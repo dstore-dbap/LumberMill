@@ -1,0 +1,1 @@
+Jun 26 08:33:12 php5-01 php-fpm[27867]: [WARNING] [pool m.titus.de] child 10371 said into stderr: "NOTICE: PHP message: 2013/06/26 10:33:12 [error] [exception.CException] exception 'CException' with message 'Parameter $code is empty!' in /var/www/libs/dStore_yii/2.0.0/dStore_yii/Images/ImageMagick/CodeManipulator.php:180"
