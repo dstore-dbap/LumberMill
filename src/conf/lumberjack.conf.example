@@ -4,7 +4,7 @@
     
 - module: TcpServerThreaded
   configuration:
-    interface: es-01.dbap.de
+    interface: localhost
     port: 5152
   receivers: 
     - SyslogMessageParser
@@ -14,12 +14,9 @@
     mark-on-success: syslog-message
     field_extraction_patterns:
       httpd_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+(apache2|nginx): httpd\[(?P<pid>\d+)\]\s+(?P<virtual_host_name>.*)\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<request_time>[\d\.]+)\s+\"(?P<http_method>GET|POST)\s+(?P<uri>.*)\"\s+(?P<http_status>-|\d+)\s+(?P<bytes_sent>-|\d+)\s+(?P<cookie_sid>\S+)\s+(?P<cookie_unique_id>\S+)\s+\"(?P<referer>.*)\"\s+\"(?P<user_agent>.*)\"'
-      agora_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\._\-]+)\s+nginx: agora (?P<request_ts>\d+\.\d+).*\s(?P<server_name>[\w\._\-]+)\s(?P<http_method>[\w\-]+)\s\"(?P<uri>.*)\"\s\"(?P<request_body>.*)\"\s(?P<username>[\w\-]+)\s(?P<http_status>\d+)\s(?P<bytes_sent>\d+)\s(?P<request_size>\d+)\s(?P<request_time>[\d\.]+)\s(?P<remote_ip>[\d\.]+)\s(?P<remote_port>\d+)\s\"(?P<x_forwarded_for>.*)\"\s\"(?P<referer>.*)\"\s\"(?P<user_agent>.*)\"\s(?P<cache_status>[\w\-]+)\s\"(?P<upstream_response_time>.*)\"\s\"(?P<upstream_addr>.*)\"\s\"(?P<content_type>.*)\"\s\"(?P<accept_encoding>.*)\"\s\"(?P<content_encoding>.*)\"\s\"(?P<custom_vars>.*)'
       httpd_log_phperrors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s(\[(?P<status>\w+)\]\s+)?\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+PHP (?P<php_error_type>Warning|Notice|Fatal error):\s+(?P<php_error_message>.*)'
       php_fpm_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+php-fpm\[(?P<pid>\d+)\]:?\s\[(?P<php_error_type>\w+)\]\s+\[pool\s(?P<php_fpm_poolname>[\w\-\._\s]+)\]\s+(?P<php_error_message>.*)'
       httpd_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s\[(?P<status>\w+)\]\s+\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+(?P<httpd_error_message>.*)'
-      webservice_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+daemontools\.(?P<service_name>\w+):.*\t(?P<remote_ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s-\s\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+\d+\s+(?P<http_method>\w+)\s+(?P<uri>/\sVersion.*)\s+(?P<http_status>\d{1,3})\s+(?P<bytes_sent>-|\d+)\s+-\s+(?P<request_time>\d+)\t(?P<user_agent>.*)\t(?P<referer>.*)'
-      flow_digest_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+flow-digest:\sSource:(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\sDestination:(?P<destination_ip>\d+\.\d+\.\d+\.\d+)\sFlowCount:(?P<flow_count>\d+)\sOctets:(?P<octets>\d+)\sPackets:(?P<packets>\d+)\sBlockThreshold:(?P<block_threshold>\d+)\sBlockStatus:(?P<block_status>\w+)'
       daemontools: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+daemontools\.(?P<service_name>\w+):\s+(?P<log_message>.*)'
   receivers:
     - AddTimeStamp
@@ -42,7 +39,7 @@
 - module: ElasticSearchStorageHandler
   pool-size: 4
   configuration:
-    host: es-01.dbap.de:9200
+    host: localhost:9200
     index_prefix: test-
     field_types: 
       block_status: Integer
@@ -59,11 +56,11 @@
 - module: Statistics
   configuration:
     print_regex_statistics_at_message_count: 1000
-    regexStatistics: False
+    regexStatistics: True
     receiveRateStatistics: True
 
 - module: StdOutHandler
-#- module: DevNullSink
+- module: DevNullSink
 
 #- module: TcpServerTwisted
 #  configuration:
