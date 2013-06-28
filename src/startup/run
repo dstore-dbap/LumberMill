@@ -1,6 +1,0 @@
-#!/bin/sh
-exec 2>&1
-exec softlimit -d100000000 envdir ./env sh -c \
-'cd //opt/pySyslogSolrServer/src; \
-exec ./SyslogMessageScanner.py \
-'
