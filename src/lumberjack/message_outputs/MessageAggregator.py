@@ -5,8 +5,7 @@ class MessageAggregator(BaseModule.BaseModule):
     """
     This class collects a configurable amount of messages
     before it will call the handler that takes care of the
-    data storage. The handlers will be run in a different
-    thread pool.
+    data storage.
     """
 
     data_container = []

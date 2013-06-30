@@ -29,7 +29,7 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
         while True:
             try:
                 self.handleData(self.input_queue.get())
-                #self.input_queue.task_done()
+                self.input_queue.task_done()
             except Exception, e:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )
@@ -61,7 +61,6 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
                          'Boolean': lambda field_name: datarow.__setitem__(field_name, bool(datarow[field_name]))}[data_type](field_name)
                     except Exception, e:
                         datarow.__setitem__(field_name, None)
-            #self.logger.debug("%s%s" % (es_index,json.dumps(datarow, sort_keys=True, indent=4)))
             json_data += "%s%s\n" % (es_index,json.dumps(datarow))
         return json_data
  

@@ -1,7 +1,7 @@
 import threading
-import lib.Decorators as Decorator
+import lumberjack.Decorators as Decorators
 
-@Decorator.singleton
+@Decorators.singleton
 class StatisticCollector:
     """ Stores the statistic data """
     statistic_data = {}

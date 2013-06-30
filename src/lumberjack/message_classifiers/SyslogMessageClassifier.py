@@ -1,9 +1,6 @@
-import os
 import sys
 import re
-import time
 import BaseModule
-import lib.StatisticCollector as StatisticCollector
 
 class SyslogMessageClassifier(BaseModule.BaseModule):
     
@@ -59,11 +56,6 @@ class SyslogMessageClassifier(BaseModule.BaseModule):
                 self.logger.debug("Raw message: "+message);
                 message_type = 'unknown'
     
-            # Statistic data
-            #if message_type not in StatisticCollector.StatisticCollector().getDict("classifyMessage"):
-            #    StatisticCollector.StatisticCollector().getDict("classifyMessage")[message_type] = { 'hits': 0 }
-            #StatisticCollector.StatisticCollector().getDict("classifyMessage")[message_type]['hits'] += 1
-            
             message_data = {'source_ip': source_ip, 'message_type': message_type, 'data': message}
             try:
                 [queue.put(message_data) for queue in self.output_queues]

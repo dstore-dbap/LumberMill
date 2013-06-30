@@ -52,13 +52,13 @@ class AddGeoInfo(BaseModule.BaseModule):
     def is_valid_ipv4_address(self, address):
         try:
             addr= socket.inet_pton(socket.AF_INET, address)
-        except AttributeError: # no inet_pton here, sorry
+        except AttributeError: 
             try:
                 addr= socket.inet_aton(address)
             except socket.error:
                 return False
             return address.count('.') == 3
-        except socket.error: # not a valid address
+        except socket.error: 
             return False
     
         return True
@@ -66,6 +66,6 @@ class AddGeoInfo(BaseModule.BaseModule):
     def is_valid_ipv6_address(self, address):
         try:
             addr= socket.inet_pton(socket.AF_INET6, address)
-        except socket.error: # not a valid address
+        except socket.error: 
             return False
         return True

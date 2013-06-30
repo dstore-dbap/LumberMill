@@ -14,7 +14,6 @@ module_dirs = {'message_inputs': {},
 import sys
 import os
 import time
-import logging
 import logging.config
 import Queue
 import threading
@@ -25,20 +24,36 @@ import yaml
 # different module directories.
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
-sys.path.append(pathname+"/lib");
-[sys.path.append(pathname+"/lib/"+mod_dir) for mod_dir in module_dirs]
+sys.path.append(pathname+"/lumberjack");
+[sys.path.append(pathname+"/lumberjack/"+mod_dir) for mod_dir in module_dirs]
+
+class Node:
+    def __init__(self, module):
+        self.children = []
+        self.module = module
+    
+    def addChild(self, node):
+        self.children.append(node)
+        
+
+def hasLoop(node, stack=[]):
+    if not stack:
+        stack.append(node)
+    for current_node in node.children:
+        if current_node in stack:
+            return [current_node]
+        stack.append(current_node)
+        return hasLoop(current_node,stack)
+    return []
 
 class LumberJack:
 
-    worker_pool = False
-    modules = {}
-    
     def __init__(self):
-        # get our logging facility
+        self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration()
 
-    def produceQueue(queue_max_size = 25):
+    def produceQueue(self, queue_max_size = 25):
         return Queue.Queue(queue_max_size)
  
     def readConfiguration(self):
@@ -81,9 +96,7 @@ class LumberJack:
         
     def initModule(self, module_name):
         """ Initalize a module."""
-        #try:
         self.logger.debug("Initializing module %s." % (module_name))
-        #main_module = __import__("lib.%s" % module_type, fromlist=[class_name])
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
@@ -97,6 +110,7 @@ class LumberJack:
         """ Connect modules via queues."""
         # All modules are initialized, connect producer and consumers via a queue.
         queues = {}
+        module_loop_buffer = []
         for module_name,instances in self.modules.iteritems():
             for instance in instances:
                 if "receivers" not in instance or instance['receivers'] is None:
@@ -116,9 +130,31 @@ class LumberJack:
                     for receiver_instance in self.modules[receiver_name]:
                         if receiver_name not in queues:
                             queues[receiver_name] = self.produceQueue()
-                        if not receiver_instance["instance"].getInputQueue():
-                            receiver_instance["instance"].setInputQueue(queues[receiver_name])
-                        instance["instance"].addOutputQueue(queues[receiver_name], filter_by_marker)
+                        try:
+                            if not receiver_instance["instance"].getInputQueue():
+                                receiver_instance["instance"].setInputQueue(queues[receiver_name])
+                            instance["instance"].addOutputQueue(queues[receiver_name], filter_by_marker)
+                        except AttributeError:
+                            self.logger.error("%s can not be set as receiver. It seems to be incompatible." % receiver_name)
+                        # Build a node structure used for the loop test.
+                        try:
+                            node = (node for node in module_loop_buffer if node.module == instance["instance"]).next()
+                        except:
+                            node = Node(instance["instance"])
+                            module_loop_buffer.append(node)
+                        try:
+                            receiver_node = (node for node in module_loop_buffer if node.module == receiver_instance["instance"]).next()
+                        except:
+                            receiver_node = Node(receiver_instance["instance"])
+                            module_loop_buffer.append(receiver_node)
+                        node.addChild(receiver_node)
+        # Check if the configuration produces a loop.
+        # This code can definitely be made more efficient...  
+        for node in module_loop_buffer:
+            for loop in hasLoop(node, stack=[]):
+                self.logger.error("Chaining of modules produced a loop. Check configuration. Module: %s." % loop.module.__class__.__name__) 
+                sys.exit(255)
+
  
     def runModules(self):                           
         # All modules are completely configured, call modules run method if it exists.

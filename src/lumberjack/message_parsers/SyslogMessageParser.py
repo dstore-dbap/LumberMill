@@ -4,11 +4,10 @@ import BaseModule
 
 class SyslogMessageParser(BaseModule.BaseModule):
     
-    message_types = []
-    fieldextraction_regexpressions = {}
-    add_marker = False
-
     def configure(self, configuration):
+        self.message_types = []
+        self.fieldextraction_regexpressions = {}
+        self.success_marker = self.failure_marker = False
         for message_type, regex_pattern in configuration['field_extraction_patterns'].items():
             self.message_types.append(message_type)
             try:
@@ -17,11 +16,9 @@ class SyslogMessageParser(BaseModule.BaseModule):
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, Exception, e))
                 sys.exit(255)
             self.fieldextraction_regexpressions[message_type] = regex
-        if configuration['mark-on-success']:
-            self.add_marker = True
+        if 'mark-on-success' in configuration:
             self.success_marker = configuration['mark-on-success']
-        if configuration['mark-on-failure']:
-            self.add_marker = True
+        if 'mark-on-failure' in configuration:
             self.failure_marker = configuration['mark-on-failure']            
 
     def handleData(self, data):
@@ -55,11 +52,11 @@ class SyslogMessageParser(BaseModule.BaseModule):
             if matches:
                 data.update(matches.groupdict())
                 data.update({'message_type': message_type})
-                if self.add_marker:
+                if self.success_marker:
                     data['markers'].append(self.success_marker)
                 break
         if not matches:
-            if self.add_marker:
+            if self.failure_marker:
                 data['markers'].append(self.failure_marker)            
             self.logger.debug("Could not extract fields for message %s." % message);
             data.update({'message_type': 'unknown'})

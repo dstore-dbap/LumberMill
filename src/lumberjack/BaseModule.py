@@ -30,6 +30,9 @@ class BaseModule(threading.Thread):
         else:
             self.logger.error("Setting input queue to output queue will create a circular reference. Exiting.")
             thread.interrupt_main()        
+    
+    def getOutputQueues(self):
+        return self.output_queues
         
     def addOutputQueue(self, queue, filter_by_marker=False):
         if queue == self.input_queue:

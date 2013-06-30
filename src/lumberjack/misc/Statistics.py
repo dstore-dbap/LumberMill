@@ -1,7 +1,6 @@
-import logging
 import time
-import lib.Decorators as Decorator
-import lib.StatisticCollector as StatisticCollector
+import lumberjack.Decorators as Decorators
+import lumberjack.StatisticCollector as StatisticCollector
 import BaseModule
 
 class Statistics(BaseModule.BaseModule):
@@ -27,7 +26,7 @@ class Statistics(BaseModule.BaseModule):
         self.logger.info("Total messages: %s." % (StatisticCollector.StatisticCollector().getCounter('received_messages')))
         StatisticCollector.StatisticCollector().resetCounter('received_messages')
         
-    @Decorator.setInterval(5.0)
+    @Decorators.setInterval(5.0)
     def receiveRateStatistics(self):
         rps = StatisticCollector.StatisticCollector().getCounter('rps')
         if not rps:
