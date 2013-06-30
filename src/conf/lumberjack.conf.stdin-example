@@ -1,0 +1,21 @@
+# A handler for stin, just for testing purposes
+- module: StdInHandler
+  receivers:
+    - RegexStringParser
+
+# Parse the messege using named regex patterns.
+# The named groups will be put into correspondig fields in the data dictionary
+- module: RegexStringParser
+  configuration:
+    # Set marker if a regex matched
+    mark-on-success: match
+    # Set marker if no regex matched
+    mark-on-failure: nomatch
+    field_extraction_patterns:
+      httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
+  receivers:
+    - StdOutHandler
+    
+- module: StdOutHandler
+  configuration:
+    pretty-print: True

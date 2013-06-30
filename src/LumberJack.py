@@ -14,6 +14,7 @@ module_dirs = {'message_inputs': {},
 import sys
 import os
 import time
+import getopt
 import logging.config
 import Queue
 import threading
@@ -48,20 +49,20 @@ def hasLoop(node, stack=[]):
 
 class LumberJack:
 
-    def __init__(self):
+    def __init__(self, path_to_config_file):
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.readConfiguration()
+        self.readConfiguration(path_to_config_file)
 
     def produceQueue(self, queue_max_size = 25):
         return Queue.Queue(queue_max_size)
  
-    def readConfiguration(self):
+    def readConfiguration(self, path_to_config_file):
         try:
-            conf_file=open("conf/lumberjack.conf")
+            conf_file=open(path_to_config_file)
             self.configuration =  yaml.load(conf_file)
         except Exception,e:
-            self.logger.error("Could not read config file in ./conf/lumberjack.conf. Exception: %s, Error: %s." % (Exception,e))
+            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, Exception, e))
             sys.exit(255)
          
     def initModulesFromConfig(self, section_type="default"):
@@ -170,11 +171,29 @@ class LumberJack:
                 except Exception,e:
                     self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, Exception, e))
 
+def usage():
+    print 'Usage: '+sys.argv[0]+' -c <path/to/config.conf>' 
+
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])
     config_pathname = config_pathname[:config_pathname.rfind("/")]+"/conf"
     logging.config.fileConfig('%s/logger.conf' % config_pathname)
-    lj = LumberJack()
+    path_to_config_file = ""
+    try:                                
+        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help", "conf="])
+    except getopt.GetoptError:          
+        usage()                         
+        sys.exit(2)                     
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):      
+            usage()                     
+            sys.exit()                  
+        elif opt in ("-c", "--conf"):
+            path_to_config_file = arg
+    if not path_to_config_file:
+        usage()                         
+        sys.exit(2)                     
+    lj = LumberJack(path_to_config_file)
     lj.initModulesFromConfig()
     lj.initEventStream()
     lj.runModules()

@@ -2,7 +2,7 @@ import sys
 import re
 import BaseModule
 
-class SyslogMessageParser(BaseModule.BaseModule):
+class RegexStringParser(BaseModule.BaseModule):
     
     def configure(self, configuration):
         self.message_types = []
