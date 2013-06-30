@@ -19,9 +19,7 @@ Working modules:
 * DevNullSink, discards all data that it receives
 * StdOutHandler, prints all received data to standard out
 * ElasticSearchStorageHandler, stores data entries in an elasticsearch index
-* DataAggregator, store a configurable number of data entries before passing them on (useful for bulk updates)
-* ModuleContainer, wrap modules in a container reducing the overhead to run each module in it's own thread
-* DataAggregator, store a configurable number of data entries before passing them on (useful for bulk updates)
+* DataAggregator, aggregate a configurable number of data entries before passing them on (useful for bulk updates)
 * ModuleContainer, wrap modules in a container reducing the overhead to run each module in it's own thread
 * Statistics, simple statistic module
 

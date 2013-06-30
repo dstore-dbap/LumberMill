@@ -18,6 +18,7 @@ import os
 import logging
 import socket
 import BaseModule
+import Utils
 from twisted.internet import defer, reactor, protocol, threads
 from twisted.protocols.basic import LineReceiver
 
@@ -110,7 +111,7 @@ class TCPListener(LineReceiver):
         except:
             host = "0.0.0.0"
         try:
-            [queue.put({"received_from": host, "data": data}, block=True, timeout=5) for queue in self.factory.output_queues]
+            [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.factory.output_queues]
         except Exception, e:
             self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (Exception, e))
 

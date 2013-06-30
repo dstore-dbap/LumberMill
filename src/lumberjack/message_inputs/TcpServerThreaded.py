@@ -18,7 +18,6 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
             data = True
             while data:
                 data = self.rfile.readline().strip()
-                self.logger.debug("Received %s." % (data))
                 try:
                     [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
                 except Exception, e:
