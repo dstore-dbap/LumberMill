@@ -27,10 +27,10 @@ Working modules:
 
 LumberJack makes use of the following projects:
 
-* [simplejson][simplejson]
-* [pyyaml][pyyaml]
-* [isodate][isodate]
-* [pygeoip][pygeoip]
+* simplejson
+* pyyaml
+* isodate
+* pygeoip
 
 ### Example usage
 
@@ -40,7 +40,17 @@ LumberJack makes use of the following projects:
 
 This should produce the following output:
 
-
+	{'bytes_send': '3395',
+	 'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395\n',
+	 'datetime': '28/Jul/2006:10:27:10 -0300',
+	 'http_status': '200',
+	 'identd': '-',
+	 'markers': ['match'],
+	 'message_type': 'httpd_access_log',
+	 'received_from': 'stdin',
+	 'remote_ip': '192.168.2.20',
+	 'url': 'GET /cgi-bin/try/ HTTP/1.0',
+	 'user': '-'}
 
 #####A rough sketch for using LumberJack with syslog-ng:
 
