@@ -8,6 +8,8 @@ To analyze i.e. log data, this tool offers a simple approach to parse the stream
 The different modules can be combined in any order. Each module runs in its own thread and data is passed 
 via python queues between the running modules.
 
+Running this with pypy instead of python increases performance noticeably.
+
 Working modules:
 
 * StdInHandler, read stream from standard in 
