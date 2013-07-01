@@ -21,11 +21,10 @@
     mark-on-failure: nomatch
     field_extraction_patterns:
       httpd_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+(apache2|nginx): httpd\[(?P<pid>\d+)\]\s+(?P<virtual_host_name>.*)\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<request_time>[\d\.]+)\s+\"(?P<http_method>GET|POST)\s+(?P<uri>.*)\"\s+(?P<http_status>-|\d+)\s+(?P<bytes_sent>-|\d+)\s+(?P<cookie_sid>\S+)\s+(?P<cookie_unique_id>\S+)\s+\"(?P<referer>.*)\"\s+\"(?P<user_agent>.*)\"'
-      agora_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\._\-]+)\s+nginx: agora (?P<request_ts>\d+\.\d+).*\s(?P<server_name>[\w\._\-]+)\s(?P<http_method>[\w\-]+)\s\"(?P<uri>.*)\"\s\"(?P<request_body>.*)\"\s(?P<username>[\w\-]+)\s(?P<http_status>\d+)\s(?P<bytes_sent>\d+)\s(?P<request_size>\d+)\s(?P<request_time>[\d\.]+)\s(?P<remote_ip>[\d\.]+)\s(?P<remote_port>\d+)\s\"(?P<x_forwarded_for>.*)\"\s\"(?P<referer>.*)\"\s\"(?P<user_agent>.*)\"\s(?P<cache_status>[\w\-]+)\s\"(?P<upstream_response_time>.*)\"\s\"(?P<upstream_addr>.*)\"\s\"(?P<content_type>.*)\"\s\"(?P<accept_encoding>.*)\"\s\"(?P<content_encoding>.*)\"\s\"(?P<custom_vars>.*)'
       httpd_log_phperrors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s(\[(?P<status>\w+)\]\s+)?\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+PHP (?P<php_error_type>Warning|Notice|Fatal error):\s+(?P<php_error_message>.*)'
       php_fpm_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+php-fpm\[(?P<pid>\d+)\]:?\s\[(?P<php_error_type>\w+)\]\s+\[pool\s(?P<php_fpm_poolname>[\w\-\._\s]+)\]\s+(?P<php_error_message>.*)'
       httpd_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s\[(?P<status>\w+)\]\s+\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+(?P<httpd_error_message>.*)'
-      daemontools: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+daemontools\.(?P<service_name>\w+):\s+(?P<log_message>.*)'
+      http_common_access_log2: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
   receivers:
     # Only messages that matched a regex will be send to this handler
     - ModuleContainer:
@@ -38,10 +37,15 @@
 # To avoid this overhead for simple tasks, wrap them up in a container.
 - module: ModuleContainer
   configuration:
+    # Add a timestamp field
     - module: AddTimeStamp
+    # Add geo info based on the ip_address_fields. The first found field in the data dictionary will be used in query.
     - module: AddGeoInfo
       configuration:
         geoip_dat_path: /usr/share/GeoIP/GeoIP.dat
+        lookup_fields:
+          - x_forwarded_for
+          - remote_ip
   receivers:
     - MessageAggregator
     - Statistics
@@ -70,10 +74,13 @@
 - module: Statistics
   configuration:
     print_regex_statistics_at_message_count: 1000
-    regexStatistics: True
+    regexStatistics: False
     receiveRateStatistics: True
 
-#- module: StdOutHandler
+- module: StdOutHandler
+  configuration:
+    pretty-print: True
+
 #- module: DevNullSink
 
 #- module: TcpServerTwisted

@@ -1,4 +1,6 @@
+import sys
 import thread
+import traceback
 import BaseModule
 
 
@@ -11,9 +13,10 @@ class ModuleContainer(BaseModule.BaseModule):
             module = __import__(module_name)
             module_class = getattr(module, module_name)
             instance = module_class()
+            instance.setLumberJackInstance(self.lj)
         except Exception, e:
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, Exception, e))
-            thread.interrupt_main()
+            self.lj.shutDown()
         return instance
 
     def configure(self, configuration):
@@ -25,8 +28,10 @@ class ModuleContainer(BaseModule.BaseModule):
             if 'configuration' in module_info:
                 try:
                     module_instance.configure(module_info['configuration'])
-                except Exception,e:
+                except Exception, e:
+                    exc_type, exc_value, exc_tb = sys.exc_info()
                     self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], Exception, e))
+                    traceback.print_exception(exc_type, exc_value, exc_tb)
                     pass
             self.modules.append(module_instance)
               

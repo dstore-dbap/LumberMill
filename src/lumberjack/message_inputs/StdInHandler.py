@@ -1,8 +1,10 @@
 import sys
+import os
 import select
 import socket
 import BaseModule
 import Utils
+import time
 
 class StdInHandler(BaseModule.BaseModule):
     
@@ -11,6 +13,7 @@ class StdInHandler(BaseModule.BaseModule):
         while sys.stdin in select.select([sys.stdin], [], [], 1)[0]:
             data = sys.stdin.readline()
             if data.__len__() > 0 and self.output_queues:
-                self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin', "data": data}))
+                self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
             else: # an empty line means stdin has been closed
-                sys.exit(0)
+                time.sleep(.5)
+                self.lj.shutDown()

@@ -21,6 +21,9 @@ class BaseModule(threading.Thread):
     def configure(self, configuration):
         self.config = configuration
 
+    def setLumberJackInstance(self, lj):
+        self.lj = lj
+
     def getInputQueue(self):
         return self.input_queue
         
@@ -60,7 +63,8 @@ class BaseModule(threading.Thread):
         while True:
             data = False
             try:
-                data = self.handleData(self.input_queue.get(block=True, timeout=None))
+                item = self.input_queue.get()
+                data = self.handleData(item)
                 self.input_queue.task_done()
             except Exception, e:
                 exc_type, exc_value, exc_tb = sys.exc_info()

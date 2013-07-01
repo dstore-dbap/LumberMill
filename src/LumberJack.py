@@ -50,6 +50,7 @@ def hasLoop(node, stack=[]):
 class LumberJack:
 
     def __init__(self, path_to_config_file):
+        self.alive = True
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
@@ -75,6 +76,10 @@ class LumberJack:
             pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
             for _ in range(pool_size):
                 module_instance = self.initModule(module_info['module'])
+                try:
+                    module_instance.setLumberJackInstance(self)
+                except AttributeError:
+                    pass
                 module_name = module_info['module']
                 # Use alias if it was set in configuration.
                 if 'alias' in module_info:
@@ -171,6 +176,17 @@ class LumberJack:
                 except Exception,e:
                     self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, Exception, e))
 
+    def run(self):
+        self.runModules()
+        try:
+            while self.alive:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            sys.exit()
+
+    def shutDown(self):
+        self.alive = False
+
 def usage():
     print 'Usage: '+sys.argv[0]+' -c <path/to/config.conf>' 
 
@@ -196,6 +212,4 @@ if "__main__" == __name__:
     lj = LumberJack(path_to_config_file)
     lj.initModulesFromConfig()
     lj.initEventStream()
-    lj.runModules()
-    while True:
-        time.sleep(1)
+    lj.run()        
