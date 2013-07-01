@@ -24,7 +24,7 @@
       httpd_log_phperrors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s(\[(?P<status>\w+)\]\s+)?\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+PHP (?P<php_error_type>Warning|Notice|Fatal error):\s+(?P<php_error_message>.*)'
       php_fpm_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+php-fpm\[(?P<pid>\d+)\]:?\s\[(?P<php_error_type>\w+)\]\s+\[pool\s(?P<php_fpm_poolname>[\w\-\._\s]+)\]\s+(?P<php_error_message>.*)'
       httpd_log_errors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s\[(?P<status>\w+)\]\s+\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+(?P<httpd_error_message>.*)'
-      http_common_access_log2: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
+      http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
   receivers:
     # Only messages that matched a regex will be send to this handler
     - ModuleContainer:
@@ -39,7 +39,7 @@
   configuration:
     # Add a timestamp field
     - module: AddTimeStamp
-    # Add geo info based on the ip_address_fields. The first found field in the data dictionary will be used in query.
+    # Add geo info based on the lookup_fields. The first field in the that yields a result from geoip will be used.
     - module: AddGeoInfo
       configuration:
         geoip_dat_path: /usr/share/GeoIP/GeoIP.dat
