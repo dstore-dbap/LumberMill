@@ -4,6 +4,7 @@ import SocketServer
 import sys
 import socket
 import Utils
+import BaseModule
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
@@ -16,12 +17,19 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
         try:
             host,port = self.request.getpeername()
             data = True
+            lock = threading.Lock()
             while data:
                 data = self.rfile.readline().strip()
                 try:
-                    [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
-                except Exception, e:
-                    self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (Exception, e))
+                    # [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
+                    for queue in self.output_queues:
+                        queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5)
+                        lock.acquire()
+                        BaseModule.BaseModule.messages_in_queues += 1
+                        lock.release()
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
         except socket.timeout, e:
             # Handle a timeout gracefully
             self.finish()
@@ -57,8 +65,9 @@ class TcpServerThreaded:
         handler_factory = TCPRequestHandlerFactory()
         try:
             self.server = ThreadedTCPServer((self.config["interface"], int(self.config["port"])), handler_factory.produce(self.output_queues))  
-        except Exception, e:
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.config["interface"],self.config["port"], Exception, e))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.config["interface"],self.config["port"], etype, evalue))
             sys.exit(255)     
         # Start a thread with the server -- that thread will then start one
         # more thread for each request

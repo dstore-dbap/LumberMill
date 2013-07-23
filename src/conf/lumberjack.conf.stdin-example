@@ -1,8 +1,3 @@
-# A handler for stin, just for testing purposes
-- module: StdInHandler
-  receivers:
-    - RegexStringParser
-
 # Parse the messege using named regex patterns.
 # The named groups will be put into correspondig fields in the data dictionary
 - module: RegexStringParser
@@ -19,3 +14,8 @@
 - module: StdOutHandler
   configuration:
     pretty-print: True
+    
+# A handler for stin, just for testing purposes
+- module: StdInHandler
+  receivers:
+    - RegexStringParser

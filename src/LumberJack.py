@@ -62,8 +62,9 @@ class LumberJack:
         try:
             conf_file=open(path_to_config_file)
             self.configuration =  yaml.load(conf_file)
-        except Exception,e:
-            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, Exception, e))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             sys.exit(255)
          
     def initModulesFromConfig(self, section_type="default"):
@@ -88,8 +89,9 @@ class LumberJack:
                 if 'configuration' in module_info:
                     try:
                         module_instance.configure(module_info['configuration'])
-                    except Exception,e:
-                        self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], Exception, e))
+                    except:
+                        etype, evalue, etb = sys.exc_info()
+                        self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], etype, evalue))
                         pass
                 try:
                     self.modules[module_name].append({'instance': module_instance, 
@@ -107,8 +109,9 @@ class LumberJack:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
             instance = module_class()
-        except Exception, e:
-            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, Exception, e))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
             sys.exit(255)
         return instance
 
@@ -173,8 +176,9 @@ class LumberJack:
                         instance["instance"].start()
                     else:
                         instance["instance"].run()
-                except Exception,e:
-                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, Exception, e))
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
 
     def run(self):
         self.runModules()

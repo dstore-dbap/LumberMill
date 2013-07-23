@@ -12,8 +12,9 @@ class SyslogMessageClassifier(BaseModule.BaseModule):
             self.message_types.append(message_type)
             try:
                 regex = re.compile(regex_pattern)
-            except Exception, e:
-                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, Exception, e))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 sys.exit(255)
             self.classification_regexpressions[message_type] = regex
  
@@ -57,7 +58,4 @@ class SyslogMessageClassifier(BaseModule.BaseModule):
                 message_type = 'unknown'
     
             message_data = {'source_ip': source_ip, 'message_type': message_type, 'data': message}
-            try:
-                [queue.put(message_data) for queue in self.output_queues]
-            except Exception, e:
-                self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (Exception, e))
+            return message_data

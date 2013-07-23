@@ -10,6 +10,8 @@ except ImportError:
 
 class BaseModule(threading.Thread):
     
+    messages_in_queues = 0
+    
     def __init__(self):
         self.input_queue = False
         self.output_queues = []
@@ -17,6 +19,7 @@ class BaseModule(threading.Thread):
         self.logger = logging.getLogger(self.__class__.__name__)
         threading.Thread.__init__(self)
         self.daemon = True
+        self.lock = threading.Lock()
 
     def configure(self, configuration):
         self.config = configuration
@@ -26,6 +29,16 @@ class BaseModule(threading.Thread):
 
     def getInputQueue(self):
         return self.input_queue
+
+    def incrementQueueCounter(self):
+        self.lock.acquire()
+        BaseModule.messages_in_queues += 1
+        self.lock.release()        
+
+    def decrementQueueCounter(self):
+        self.lock.acquire()
+        BaseModule.messages_in_queues -= 1
+        self.lock.release()
         
     def setInputQueue(self, queue):
         if queue not in self.output_queues:
@@ -53,8 +66,10 @@ class BaseModule(threading.Thread):
                 if not queue['output_filter'] or queue['output_filter'](data, queue['marker']):
                     #self.logger.info("Adding %s to output_queue %s in %s." % (data, queue, threading.currentThread()))
                     queue['queue'].put(data)
-        except Exception, e:
-            self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (Exception, e))
+                    self.incrementQueueCounter()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
 
     def run(self):
         if not self.input_queue:
@@ -66,7 +81,8 @@ class BaseModule(threading.Thread):
                 item = self.input_queue.get()
                 data = self.handleData(item)
                 self.input_queue.task_done()
-            except Exception, e:
+                self.decrementQueueCounter()
+            except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )
                 traceback.print_exception(exc_type, exc_value, exc_tb)

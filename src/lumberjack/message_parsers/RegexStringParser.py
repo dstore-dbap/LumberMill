@@ -12,8 +12,9 @@ class RegexStringParser(BaseModule.BaseModule):
             self.message_types.append(message_type)
             try:
                 regex = re.compile(regex_pattern)
-            except Exception, e:
-                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, Exception, e))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 sys.exit(255)
             self.fieldextraction_regexpressions[message_type] = regex
         if 'mark-on-success' in configuration:

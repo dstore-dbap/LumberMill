@@ -30,6 +30,7 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             try:
                 self.handleData(self.input_queue.get())
                 self.input_queue.task_done()
+                self.decrementQueueCounter()
             except Exception, e:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )

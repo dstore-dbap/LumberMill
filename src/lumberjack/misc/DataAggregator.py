@@ -1,7 +1,7 @@
 import time
 import BaseModule
 
-class MessageAggregator(BaseModule.BaseModule):
+class DataAggregator(BaseModule.BaseModule):
     """
     This class collects a configurable amount of messages
     before it will call the handler that takes care of the

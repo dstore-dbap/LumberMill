@@ -17,6 +17,7 @@ import sys
 import os
 import logging
 import socket
+import threading
 import BaseModule
 import Utils
 from twisted.internet import defer, reactor, protocol, threads
@@ -110,10 +111,17 @@ class TCPListener(LineReceiver):
             host = self.transport.getPeer().host;
         except:
             host = "0.0.0.0"
+        lock = threading.Lock()
         try:
-            [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.factory.output_queues]
-        except Exception, e:
-            self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (Exception, e))
+            #[queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.factory.output_queues]
+            for queue in self.output_queues:
+                queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5)
+                lock.acquire()
+                BaseModule.BaseModule.messages_in_queues += 1
+                lock.release()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
 
 class handlerFactory(protocol.Factory):
     protocol = TCPListener
@@ -143,8 +151,9 @@ class TcpServerTwisted(BaseModule.BaseModule):
             self.logger.info("Starting TwistedUdpServer on interface %s, port: %s" % (self.config["Interface"],self.config["UDP"]))
             try:
                 reactor.listenUDP(int(self.config["UDP"]), self.udpListener, self.config["Interface"],self.config["UDP"])
-            except Exception, e:
-                self.logger.error("An error occured: Exception: %s, Error: %s." % (Exception,e))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("An error occured: Exception: %s, Error: %s." % (etype,evalue))
                 self.logger.info("No UDPListener registered...")
                 sys.exit(255)
             start_reactor = True
@@ -154,8 +163,9 @@ class TcpServerTwisted(BaseModule.BaseModule):
                 server = reactor.listenTCP(int(self.config["TCP"]), self.tcpListener, interface = self.config["Interface"])
                 server.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 server.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-            except Exception, e:
-                self.logger.error("An error occured: Exception: %s, Error: %s." % (Exception,e))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("An error occured: Exception: %s, Error: %s." % (etype,evalue))
                 self.logger.error("No TCPListener registered...")
                 sys.exit(255)
             start_reactor = True

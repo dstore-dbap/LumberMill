@@ -1,4 +1,5 @@
 import time
+import sys
 import lumberjack.Decorators as Decorators
 import lumberjack.StatisticCollector as StatisticCollector
 import BaseModule
@@ -33,6 +34,10 @@ class Statistics(BaseModule.BaseModule):
             rps = 0
         StatisticCollector.StatisticCollector().resetCounter('rps')
         self.logger.info("Received messages in 5s: %s (%s/rps)" % (rps, (rps/5)))
+
+    @Decorators.setInterval(5.0)
+    def waitingEventStatistics(self):
+        self.logger.info("Events waiting to be processed: %s" % BaseModule.BaseModule.messages_in_queues)
         
     def run(self):
         if not self.input_queue:
@@ -40,14 +45,18 @@ class Statistics(BaseModule.BaseModule):
             return
         if self.config['receiveRateStatistics']:
             self.receiveRateStatistics()
+        if self.config['waitingEventStatistics']:
+            self.waitingEventStatistics()
         while True:
             try:
                 self.handleData(self.input_queue.get())
                 if self.config['regexStatistics']:
                     self.regexStatistics()
                 self.input_queue.task_done()
-            except Exception, e:
-                self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (Exception, e))
+                self.decrementQueueCounter()
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (etype, evalue))
                 time.sleep(1)
     
     def handleData(self, data):

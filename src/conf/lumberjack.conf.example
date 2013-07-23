@@ -47,11 +47,11 @@
           - x_forwarded_for
           - remote_ip
   receivers:
-    - MessageAggregator
+    - DataAggregator
     - Statistics
 
 # Aggregate the messages before sending them to the output handler, so that a bulk update really makes sense.
-- module: MessageAggregator
+- module: DataAggregator
   configuration:
     store_data_interval: 25
   receivers: 

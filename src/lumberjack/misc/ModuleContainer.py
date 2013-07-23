@@ -29,9 +29,9 @@ class ModuleContainer(BaseModule.BaseModule):
                 try:
                     module_instance.configure(module_info['configuration'])
                 except Exception, e:
-                    exc_type, exc_value, exc_tb = sys.exc_info()
-                    self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], Exception, e))
-                    traceback.print_exception(exc_type, exc_value, exc_tb)
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], etype, evalue))
+                    traceback.print_exception(etype, evalue, etb)
                     pass
             self.modules.append(module_instance)
               
