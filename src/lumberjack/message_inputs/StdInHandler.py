@@ -16,5 +16,5 @@ class StdInHandler(BaseModule.BaseModule):
                 self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
             else: # an empty line means stdin has been closed
                 while BaseModule.BaseModule.messages_in_queues > 0:
-                    time.sleep(.1)
+                    time.sleep(.01)
                 self.lj.shutDown()

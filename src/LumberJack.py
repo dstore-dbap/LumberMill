@@ -184,7 +184,7 @@ class LumberJack:
         self.runModules()
         try:
             while self.alive:
-                time.sleep(1)
+                time.sleep(.1)
         except KeyboardInterrupt:
             sys.exit()
 
