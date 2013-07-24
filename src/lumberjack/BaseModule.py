@@ -21,11 +21,11 @@ class BaseModule(threading.Thread):
         self.daemon = True
         self.lock = threading.Lock()
 
+    def setup(self, lj):
+        self.lj = lj
+        
     def configure(self, configuration):
         self.config = configuration
-
-    def setLumberJackInstance(self, lj):
-        self.lj = lj
 
     def getInputQueue(self):
         return self.input_queue

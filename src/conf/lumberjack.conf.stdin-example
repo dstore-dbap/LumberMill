@@ -1,5 +1,12 @@
-# Parse the messege using named regex patterns.
-# The named groups will be put into correspondig fields in the data dictionary
+# A handler for stin, just for testing purposes
+- module: StdInHandler
+  configuration:
+    multiline: False  
+  receivers:
+    - RegexStringParser
+
+# Parse the message using named regex patterns.
+# The named groups will be put into corresponding fields in the data dictionary
 - module: RegexStringParser
   configuration:
     # Set marker if a regex matched
@@ -14,8 +21,3 @@
 - module: StdOutHandler
   configuration:
     pretty-print: True
-    
-# A handler for stin, just for testing purposes
-- module: StdInHandler
-  receivers:
-    - RegexStringParser

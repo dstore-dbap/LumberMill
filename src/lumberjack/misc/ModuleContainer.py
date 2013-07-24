@@ -13,7 +13,11 @@ class ModuleContainer(BaseModule.BaseModule):
             module = __import__(module_name)
             module_class = getattr(module, module_name)
             instance = module_class()
-            instance.setLumberJackInstance(self.lj)
+            # Call setup of module if method is implemented and pass reference to Lumberjack instance
+            try:
+                instance.setup(self.lj)
+            except AttributeError:
+                    pass
         except Exception, e:
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, Exception, e))
             self.lj.shutDown()

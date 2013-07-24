@@ -77,14 +77,15 @@ class LumberJack:
             pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
             for _ in range(pool_size):
                 module_instance = self.initModule(module_info['module'])
-                try:
-                    module_instance.setLumberJackInstance(self)
-                except AttributeError:
-                    pass
                 module_name = module_info['module']
                 # Use alias if it was set in configuration.
                 if 'alias' in module_info:
                     module_name = module_info['alias']
+                # Call setup of module if method is implemented and pass reference to Lumberjack instance
+                try:
+                    module_instance.setup(self)
+                except AttributeError:
+                    pass
                 # Call configuration of module
                 if 'configuration' in module_info:
                     try:
