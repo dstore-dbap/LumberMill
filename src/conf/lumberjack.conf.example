@@ -87,4 +87,4 @@
 #  configuration:
 #    TCP: 5152
 #  receivers: 
-#    - SyslogMessageParser
+#    - RegexStringParser

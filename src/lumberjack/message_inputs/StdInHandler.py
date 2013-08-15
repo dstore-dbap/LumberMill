@@ -23,7 +23,7 @@ class StdInHandler(BaseModule.BaseModule):
             return
         while sys.stdin in select.select([sys.stdin], [], [], 1)[0]:
             data = sys.stdin.readline()
-            print "### %s (%s)" % (data, data.__len__())
+            #print "### %s (%s)" % (data, data.__len__())
             if data.__len__() > 0:
                 if not self.multiline:
                     self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
