@@ -61,7 +61,7 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
                          'Float': lambda field_name: datarow.__setitem__(field_name, float(datarow[field_name])),
                          'Boolean': lambda field_name: datarow.__setitem__(field_name, bool(datarow[field_name]))}[data_type](field_name)
                     except Exception, e:
-                        datarow.__setitem__(field_name, None)
+                        pass #datarow.__setitem__(field_name, None)
             json_data += "%s%s\n" % (es_index,json.dumps(datarow))
         return json_data
  

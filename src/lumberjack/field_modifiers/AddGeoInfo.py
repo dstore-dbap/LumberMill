@@ -55,6 +55,8 @@ class AddGeoInfo(BaseModule.BaseModule):
                 return message_data
             except:
                 pass
+        # Return message date if lookup failed completely
+        return message_data
     
     def is_valid_ipv4_address(self, address):
         try:
