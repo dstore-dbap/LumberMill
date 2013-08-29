@@ -38,7 +38,7 @@
 - module: ModuleContainer
   configuration:
     # Add a timestamp field
-    - module: AddTimeStamp
+    - module: AddDateTime
     # Add geo info based on the lookup_fields. The first field in the that yields a result from geoip will be used.
     - module: AddGeoInfo
       configuration:

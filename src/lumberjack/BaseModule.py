@@ -11,6 +11,19 @@ except ImportError:
 class BaseModule(threading.Thread):
     
     messages_in_queues = 0
+    lock = threading.Lock()
+ 
+    @staticmethod
+    def incrementQueueCounter():
+        BaseModule.lock.acquire()
+        BaseModule.messages_in_queues += 1
+        BaseModule.lock.release()        
+
+    @staticmethod
+    def decrementQueueCounter():
+        BaseModule.lock.acquire()
+        BaseModule.messages_in_queues -= 1
+        BaseModule.lock.release()
     
     def __init__(self):
         self.input_queue = False
@@ -19,10 +32,12 @@ class BaseModule(threading.Thread):
         self.logger = logging.getLogger(self.__class__.__name__)
         threading.Thread.__init__(self)
         self.daemon = True
-        self.lock = threading.Lock()
 
     def setup(self, lj):
         self.lj = lj
+
+    def shutDown(self):
+        self.lj.shutDown()
         
     def configure(self, configuration):
         self.config = configuration
@@ -30,16 +45,6 @@ class BaseModule(threading.Thread):
     def getInputQueue(self):
         return self.input_queue
 
-    def incrementQueueCounter(self):
-        self.lock.acquire()
-        BaseModule.messages_in_queues += 1
-        self.lock.release()        
-
-    def decrementQueueCounter(self):
-        self.lock.acquire()
-        BaseModule.messages_in_queues -= 1
-        self.lock.release()
-        
     def setInputQueue(self, queue):
         if queue not in self.output_queues:
             self.input_queue = queue
@@ -81,11 +86,11 @@ class BaseModule(threading.Thread):
                 item = self.input_queue.get()
                 data = self.handleData(item)
                 self.input_queue.task_done()
-                self.decrementQueueCounter()
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )
                 traceback.print_exception(exc_type, exc_value, exc_tb)
-                time.sleep(1)
+            finally:
+                self.decrementQueueCounter()
             if data:
                 self.addToOutputQueues(data)

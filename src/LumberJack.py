@@ -1,9 +1,5 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-########################################################
-# 
-########################################################
-
 module_dirs = {'message_inputs': {},
                'message_classifiers': {},
                'message_parsers': {},
@@ -20,7 +16,7 @@ import Queue
 import threading
 import yaml
 
-# Expand the include path to out libs and modules.
+# Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
 # different module directories.
 pathname = os.path.abspath(__file__)
@@ -48,17 +44,68 @@ def hasLoop(node, stack=[]):
     return []
 
 class LumberJack:
-
+    """A stream parser with configurable modules and message paths.
+    
+    LumberJack helps to parse text based streams by providing a framework of modules.
+    These modules can be combined via a simple configuration in any way you like. Have
+    a look at the example config lumberjack.conf.example in the conf folder.
+    
+    This is the main class that reads the configuration, includes the needed modules
+    and connect the different queues as configured.
+    """
     def __init__(self, path_to_config_file):
         self.alive = True
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def produceQueue(self, queue_max_size = 25):
+    def _produceQueue(self, queue_max_size = 25):
+        """Returns a queue with queue_max_size"""
         return Queue.Queue(queue_max_size)
  
+
+    def _initModule(self, module_name):
+        """ Initalize a module.
+        
+        :param module_name: module to initialize
+        :type module_name: string
+        """
+        self.logger.debug("Initializing module %s." % (module_name))
+        try:
+            module = __import__(module_name)
+            module_class = getattr(module, module_name)
+            instance = module_class()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
+            sys.exit(255)
+        return instance
+
+    def _runModules(self):
+        """Start the configured modules
+        
+        Start each module in its own thread
+        """                  
+        # All modules are completely configured, call modules run method if it exists.
+        for module_name, instances in self.modules.iteritems():
+            for instance in instances:
+                name = instance['alias'] if 'alias' in instance else module_name
+                self.logger.debug("Calling start/run method of %s." % name)
+                try:
+                    if(isinstance(instance["instance"], threading.Thread)):
+                        instance["instance"].start()
+                    else:
+                        instance["instance"].run()
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
+
     def readConfiguration(self, path_to_config_file):
+        """Loads and parses the configuration
+
+        :param path_to_config_file: path to the configuration file
+        :type path_to_config_file: str
+        """
         try:
             conf_file=open(path_to_config_file)
             self.configuration =  yaml.load(conf_file)
@@ -66,17 +113,17 @@ class LumberJack:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             sys.exit(255)
-         
-    def initModulesFromConfig(self, section_type="default"):
+
+    def initModulesFromConfig(self):
         """ Initalize all modules from the current config.
-            To initalize all needed modules, parse the config file and find all
-            modules that will be needed to run properly.
-            """
+        
+            The pool size defines how many threads for this module will be started.
+        """
         # Init modules as defined in config
         for module_info in self.configuration:
             pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
             for _ in range(pool_size):
-                module_instance = self.initModule(module_info['module'])
+                module_instance = self._initModule(module_info['module'])
                 module_name = module_info['module']
                 # Use alias if it was set in configuration.
                 if 'alias' in module_info:
@@ -103,21 +150,13 @@ class LumberJack:
                                                   'configuration': module_info['configuration'] if 'configuration' in module_info else None,
                                                   'receivers': module_info['receivers'] if 'receivers' in module_info else None}]
         
-    def initModule(self, module_name):
-        """ Initalize a module."""
-        self.logger.debug("Initializing module %s." % (module_name))
-        try:
-            module = __import__(module_name)
-            module_class = getattr(module, module_name)
-            instance = module_class()
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
-            sys.exit(255)
-        return instance
-
     def initEventStream(self):
-        """ Connect modules via queues."""
+        """ Connect modules via queues.
+        
+        The configuartion allows to connect the modules via the <receivers> parameter.
+        This method creates the queues and connects the modules via this queues.
+        To prevent loops a sanity check is performed before all modules are connected.
+        """
         # All modules are initialized, connect producer and consumers via a queue.
         queues = {}
         module_loop_buffer = []
@@ -139,7 +178,7 @@ class LumberJack:
                         continue
                     for receiver_instance in self.modules[receiver_name]:
                         if receiver_name not in queues:
-                            queues[receiver_name] = self.produceQueue()
+                            queues[receiver_name] = self._produceQueue()
                         try:
                             if not receiver_instance["instance"].getInputQueue():
                                 receiver_instance["instance"].setInputQueue(queues[receiver_name])
@@ -166,23 +205,8 @@ class LumberJack:
                 sys.exit(255)
 
  
-    def runModules(self):                           
-        # All modules are completely configured, call modules run method if it exists.
-        for module_name, instances in self.modules.iteritems():
-            for instance in instances:
-                name = instance['alias'] if 'alias' in instance else module_name
-                self.logger.debug("Calling start/run method of %s." % name)
-                try:
-                    if(isinstance(instance["instance"], threading.Thread)):
-                        instance["instance"].start()
-                    else:
-                        instance["instance"].run()
-                except:
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
-
     def run(self):
-        self.runModules()
+        self._runModules()
         try:
             while self.alive:
                 time.sleep(.1)

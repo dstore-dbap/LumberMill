@@ -6,7 +6,6 @@ import datetime
 import threading
 import traceback 
 import simplejson as json
-import isodate
 import BaseModule
 import xml.etree.ElementTree as ElementTree
 from hashlib import md5
@@ -25,7 +24,10 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Prefix: %s" % (self.config["host"], self.config["index_prefix"]))
+        if "index_prefix" in self.config:
+            self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Prefix: %s" % (self.config["host"], self.config["index_prefix"]))
+        else:
+            self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Name: %s" % (self.config["host"], self.config["index_name"]))
         while True:
             try:
                 self.handleData(self.input_queue.get())
@@ -47,11 +49,6 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             data = [data]
         for datarow in data:
             es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, datarow['message_type'], md5(datarow['data']).hexdigest())
-            # Change some fields, to make kibana3 happy
-            datarow['@message'] = datarow['data']
-            del(datarow['data'])
-            datarow['@timestamp'] = isodate.datetime_isoformat(datetime.datetime.utcnow())
-            del(datarow['timestamp'])
             # Cast fields to datatype as defined in config.
             if 'field_types' in self.config:
                 for field_name, data_type in self.config['field_types'].items():
@@ -61,7 +58,7 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
                          'Float': lambda field_name: datarow.__setitem__(field_name, float(datarow[field_name])),
                          'Boolean': lambda field_name: datarow.__setitem__(field_name, bool(datarow[field_name]))}[data_type](field_name)
                     except Exception, e:
-                        pass #datarow.__setitem__(field_name, None)
+                        pass
             json_data += "%s%s\n" % (es_index,json.dumps(datarow))
         return json_data
  
@@ -72,7 +69,10 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
         """
         if len(data) == 0:
             return
-        index_name = "%s%s" % (self.config["index_prefix"], datetime.date.today().strftime('%Y.%m.%d'))
+        if "index_prefix" in self.config:
+            index_name = "%s%s" % (self.config["index_prefix"], datetime.date.today().strftime('%Y.%m.%d'))
+        else:
+            index_name = self.config["index_name"]
         bulk_update_url = index_name+"/_bulk"
         json_data = self.dataToElasticSearchJson(index_name, data)
         self.restService.putrequest("POST", bulk_update_url)

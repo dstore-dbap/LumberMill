@@ -17,19 +17,20 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
         try:
             host,port = self.request.getpeername()
             data = True
-            lock = threading.Lock()
             while data:
                 data = self.rfile.readline().strip()
                 try:
                     # [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
                     for queue in self.output_queues:
                         queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5)
-                        lock.acquire()
-                        BaseModule.BaseModule.messages_in_queues += 1
-                        lock.release()
+                        #BaseModule.BaseModule.lock.acquire()
+                        #BaseModule.BaseModule.messages_in_queues += 1
+                        #BaseModule.BaseModule.lock.release()
+                        BaseModule.BaseModule.incrementQueueCounter()
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
+                    
         except socket.timeout, e:
             # Handle a timeout gracefully
             self.finish()

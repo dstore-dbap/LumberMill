@@ -49,15 +49,17 @@ class Statistics(BaseModule.BaseModule):
             self.waitingEventStatistics()
         while True:
             try:
-                self.handleData(self.input_queue.get())
+                item = self.input_queue.get()
+                self.handleData(item)
                 if self.config['regexStatistics']:
                     self.regexStatistics()
                 self.input_queue.task_done()
-                self.decrementQueueCounter()
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (etype, evalue))
                 time.sleep(1)
+            finally:
+                self.decrementQueueCounter()
     
     def handleData(self, data):
         StatisticCollector.StatisticCollector().incrementCounter('received_messages')
