@@ -7,7 +7,6 @@ import threading
 import traceback 
 import simplejson as json
 import BaseModule
-import xml.etree.ElementTree as ElementTree
 from hashlib import md5
 
 class ElasticSearchStorageHandler(BaseModule.BaseModule):
@@ -15,14 +14,14 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
     StorageHandler to store SyslogMessages into an elastic search index.
     This is done via a http post request.
     """
-    host = False
-    index_prefix = ""
-        
     def run(self):
         socket.setdefaulttimeout(25)
         self.restService = httplib.HTTP(self.config["host"])
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
+            return
+        if not any (keys in self.config for keys in ['index_prefix', 'index_name']):
+            self.logger.warning("Will not start module %s since no index name is set." % (self.__class__.__name__))
             return
         if "index_prefix" in self.config:
             self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Prefix: %s" % (self.config["host"], self.config["index_prefix"]))
