@@ -8,7 +8,7 @@ To analyze i.e. log data, this tool offers a simple approach to parse the stream
 The different modules can be combined in any order. Each module runs in its own thread and data is passed 
 via python queues between the running modules.
 
-Running this with pypy instead of python increases performance noticeably.
+Running this with pypy instead of python increases performance noticeably! So be sure to run it via pypy.
 
 Working modules:
 
@@ -16,8 +16,11 @@ Working modules:
 * TcpServerThreaded, read stream from a tcp socket  
 * TcpServerTwisted, same as above but using python twisted
 * RegexStringParser, parse a string using regular expressions and named capturing groups
-* AddTimeStamp, adds a timestamp field
+* CSVParser, parse a char separated string
+* JsonParser, parse a json formatted string
+* AddDateTime, adds a timestamp field
 * AddGeoInfo, adds geo info fields
+* ModifyFields, some methods to change extracted fields, e.g. delete, replace, castToInteger etc.
 * DevNullSink, discards all data that it receives
 * StdOutHandler, prints all received data to standard out
 * ElasticSearchStorageHandler, stores data entries in an elasticsearch index
@@ -29,7 +32,6 @@ LumberJack makes use of the following projects:
 
 * simplejson
 * pyyaml
-* isodate
 * pygeoip
 
 ### Example usage
