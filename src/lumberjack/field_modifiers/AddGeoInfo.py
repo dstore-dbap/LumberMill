@@ -7,8 +7,18 @@ except:
     import pygeoip
 
 class AddGeoInfo(BaseModule.BaseModule):
+    """Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
+    Configuration example:
+
+    - module: AddGeoInfo
+      configuration:
+        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat
+        lookup_fields: [x_forwarded_for, remote_ip]
+    """
 
     def configure(self, configuration):
+        # Call parent configure method
+        super(AddGeoInfo, self).configure(configuration)
         self.gi = False
         try:
             self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
@@ -50,8 +60,7 @@ class AddGeoInfo(BaseModule.BaseModule):
                     self.logger.debug("lookup for %s failed with error: %s" % (hostname_or_ip, e))
             try:
                 message_data['country_code'] = address_geo_info['country_code']
-                message_data['longitude'] = address_geo_info['longitude']
-                message_data['latitude'] = address_geo_info['latitude']
+                message_data['longitude-latitude'] = (address_geo_info['longitude'], address_geo_info['latitude'])
                 return message_data
             except:
                 pass

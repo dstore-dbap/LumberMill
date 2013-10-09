@@ -3,32 +3,35 @@ import re
 import BaseModule
 
 class RegexStringParser(BaseModule.BaseModule):
-    """Parser a string by named regular expressions.
+    """Parse a string by named regular expressions.
 
-    When the expression ma
-    
-    You never call this class before calling :func:`public_fn_with_sphinxy_docstring`.
+    Configuration example:
 
-    .. note::
+    - module: RegexStringParser
+      configuration:
+        # Set marker if a regex matched
+        mark-on-success: match
+        # Set marker if no regex matched
+        mark-on-failure: nomatch
+        break_on_match: True
+        field_extraction_patterns:
+          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+        receivers:
+          # Only messages that matched a regex will be send to this handler
+          - ModuleContainer:
+            filter-by-marker: match
+          # Print out messages that did not match
+          - StdOutHandler:
+            filter-by-marker: nomatch
+    """
 
-       An example of intersphinx is this: you **cannot** use :mod:`pickle` on this class.
-
-    """   
     def configure(self, configuration):
-        """This gets the foobar
-
-        This really should have a full function definition, but I am too lazy.
-
-        >>> print get_foobar(10, 20)
-        30
-        >>> print get_foobar('a', 'b')
-        ab
-
-        Isn't that what you want?
-
-        """
+        # Call parent configure method
+        super(RegexStringParser, self).configure(configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
+        # Set the data field name that will be matched against the regex.
+        self.fieldname = configuration['field'] if 'field' in configuration else 'data'
         self.success_marker = configuration['mark-on-success'] if 'mark-on-success' in configuration else False
         self.failure_marker = configuration['mark-on-failure'] if 'mark-on-success' in configuration else False
         self.break_on_match = configuration['break_on_match'] if 'break_on_match' in configuration else True
@@ -72,24 +75,23 @@ class RegexStringParser(BaseModule.BaseModule):
         It might contain more then one message. We split at the newline char.
         """
         self.logger.debug("Received raw message: %s" % data)
-        message = data['data']
         # Remove possible remaining syslog error code
         # i.e. message starts with <141>
         try:
-            if message.index(">") <= 4:
-                message = message[message.index(">")+1:] + "\n"
+            if data[self.fieldname].index(">") <= 4:
+                data[self.fieldname] = data[self.fieldname][data[self.fieldname].index(">")+1:] + "\n"
         except: 
             pass
-        if message.strip() == "":
+        if data[self.fieldname].strip() == "":
             return
-        data['data'] = message
         return self.parseMessage(data)
         
     def parseMessage(self, data):
         """
         When a message type was successfully detected, extract the fields with to corresponding regex pattern
         """
-        message = data['data']
+        message = data[self.fieldname]
+        matches_dict = False
         self.logger.debug("Input to parseMessage: %s" % message)
         for message_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
@@ -118,4 +120,3 @@ class RegexStringParser(BaseModule.BaseModule):
             data.update({'message_type': 'unknown'})
         self.logger.debug("Output from parseMessage %s" % data)
         return data
-            

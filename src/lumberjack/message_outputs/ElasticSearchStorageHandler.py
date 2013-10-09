@@ -30,14 +30,18 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Name: %s" % (self.config["host"], self.config["index_name"]))
         while True:
             try:
-                self.handleData(self.input_queue.get())
+                data = self.input_queue.get()
+                self.handleData(data)
                 self.input_queue.task_done()
-                self.decrementQueueCounter()
             except Exception, e:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )
                 traceback.print_exception(exc_type, exc_value, exc_tb)
-                time.sleep(1)  
+                time.sleep(.5)
+            finally:
+                self.decrementQueueCounter()
+            if self.output_queues:
+                self.addToOutputQueues(data)
     
     def dataToElasticSearchJson(self, index_name, data):
         """
@@ -59,7 +63,11 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
                          'Boolean': lambda field_name: datarow.__setitem__(field_name, bool(datarow[field_name]))}[data_type](field_name)
                     except Exception, e:
                         pass
-            json_data += "%s%s\n" % (es_index,json.dumps(datarow))
+            try:
+                json_data += "%s%s\n" % (es_index,json.dumps(datarow))
+            except UnicodeDecodeError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not  json encode %s. Exception: %s, Error: %s." % (datarow, etype, evalue))
         return json_data
  
     def handleData(self, data):
@@ -75,20 +83,25 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             index_name = self.config["index_name"]
         bulk_update_url = index_name+"/_bulk"
         json_data = self.dataToElasticSearchJson(index_name, data)
-        self.restService.putrequest("POST", bulk_update_url)
-        self.restService.putheader("User-Agent", "Python post")
-        self.restService.putheader("Content-type", "application/json;") #charset=\"UTF-8\"
-        self.restService.putheader("Content-length", "%d" % len(json_data))
         try:
             self.logger.debug("(ThreadID: %s): Sending json data to server: %s. URL: %s" % (threading.current_thread(), self.config["host"], bulk_update_url));
+            self.restService.putrequest("POST", bulk_update_url)
+            self.restService.putheader("User-Agent", "Python post")
+            self.restService.putheader("Content-type", "application/json;") #charset=\"UTF-8\"
+            self.restService.putheader("Content-length", "%d" % len(json_data))
             self.restService.endheaders()
             self.restService.send(json_data)
         except Exception, e:
+
             try:
                 self.logger.error("Server cummunication error: %s" % e[1])
                 self.logger.error("%s/%s" % (self.config["host"],index_name))
             except:
                 self.logger.error("Server cummunication error: %s" % e)
+            finally:
+                self.restService = None
+                self.restService = httplib.HTTP(self.config["host"])
+                time.sleep(.1)
             return
         # Get the response
         try:

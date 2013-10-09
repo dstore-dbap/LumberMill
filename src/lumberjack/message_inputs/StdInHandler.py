@@ -8,14 +8,25 @@ import time
 
 class StdInHandler(BaseModule.BaseModule):
     """Reads data from stdin and sends it to its output queue
+
+    Configuration example:
+
+    - module: StdInHandler
+      configuration:
+        multiline: True
+        stream_end_signal: #########
+        stream_end_signal: #########
     """
-    def setup(self, lj):
-        self.lj = lj
+    def setup(self):
+        # Set defaults
+        self.multiline = False
+        self.stream_end_signal = False
     
     def configure(self, configuration):
-        # Set defaults
-        self.multiline = configuration['multiline'] if 'multiline' in configuration else False
-        self.stream_end_signal = configuration['stream_end_signal'] if 'stream_end_signal' in configuration else False
+        if 'multiline' in configuration:
+            self.multiline = configuration['multiline']
+        if 'stream_end_signal' in configuration:
+            self.stream_end_signal = configuration['stream_end_signal']
             
     def run(self, input=sys.stdin):
         hostname = socket.gethostname()

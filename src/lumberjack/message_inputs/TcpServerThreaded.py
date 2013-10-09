@@ -23,9 +23,6 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                     # [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
                     for queue in self.output_queues:
                         queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5)
-                        #BaseModule.BaseModule.lock.acquire()
-                        #BaseModule.BaseModule.messages_in_queues += 1
-                        #BaseModule.BaseModule.lock.release()
                         BaseModule.BaseModule.incrementQueueCounter()
                 except:
                     etype, evalue, etb = sys.exc_info()
@@ -49,13 +46,14 @@ class TcpServerThreaded:
  
     output_queues = []
  
-    def __init__(self):
+    def __init__(self, lj=False):
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.lj = lj
    
     def configure(self, configuration):
         self.config = configuration
    
-    def addOutputQueue(self, queue, filter_by_marker=False):
+    def addOutputQueue(self, queue, filter_by_marker=False, filter_by_field=False):
         if queue not in self.output_queues:
             self.output_queues.append(queue)
     
@@ -69,7 +67,7 @@ class TcpServerThreaded:
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.config["interface"],self.config["port"], etype, evalue))
-            sys.exit(255)     
+            self.lj.shutDown()
         # Start a thread with the server -- that thread will then start one
         # more thread for each request
         self.server_thread = threading.Thread(target=self.server.serve_forever)

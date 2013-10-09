@@ -25,22 +25,23 @@ class BaseModule(threading.Thread):
         BaseModule.messages_in_queues -= 1
         BaseModule.lock.release()
     
-    def __init__(self):
+    def __init__(self, lj=False):
         self.input_queue = False
         self.output_queues = []
-        self.config = {}
+        self.config = { "work_on_copy": False }
         self.logger = logging.getLogger(self.__class__.__name__)
         threading.Thread.__init__(self)
         self.daemon = True
-
-    def setup(self, lj):
         self.lj = lj
+
+    def setup(self):
+        return
 
     def shutDown(self):
         self.lj.shutDown()
         
     def configure(self, configuration):
-        self.config = configuration
+        self.config.update(configuration)
 
     def getInputQueue(self):
         return self.input_queue
@@ -55,21 +56,33 @@ class BaseModule(threading.Thread):
     def getOutputQueues(self):
         return self.output_queues
         
-    def addOutputQueue(self, queue, filter_by_marker=False):
+    def addOutputQueue(self, queue, filter_by_marker=False, filter_by_field=False):
         if queue == self.input_queue:
             self.logger.error("Setting input queue to output queue will create a circular reference. Exiting.")
             thread.interrupt_main()
-        func = None   
+        func = filter_field = None
         if filter_by_marker:
-            func = lambda item,marker: True if marker in item['markers'] else False
+            if filter_by_marker[:1] == "!":
+                filter_by_marker = filter_by_marker[1:]
+                func = lambda item,marker: False if marker in item['markers'] else True
+            else:
+                func = lambda item,marker: True if marker in item['markers'] else False
+            filter_field = filter_by_marker
+        if filter_by_field:
+            if filter_by_field[:1] == "!":
+                filter_by_field = filter_by_field[1:]
+                func = lambda item,field: False if field in item else True
+            else:
+                func = lambda item,field: True if field in item else False
+            filter_field = filter_by_field
         if not any(queue == output_queue['queue'] for output_queue in self.output_queues):
-            self.output_queues.append({'queue': queue, 'output_filter': func, 'marker': filter_by_marker})
+            self.output_queues.append({'queue': queue, 'output_filter': func, 'filter_field': filter_field})
 
     def addToOutputQueues(self, data):
         try:
             for queue in self.output_queues:
-                if not queue['output_filter'] or queue['output_filter'](data, queue['marker']):
-                    #self.logger.info("Adding %s to output_queue %s in %s." % (data, queue, threading.currentThread()))
+                if not queue['output_filter'] or queue['output_filter'](data, queue['filter_field']):
+                    #self.logger.info("Adding data to output_queue %s in %s." % (queue, threading.currentThread()))
                     queue['queue'].put(data)
                     self.incrementQueueCounter()
         except:
@@ -83,8 +96,8 @@ class BaseModule(threading.Thread):
         while True:
             data = False
             try:
-                item = self.input_queue.get()
-                data = self.handleData(item)
+                data = self.input_queue.get() if not self.config['work_on_copy'] else self.input_queue.get().copy()
+                data = self.handleData(data)
                 self.input_queue.task_done()
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()

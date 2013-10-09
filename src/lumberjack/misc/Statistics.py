@@ -5,12 +5,14 @@ import lumberjack.StatisticCollector as StatisticCollector
 import BaseModule
 
 class Statistics(BaseModule.BaseModule):
-    
-    print_regex_statistics_at_message_count = 500
+
+    def setup(self):
+        self.print_regex_statistics_at_message_count = 500
        
     def configure(self, configuration):
-        self.config = configuration
-        if configuration['print_regex_statistics_at_message_count']:
+         # Call parent configure method
+        super(Statistics, self).configure(configuration)
+        if 'print_regex_statistics_at_message_count' in configuration:
             self.print_regex_statistics_at_message_count = configuration['print_regex_statistics_at_message_count']
 
     def regexStatistics(self):
@@ -43,9 +45,9 @@ class Statistics(BaseModule.BaseModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if self.config['receiveRateStatistics']:
+        if 'receiveRateStatistics' in self.config:
             self.receiveRateStatistics()
-        if self.config['waitingEventStatistics']:
+        if 'waitingEventStatistics' in self.config:
             self.waitingEventStatistics()
         while True:
             try:

@@ -6,6 +6,8 @@ from cStringIO import StringIO
 class CsvParser(BaseModule.BaseModule):
    
     def configure(self, configuration):
+        # Call parent configure method
+        super(CsvParser, self).configure(configuration)
         # Set defaults
         self.escapechar = configuration['escapechar'] if 'escapechar' in configuration else "\\"
         self.skipinitialspace = configuration['skipinitialspace'] if 'skipinitialspace' in configuration else False
