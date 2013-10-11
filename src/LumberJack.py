@@ -15,6 +15,7 @@ import logging.config
 import Queue
 import threading
 import yaml
+import lumberjack.BaseModule as BaseModule
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
@@ -53,7 +54,7 @@ class LumberJack:
     a look at the example config lumberjack.conf.example in the conf folder.
     
     This is the main class that reads the configuration, includes the needed modules
-    and connect the different queues as configured.
+    and connects them via queues as configured.
     """
 
     def __init__(self, path_to_config_file):
@@ -62,7 +63,7 @@ class LumberJack:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def _produceQueue(self, queue_max_size=25):
+    def _produceQueue(self, queue_max_size=100):
         """Returns a queue with queue_max_size"""
         return Queue.Queue(queue_max_size)
 
@@ -139,12 +140,16 @@ class LumberJack:
                 # Call configuration of module
                 if 'configuration' in module_info:
                     try:
-                        module_instance.configure(module_info['configuration'])
+                        configuration_sucessful = module_instance.configure(module_info['configuration'])
+                        if configuration_sucessful == False:
+                            self.logger.error("Could not configure module %s. Please check log for error messages.") % module_info['module']
+                            self.shutDown()
+                            break
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        self.logger.warn("Could not configure module %s. Exception: %s, Error: %s." % (
-                            module_info['module'], etype, evalue))
-                        pass
+                        self.logger.error("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], etype, evalue))
+                        self.shutDown()
+                        break
                 try:
                     self.modules[module_name].append({'instance': module_instance,
                                                       'configuration': module_info[
@@ -225,6 +230,8 @@ class LumberJack:
             while self.alive:
                 time.sleep(.1)
         except KeyboardInterrupt:
+            self.logger.info("Shutting down...")
+            # TODO: Get all event input modules and shut those down first. Then wait till all events in all queues (BaseModule.BaseModule.messages_in_queues) have been proccessed.
             sys.exit()
 
     def shutDown(self):
@@ -233,7 +240,6 @@ class LumberJack:
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'
-
 
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])

@@ -44,12 +44,13 @@ class TCPRequestHandlerFactory:
 
 class TcpServerThreaded:
  
-    output_queues = []
- 
     def __init__(self, lj=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.lj = lj
-   
+
+    def setup(self):
+        self.output_queues = []
+
     def configure(self, configuration):
         self.config = configuration
    

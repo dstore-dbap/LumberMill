@@ -47,15 +47,8 @@
           - x_forwarded_for
           - remote_ip
   receivers:
-    - DataAggregator
-    - Statistics
-
-# Aggregate the messages before sending them to the output handler, so that a bulk update really makes sense.
-- module: DataAggregator
-  configuration:
-    store_data_interval: 25
-  receivers: 
     - ElasticSearchStorageHandler
+    - Statistics
 
 # Add messages to ES
 - module: ElasticSearchStorageHandler
@@ -63,13 +56,8 @@
   configuration:
     host: localhost:9200
     index_prefix: test-
-    field_types: 
-      bytes_sent: Integer
-      http_status: Integer
-      pid: Integer
-      remote_port: Integer
-      request_time: Integer
-      request_size: Integer
+    store_data_interval: 25
+    store_data_idle: 1
 
 - module: Statistics
   configuration:

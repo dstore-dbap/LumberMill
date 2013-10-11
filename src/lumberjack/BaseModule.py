@@ -1,5 +1,4 @@
 import sys
-import time
 import logging
 import threading
 import traceback
@@ -93,7 +92,7 @@ class BaseModule(threading.Thread):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        while True:
+        while self.is_alive:
             data = False
             try:
                 data = self.input_queue.get() if not self.config['work_on_copy'] else self.input_queue.get().copy()

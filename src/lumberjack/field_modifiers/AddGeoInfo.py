@@ -1,10 +1,13 @@
 import BaseModule
 import socket
-import time
+
 try:
     import GeoIP 
 except:
-    import pygeoip
+    try:
+        import pygeoip
+    except:
+        pass
 
 class AddGeoInfo(BaseModule.BaseModule):
     """Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
@@ -23,18 +26,25 @@ class AddGeoInfo(BaseModule.BaseModule):
         try:
             self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
         except: 
-            if 'geoip_dat_path' in configuration:
+            if 'geoip_dat_path' not in configuration:
+                self.logger.error("Will not start module %s since 'geoip_dat_path' not configured." % (self.__class__.__name__))
+                self.shutDown()
+                return False
+            try:
                 self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
-        if not self.gi:
-            raise Exception
+            except NameError:
+                self.logger.error("Will not start module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
+                self.shutDown()
+                return False
         try:
             self.lookup_fields = configuration['lookup_fields']
             if self.lookup_fields.__len__ == 0:
                 raise KeyError
         except KeyError:
-            self.logger.error("lookup_fields not set in configuration. Please set a least one field to use for geoip lookup.")
-            self.lj.shutDown()
-                        
+            self.logger.error("Will not start module %s since lookup_fields not set in configuration. Please set a least one field to use for geoip lookup." % (self.__class__.__name__))
+            self.shutDown()
+            return False
+
     def handleData(self, message_data):
         hostname_or_ip = False
         for lookup_field in self.lookup_fields:

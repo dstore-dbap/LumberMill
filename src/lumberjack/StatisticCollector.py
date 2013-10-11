@@ -51,7 +51,6 @@ class StatisticCollector:
         finally:
             self.lock.release()
   
-        
     def getDict(self, name):
         self.lock.acquire()
         if name not in self.statistic_data:

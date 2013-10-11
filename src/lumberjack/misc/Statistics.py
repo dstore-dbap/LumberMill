@@ -18,15 +18,14 @@ class Statistics(BaseModule.BaseModule):
     def regexStatistics(self):
         if not StatisticCollector.StatisticCollector().getCounter('received_messages') % self.print_regex_statistics_at_message_count == 0:
             return
-        total_messages_count = total_failures_count = 0
-        # log statistic data 
+        # log statistic data
         self.logger.info("########## Regex Statistics ##########")
         for message_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
             if message_type in ['rps', 'received_messages']:
                 continue
-            self.logger.info("MessageType: %s - Hits: %s" % (message_type, count))
+            self.logger.info("EventType: %s - Hits: %s" % (message_type, count))
             StatisticCollector.StatisticCollector().resetCounter(message_type)
-        self.logger.info("Total messages: %s." % (StatisticCollector.StatisticCollector().getCounter('received_messages')))
+        self.logger.info("Total events: %s." % (StatisticCollector.StatisticCollector().getCounter('received_messages')))
         StatisticCollector.StatisticCollector().resetCounter('received_messages')
         
     @Decorators.setInterval(5.0)
@@ -35,11 +34,11 @@ class Statistics(BaseModule.BaseModule):
         if not rps:
             rps = 0
         StatisticCollector.StatisticCollector().resetCounter('rps')
-        self.logger.info("Received messages in 5s: %s (%s/rps)" % (rps, (rps/5)))
+        self.logger.info("Received events in 5s: %s (%s/eps)" % (rps, (rps/5)))
 
     @Decorators.setInterval(5.0)
     def waitingEventStatistics(self):
-        self.logger.info("Events waiting to be processed: %s" % BaseModule.BaseModule.messages_in_queues)
+        self.logger.info("Events waiting to be served: %s" % BaseModule.BaseModule.messages_in_queues)
         
     def run(self):
         if not self.input_queue:
