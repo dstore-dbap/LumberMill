@@ -75,7 +75,7 @@ class TcpServerThreaded:
         # Exit the server thread when the main thread terminates
         self.server_thread.daemon = True
         self.server_thread.start()
-        self.logger.info("Started ThreadedTCPServer on interface %s, port: %s" % (self.config["interface"], self.config["port"]))
+        self.logger.info("%sStarted ThreadedTCPServer on interface %s, port: %s%s" % (Utils.AnsiColors.OKGREEN ,self.config["interface"], self.config["port"], Utils.AnsiColors.ENDC))
 
     def shutdown(self):
         self.server.shutdown()

@@ -11,6 +11,7 @@ class TestAddGeoInfo(unittest.TestCase):
         self.output_queue = Queue.Queue()
         self.test_object = AddGeoInfo.AddGeoInfo()
         self.test_object.lj = mock.Mock()
+        self.test_object.setup()
         self.test_object.setInputQueue(self.input_queue)
         self.test_object.addOutputQueue(self.output_queue, filter_by_marker=False, filter_by_field=False)
     

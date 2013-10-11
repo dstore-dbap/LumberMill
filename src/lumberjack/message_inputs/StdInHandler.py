@@ -18,6 +18,8 @@ class StdInHandler(BaseModule.BaseModule):
         stream_end_signal: #########
     """
     def setup(self):
+        # Call parent setup method
+        super(StdInHandler, self).setup()
         # Set defaults
         self.multiline = False
         self.stream_end_signal = False

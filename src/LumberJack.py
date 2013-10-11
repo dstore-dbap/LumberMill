@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+from lumberjack import Utils
+
 module_dirs = {'message_inputs': {},
                'message_classifiers': {},
                'message_parsers': {},
@@ -63,7 +65,7 @@ class LumberJack:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def _produceQueue(self, queue_max_size=100):
+    def _produceQueue(self, queue_max_size=0):
         """Returns a queue with queue_max_size"""
         return Queue.Queue(queue_max_size)
 
@@ -102,8 +104,7 @@ class LumberJack:
                         instance["instance"].run()
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning(
-                        "Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
+                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
 
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration
@@ -116,8 +117,7 @@ class LumberJack:
             self.configuration = yaml.load(conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error(
-                "Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
+            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             sys.exit(255)
 
     def initModulesFromConfig(self):
@@ -230,7 +230,7 @@ class LumberJack:
             while self.alive:
                 time.sleep(.1)
         except KeyboardInterrupt:
-            self.logger.info("Shutting down...")
+            self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.OKGREEN, Utils.AnsiColors.ENDC))
             # TODO: Get all event input modules and shut those down first. Then wait till all events in all queues (BaseModule.BaseModule.messages_in_queues) have been proccessed.
             sys.exit()
 

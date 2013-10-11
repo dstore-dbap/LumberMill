@@ -12,8 +12,9 @@ from hashlib import md5
 
 class ElasticSearchStorageHandler(BaseModule.BaseModule):
 
-
     def setup(self):
+        # Call parent setup method
+        super(ElasticSearchStorageHandler, self).setup()
         # Set defaults
         self.events_container = []
         self.store_data_interval = 25

@@ -7,6 +7,8 @@ import BaseModule
 class Statistics(BaseModule.BaseModule):
 
     def setup(self):
+        # Call parent setup method
+        super(Statistics, self).setup()
         self.print_regex_statistics_at_message_count = 500
        
     def configure(self, configuration):
