@@ -27,7 +27,7 @@ class ModuleContainer(BaseModule.BaseModule):
         self.modules = []
         for module_configuration in configuration:
             module_instance = self._initModule(module_configuration['module'])
-            # Call setup of module if method is implemented and pass reference to Lumberjack instance
+            # Call setup of module if method is implemented and pass reference to GambolPutty instance
             try:
                 module_instance.setup()
             except AttributeError:

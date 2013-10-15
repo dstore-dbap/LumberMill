@@ -1,32 +1,46 @@
-import sys
-import httplib
-import socket
-import time
-import datetime
-import threading
-import traceback
-import Queue
-import simplejson as json
-import BaseModule
 from hashlib import md5
+import sys
+import socket
+import Queue
+import datetime
+import time
+import simplejson as json
+import elasticsearch
+import BaseModule
 
-class ElasticSearchStorageHandler(BaseModule.BaseModule):
+class ElasticSearchOutput(BaseModule.BaseModule):
 
     def setup(self):
         # Call parent setup method
-        super(ElasticSearchStorageHandler, self).setup()
+        super(ElasticSearchOutput, self).setup()
         # Set defaults
         self.events_container = []
         self.store_data_interval = 25
         self.store_data_idle = 1
+        self.es = False
 
     def configure(self, configuration):
         # Call parent configure method
-        super(ElasticSearchStorageHandler, self).configure(configuration)
+        super(ElasticSearchOutput, self).configure(configuration)
         if 'store_data_interval' in configuration:
             self.store_data_interval = configuration['store_data_interval']
         if 'store_data_idle' in configuration:
             self.store_data_idle = configuration['store_data_idle']
+        self.es = self.connect()
+        if not self.es:
+            self.logger.error("No index servers configured or none could be reached.")
+            self.shutDown()
+            return False
+
+    def connect(self):
+        es = False
+        # Connect to es nodes and round-robin between them
+        if 'nodes' in self.config:
+            try:
+                es = elasticsearch.Elasticsearch(self.config['nodes'], sniff_on_start=True)
+            except:
+                es = False
+        return es
 
     """
     StorageHandler to store SyslogMessages into an elastic search index.
@@ -34,7 +48,6 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
     """
     def run(self):
         socket.setdefaulttimeout(25)
-        self.restService = httplib.HTTP(self.config["host"])
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
@@ -42,9 +55,9 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             self.logger.warning("Will not start module %s since no index name is set." % (self.__class__.__name__))
             return
         if "index_prefix" in self.config:
-            self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Prefix: %s" % (self.config["host"], self.config["index_prefix"]))
+            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Prefix: %s" % (self.config["nodes"], self.config["index_prefix"]))
         else:
-            self.logger.info("Started ElasticSearchStorageHandler. ES-Server: %s, Index-Name: %s" % (self.config["host"], self.config["index_name"]))
+            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Name: %s" % (self.config["nodes"], self.config["index_name"]))
         while self.is_alive:
             try:
                 data = self.input_queue.get(timeout=self.store_data_idle)
@@ -81,44 +94,19 @@ class ElasticSearchStorageHandler(BaseModule.BaseModule):
             index_name = "%s%s" % (self.config["index_prefix"], datetime.date.today().strftime('%Y.%m.%d'))
         else:
             index_name = self.config["index_name"]
-        bulk_update_url = index_name+"/_bulk"
         json_data = self.dataToElasticSearchJson(index_name, self.events_container)
         try:
-            self.logger.debug("(ThreadID: %s): Sending json data to server: %s. URL: %s" % (threading.current_thread(), self.config["host"], bulk_update_url));
-            self.restService.putrequest("POST", bulk_update_url)
-            self.restService.putheader("User-Agent", "Python post")
-            self.restService.putheader("Content-type", "application/json;") #charset=\"UTF-8\"
-            self.restService.putheader("Content-length", "%d" % len(json_data))
-            self.restService.endheaders()
-            self.restService.send(json_data)
+            self.es.bulk(body=json_data)
         except Exception, e:
             try:
                 self.logger.error("Server cummunication error: %s" % e[1])
-                self.logger.error("%s/%s" % (self.config["host"],index_name))
+                self.logger.error("%s/%s" % (self.config["nodes"],index_name))
             except:
                 self.logger.error("Server cummunication error: %s" % e)
             finally:
-                self.restService = None
-                self.restService = httplib.HTTP(self.config["host"])
+                self.es = self.connect()
                 time.sleep(.1)
             return
-        # Get the response
-        try:
-            http_statuscode, statusmessage, header = self.restService.getreply()
-            response_string = self.restService.getfile().read()
-            self.logger.debug("Server said: HttpStatus: %s. Response: %s" % (http_statuscode,response_string));
-        except Exception, e:
-            try:
-                self.logger.error("Server cummunication error: %s" % e[1])
-            except:
-                self.logger.error("Server cummunication error: %s" % e)
-            return
-        # Check status code
-        if(http_statuscode != 200):
-            self.logger.error("Server returncode: %s. Error: %s" % (http_statuscode,response_string))
-            self.logger.error("JSON Data: %s" % json_data)
-            return
-        self.logger.debug("Successfully send data: %s" % json_data)
 
     def dataToElasticSearchJson(self, index_name, data):
         """

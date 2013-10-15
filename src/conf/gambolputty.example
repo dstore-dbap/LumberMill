@@ -54,7 +54,7 @@
 - module: ElasticSearchStorageHandler
   pool-size: 4
   configuration:
-    host: localhost:9200
+    nodes: ["localhost:9200"]
     index_prefix: test-
     store_data_interval: 25
     store_data_idle: 1

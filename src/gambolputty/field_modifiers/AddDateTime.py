@@ -14,7 +14,7 @@ class AddDateTime(BaseModule.BaseModule):
     def setup(self):
         """
         Setup method to set default values.
-        This method will be called by the LumberJack main class after initializing the module
+        This method will be called by the GambolPutty main class after initializing the module
         and before the configure method of the module is called.
         """
         # Call parent setup method
@@ -25,7 +25,7 @@ class AddDateTime(BaseModule.BaseModule):
     def configure(self, configuration):
         """
         Configure the module.
-        This method will be called by the LumberJack main class after initializing the module
+        This method will be called by the GambolPutty main class after initializing the module
         and after the configure method of the module is called.
         The configuration parameter contains k:v pairs of the yaml configuration for this module.
 

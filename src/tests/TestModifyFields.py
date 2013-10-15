@@ -42,6 +42,29 @@ class TestModifyFields(unittest.TestCase):
         result = self.test_object.handleData(self.default_dict)
         self.assertEquals(result['replaceme'], 'The English Inquisition')
 
+    def testMap(self):
+        self.default_dict['http_status'] = 100
+        self.test_object.configure({'action': 'map',
+                                    'fields': 'http_status',
+                                    'with': {100: 'Continue',
+                                             200: 'OK'
+                                        }
+                                  })
+        result = self.test_object.handleData(self.default_dict)
+        self.assertEquals(result['http_status_mapped'], 'Continue')
+
+    def testTranslateWithTargetField(self):
+        self.default_dict['http_status'] = 200
+        self.test_object.configure({'action': 'map',
+                                    'fields': 'http_status',
+                                    'with': {100: 'Continue',
+                                             200: 'OK'
+                                        },
+                                    'target_field': 'http_status'
+                                  })
+        result = self.test_object.handleData(self.default_dict)
+        self.assertEquals(result['http_status'], 'OK')
+
     def testKeep(self):
         self.default_dict['keep-this'] = 'The Spanish Inquisition'
         self.default_dict['keep-that'] = 'My hovercraft is full of eels!'

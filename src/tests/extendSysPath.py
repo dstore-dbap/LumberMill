@@ -13,5 +13,5 @@ import os
 # different module directories.
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
-sys.path.append(pathname+"/../lumberjack");
-[sys.path.append(pathname+"/../lumberjack/"+mod_dir) for mod_dir in module_dirs]
+sys.path.append(pathname+"/../gambolputty");
+[sys.path.append(pathname+"/../gambolputty/"+mod_dir) for mod_dir in module_dirs]

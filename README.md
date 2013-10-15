@@ -1,7 +1,7 @@
-LumberJack
+GambolPutty
 ==========
 
-A simple stream parser in python. To run LumberJack you will need Python 2.5+. 
+A simple stream parser in python. To run GambolPutty you will need Python 2.5+.
 
 To analyze i.e. log data, this tool offers a simple approach to parse the streams using regular expressions.
 
@@ -28,7 +28,7 @@ Working modules:
 * ModuleContainer, wrap modules in a container reducing the overhead to run each module in it's own thread
 * Statistics, simple statistic module
 
-LumberJack makes use of the following projects:
+GambolPutty makes use of the following projects:
 
 * simplejson
 * pyyaml
@@ -38,7 +38,7 @@ LumberJack makes use of the following projects:
 
 #####Simple example to get you started ;)
 
-	echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python LumberJack.py -c ./conf/lumberjack.conf.stdin-example
+	echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python GambolPutty.pyy -c ./conf/lumberjack.conf.stdin-example
 
 This should produce the following output:
 
@@ -54,7 +54,7 @@ This should produce the following output:
 	 'url': 'GET /cgi-bin/try/ HTTP/1.0',
 	 'user': '-'}
 
-#####A rough sketch for using LumberJack with syslog-ng:
+#####A rough sketch for using GambolPutty with syslog-ng:
 
 Send e.g. apache access logs to syslog (/etc/httpd/conf/httpd.conf):
 
@@ -71,7 +71,7 @@ Configure the linux syslog-ng service to send data to a tcp address (/etc/syslog
 	log { source(s_sys); filter(f_httpd_access); destination(d_lumberjack); flags(final);};
 	...	
 
-Configure LumberJack to listen on localhost 5151(./conf/lumberjack.conf):
+Configure GambolPutty to listen on localhost 5151(./conf/lumberjack.conf):
 
 	...
 	- module: TcpServerThreaded

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-from lumberjack import Utils
+from gambolputty import Utils
 
 module_dirs = {'message_inputs': {},
                'message_classifiers': {},
@@ -17,15 +17,15 @@ import logging.config
 import Queue
 import threading
 import yaml
-import lumberjack.BaseModule as BaseModule
+import gambolputty.BaseModule as BaseModule
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
 # different module directories.
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
-sys.path.append(pathname + "/lumberjack")
-[sys.path.append(pathname + "/lumberjack/" + mod_dir) for mod_dir in module_dirs]
+sys.path.append(pathname + "/gambolputty")
+[sys.path.append(pathname + "/gambolputty/" + mod_dir) for mod_dir in module_dirs]
 
 
 class Node:
@@ -48,19 +48,19 @@ def hasLoop(node, stack=[]):
     return []
 
 
-class LumberJack:
+class GambolPutty:
     """A stream parser with configurable modules and message paths.
     
-    LumberJack helps to parse text based streams by providing a framework of modules.
+    GambolPutty helps to parse text based streams by providing a framework of modules.
     These modules can be combined via a simple configuration in any way you like. Have
-    a look at the example config lumberjack.conf.example in the conf folder.
+    a look at the example config gambolputty.conf.example in the conf folder.
     
     This is the main class that reads the configuration, includes the needed modules
     and connects them via queues as configured.
     """
 
     def __init__(self, path_to_config_file):
-        self.alive = True
+        self.is_alive = True
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
@@ -83,7 +83,7 @@ class LumberJack:
             instance = module_class(self)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
+            self.logger.error("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
         return instance
 
@@ -105,6 +105,7 @@ class LumberJack:
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
+            self.logger.info("%sStarted module %s with pool size of %s%s" % (Utils.AnsiColors.LIGHTBLUE , module_name, len(instances),Utils.AnsiColors.ENDC))
 
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration
@@ -117,7 +118,7 @@ class LumberJack:
             self.configuration = yaml.load(conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
+            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
 
     def initModulesFromConfig(self):
@@ -132,7 +133,7 @@ class LumberJack:
                 module_instance = self._initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
                 module_name = module_info['module'] if 'alias' not in module_info else module_info['alias']
-                # Call setup of module if method is implemented and pass reference to Lumberjack instance
+                # Call setup of module if method is implemented and pass reference to GambolPutty instance
                 try:
                     module_instance.setup()
                 except AttributeError:
@@ -142,12 +143,12 @@ class LumberJack:
                     try:
                         configuration_sucessful = module_instance.configure(module_info['configuration'])
                         if configuration_sucessful == False:
-                            self.logger.error("Could not configure module %s. Please check log for error messages.") % module_info['module']
+                            self.logger.error("%sCould not configure module %s. Please check log for error messages.%s") % (Utils.AnsiColors.FAIL, module_info['module'], Utils.AnsiColors.ENDC)
                             self.shutDown()
                             break
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        self.logger.error("Could not configure module %s. Exception: %s, Error: %s." % (module_info['module'], etype, evalue))
+                        self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_info['module'], etype, evalue, Utils.AnsiColors.ENDC))
                         self.shutDown()
                         break
                 try:
@@ -191,7 +192,7 @@ class LumberJack:
                     self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
                     if receiver_name not in self.modules:
                         self.logger.warning(
-                            "Could not add %s as receiver for %s. Module not found." % (receiver_name, module_name))
+                            "%sCould not add %s as receiver for %s. Module not found.%s" % (Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
                         continue
                     for receiver_instance in self.modules[receiver_name]:
                         if receiver_name not in queues:
@@ -202,7 +203,7 @@ class LumberJack:
                             instance["instance"].addOutputQueue(queues[receiver_name], filter_by_marker, filter_by_field)
                         except AttributeError:
                             self.logger.error(
-                                "%s can not be set as receiver. It seems to be incompatible." % receiver_name)
+                                "%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
                             # Build a node structure used for the loop test.
                         try:
                             node = (node for node in module_loop_buffer if node.module == instance["instance"]).next()
@@ -221,22 +222,31 @@ class LumberJack:
         for node in module_loop_buffer:
             for loop in hasLoop(node, stack=[]):
                 self.logger.error(
-                    "Chaining of modules produced a loop. Check configuration. Module: %s." % loop.module.__class__.__name__)
-                sys.exit(255)
+                    "%sChaining of modules produced a loop. Check configuration. Module: %s.%s" % (Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
+                self.shutDown()
 
     def run(self):
         self._runModules()
         try:
-            while self.alive:
+            while self.is_alive:
                 time.sleep(.1)
         except KeyboardInterrupt:
-            self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.OKGREEN, Utils.AnsiColors.ENDC))
-            # TODO: Get all event input modules and shut those down first. Then wait till all events in all queues (BaseModule.BaseModule.messages_in_queues) have been proccessed.
+            self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+            # Shutdown all input modules.
+            for module_name, instances in self.modules.iteritems():
+                for instance in instances:
+                    if instance['instance'].module_type == "input":
+                        instance['instance'].shutDown()
+            # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
+            shutdown_tries = 0
+            while instance['instance'].messages_in_queues > 0 and shutdown_tries <= 10:
+                self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, instance['instance'].messages_in_queues, Utils.AnsiColors.ENDC))
+                shutdown_tries += 1
+                time.sleep(.5)
             sys.exit()
 
     def shutDown(self):
-        self.alive = False
-
+        self.is_alive = False
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'
@@ -260,7 +270,7 @@ if "__main__" == __name__:
     if not path_to_config_file:
         usage()
         sys.exit(2)
-    lj = LumberJack(path_to_config_file)
+    lj = GambolPutty(path_to_config_file)
     lj.initModulesFromConfig()
     lj.initEventStream()
     lj.run()        

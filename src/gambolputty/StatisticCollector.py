@@ -1,5 +1,5 @@
 import threading
-import lumberjack.Decorators as Decorators
+import gambolputty.Decorators as Decorators
 
 @Decorators.singleton
 class StatisticCollector:

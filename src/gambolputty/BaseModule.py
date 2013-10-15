@@ -11,15 +11,21 @@ except ImportError:
 
 class BaseModule(threading.Thread):
     """
-    Base class for all lumberjack  modules.
+    Base class for all gambolputty  modules.
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned ;)
     """
 
-    """ Stores number of messages in all queues """
     messages_in_queues = 0
+    """ Stores number of messages in all queues. """
+
     lock = threading.Lock()
- 
+    """ Class wide access to locking. """
+
+    module_type = "generic"
+    """ Set module type. """
+
+
     @staticmethod
     def incrementQueueCounter():
         """
@@ -47,7 +53,7 @@ class BaseModule(threading.Thread):
     def setup(self):
         """
         Setup method to set default values.
-        This method will be called by the LumberJack main class after initializing the module
+        This method will be called by the GambolPutty main class after initializing the module
         and before the configure method of the module is called.
         """
         self.input_queue = False
@@ -58,7 +64,7 @@ class BaseModule(threading.Thread):
     def configure(self, configuration):
         """
         Configure the module.
-        This method will be called by the LumberJack main class after initializing the module
+        This method will be called by the GambolPutty main class after initializing the module
         and after the configure method of the module is called.
         The configuration parameter contains k:v pairs of the yaml configuration for this module.
 
@@ -68,6 +74,7 @@ class BaseModule(threading.Thread):
         self.config.update(configuration)
 
     def shutDown(self):
+        self.is_alive = False
         self.lj.shutDown()
         
     def getInputQueue(self):
@@ -78,7 +85,7 @@ class BaseModule(threading.Thread):
             self.input_queue = queue
         else:
             self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            thread.interrupt_main()        
+            self.shutDown()
     
     def getOutputQueues(self):
         return self.output_queues
@@ -120,7 +127,6 @@ class BaseModule(threading.Thread):
         if not self.input_queue:
             self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
-        self.logger.info("%sStarted %s%s" % (Utils.AnsiColors.OKGREEN ,self.__class__.__name__, Utils.AnsiColors.ENDC))
         while self.is_alive:
             data = False
             try:
@@ -130,7 +136,7 @@ class BaseModule(threading.Thread):
                 self.input_queue.task_done()
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
-                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, tils.AnsiColors.ENDCU) )
+                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
                 traceback.print_exception(exc_type, exc_value, exc_tb)
             if data:
                 self.addToOutputQueues(data)

@@ -1,7 +1,8 @@
 import time
 import sys
-import lumberjack.Decorators as Decorators
-import lumberjack.StatisticCollector as StatisticCollector
+import gambolputty.Decorators as Decorators
+import gambolputty.StatisticCollector as StatisticCollector
+import gambolputty.Utils as Utils
 import BaseModule
 
 class Statistics(BaseModule.BaseModule):
@@ -25,9 +26,9 @@ class Statistics(BaseModule.BaseModule):
         for message_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
             if message_type in ['rps', 'received_messages']:
                 continue
-            self.logger.info("EventType: %s - Hits: %s" % (message_type, count))
+            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, message_type, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             StatisticCollector.StatisticCollector().resetCounter(message_type)
-        self.logger.info("Total events: %s." % (StatisticCollector.StatisticCollector().getCounter('received_messages')))
+        self.logger.info("Total events: %s%s%s." % (Utils.AnsiColors.YELLOW, StatisticCollector.StatisticCollector().getCounter('received_messages'), Utils.AnsiColors.ENDC))
         StatisticCollector.StatisticCollector().resetCounter('received_messages')
         
     @Decorators.setInterval(5.0)
@@ -36,11 +37,11 @@ class Statistics(BaseModule.BaseModule):
         if not rps:
             rps = 0
         StatisticCollector.StatisticCollector().resetCounter('rps')
-        self.logger.info("Received events in 5s: %s (%s/eps)" % (rps, (rps/5)))
+        self.logger.info("Received events in 5s: %s%s (%s/eps)%s" % (Utils.AnsiColors.YELLOW, rps, (rps/5), Utils.AnsiColors.ENDC))
 
     @Decorators.setInterval(5.0)
     def waitingEventStatistics(self):
-        self.logger.info("Events waiting to be served: %s" % BaseModule.BaseModule.messages_in_queues)
+        self.logger.info("Events waiting to be served: %s%s%s" % (Utils.AnsiColors.YELLOW, BaseModule.BaseModule.messages_in_queues, Utils.AnsiColors.ENDC))
         
     def run(self):
         if not self.input_queue:
