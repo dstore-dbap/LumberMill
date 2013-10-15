@@ -1,4 +1,3 @@
-from docutils.nodes import danger
 import extendSysPath
 import unittest
 import re

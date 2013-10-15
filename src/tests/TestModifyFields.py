@@ -1,5 +1,3 @@
-__author__ = 'bjornputtmann'
-
 import extendSysPath
 import unittest
 import Queue

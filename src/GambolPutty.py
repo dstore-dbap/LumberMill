@@ -17,7 +17,6 @@ import logging.config
 import Queue
 import threading
 import yaml
-import gambolputty.BaseModule as BaseModule
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
