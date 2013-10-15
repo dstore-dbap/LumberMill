@@ -30,9 +30,10 @@ Working modules:
 
 GambolPutty makes use of the following projects:
 
-* simplejson
-* pyyaml
-* pygeoip
+* https://pypi.python.org/pypi/simplejson
+* https://bitbucket.org/xi/pyyaml
+* https://pypi.python.org/pypi/pygeoip/
+* https://pypi.python.org/pypi/elasticsearch/0.4.2
 
 ### Example usage
 
