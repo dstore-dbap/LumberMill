@@ -68,6 +68,8 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
             data = True
             while data:
                 data = self.rfile.readline().strip()
+                if data == "":
+                    continue
                 try:
                     # [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
                     for queue in self.output_queues:
@@ -100,9 +102,9 @@ class TcpServerThreaded:
     module_type = "input"
     """Set module type"""
 
-    def __init__(self, lj=False):
+    def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.lj = lj
+        self.gp = gp
 
     def setup(self):
         self.output_queues = []
@@ -126,7 +128,7 @@ class TcpServerThreaded:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (
             self.config["interface"], self.config["port"], etype, evalue))
-            self.lj.shutDown()
+            self.gp.shutDown()
             # Start a thread with the server -- that thread will then start one
         # more thread for each request
         self.server_thread = threading.Thread(target=self.server.serve_forever)

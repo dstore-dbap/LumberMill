@@ -1,18 +1,17 @@
 import sys
-import thread
 import traceback
 import BaseModule
 
 
 class ModuleContainer(BaseModule.BaseModule):
 
-    def _initModule(self, module_name):
+    def initModule(self, module_name):
         """ Initalize a module."""
         self.logger.debug("Initializing module %s." % (module_name))
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
-            instance = module_class(self.lj)
+            instance = module_class(self.gp)
             # Call setup of module if method is implemented
             try:
                 instance.setup()
@@ -20,13 +19,13 @@ class ModuleContainer(BaseModule.BaseModule):
                 pass
         except Exception, e:
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, Exception, e))
-            self.lj.shutDown()
+            self.shutDown()
         return instance
 
     def configure(self, configuration):
         self.modules = []
         for module_configuration in configuration:
-            module_instance = self._initModule(module_configuration['module'])
+            module_instance = self.initModule(module_configuration['module'])
             # Call setup of module if method is implemented and pass reference to GambolPutty instance
             try:
                 module_instance.setup()
@@ -45,5 +44,5 @@ class ModuleContainer(BaseModule.BaseModule):
 
     def handleData(self, data):
         for module in self.modules:
-            data = module.handleData(data if(module.config['work_on_copy']) else data.copy())
+            data = module.handleData(data) #  if 'work-on-copy' not in module.configuration_data else data.copy()
         return data

@@ -47,15 +47,15 @@ class Statistics(BaseModule.BaseModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if 'receiveRateStatistics' in self.config:
+        if 'receiveRateStatistics' in self.configuration_data:
             self.receiveRateStatistics()
-        if 'waitingEventStatistics' in self.config:
+        if 'waitingEventStatistics' in self.configuration_data:
             self.waitingEventStatistics()
         while True:
             try:
                 item = self.input_queue.get()
                 self.handleData(item)
-                if self.config['regexStatistics']:
+                if self.configuration_data['regexStatistics']:
                     self.regexStatistics()
                 self.input_queue.task_done()
             except:

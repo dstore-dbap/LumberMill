@@ -52,5 +52,5 @@ class StdInHandler(BaseModule.BaseModule):
                     self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
                 while self.isAlive() and BaseModule.BaseModule.messages_in_queues > 0:
                     time.sleep(.01)
-                self.lj.shutDown()
+                self.shutDown()
                 return

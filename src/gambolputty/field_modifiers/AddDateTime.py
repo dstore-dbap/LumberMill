@@ -19,7 +19,7 @@ class AddDateTime(BaseModule.BaseModule):
         """
         # Call parent setup method
         super(AddDateTime, self).setup()
-        self.fieldname = '@timestamp'
+        self.target_fieldname = '@timestamp'
         self.datetime_format = '%Y-%m-%dT%H:%M:%S'
 
     def configure(self, configuration):
@@ -34,8 +34,8 @@ class AddDateTime(BaseModule.BaseModule):
         """
         # Call parent configure method
         super(AddDateTime, self).configure(configuration)
-        if 'field' in configuration:
-            self.fieldname = configuration['field']
+        if 'target-field' in configuration:
+            self.target_fieldname = configuration['target-field']
         if 'format' in configuration:
             self.datetime_format = configuration['format']
 
@@ -46,5 +46,5 @@ class AddDateTime(BaseModule.BaseModule):
         @param data: dictionary
         @return data: dictionary
         """
-        data[self.fieldname] = datetime.datetime.utcnow().strftime(self.datetime_format)
+        data[self.target_fieldname] = datetime.datetime.utcnow().strftime(self.datetime_format)
         return data

@@ -15,7 +15,7 @@ Working modules:
 * StdInHandler, read stream from standard in 
 * TcpServerThreaded, read stream from a tcp socket  
 * TcpServerTwisted, same as above but using python twisted
-* RegexStringParser, parse a string using regular expressions and named capturing groups
+* RegexParser, parse a string using regular expressions and named capturing groups
 * CSVParser, parse a char separated string
 * JsonParser, parse a json formatted string
 * AddDateTime, adds a timestamp field

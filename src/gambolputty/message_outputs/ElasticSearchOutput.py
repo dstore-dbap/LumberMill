@@ -17,15 +17,16 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         self.events_container = []
         self.store_data_interval = 25
         self.store_data_idle = 1
+
         self.es = False
 
     def configure(self, configuration):
         # Call parent configure method
         super(ElasticSearchOutput, self).configure(configuration)
-        if 'store_data_interval' in configuration:
-            self.store_data_interval = configuration['store_data_interval']
-        if 'store_data_idle' in configuration:
-            self.store_data_idle = configuration['store_data_idle']
+        if 'store-data-interval' in configuration:
+            self.store_data_interval = configuration['store-data-interval']
+        if 'store-data-idle' in configuration:
+            self.store_data_idle = configuration['store-data-idle']
         self.es = self.connect()
         if not self.es:
             self.logger.error("No index servers configured or none could be reached.")
@@ -35,9 +36,9 @@ class ElasticSearchOutput(BaseModule.BaseModule):
     def connect(self):
         es = False
         # Connect to es nodes and round-robin between them
-        if 'nodes' in self.config:
+        if 'nodes' in self.configuration_data:
             try:
-                es = elasticsearch.Elasticsearch(self.config['nodes'], sniff_on_start=True)
+                es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), sniff_on_start=True)
             except:
                 es = False
         return es
@@ -51,13 +52,13 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if not any (keys in self.config for keys in ['index_prefix', 'index_name']):
+        if not any (keys in self.configuration_data for keys in ['index-prefix', 'index-name']):
             self.logger.warning("Will not start module %s since no index name is set." % (self.__class__.__name__))
             return
-        if "index_prefix" in self.config:
-            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Prefix: %s" % (self.config["nodes"], self.config["index_prefix"]))
+        if "index-prefix" in self.configuration_data:
+            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Prefix: %s" % (self.configuration_data["nodes"], self.configuration_data["index-prefix"]))
         else:
-            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Name: %s" % (self.config["nodes"], self.config["index_name"]))
+            self.logger.info("Started ElasticSearchOutput. ES-Server: %s, Index-Name: %s" % (self.configuration_data["nodes"], self.configuration_data["index-name"]))
         while self.is_alive:
             try:
                 data = self.input_queue.get(timeout=self.store_data_idle)
@@ -84,23 +85,23 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         """
         # Append event to internal data container
         self.events_container.append(data)
-        if len(self.events_container) < self.config['store_data_interval']:
+        if len(self.events_container) < self.store_data_interval:
             return
         self.storeData()
         self.events_container = []
 
     def storeData(self):
-        if "index_prefix" in self.config:
-            index_name = "%s%s" % (self.config["index_prefix"], datetime.date.today().strftime('%Y.%m.%d'))
+        if "index-prefix" in self.configuration_data:
+            index_name = "%s%s" % (self.getConfigurationValue("index-prefix"), datetime.date.today().strftime('%Y.%m.%d'))
         else:
-            index_name = self.config["index_name"]
+            index_name = self.getConfigurationValue("index-name")
         json_data = self.dataToElasticSearchJson(index_name, self.events_container)
         try:
             self.es.bulk(body=json_data)
         except Exception, e:
             try:
                 self.logger.error("Server cummunication error: %s" % e[1])
-                self.logger.error("%s/%s" % (self.config["nodes"],index_name))
+                self.logger.error("%s/%s" % (self.getConfigurationValue("nodes"),index_name))
             except:
                 self.logger.error("Server cummunication error: %s" % e)
             finally:
@@ -114,10 +115,12 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         """
         json_data = ""
         for datarow in data:
+            if 'message_type' not in datarow:
+                continue
             es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, datarow['message_type'], md5(datarow['data']).hexdigest())
             # Cast fields to datatype as defined in config.
-            if 'field_types' in self.config:
-                for field_name, data_type in self.config['field_types'].items():
+            if 'field_types' in self.configuration_data:
+                for field_name, data_type in self.getConfigurationValue('field_types').items():
                     try:
                         {'Integer': lambda field_name: datarow.__setitem__(field_name, int(datarow[field_name])),
                          'String': lambda field_name: datarow.__setitem__(field_name, str(datarow[field_name])),

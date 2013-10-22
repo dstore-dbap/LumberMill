@@ -2,12 +2,12 @@ import sys
 import re
 import BaseModule
 
-class RegexStringParser(BaseModule.BaseModule):
+class RegexParser(BaseModule.BaseModule):
     """Parse a string by named regular expressions.
 
     Configuration example:
 
-    - module: RegexStringParser
+    - module: RegexParser
       configuration:
         # Set marker if a regex matched
         mark-on-success: match
@@ -25,19 +25,29 @@ class RegexStringParser(BaseModule.BaseModule):
             filter-by-marker: nomatch
     """
 
+    def setup(self):
+        """
+        Setup method to set default values.
+
+        This method will be called by the GambolPutty main class after initializing the module
+        and before the configure method of the module is called.
+        """
+        # Call parent setup method
+        super(RegexParser, self).setup()
+        # Set the default data field name that will be matched against the regex.
+        self.configuration_data['source-fields'] = 'data'
+
     def configure(self, configuration):
         # Call parent configure method
-        super(RegexStringParser, self).configure(configuration)
+        super(RegexParser, self).configure(configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
-        # Set the data field name that will be matched against the regex.
-        self.fieldname = configuration['field'] if 'field' in configuration else 'data'
-        self.success_marker = configuration['mark-on-success'] if 'mark-on-success' in configuration else False
-        self.failure_marker = configuration['mark-on-failure'] if 'mark-on-success' in configuration else False
-        self.break_on_match = configuration['break_on_match'] if 'break_on_match' in configuration else True
+        self.add_success_marker = True if 'mark-on-success' in configuration else False
+        self.add_failure_marker = True if 'mark-on-failure' in configuration else False
+        self.break_on_match = configuration['break-on-match'] if 'break-on-match' in configuration else True
         self.message_types = []
         self.fieldextraction_regexpressions = {}
-        for message_type, regex_pattern in configuration['field_extraction_patterns'].items():
+        for message_type, regex_pattern in configuration['field-extraction-patterns'].items():
             regex_options = 0
             regex_match_type = 'search'
             if isinstance(regex_pattern, list):
@@ -77,20 +87,22 @@ class RegexStringParser(BaseModule.BaseModule):
         self.logger.debug("Received raw message: %s" % data)
         # Remove possible remaining syslog error code
         # i.e. message starts with <141>
-        try:
-            if data[self.fieldname].index(">") <= 4:
-                data[self.fieldname] = data[self.fieldname][data[self.fieldname].index(">")+1:] + "\n"
-        except: 
-            pass
-        if data[self.fieldname].strip() == "":
-            return
-        return self.parseMessage(data)
+        for fieldname in self.getConfigurationValue('source-fields', data):
+            if fieldname not in data:
+                continue
+            try:
+                if data[fieldname].index(">") <= 4:
+                    data[fieldname] = data[fieldname][data[fieldname].index(">")+1:] + "\n"
+            except:
+                pass
+            data = self.parseMessage(data, fieldname)
+        return data
         
-    def parseMessage(self, data):
+    def parseMessage(self, data, fieldname):
         """
         When a message type was successfully detected, extract the fields with to corresponding regex pattern
         """
-        message = data[self.fieldname]
+        message = data[fieldname]
         matches_dict = False
         self.logger.debug("Input to parseMessage: %s" % message)
         for message_type, regex_data in self.fieldextraction_regexpressions.iteritems():
@@ -109,13 +121,13 @@ class RegexStringParser(BaseModule.BaseModule):
             if matches_dict:
                 data.update(matches_dict)
                 data.update({'message_type': message_type})
-                if self.success_marker:
-                    data['markers'].append(self.success_marker)
+                if self.add_success_marker:
+                    data['markers'].append(self.getConfigurationValue('mark-on-success', data))
                 if(self.break_on_match):
                     break
         if not matches_dict:
-            if self.failure_marker:
-                data['markers'].append(self.failure_marker)            
+            if self.add_failure_marker:
+                data['markers'].append(self.getConfigurationValue('mark-on-failure', data))
             self.logger.debug("Could not extract fields for message %s." % message);
             data.update({'message_type': 'unknown'})
         self.logger.debug("Output from parseMessage %s" % data)

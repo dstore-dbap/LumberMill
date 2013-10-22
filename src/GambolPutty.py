@@ -64,12 +64,25 @@ class GambolPutty:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def _produceQueue(self, queue_max_size=0):
+    def produceQueue(self, queue_max_size=0):
         """Returns a queue with queue_max_size"""
         return Queue.Queue(queue_max_size)
 
+    def readConfiguration(self, path_to_config_file):
+        """Loads and parses the configuration
 
-    def _initModule(self, module_name):
+        :param path_to_config_file: path to the configuration file
+        :type path_to_config_file: str
+        """
+        try:
+            conf_file = open(path_to_config_file)
+            self.configuration = yaml.load(conf_file)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (AnsiColors.WARNING, path_to_config_file, etype, evalue, AnsiColors.ENDC))
+            sys.exit(255)
+
+    def initModule(self, module_name):
         """ Initalize a module.
         
         :param module_name: module to initialize
@@ -86,7 +99,7 @@ class GambolPutty:
             sys.exit(255)
         return instance
 
-    def _runModules(self):
+    def runModules(self):
         """Start the configured modules
         
         Start each module in its own thread
@@ -106,20 +119,6 @@ class GambolPutty:
                     self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
             self.logger.info("%sStarted module %s with pool size of %s%s" % (Utils.AnsiColors.LIGHTBLUE , module_name, len(instances),Utils.AnsiColors.ENDC))
 
-    def readConfiguration(self, path_to_config_file):
-        """Loads and parses the configuration
-
-        :param path_to_config_file: path to the configuration file
-        :type path_to_config_file: str
-        """
-        try:
-            conf_file = open(path_to_config_file)
-            self.configuration = yaml.load(conf_file)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
-            sys.exit(255)
-
     def initModulesFromConfig(self):
         """ Initalize all modules from the current config.
         
@@ -129,7 +128,7 @@ class GambolPutty:
         for module_info in self.configuration:
             pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
             for _ in range(pool_size):
-                module_instance = self._initModule(module_info['module'])
+                module_instance = self.initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
                 module_name = module_info['module'] if 'alias' not in module_info else module_info['alias']
                 # Call setup of module if method is implemented and pass reference to GambolPutty instance
@@ -195,7 +194,7 @@ class GambolPutty:
                         continue
                     for receiver_instance in self.modules[receiver_name]:
                         if receiver_name not in queues:
-                            queues[receiver_name] = self._produceQueue()
+                            queues[receiver_name] = self.produceQueue()
                         try:
                             if not receiver_instance["instance"].getInputQueue():
                                 receiver_instance["instance"].setInputQueue(queues[receiver_name])
@@ -225,7 +224,7 @@ class GambolPutty:
                 self.shutDown()
 
     def run(self):
-        self._runModules()
+        self.runModules()
         try:
             while self.is_alive:
                 time.sleep(.1)

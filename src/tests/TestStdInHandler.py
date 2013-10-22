@@ -10,7 +10,7 @@ import StdInHandler
 class TestStdInHandler(unittest.TestCase):
 
     def setUp(self):
-        self.test_object = StdInHandler.StdInHandler(lj=mock.Mock())
+        self.test_object = StdInHandler.StdInHandler(gp=mock.Mock())
         self.test_object.setup()
         self.default_dict = Utils.getDefaultDataDict({})
         self.queue = Queue.Queue()

@@ -1,11 +1,10 @@
 import BaseModule
 import pprint
-import time
 
 class StdOutHandler(BaseModule.BaseModule):
 
     def handleData(self, data):
-        if 'pretty-print' in self.config and self.config['pretty-print'] == True:
+        if 'pretty-print' in self.configuration_data and self.configuration_data['pretty-print'] == True:
             pprint.pprint(data)
         else:
             print "%s" % data
