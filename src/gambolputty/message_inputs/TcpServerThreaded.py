@@ -110,7 +110,7 @@ class TcpServerThreaded:
         self.output_queues = []
 
     def configure(self, configuration):
-        self.config = configuration
+        self.configuration_data = configuration
 
     def addOutputQueue(self, queue, filter_by_marker=False, filter_by_field=False):
         if queue not in self.output_queues:
@@ -122,12 +122,12 @@ class TcpServerThreaded:
             return
         handler_factory = TCPRequestHandlerFactory()
         try:
-            self.server = ThreadedTCPServer((self.config["interface"], int(self.config["port"])),
+            self.server = ThreadedTCPServer((self.configuration_data["interface"], int(self.configuration_data["port"])),
                                             handler_factory.produce(self.output_queues))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (
-            self.config["interface"], self.config["port"], etype, evalue))
+            self.configuration_data["interface"], self.configuration_data["port"], etype, evalue))
             self.gp.shutDown()
             # Start a thread with the server -- that thread will then start one
         # more thread for each request

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from lxml import etree
 import BaseModule
 
@@ -20,7 +21,6 @@ class XPathParser(BaseModule.BaseModule):
         # Call parent setup method
         super(XPathParser, self).setup()
 
-
     def configure(self, configuration):
         """
         Configure the module.
@@ -34,6 +34,9 @@ class XPathParser(BaseModule.BaseModule):
         # Call parent configure method
         super(XPathParser, self).configure(configuration)
 
+    def castToList(self, value):
+        return [str(x) for x in value]
+
 
     def handleData(self, data):
         """
@@ -45,11 +48,15 @@ class XPathParser(BaseModule.BaseModule):
         for source_field in self.getConfigurationValue('source-fields', data):
             if source_field not in data:
                 continue
-            xml_string = data[source_field].decode('utf8').encode('ascii', 'ignore')
-            xml_root = etree.fromstring(xml_string)
-            xml_tree = etree.ElementTree(xml_root)
-            print self.getConfigurationValue('query', data)
-            result =  xml_tree.xpath(self.getConfigurationValue('query', data))
+            result = self.getRedisValue(self.getConfigurationValue('redis-key', data))
+            if result == None:
+                xml_string = data[source_field].decode('utf8').encode('ascii', 'ignore')
+                xml_root = etree.fromstring(xml_string)
+                xml_tree = etree.ElementTree(xml_root)
+                result =  xml_tree.xpath(self.getConfigurationValue('query', data))
+                if(type(result) == list):
+                    result = self.castToList(result)
+                self.setRedisValue(self.getConfigurationValue('redis-key', data), result, self.getConfigurationValue('redis-ttl'))
             if not result:
                 continue
             target_field_name = self.getConfigurationValue('target-field', data) if 'target-field' in self.configuration_data else "gambolputty_xpath"

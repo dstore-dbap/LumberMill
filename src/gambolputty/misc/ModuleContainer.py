@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import sys
 import traceback
 import BaseModule
-
 
 class ModuleContainer(BaseModule.BaseModule):
 
@@ -41,6 +41,15 @@ class ModuleContainer(BaseModule.BaseModule):
                     traceback.print_exception(etype, evalue, etb)
                     pass
             self.modules.append(module_instance)
+
+    def run(self):
+        for module in self.modules:
+            # Init redis client if it is configured by the module
+            if 'redis-client' in module.configuration_data:
+                module.initRedisClient()
+        # Call parent run method
+        super(ModuleContainer, self).run()
+
 
     def handleData(self, data):
         for module in self.modules:

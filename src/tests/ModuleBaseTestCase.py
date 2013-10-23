@@ -1,9 +1,9 @@
 import extendSysPath
-import unittest
+import unittest2
 import Queue
 import Utils
 
-class ModuleBaseTestCase(unittest.TestCase):
+class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
         self.input_queue = Queue.Queue()
@@ -25,7 +25,7 @@ class ModuleBaseTestCase(unittest.TestCase):
         self.assert_(queue_emtpy != True)
 
     def testWorksOnOriginal(self, config = {}):
-        config['work-on-copy'] = False
+        config['work-on-copy'] = {'value': False, 'configuration_value_type': 'static'}
         data_dict = Utils.getDefaultDataDict({})
         self.test_object.configure(config)
         self.test_object.start()
@@ -38,7 +38,7 @@ class ModuleBaseTestCase(unittest.TestCase):
         self.assert_(queue_emtpy != True and returned_data_dict is data_dict)
 
     def testWorksOnCopy(self, config = {}):
-        config['work-on-copy'] = True
+        config['work-on-copy'] = {'value': True, 'configuration_value_type': 'static'}
         data_dict = Utils.getDefaultDataDict({})
         self.test_object.configure(config)
         self.test_object.start()
@@ -78,3 +78,6 @@ class ModuleBaseTestCase(unittest.TestCase):
         except Queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy != True and 'data' in returned_data_dict)
+
+    def tearDown(self):
+        pass

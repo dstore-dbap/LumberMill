@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 import extendSysPath
 import unittest
 import ModuleBaseTestCase
 import mock
-import Queue
 import Utils
 import XPathParser
+import RedisClient
 
 class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -65,6 +66,24 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                          'category': 'COOKING'})
         result = self.test_object.handleData(data)
         self.assertTrue('book_title' in result and len(result['book_title']) > 0)
+
+    def testRedis(self):
+        rc = RedisClient.RedisClient(gp=mock.Mock())
+        rc.setup()
+        rc.configure({'server': 'es-01.dbap.de'})
+        self.test_object.gp.modules = {'RedisClient': [{'instance': rc}]}
+        self.test_object.configure({'source-fields': 'agora_product_xml',
+                                    'target-field': 'book_title',
+                                    'query': '//bookstore/book[@category="%(category)s"]/title/text()',
+                                    'redis-client': 'RedisClient',
+                                    'redis-key': '%(category)s',
+                                    'redis-ttl': 5})
+        self.test_object.initRedisClient()
+        data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
+                                         'category': 'COOKING'})
+        result = self.test_object.handleData(data)
+        redis_entry = self.test_object.getRedisValue('COOKING')
+        self.assertEquals(result['book_title'], redis_entry)
 
     def testQueueCommunication(self):
         config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}

@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import sys
 import re
 import logging
 import threading
 import traceback
+import cPickle
 import Utils
 
 try:
@@ -44,12 +46,13 @@ class BaseModule(threading.Thread):
         BaseModule.lock.acquire()
         BaseModule.messages_in_queues -= 1
         BaseModule.lock.release()
-    
+
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         threading.Thread.__init__(self)
         self.daemon = True
         self.gp = gp
+        self.allow_setup = True
 
     def setup(self):
         """
@@ -63,10 +66,17 @@ class BaseModule(threading.Thread):
         super(<ClassName>, self).setup()
         self.configuration_data['some_setting'] = <default_value>
         """
+        # Make sure setup will only be called once.
+        if not self.allow_setup:
+            return
+        # Initalize some important default values.
         self.input_queue = False
         self.output_queues = []
-        self.configuration_data = {"work-on-copy": {'value': False, 'type': 'static'}}
-        return
+        self.redis_client = False
+        self.configuration_data = { 'work-on-copy': {'value': False, 'configuration_value_type': 'static'},
+                                    'redis_ttl': {'value': 60, 'configuration_value_type': 'static'},
+                                  }
+        self.allow_setup = False
 
     def configure(self, configuration):
         """
@@ -88,58 +98,86 @@ class BaseModule(threading.Thread):
         # Test for dynamic value patterns
         dynamic_var_regex = re.compile('%\((.*?)\)[sd]')
         for key, value in self.configuration_data.iteritems():
-            type = 'static'
+            # Make sure that configuration values only get parsed once.
+            if isinstance(value, dict) and 'configuration_value_type' in value:
+                continue
+            configuration_value_type = 'static'
             if isinstance(value, list):
                 for _value in value:
                     try:
                         if dynamic_var_regex.search(_value):
-                            type = 'dynamic'
+                            configuration_value_type = 'dynamic'
                     except:
                         pass
             elif isinstance(value, dict):
                 for _key, _value in value.iteritems():
                     try:
                         if dynamic_var_regex.search(_key) or dynamic_var_regex.search(_value):
-                            type = 'dynamic'
+                            configuration_value_type = 'dynamic'
                     except:
                         pass
             elif isinstance(value, basestring):
                 if dynamic_var_regex.search(value):
-                    type = 'dynamic'
-            self.configuration_data.update({key: {'value': value, 'type': type}})
+                    configuration_value_type = 'dynamic'
+            self.configuration_data.update({key: {'value': value, 'configuration_value_type': configuration_value_type}})
 
-    def getConfigurationValue(self, key, data=False):
+    def getConfigurationValue(self, key, mapping_dict=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and
-        takes care of replacing dynamic variables of the pattern e.g. %(field_name)s.
+        takes care of replacing dynamic variables of the pattern e.g. %(field_name)s with the corresponding
+        entries of the mapping dictionary. Most of the time, this will be the data dictionary.
         """
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
             self.logger.warning("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
             return False
-        if config_setting['type'] == 'static' or data == False:
+        if config_setting['configuration_value_type'] == 'static' or mapping_dict == False:
             return config_setting['value']
         # At the moment, just flat lists and dictionaries are supported.
         # If need arises, recursive parsing of the lists and dictionaries will be added.
         if isinstance(config_setting['value'], list):
             try:
-                mapped_values = [v % data for v in config_setting['value']]
+                mapped_values = [v % mapping_dict for v in config_setting['value']]
                 return mapped_values
             except KeyError:
-                return config_setting['value']
+                return False
         elif isinstance(config_setting['value'], dict):
             try:
-                mapped_keys = [k % data for k in config_setting['value'].iterkeys()]
-                mapped_values = [v % data for v in config_setting['value'].itervalues()]
+                mapped_keys = [k % mapping_dict for k in config_setting['value'].iterkeys()]
+                mapped_values = [v % mapping_dict for v in config_setting['value'].itervalues()]
                 return dict(zip(mapped_keys, mapped_values))
             except KeyError:
-                return config_setting['value']
+                return False
         elif isinstance(config_setting['value'], basestring):
             try:
-                return config_setting['value'] % data
+                return config_setting['value'] % mapping_dict
             except KeyError:
-                return config_setting['value']
+                return False
+
+    def initRedisClient(self):
+        try:
+            self.temp = self.gp.modules[self.getConfigurationValue('redis-client')][0]['instance']
+            self.redis_client = self.gp.modules[self.getConfigurationValue('redis-client')][0]['instance'].getClient()
+        except KeyError:
+            self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis-client'), Utils.AnsiColors.ENDC))
+        if 'redis-ttl' in self.configuration_data:
+            self.redis_ttl = self.getConfigurationValue('redis-ttl')
+
+    def setRedisValue(self, key, value, ttl=0):
+        if not self.redis_client:
+            return None
+        pickled_value = cPickle.dumps(value)
+        self.redis_client.setex(key, ttl, pickled_value)
+
+    def getRedisValue(self, key):
+        if not self.redis_client:
+            return None
+        pickled_value = self.redis_client.get(key)
+        if pickled_value is None:
+            return None
+        value = cPickle.loads(pickled_value)
+        return value
 
     def shutDown(self):
         self.is_alive = False

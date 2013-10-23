@@ -1,5 +1,5 @@
 import extendSysPath
-import unittest
+import unittest2
 import ModuleBaseTestCase
 import mock
 import re
@@ -20,24 +20,20 @@ class TestModuleContainer(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', data['@timestamp'])) # 2013-08-29T10:25:26
 
     def testQueueCommunication(self):
-        self.test_object.setup()
         super(TestModuleContainer, self).testQueueCommunication(self.default_config)
 
     def testOutputQueueFilter(self):
-        self.test_object.setup()
         super(TestModuleContainer, self).testOutputQueueFilter(self.default_config)
 
     def testInvertedOutputQueueFilter(self):
-        self.test_object.setup()
         super(TestModuleContainer, self).testInvertedOutputQueueFilter(self.default_config)
 
+    @unittest2.skip("Skipping testWorksOnCopy because this is tested via the module tests.")
     def testWorksOnCopy(self):
-        return
-        self.test_object.setup()
         super(TestModuleContainer, self).testWorksOnCopy(self.default_config)
 
+    @unittest2.skip("Skipping testWorksOnCopy because this is tested via the module tests.")
     def testWorksOnOriginal(self):
-        return
         super(TestModuleContainer, self).testWorksOnOriginal(self.default_config)
 
 if __name__ == '__main__':

@@ -108,6 +108,9 @@ class GambolPutty:
         for module_name, instances in self.modules.iteritems():
             for instance in instances:
                 name = instance['alias'] if 'alias' in instance else module_name
+                # Init redis client if it is configured by the module
+                if 'redis-client' in instance["instance"].configuration_data:
+                    instance["instance"].initRedisClient()
                 self.logger.debug("Calling start/run method of %s." % name)
                 try:
                     if (isinstance(instance["instance"], threading.Thread)):
