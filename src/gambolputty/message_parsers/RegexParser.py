@@ -1,7 +1,9 @@
 import sys
 import re
 import BaseModule
+from Decorators import GambolPuttyModule
 
+@GambolPuttyModule
 class RegexParser(BaseModule.BaseModule):
     """Parse a string by named regular expressions.
 
@@ -9,37 +11,17 @@ class RegexParser(BaseModule.BaseModule):
 
     - module: RegexParser
       configuration:
-        # Set marker if a regex matched
-        mark-on-success: match
-        # Set marker if no regex matched
-        mark-on-failure: nomatch
-        break_on_match: True
-        field_extraction_patterns:
+        source-field: field1                    # <default: 'data'; type: string; is: optional>
+        mark-on-success: True                   # <default: False; type: boolean; is: optional>
+        mark-on-failure: True                   # <default: False; type: boolean; is: optional>
+        break_on_match: True                    # <default: True; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: [string,list]; is: required>
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
-        receivers:
-          # Only messages that matched a regex will be send to this handler
-          - ModuleContainer:
-            filter-by-marker: match
-          # Print out messages that did not match
-          - StdOutHandler:
-            filter-by-marker: nomatch
     """
-
-    def setup(self):
-        """
-        Setup method to set default values.
-
-        This method will be called by the GambolPutty main class after initializing the module
-        and before the configure method of the module is called.
-        """
-        # Call parent setup method
-        super(RegexParser, self).setup()
-        # Set the default data field name that will be matched against the regex.
-        self.configuration_data['source-fields'] = 'data'
 
     def configure(self, configuration):
         # Call parent configure method
-        super(RegexParser, self).configure(configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.add_success_marker = True if 'mark-on-success' in configuration else False
@@ -87,15 +69,15 @@ class RegexParser(BaseModule.BaseModule):
         self.logger.debug("Received raw message: %s" % data)
         # Remove possible remaining syslog error code
         # i.e. message starts with <141>
-        for fieldname in self.getConfigurationValue('source-fields', data):
-            if fieldname not in data:
-                continue
-            try:
-                if data[fieldname].index(">") <= 4:
-                    data[fieldname] = data[fieldname][data[fieldname].index(">")+1:] + "\n"
-            except:
-                pass
-            data = self.parseMessage(data, fieldname)
+        fieldname = self.getConfigurationValue('source-field', data)
+        if fieldname not in data:
+            return data
+        try:
+            if data[fieldname].index(">") <= 4:
+                data[fieldname] = data[fieldname][data[fieldname].index(">")+1:] + "\n"
+        except:
+            pass
+        data = self.parseMessage(data, fieldname)
         return data
         
     def parseMessage(self, data, fieldname):

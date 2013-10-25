@@ -79,7 +79,7 @@ class GambolPutty:
             self.configuration = yaml.load(conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (AnsiColors.WARNING, path_to_config_file, etype, evalue, AnsiColors.ENDC))
+            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
 
     def initModule(self, module_name):
@@ -134,24 +134,19 @@ class GambolPutty:
                 module_instance = self.initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
                 module_name = module_info['module'] if 'alias' not in module_info else module_info['alias']
-                # Call setup of module if method is implemented and pass reference to GambolPutty instance
-                try:
-                    module_instance.setup()
-                except AttributeError:
-                    pass
                 # Call configuration of module
-                if 'configuration' in module_info:
-                    try:
-                        configuration_sucessful = module_instance.configure(module_info['configuration'])
-                        if configuration_sucessful == False:
-                            self.logger.error("%sCould not configure module %s. Please check log for error messages.%s") % (Utils.AnsiColors.FAIL, module_info['module'], Utils.AnsiColors.ENDC)
-                            self.shutDown()
-                            break
-                    except:
-                        etype, evalue, etb = sys.exc_info()
-                        self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_info['module'], etype, evalue, Utils.AnsiColors.ENDC))
+                configuration = module_info['configuration'] if 'configuration' in module_info else {}
+                try:
+                    configuration_sucessful = module_instance.configure(configuration)
+                    if configuration_sucessful == False:
+                        self.logger.error("%sCould not configure module %s. Please check log for error messages.%s" % (Utils.AnsiColors.FAIL, module_info['module'], Utils.AnsiColors.ENDC))
                         self.shutDown()
                         break
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_info['module'], etype, evalue, Utils.AnsiColors.ENDC))
+                    self.shutDown()
+                    break
                 try:
                     self.modules[module_name].append({'instance': module_instance,
                                                       'configuration': module_info[

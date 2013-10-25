@@ -25,6 +25,12 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.test_object.handleData(dict)
         self.assertEqual(result['country_code'], 'US')
 
+    def testAddGeoInfoFromDefaultField(self):
+        self.test_object.configure({'geoip-dat-path': '../exampleData/GeoIP.dat'})
+        dict = Utils.getDefaultDataDict({'x_forwarded_for': '99.124.167.129'})
+        result = self.test_object.handleData(dict)
+        self.assertEqual(result['country_code'], 'US')
+
     def testQueueCommunication(self):
         config = {'source-fields': ['f1'],
                   'geoip-dat-path': '../exampleData/GeoIP.dat'}

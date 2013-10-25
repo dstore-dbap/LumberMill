@@ -105,8 +105,6 @@ class TcpServerThreaded:
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
-
-    def setup(self):
         self.output_queues = []
 
     def configure(self, configuration):

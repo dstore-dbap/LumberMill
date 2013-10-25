@@ -16,7 +16,12 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({})
         dict_with_date = self.test_object.handleData(Utils.getDefaultDataDict({}))
         self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', dict_with_date['@timestamp'])) # 2013-08-29T10:25:26
-    
+
+    def testAddDateTimeCustomFormat(self):
+        self.test_object.configure({'format': '%Y/%M/%d %H.%M.%S'})
+        dict_with_date = self.test_object.handleData(Utils.getDefaultDataDict({}))
+        self.assert_(re.match('^\d+/\d+/\d+ \d+.\d+.\d+$', dict_with_date['@timestamp'])) # 2013/08/29 10.25.26
+
     def testAddDateTimeDefaultField(self):
         self.test_object.configure({})
         dict_with_date = self.test_object.handleData(Utils.getDefaultDataDict({}))

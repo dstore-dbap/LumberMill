@@ -2,7 +2,6 @@ import extendSysPath
 import ModuleBaseTestCase
 import unittest
 import mock
-import Queue
 import ModifyFields
 import Utils
 
@@ -15,7 +14,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testDelete(self):
         self.default_dict['delme'] = 1
         self.test_object.configure({'action': 'delete',
-                                    'source-fields': 'delme'})
+                                    'source-fields': ['delme']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('delme' not in result)
 
@@ -41,7 +40,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testMap(self):
         self.default_dict['http_status'] = 100
         self.test_object.configure({'action': 'map',
-                                    'source-fields': 'http_status',
+                                    'source-field': 'http_status',
                                     'map': {100: 'Continue',
                                             200: 'OK'}
                                   })
@@ -52,7 +51,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testMapWithTargetField(self):
         self.default_dict['http_status'] = 200
         self.test_object.configure({'action': 'map',
-                                    'source-fields': 'http_status',
+                                    'source-field': 'http_status',
                                     'map': {100: 'Continue',
                                             200: 'OK'},
                                     'target-field': 'http_status'
@@ -102,23 +101,28 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue('castable' in result and result['castable'] == True)
 
     def testQueueCommunication(self):
-        config = {'source-fields': 'data'}
+        config = {'source-fields': ['data'],
+                  'action': 'keep'  }
         super(TestModifyFields, self).testQueueCommunication(config)
 
     def testOutputQueueFilter(self):
-        config = {'source-fields': 'dev_null'}
+        config = {'source-fields': ['data'],
+                  'action': 'keep'  }
         super(TestModifyFields, self).testOutputQueueFilter(config)
 
     def testInvertedOutputQueueFilter(self):
-        config = {'source-fields': 'dev_null'}
+        config = {'source-fields': ['data'],
+                  'action': 'keep'  }
         super(TestModifyFields, self).testInvertedOutputQueueFilter(config)
 
     def testWorksOnCopy(self):
-        config = {'source-fields': 'data'}
+        config = {'source-fields': ['data'],
+                  'action': 'keep'  }
         super(TestModifyFields, self).testWorksOnCopy(config)
 
     def testWorksOnOriginal(self):
-        config = {'source-fields': 'data'}
+        config = {'source-fields': ['data'],
+                  'action': 'keep'  }
         super(TestModifyFields, self).testWorksOnOriginal(config)
 
 if __name__ == '__main__':

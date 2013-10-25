@@ -1,43 +1,18 @@
+# -*- coding: utf-8 -*-
 import datetime
 import BaseModule
+from Decorators import GambolPuttyModule
 
+@GambolPuttyModule
 class AddDateTime(BaseModule.BaseModule):
     """Add a field with the current datetime.
     Configuration example:
 
     - module: AddDateTime
       configuration:
-        field: 'my_timestamp'
-        format: '%Y-%M-%dT%H:%M:%S'
+        target-field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
+        format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
     """
-
-    def setup(self):
-        """
-        Setup method to set default values.
-        This method will be called by the GambolPutty main class after initializing the module
-        and before the configure method of the module is called.
-        """
-        # Call parent setup method
-        super(AddDateTime, self).setup()
-        self.target_fieldname = '@timestamp'
-        self.datetime_format = '%Y-%m-%dT%H:%M:%S'
-
-    def configure(self, configuration):
-        """
-        Configure the module.
-        This method will be called by the GambolPutty main class after initializing the module
-        and after the configure method of the module is called.
-        The configuration parameter contains k:v pairs of the yaml configuration for this module.
-
-        @param configuration: dictionary
-        @return:
-        """
-        # Call parent configure method
-        super(AddDateTime, self).configure(configuration)
-        if 'target-field' in configuration:
-            self.target_fieldname = configuration['target-field']
-        if 'format' in configuration:
-            self.datetime_format = configuration['format']
 
     def handleData(self, data):
         """
@@ -46,5 +21,5 @@ class AddDateTime(BaseModule.BaseModule):
         @param data: dictionary
         @return data: dictionary
         """
-        data[self.target_fieldname] = datetime.datetime.utcnow().strftime(self.datetime_format)
+        data[self.getConfigurationValue('target-field', data)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', data))
         return data

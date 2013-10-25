@@ -9,7 +9,6 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.input_queue = Queue.Queue()
         self.output_queue = Queue.Queue()
         self.test_object = test_object
-        self.test_object.setup()
         self.test_object.setInputQueue(self.input_queue)
         self.test_object.addOutputQueue(self.output_queue, filter_by_marker=False, filter_by_field=False)
 
@@ -25,7 +24,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.assert_(queue_emtpy != True)
 
     def testWorksOnOriginal(self, config = {}):
-        config['work-on-copy'] = {'value': False, 'configuration_value_type': 'static'}
+        config['work-on-copy'] = {'value': False, 'contains_placeholder': False}
         data_dict = Utils.getDefaultDataDict({})
         self.test_object.configure(config)
         self.test_object.start()
@@ -35,10 +34,10 @@ class ModuleBaseTestCase(unittest2.TestCase):
             returned_data_dict = self.output_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
-        self.assert_(queue_emtpy != True and returned_data_dict is data_dict)
+        self.assert_(queue_emtpy == False and returned_data_dict is data_dict)
 
     def testWorksOnCopy(self, config = {}):
-        config['work-on-copy'] = {'value': True, 'configuration_value_type': 'static'}
+        config['work-on-copy'] = {'value': True, 'contains_placeholder': False}
         data_dict = Utils.getDefaultDataDict({})
         self.test_object.configure(config)
         self.test_object.start()
@@ -48,7 +47,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
             returned_data_dict = self.output_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
-        self.assert_(queue_emtpy != True and returned_data_dict is not data_dict)
+        self.assert_(queue_emtpy == False and returned_data_dict is not data_dict)
 
     def testOutputQueueFilter(self, config = {}):
         filtered_queue = Queue.Queue()
@@ -77,7 +76,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
             returned_data_dict = filtered_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
-        self.assert_(queue_emtpy != True and 'data' in returned_data_dict)
+        self.assert_(queue_emtpy == False and 'data' in returned_data_dict)
 
     def tearDown(self):
         pass

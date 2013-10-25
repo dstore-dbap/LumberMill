@@ -4,19 +4,27 @@ import gambolputty.Decorators as Decorators
 import gambolputty.StatisticCollector as StatisticCollector
 import gambolputty.Utils as Utils
 import BaseModule
+from Decorators import GambolPuttyModule
 
+@GambolPuttyModule
 class Statistics(BaseModule.BaseModule):
+    """
+    Collect and log some statistic data.
 
-    def setup(self):
-        # Call parent setup method
-        super(Statistics, self).setup()
-        self.print_regex_statistics_at_message_count = 500
-       
+    Configuration example:
+
+    - module: Statistics
+      configuration:
+        print-regex-statistics-interval: 1000               # <default: 1000; type: integer; is: optional>
+        regexStatistics: True                               # <default: True; type: boolean; is: optional>
+        receiveRateStatistics: True                         # <default: True; type: boolean; is: optional>
+        waitingEventStatistics: True                        # <default: True; type: boolean; is: optional>
+    """
+
     def configure(self, configuration):
          # Call parent configure method
-        super(Statistics, self).configure(configuration)
-        if 'print_regex_statistics_at_message_count' in configuration:
-            self.print_regex_statistics_at_message_count = configuration['print_regex_statistics_at_message_count']
+        BaseModule.BaseModule.configure(self, configuration)
+        self.print_regex_statistics_at_message_count = self.getConfigurationValue('print-regex-statistics-interval')
 
     def regexStatistics(self):
         if not StatisticCollector.StatisticCollector().getCounter('received_messages') % self.print_regex_statistics_at_message_count == 0:
@@ -47,15 +55,15 @@ class Statistics(BaseModule.BaseModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if 'receiveRateStatistics' in self.configuration_data:
+        if self.getConfigurationValue('receiveRateStatistics'):
             self.receiveRateStatistics()
-        if 'waitingEventStatistics' in self.configuration_data:
+        if self.getConfigurationValue('waitingEventStatistics'):
             self.waitingEventStatistics()
         while True:
             try:
                 item = self.input_queue.get()
                 self.handleData(item)
-                if self.configuration_data['regexStatistics']:
+                if self.getConfigurationValue('regexStatistics'):
                     self.regexStatistics()
                 self.input_queue.task_done()
             except:

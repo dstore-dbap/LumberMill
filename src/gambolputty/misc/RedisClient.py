@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
+import sys
 import redis
 import BaseModule
+from Decorators import GambolPuttyModule
 
+@GambolPuttyModule
 class RedisClient(BaseModule.BaseModule):
+    """
+    A simple wrapper around the redis python module.
 
-    def setup(self):
-        # Call parent setup method
-        super(RedisClient, self).setup()
-        self.default_redis_port = 6379
-        self.default_redis_server = 'localhost'
+    Configuration example:
+
+    - module: RedisClient
+      configuration:
+        server: redis.server    # <default: 'localhost'; type: string; is: optional>
+        port: 6379              # <default: 6379; type: integer; is: optional>
+        db: 0                   # <default: 0; type: string; is: optional>
+    """
 
     def configure(self, configuration):
          # Call parent configure method
-        super(RedisClient, self).configure(configuration)
-        if 'server' in configuration:
-            redis_server, _, redis_port = configuration['server'].partition(":")
+        BaseModule.BaseModule.configure(self, configuration)
         try:
-            self.redis_server = redis_server if redis_server != "" else self.default_redis_server
-            self.redis_port = int(redis_port) if redis_port != "" else self.default_redis_port
-            self.redis_client = redis.StrictRedis(host=self.redis_server, port=self.redis_port, db=0)
+            self.redis_client = redis.StrictRedis(host=self.getConfigurationValue('server'), port=self.getConfigurationValue('port'), db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (configuration['server'],etype, evalue))

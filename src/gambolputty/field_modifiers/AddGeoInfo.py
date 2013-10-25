@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import BaseModule
 import socket
+from Decorators import GambolPuttyModule
 
 try:
     import GeoIP 
@@ -9,19 +11,20 @@ except:
     except:
         pass
 
+@GambolPuttyModule
 class AddGeoInfo(BaseModule.BaseModule):
     """Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
     Configuration example:
 
     - module: AddGeoInfo
       configuration:
-        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat
-        lookup_fields: [x_forwarded_for, remote_ip]
+        geoip-dat-path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
+        source-fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
     """
 
     def configure(self, configuration):
         # Call parent configure method
-        super(AddGeoInfo, self).configure(configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.gi = False
         try:
             self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
@@ -36,18 +39,10 @@ class AddGeoInfo(BaseModule.BaseModule):
                 self.logger.error("Will not start module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
                 self.shutDown()
                 return False
-        try:
-            self.source_fields = self.getConfigurationValue('source-fields')
-            if self.source_fields.__len__ == 0:
-                raise KeyError
-        except KeyError:
-            self.logger.error("Will not start module %s since source-fields not set in configuration. Please set a least one field to use for geoip lookup." % (self.__class__.__name__))
-            self.shutDown()
-            return False
 
     def handleData(self, message_data):
         hostname_or_ip = False
-        for lookup_field in self.source_fields:
+        for lookup_field in self.getConfigurationValue('source-fields'):
             if lookup_field not in message_data:
                 continue
             hostname_or_ip = message_data[lookup_field]
