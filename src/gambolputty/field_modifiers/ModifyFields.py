@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import re
 import BaseModule
@@ -5,7 +6,9 @@ from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
 class ModifyFields(BaseModule.BaseModule):
-    """Add a field with the current datetime.
+    """
+    Add a field with the current datetime.
+
     Configuration examples:
 
     # Keep all fields listed in source-fields, discard all others.

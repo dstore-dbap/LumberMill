@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import re
 import BaseModule
@@ -5,7 +6,8 @@ from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
 class RegexParser(BaseModule.BaseModule):
-    """Parse a string by named regular expressions.
+    """
+    Parse a string by named regular expressions.
 
     Configuration example:
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import socket
 import BaseModule
@@ -7,7 +8,8 @@ from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
 class StdInHandler(BaseModule.BaseModule):
-    """Reads data from stdin and sends it to its output queue.
+    """
+    Reads data from stdin and sends it to its output queue.
 
     Configuration example:
 

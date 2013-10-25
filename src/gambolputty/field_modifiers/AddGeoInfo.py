@@ -13,7 +13,9 @@ except:
 
 @GambolPuttyModule
 class AddGeoInfo(BaseModule.BaseModule):
-    """Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
+    """
+    Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
+
     Configuration example:
 
     - module: AddGeoInfo

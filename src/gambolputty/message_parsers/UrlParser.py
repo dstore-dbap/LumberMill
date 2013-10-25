@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import BaseModule
 import urlparse
 from Decorators import GambolPuttyModule

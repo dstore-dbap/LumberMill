@@ -5,7 +5,9 @@ from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
 class AddDateTime(BaseModule.BaseModule):
-    """Add a field with the current datetime.
+    """
+    Add a field with the current datetime.
+
     Configuration example:
 
     - module: AddDateTime

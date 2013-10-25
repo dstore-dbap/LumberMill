@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import BaseModule
 import pprint
 from Decorators import GambolPuttyModule

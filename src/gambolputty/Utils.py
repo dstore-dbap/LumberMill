@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def getDefaultDataDict(dict={}):
     default_dict = { "received_from": False, 
                      "data": "",
