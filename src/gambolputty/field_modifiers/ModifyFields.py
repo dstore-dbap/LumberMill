@@ -7,7 +7,7 @@ from Decorators import GambolPuttyModule
 @GambolPuttyModule
 class ModifyFields(BaseModule.BaseModule):
     """
-    Add a field with the current datetime.
+    Simple module to add/delete/change field values.
 
     Configuration examples:
 
