@@ -23,7 +23,7 @@ class UrlParser(BaseModule.BaseModule):
                 raise KeyError
         except KeyError:
             self.logger.error("source-field not set in configuration. Please set a least one field to use for parsing an url string.")
-            self.shutDown()
+            self.gp.shutDown()
 
     def handleData(self, data):
         lookup_field = self.getConfigurationValue('source-field', data)

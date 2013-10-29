@@ -1,8 +1,7 @@
-module_dirs = {'message_inputs': {},
-               'message_classifiers': {},
-               'message_parsers': {},
-               'field_modifiers': {},
-               'message_outputs': {},
+module_dirs = {'inputs': {},
+               'parsers': {},
+               'modifiers': {},
+               'outputs': {},
                'misc': {}}
 
 import sys

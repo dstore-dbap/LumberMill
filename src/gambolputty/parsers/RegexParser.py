@@ -44,7 +44,7 @@ class RegexParser(BaseModule.BaseModule):
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("RegEx error for options %s. Exception: %s, Error: %s" % (regex_options, etype, evalue))
-                    self.shutDown()
+                    self.gp.shutDown()
                 # Regex match type the third (optional)
                 try:
                     regex_match_type = i.next()
@@ -54,13 +54,13 @@ class RegexParser(BaseModule.BaseModule):
             # At the moment only search and findall are supported
             if regex_match_type not in supported_regex_match_types:
                 self.logger.error("RegEx error for match type %s. Only %s are supported." % (regex_options, supported_regex_match_types))
-                self.shutDown()               
+                self.gp.shutDown()
             try:
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
-                self.shutDown()
+                self.gp.shutDown()
             self.fieldextraction_regexpressions[message_type] = {'pattern': regex, 'match_type': regex_match_type}
 
     def handleData(self, data):

@@ -16,7 +16,7 @@ class ModuleContainer(BaseModule.BaseModule):
             instance = module_class(self.gp)
         except Exception, e:
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, Exception, e))
-            self.shutDown()
+            self.gp.shutDown()
         return instance
 
     def configure(self, configuration):

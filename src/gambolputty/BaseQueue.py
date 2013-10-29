@@ -35,8 +35,8 @@ class BaseQueue(Queue.Queue):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def put(self, item, block=True, timeout=None, filter=False):
-        Queue.Queue.put(self, item, block=True, timeout=None)
         self.incrementQueueCounter()
+        Queue.Queue.put(self, item, block=True, timeout=None)
 
     def get(self, block=True, timeout=None):
         item = Queue.Queue.get(self, block, timeout)

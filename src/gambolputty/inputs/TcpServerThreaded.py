@@ -96,6 +96,18 @@ class TCPRequestHandlerFactory:
 
 
 class TcpServerThreaded:
+    """
+    Reads data from tcp socket and sends it to its output queues.
+
+    Configuration example:
+
+    - module: TcpServerThreaded
+      configuration:
+        interface: localhost             # <default: 'localhost'; type: string; is: optional>
+        port: 5151                       # <default: 5151; type: integer; is: optional>
+      receivers:
+        - NextModule
+    """
 
     module_type = "input"
     """Set module type"""

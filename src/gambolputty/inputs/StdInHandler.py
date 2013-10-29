@@ -20,10 +20,13 @@ class StdInHandler(BaseModule.BaseModule):
         stream-end-signal: #########     # <default: False; type: string; is: optional>
     """
 
+    module_type = "input"
+    """Set module type"""
+
     def configure(self, configuration):
         BaseModule.BaseModule.configure(self, configuration)
         self.multiline = self.getConfigurationValue('multiline')
-        self.stream_end_signal = self.getConfigurationValue('stream_end_signal')
+        self.stream_end_signal = self.getConfigurationValue('stream-end-signal')
             
     def run(self, input=sys.stdin):
         hostname = socket.gethostname()
@@ -34,17 +37,15 @@ class StdInHandler(BaseModule.BaseModule):
             data = input.readline()
             if data.__len__() > 0:
                 if not self.multiline:
-                    self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
+                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
                 else:
                     if self.stream_end_signal and self.stream_end_signal == data:
-                        self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
+                        self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
                         multiline_data = ""
                         continue
                     multiline_data += data
             else: # an empty line means stdin has been closed
                 if multiline_data.__len__() > 0:
-                    self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
-                while self.isAlive() and BaseQueue.BaseQueue.messages_in_queues > 0:
-                    time.sleep(.01)
-                self.shutDown()
+                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
+                self.gp.shutDown()
                 return

@@ -63,11 +63,10 @@ class Statistics(BaseModule.BaseModule):
             self.waitingEventStatistics()
         while True:
             try:
-                item = self.input_queue.get()
+                item = self.getEventFromInputQueue()
                 self.handleData(item)
                 if self.getConfigurationValue('regexStatistics'):
                     self.regexStatistics()
-                self.input_queue.task_done()
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (etype, evalue))

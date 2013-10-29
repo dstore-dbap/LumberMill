@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from gambolputty import Utils
+from gambolputty import BaseModule
 from gambolputty import BaseQueue
 
-module_dirs = {'message_inputs': {},
-               'message_classifiers': {},
-               'message_parsers': {},
-               'field_modifiers': {},
-               'message_outputs': {},
+module_dirs = {'inputs': {},
+               'parsers': {},
+               'modifiers': {},
+               'outputs': {},
                'misc': {}}
 
 import sys
@@ -223,22 +223,23 @@ class GambolPutty:
             while self.is_alive:
                 time.sleep(.1)
         except KeyboardInterrupt:
-            self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
-            # Shutdown all input modules.
-            for module_name, instances in self.modules.iteritems():
-                for instance in instances:
-                    if instance['instance'].module_type == "input":
-                        instance['instance'].shutDown()
-            # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
-            shutdown_tries = 0
-            while BaseQueue.BaseQueue.messages_in_queues > 0 and shutdown_tries <= 10:
-                self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
-                shutdown_tries += 1
-                time.sleep(.5)
-            sys.exit()
+            self.shutDown()
 
     def shutDown(self):
+        self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        # Shutdown all input modules.
+        for module_name, instances in self.modules.iteritems():
+            for instance in instances:
+                if instance['instance'].module_type == "input":
+                    instance['instance'].shutDown()
+        # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
+        shutdown_tries = 0
+        while (BaseQueue.BaseQueue.messages_in_queues > 0 or BaseModule.BaseModule.events_being_processed > 0) and shutdown_tries <= 10:
+            self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
+            shutdown_tries += 1
+            time.sleep(.1)
         self.is_alive = False
+        sys.exit()
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'

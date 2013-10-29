@@ -91,13 +91,13 @@ class ModifyFields(BaseModule.BaseModule):
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("RegEx error for options %s. Exception: %s, Error: %s" % (regex_options, etype, evalue))
-                    self.shutDown()
+                    self.gp.shutDown()
             try:
                 self.regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
-                self.shutDown()
+                self.gp.shutDown()
 
     def handleData(self, data):
         try:
@@ -105,7 +105,7 @@ class ModifyFields(BaseModule.BaseModule):
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
-            self.shutDown()
+            self.gp.shutDown()
         return data
 
     def keep(self,data):

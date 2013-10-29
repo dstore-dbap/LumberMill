@@ -33,13 +33,13 @@ class AddGeoInfo(BaseModule.BaseModule):
         except: 
             if 'geoip-dat-path' not in configuration:
                 self.logger.error("Will not start module %s since 'geoip-dat-path' not configured." % (self.__class__.__name__))
-                self.shutDown()
+                self.gp.shutDown()
                 return False
             try:
                 self.gi = pygeoip.GeoIP(configuration['geoip-dat-path'], pygeoip.MEMORY_CACHE)
             except NameError:
                 self.logger.error("Will not start module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
-                self.shutDown()
+                self.gp.shutDown()
                 return False
 
     def handleData(self, message_data):

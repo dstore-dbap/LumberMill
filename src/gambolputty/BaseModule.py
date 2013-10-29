@@ -33,12 +33,25 @@ class BaseModule(threading.Thread):
        - ModuleAlias
     """
 
+    events_being_processed = 0
+
     lock = threading.Lock()
     """ Class wide access to locking. """
 
     module_type = "generic"
     """ Set module type. """
 
+    @staticmethod
+    def incrementEventsBeingProcessedCounter():
+        BaseModule.lock.acquire()
+        BaseModule.events_being_processed += 1
+        BaseModule.lock.release()
+
+    @staticmethod
+    def decrementEventsBeingProcessedCounter():
+        BaseModule.lock.acquire()
+        BaseModule.events_being_processed -= 1
+        BaseModule.lock.release()
 
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -105,11 +118,11 @@ class BaseModule(threading.Thread):
                     return self.configuration_metadata[key]['default']
                 except KeyError:
                     self.logger.error("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-                    self.shutDown()
+                    self.gp.shutDown()
                     return False
         if not isinstance(config_setting, dict):
             self.logger.error("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-            self.shutDown()
+            self.gp.shutDown()
             return False
         # Return value directly if it does not contain any placeholders or no mapping dictionary was provided.
         if config_setting['contains_placeholder'] == False or mapping_dict == False:
@@ -121,7 +134,7 @@ class BaseModule(threading.Thread):
                     return self.configuration_metadata[key]['default']
                 except KeyError:
                     self.logger.error("%sCould not find configuration value for key: %s and no default value was defined." % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-                    self.shutDown()
+                    self.gp.shutDown()
                     return False
         # At the moment, just flat lists and dictionaries are supported.
         # If need arises, recursive parsing of the lists and dictionaries will be added.
@@ -170,8 +183,7 @@ class BaseModule(threading.Thread):
 
     def shutDown(self):
         self.is_alive = False
-        self.gp.shutDown()
-        
+
     def getInputQueue(self):
         return self.input_queue
 
@@ -180,7 +192,7 @@ class BaseModule(threading.Thread):
             self.input_queue = queue
         else:
             self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            self.shutDown()
+            self.gp.shutDown()
     
     def getOutputQueues(self):
         return self.output_queues
@@ -205,14 +217,14 @@ class BaseModule(threading.Thread):
     def addOutputQueue(self, queue, filter = False):
         if queue == self.input_queue:
             self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            self.shutDown()
+            self.gp.shutDown()
             return
         if filter:
             filter = Utils.compileAstConditionalFilterObject(filter)
         if not any(queue == output_queue['queue'] for output_queue in self.output_queues):
             self.output_queues.append({'queue': queue, 'filter': filter})
 
-    def addToOutputQueues(self, data):
+    def addEventToOutputQueues(self, data):
         for queue in self.output_queues:
             if queue['filter']:
                 try:
@@ -227,6 +239,13 @@ class BaseModule(threading.Thread):
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
+        self.decrementEventsBeingProcessedCounter()
+
+    def getEventFromInputQueue(self, block=True, timeout=None):
+        data = self.input_queue.get(block, timeout) if not self.getConfigurationValue('work-on-copy') else self.input_queue.get().copy()
+        self.incrementEventsBeingProcessedCounter()
+        self.input_queue.task_done()
+        return data
 
     def run(self):
         if not self.input_queue:
@@ -235,12 +254,11 @@ class BaseModule(threading.Thread):
         while self.is_alive:
             data = False
             try:
-                data = self.input_queue.get() if not self.getConfigurationValue('work-on-copy') else self.input_queue.get().copy()
+                data = self.getEventFromInputQueue()
                 data = self.handleData(data)
-                self.input_queue.task_done()
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
                 traceback.print_exception(exc_type, exc_value, exc_tb)
             if data:
-                self.addToOutputQueues(data)
+                self.addEventToOutputQueues(data)

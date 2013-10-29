@@ -38,7 +38,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         self.es = self.connect()
         if not self.es:
             self.logger.error("No index servers configured or none could be reached.")
-            self.shutDown()
+            self.gp.shutDown()
             return False
 
     def connect(self):
@@ -61,9 +61,8 @@ class ElasticSearchOutput(BaseModule.BaseModule):
             self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index-Prefix: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index-prefix")))
         while self.is_alive:
             try:
-                data = self.input_queue.get(timeout=self.store_data_idle)
+                data = self.getEventFromInputQueue(timeout=self.store_data_idle)
                 self.handleData(data)
-                self.input_queue.task_done()
             except Queue.Empty:
                 if len(self.events_container) > 0:
                     self.storeData()
@@ -75,7 +74,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
                 traceback.print_exception(exc_type, exc_value, exc_tb)
                 time.sleep(.5)
             if self.output_queues and data:
-                self.addToOutputQueues(data)
+                self.addEventToOutputQueues(data)
 
     def handleData(self, data):
         # Append event to internal data container
