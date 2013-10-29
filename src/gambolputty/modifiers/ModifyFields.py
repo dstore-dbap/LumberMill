@@ -16,12 +16,16 @@ class ModifyFields(BaseModule.BaseModule):
       configuration:
         action: keep                                # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
 
     # Discard all fields listed in source-fields.
     - module: ModifyFields
       configuration:
         action: delete                              # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - module: ModifyFields
@@ -30,6 +34,8 @@ class ModifyFields(BaseModule.BaseModule):
         source-field: field1                        # <type: string; is: required>
         regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
         with: 'Johann Gambolputty'                  # <type: string; is: required>
+      receivers:
+        - NextModule
 
     # Map a field value.
     - module: ModifyFields
@@ -38,31 +44,41 @@ class ModifyFields(BaseModule.BaseModule):
         source-field: http_status                   # <type: string; is: required>
         map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
         target-field: http_status                   # <default: "%(source-field)s_mapped"; type: string; is: optional>
+      receivers:
+        - NextModule
 
     # Cast field values to integer.
     - module: ModifyFields
       configuration:
         action: castToInteger                       # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
 
     # Cast field values to float.
     - module: ModifyFields
       configuration:
         action: castToFloat                         # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
 
     # Cast field values to string.
     - module: ModifyFields
       configuration:
         action: castToString                        # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
 
     # Cast field values to boolean.
     - module: ModifyFields
       configuration:
         action: castToBoolean                       # <type: string; is: required>
         source-fields: [field1, field2, ... ]       # <type: list; is: required>
-    """
+      receivers:
+        - NextModule
+"""
 
     def configure(self, configuration):
         # Call parent configure method

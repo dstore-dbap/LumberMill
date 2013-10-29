@@ -10,7 +10,7 @@ from Decorators import GambolPuttyModule
 @GambolPuttyModule
 class StdInHandler(BaseModule.BaseModule):
     """
-    Reads data from stdin and sends it to its output queue.
+    Reads data from stdin and sends it to its output queues.
 
     Configuration example:
 
@@ -18,6 +18,8 @@ class StdInHandler(BaseModule.BaseModule):
       configuration:
         multiline: True                  # <default: False; type: boolean; is: optional>
         stream-end-signal: #########     # <default: False; type: string; is: optional>
+      receivers:
+        - NextModule
     """
 
     module_type = "input"

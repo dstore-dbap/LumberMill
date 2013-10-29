@@ -13,6 +13,8 @@ class StdOutHandler(BaseModule.BaseModule):
     - module: StdOutHandler
       configuration:
         pretty-print: True      # <default: True; type: boolean; is: optional>
+      receivers:
+        - NextModule
     """
     def handleData(self, data):
         if self.getConfigurationValue('pretty-print'):

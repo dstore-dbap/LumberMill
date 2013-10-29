@@ -36,3 +36,38 @@ Configuration example:
       configuration:
         source-field: 'xml_data'                                # <type: string; is: required>
         query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
+
+#####CsvParser
+
+Parse a string as csv data.
+
+It will parse the csv and create or replace fields in the internal data dictionary with
+the corresponding csv fields.
+
+Configuration example:
+
+    - module: CsvParser
+      configuration:
+        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        escapechar: \                           # <default: '\'; type: string; is: optional>
+        skipinitialspace: False                 # <default: False; type: boolean; is: optional>
+        quotechar: '"'                          # <default: '"'; type: string; is: optional>
+        delimiter: ';'                          # <default: '|'; type: char; is: optional>
+        fieldnames: ["gumby", "brain", "specialist"]        # <default: False; type: [list]; is: optional>
+      receivers:
+        - NextHandler
+
+#####JsonParser
+
+It will parse the json data and create or replace fields in the internal data dictionary with
+the corresponding json fields.
+
+At the moment only flat json files can be processed correctly.
+
+Configuration example:
+
+    - module: JsonParser
+      configuration:
+        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+      receivers:
+        - NextHandler

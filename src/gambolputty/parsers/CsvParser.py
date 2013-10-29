@@ -3,47 +3,52 @@ import sys
 import BaseModule
 import csv
 from cStringIO import StringIO
+from Decorators import GambolPuttyModule
 
+@GambolPuttyModule
 class CsvParser(BaseModule.BaseModule):
-   
-    def configure(self, configuration):
-        # Call parent configure method
-        super(CsvParser, self).configure(configuration)
-        # Set defaults
-        self.escapechar = configuration['escapechar'] if 'escapechar' in configuration else "\\"
-        self.skipinitialspace = configuration['skipinitialspace'] if 'skipinitialspace' in configuration else False
-        self.quotechar = configuration['quotechar'] if 'quotechar' in configuration else '"'
-        self.delimiter = configuration['delimiter'] if 'delimiter' in configuration else ';'
-        self.fieldnames = configuration['fieldnames'] if 'fieldnames' in configuration else False
-    
+    """
+    Parse a string as csv data.
+
+    It will parse the csv and create or replace fields in the internal data dictionary with
+    the corresponding csv fields.
+
+    Configuration example:
+
+    - module: CsvParser
+      configuration:
+        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        escapechar: \                           # <default: '\'; type: string; is: optional>
+        skipinitialspace: False                 # <default: False; type: boolean; is: optional>
+        quotechar: '"'                          # <default: '"'; type: string; is: optional>
+        delimiter: ';'                          # <default: '|'; type: char; is: optional>
+        fieldnames: ["gumby", "brain", "specialist"]        # <default: False; type: [list]; is: optional>
+      receivers:
+        - NextHandler
+    """
+
     def handleData(self, data):
-        """
-        This method expects csv content in the internal data dictionary data field.
-        It will just parse the csv and create or replace fields in the internal data dictionary with
-        the corresponding csv fields.
-        Example configuration:
-        
-        - module: CsvParser
-          configuration:
-            escapechar: "\\"
-            delimiter: "|"
-            quotechar: '"'
-            skipinitialspace: False
-            fieldnames: ["gumby", "brain", "specialist"]
-          receivers: 
-            - NextHandler
-        """
-        try: 
-            csv_dict = csv.reader(StringIO(data['data']), escapechar=self.escapechar, skipinitialspace=self.skipinitialspace, quotechar=self.quotechar, delimiter=self.delimiter)
+        try:
+            csv_dict = csv.reader(StringIO(data[self.getConfigurationValue('source-field', data)]),
+                                  escapechar=self.getConfigurationValue('escapechar', data),
+                                  skipinitialspace=self.getConfigurationValue('skipinitialspace', data),
+                                  quotechar=self.getConfigurationValue('quotechar', data),
+                                  delimiter=self.getConfigurationValue('delimiter', data))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (data, etype, evalue))
-            return
-        field_names = self.fieldnames
+            return data
+        field_names = self.getConfigurationValue('fieldnames', data)
         for values in csv_dict:
             if not field_names:
+                # Use first line for field names if none were provided.
                 field_names = values
                 continue
             for index,value in enumerate(values):
-                data[field_names[index]] = value
-        self.logger.debug("Output: %s" % data)
+                try:
+                    data[field_names[index]] = value
+                except KeyError:
+                    return data
+                except IndexError:
+                    return data
+        return data

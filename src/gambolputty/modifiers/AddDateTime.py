@@ -14,6 +14,8 @@ class AddDateTime(BaseModule.BaseModule):
       configuration:
         target-field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
         format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
+      receivers:
+        - NextModule
     """
 
     def handleData(self, data):

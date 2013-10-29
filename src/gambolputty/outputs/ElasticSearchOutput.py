@@ -28,6 +28,8 @@ class ElasticSearchOutput(BaseModule.BaseModule):
           index-name: "Fixed index name"            # <default: False; type: string, is: optional>
           store-data-interval: 50                   # <default: 50; type: integer, is: optional>
           store-data-idle: 1                        # <default: 1; type: integer, is: optional>
+      receivers:
+        - NextModule
     """
     def configure(self, configuration):
         # Call parent configure method

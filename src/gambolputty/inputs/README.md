@@ -12,11 +12,11 @@ Reads data from tcp socket and sends it to its output queues.
         interface: localhost             # <default: 'localhost'; type: string; is: optional>
         port: 5151                       # <default: 5151; type: integer; is: optional>
       receivers:
-        - NextModule
+        - NextModuleName
 
 #####StdInHandler
 
-Reads data from stdin and sends it to its output queue.
+Reads data from stdin and sends it to its output queues.
 
     Configuration example:
 
@@ -24,3 +24,5 @@ Reads data from stdin and sends it to its output queue.
       configuration:
         multiline: True                  # <default: False; type: boolean; is: optional>
         stream-end-signal: #########     # <default: False; type: string; is: optional>
+      receivers:
+        - NextModuleName

@@ -22,6 +22,8 @@ class AddGeoInfo(BaseModule.BaseModule):
       configuration:
         geoip-dat-path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
         source-fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+      receivers:
+        - NextModule
     """
 
     def configure(self, configuration):
