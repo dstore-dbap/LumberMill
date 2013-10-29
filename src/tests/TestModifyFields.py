@@ -105,15 +105,15 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                   'action': 'keep'  }
         super(TestModifyFields, self).testQueueCommunication(config)
 
-    def testOutputQueueFilter(self):
+    def testOutputQueueFilterNoMatch(self):
         config = {'source-fields': ['data'],
                   'action': 'keep'  }
-        super(TestModifyFields, self).testOutputQueueFilter(config)
+        super(TestModifyFields, self).testOutputQueueFilterNoMatch(config)
 
-    def testInvertedOutputQueueFilter(self):
-        config = {'source-fields': ['data'],
+    def testOutputQueueFilterMatch(self):
+        config = {'source-fields': ['data', 'Johann'],
                   'action': 'keep'  }
-        super(TestModifyFields, self).testInvertedOutputQueueFilter(config)
+        super(TestModifyFields, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
         config = {'source-fields': ['data'],

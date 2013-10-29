@@ -22,11 +22,11 @@ class TestModuleContainer(ModuleBaseTestCase.ModuleBaseTestCase):
     def testQueueCommunication(self):
         super(TestModuleContainer, self).testQueueCommunication(self.default_config)
 
-    def testOutputQueueFilter(self):
-        super(TestModuleContainer, self).testOutputQueueFilter(self.default_config)
+    def testOutputQueueFilterNoMatch(self):
+        super(TestModuleContainer, self).testOutputQueueFilterNoMatch(self.default_config)
 
-    def testInvertedOutputQueueFilter(self):
-        super(TestModuleContainer, self).testInvertedOutputQueueFilter(self.default_config)
+    def testOutputQueueFilterMatch(self):
+        super(TestModuleContainer, self).testOutputQueueFilterMatch(self.default_config)
 
     @unittest2.skip("Skipping testWorksOnCopy because this is tested via the module tests.")
     def testWorksOnCopy(self):

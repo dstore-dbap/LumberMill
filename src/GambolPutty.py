@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from gambolputty import Utils
+from gambolputty import BaseQueue
 
 module_dirs = {'message_inputs': {},
                'message_classifiers': {},
@@ -14,7 +15,6 @@ import os
 import time
 import getopt
 import logging.config
-import Queue
 import threading
 import yaml
 
@@ -66,7 +66,7 @@ class GambolPutty:
 
     def produceQueue(self, queue_max_size=0):
         """Returns a queue with queue_max_size"""
-        return Queue.Queue(queue_max_size)
+        return BaseQueue.BaseQueue(queue_max_size)
 
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration
@@ -175,16 +175,11 @@ class GambolPutty:
                 if "receivers" not in instance or instance['receivers'] is None:
                     continue
                 for receiver_data in instance["receivers"]:
-                    filter_by_marker = False
-                    filter_by_field = False
+                    receiver_filter_config = {}
                     if isinstance(receiver_data, str):
                         receiver_name = receiver_data
                     else:
-                        receiver_name, config = receiver_data.iteritems().next()
-                        if 'filter-by-marker' in config:
-                            filter_by_marker = config['filter-by-marker']
-                        if 'filter-by-field' in config:
-                            filter_by_field = config['filter-by-field']
+                        receiver_name, receiver_filter_config = receiver_data.iteritems().next()
                     self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
                     if receiver_name not in self.modules:
                         self.logger.warning(
@@ -196,7 +191,8 @@ class GambolPutty:
                         try:
                             if not receiver_instance["instance"].getInputQueue():
                                 receiver_instance["instance"].setInputQueue(queues[receiver_name])
-                            instance["instance"].addOutputQueue(queues[receiver_name], filter_by_marker, filter_by_field)
+                            filter = receiver_filter_config['filter'] if 'filter' in receiver_filter_config else False
+                            instance["instance"].addOutputQueue(queues[receiver_name], filter)
                         except AttributeError:
                             self.logger.error(
                                 "%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
@@ -235,8 +231,8 @@ class GambolPutty:
                         instance['instance'].shutDown()
             # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
             shutdown_tries = 0
-            while instance['instance'].messages_in_queues > 0 and shutdown_tries <= 10:
-                self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, instance['instance'].messages_in_queues, Utils.AnsiColors.ENDC))
+            while BaseQueue.BaseQueue.messages_in_queues > 0 and shutdown_tries <= 10:
+                self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
                 shutdown_tries += 1
                 time.sleep(.5)
             sys.exit()

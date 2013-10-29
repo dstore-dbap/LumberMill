@@ -5,6 +5,7 @@ import gambolputty.Decorators as Decorators
 import gambolputty.StatisticCollector as StatisticCollector
 import gambolputty.Utils as Utils
 import BaseModule
+import BaseQueue
 from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
@@ -50,7 +51,7 @@ class Statistics(BaseModule.BaseModule):
 
     @Decorators.setInterval(5.0)
     def waitingEventStatistics(self):
-        self.logger.info("Events waiting to be served: %s%s%s" % (Utils.AnsiColors.YELLOW, BaseModule.BaseModule.messages_in_queues, Utils.AnsiColors.ENDC))
+        self.logger.info("Events waiting to be served: %s%s%s" % (Utils.AnsiColors.YELLOW, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
         
     def run(self):
         if not self.input_queue:
@@ -71,8 +72,6 @@ class Statistics(BaseModule.BaseModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (etype, evalue))
                 time.sleep(1)
-            finally:
-                self.decrementQueueCounter()
     
     def handleData(self, data):
         StatisticCollector.StatisticCollector().incrementCounter('received_messages')

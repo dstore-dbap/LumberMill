@@ -28,13 +28,13 @@ class TestRedisClient(ModuleBaseTestCase.ModuleBaseTestCase):
     def testQueueCommunication(self):
         super(TestRedisClient, self).testQueueCommunication(self.default_config)
 
-    @unittest2.skip("Skipping testOutputQueueFilter.")
-    def testOutputQueueFilter(self):
-        super(TestRedisClient, self).testOutputQueueFilter(self.default_config)
+    @unittest2.skip("Skipping testOutputQueueFilterMatch.")
+    def testOutputQueueFilterMatch(self):
+        super(TestRedisClient, self).testOutputQueueFilterMatch(self.default_config)
 
-    @unittest2.skip("Skipping testInvertedOutputQueueFilter.")
-    def testInvertedOutputQueueFilter(self):
-        super(TestRedisClient, self).testInvertedOutputQueueFilter(self.default_config)
+    @unittest2.skip("Skipping testOutputQueueFilterNoMatch.")
+    def testOutputQueueFilterNoMatch(self):
+        super(TestRedisClient, self).testOutputQueueFilterNoMatch(self.default_config)
 
     @unittest2.skip("Skipping testWorksOnCopy.")
     def testWorksOnCopy(self):

@@ -62,7 +62,6 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         while self.is_alive:
             try:
                 data = self.input_queue.get(timeout=self.store_data_idle)
-                self.decrementQueueCounter()
                 self.handleData(data)
                 self.input_queue.task_done()
             except Queue.Empty:

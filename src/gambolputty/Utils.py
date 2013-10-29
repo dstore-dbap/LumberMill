@@ -1,10 +1,34 @@
 # -*- coding: utf-8 -*-
+import ast
+import parser
+import symbol
+import token
+
 def getDefaultDataDict(dict={}):
     default_dict = { "received_from": False, 
                      "data": "",
                      "markers": [] }
     default_dict.update(dict)
     return default_dict
+
+def compileAstConditionalFilterObject(filter_as_string):
+    transformer = AstTransformer()
+    try:
+        # Build a complete expression from filter.
+        conditional_ast = ast.parse("matched = %s" % filter_as_string)
+        conditional_ast = transformer.visit(conditional_ast)
+        conditional = compile(conditional_ast, '<string>', 'exec')
+        return conditional
+    except:
+        return False
+
+class AstTransformer(ast.NodeTransformer):
+    def visit_Name(self, node):
+        # ignore matched variable
+        if node.id == "matched":
+            return node
+        new_node = ast.parse(ast.parse('data["%s"]' % node.id)).body[0].value
+        return new_node
 
 class AnsiColors:
     HEADER = '\033[95m'

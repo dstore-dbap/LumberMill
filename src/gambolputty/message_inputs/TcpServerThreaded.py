@@ -6,8 +6,6 @@ import sys
 import socket
 import Queue
 import Utils
-import BaseModule
-
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
     """
@@ -76,7 +74,6 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                     for queue in self.output_queues:
                         queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True,
                                   timeout=5)
-                        BaseModule.BaseModule.incrementQueueCounter()
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error(

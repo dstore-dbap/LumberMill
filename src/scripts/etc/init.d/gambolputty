@@ -33,7 +33,11 @@ fi
 # Source the pythonpath
 . /etc/profile.d/python.sh
 
-interpreter="/usr/bin/pypy"
+# Prefer pypy if it is available.
+if [ -f /usr/bin/pypy ]; then
+    interpreter="/usr/bin/pypy"
+fi
+
 exec="/opt/GambolPutty/src/GambolPutty.py"
 prog="gambolputty"
 pidfile=/var/run/gambolputty/${prog}.pid
@@ -41,8 +45,9 @@ lockfile=/var/lock/subsys/$prog
 conffile=/etc/gambolputty/log2elasticsearch.conf
 
 start() {
-    [ -x $exec ] || exit 5
-    [ -f $conffile ] || $(echo "Config $conffile does not exists!" && exit 6)
+    [ -f $interpreter ] || $(echo "Interpreter $interpreter does not exist." && exit 6)
+    [ -x $interpreter ] || $(echo "Interpreter $interpreter is not executable." && exit 5)
+    [ -f $conffile ] || $(echo "Config $conffile does not exists." && exit 6)
     echo -n $"Starting $prog: "
     # if not running, start it up here, usually something like "daemon $exec"
     daemonize -u $USER -p $pidfile -l $lockfile $interpreter $exec -c $conffile && success || failure $"$prog start"

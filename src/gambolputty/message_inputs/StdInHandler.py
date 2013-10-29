@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 import socket
-import BaseModule
 import Utils
 import time
+import BaseModule
+import BaseQueue
 from Decorators import GambolPuttyModule
 
 @GambolPuttyModule
@@ -43,7 +44,7 @@ class StdInHandler(BaseModule.BaseModule):
             else: # an empty line means stdin has been closed
                 if multiline_data.__len__() > 0:
                     self.addToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
-                while self.isAlive() and BaseModule.BaseModule.messages_in_queues > 0:
+                while self.isAlive() and BaseQueue.BaseQueue.messages_in_queues > 0:
                     time.sleep(.01)
                 self.shutDown()
                 return

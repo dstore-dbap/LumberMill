@@ -20,13 +20,13 @@ class TestUrlParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source-field': 'data'}
         super(TestUrlParser, self).testQueueCommunication(config)
 
-    def testOutputQueueFilter(self):
+    def testOutputQueueFilterNoMatch(self):
         config = {'source-field': 'dev_null'}
-        super(TestUrlParser, self).testOutputQueueFilter(config)
+        super(TestUrlParser, self).testOutputQueueFilterNoMatch(config)
 
-    def testInvertedOutputQueueFilter(self):
+    def testOutputQueueFilterMatch(self):
         config = {'source-field': 'dev_null'}
-        super(TestUrlParser, self).testInvertedOutputQueueFilter(config)
+        super(TestUrlParser, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
         config = {'source-field': 'data'}

@@ -36,10 +36,10 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
                   'geoip-dat-path': '../exampleData/GeoIP.dat'}
         super(TestAddGeoInfo, self).testQueueCommunication(config)
 
-    def testInvertedOutputQueueFilter(self):
+    def testOutputQueueFilterMatch(self):
         config = {'source-fields': ['f1'],
                   'geoip-dat-path': '../exampleData/GeoIP.dat'}
-        super(TestAddGeoInfo, self).testInvertedOutputQueueFilter(config)
+        super(TestAddGeoInfo, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
         config = {'source-fields': ['f1'],

@@ -44,5 +44,5 @@ class ModuleContainer(BaseModule.BaseModule):
 
     def handleData(self, data):
         for module in self.modules:
-            data = module.handleData(data) #  if 'work-on-copy' not in module.configuration_data else data.copy()
+            data = module.handleData(data if 'work-on-copy' not in module.configuration_data else data.copy())
         return data

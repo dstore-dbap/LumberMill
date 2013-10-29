@@ -35,13 +35,13 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testQueueCommunication(config)
 
-    def testOutputQueueFilter(self):
+    def testOutputQueueFilterNoMatch(self):
         config = {'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
-        super(TestRegexParser, self).testOutputQueueFilter(config)
+        super(TestRegexParser, self).testOutputQueueFilterNoMatch(config)
 
-    def testInvertedOutputQueueFilter(self):
+    def testOutputQueueFilterMatch(self):
         config = {'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
-        super(TestRegexParser, self).testInvertedOutputQueueFilter(config)
+        super(TestRegexParser, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
         config = {'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}

@@ -1,16 +1,17 @@
 import extendSysPath
 import unittest2
 import Queue
+import BaseQueue
 import Utils
 
 class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
-        self.input_queue = Queue.Queue()
-        self.output_queue = Queue.Queue()
+        self.input_queue = BaseQueue.BaseQueue()
+        self.output_queue = BaseQueue.BaseQueue()
         self.test_object = test_object
         self.test_object.setInputQueue(self.input_queue)
-        self.test_object.addOutputQueue(self.output_queue, filter_by_marker=False, filter_by_field=False)
+        self.test_object.addOutputQueue(self.output_queue, filter=False)
 
     def testQueueCommunication(self, config = {}):
         self.test_object.configure(config)
@@ -49,34 +50,36 @@ class ModuleBaseTestCase(unittest2.TestCase):
             queue_emtpy = True
         self.assert_(queue_emtpy == False and returned_data_dict is not data_dict)
 
-    def testOutputQueueFilter(self, config = {}):
-        filtered_queue = Queue.Queue()
+    def testOutputQueueFilterNoMatch(self, config = {}):
+        output_queue = BaseQueue.BaseQueue()
         data_dict = Utils.getDefaultDataDict({})
+        data_dict['Johann'] = 'Gambolputty'
         self.test_object.configure(config)
-        self.test_object.addOutputQueue(filtered_queue, filter_by_marker=False, filter_by_field="not_existing_field_name")
+        self.test_object.addOutputQueue(output_queue, filter='Johann == "Gambolputty de von ausfern" or Johann != "Gambolputty"')
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         try:
-            filtered_queue.get(timeout=1)
+            item = output_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == True)
 
-    def testInvertedOutputQueueFilter(self,config = {}):
-        filtered_queue = Queue.Queue()
+    def testOutputQueueFilterMatch(self,config = {}):
+        output_queue = BaseQueue.BaseQueue()
         data_dict = Utils.getDefaultDataDict({})
+        data_dict['Johann'] = 'Gambolputty'
         self.test_object.configure(config)
-        self.test_object.addOutputQueue(filtered_queue, filter_by_marker=False, filter_by_field="!not_existing_field_name")
+        self.test_object.addOutputQueue(output_queue, filter='Johann in ["Gambolputty", "Blagr"] or Johan not in ["Gambolputty", "Blagr"]')
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         returned_data_dict = {}
         try:
-            returned_data_dict = filtered_queue.get(timeout=1)
+            returned_data_dict = output_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
-        self.assert_(queue_emtpy == False and 'data' in returned_data_dict)
+        self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
 
     def tearDown(self):
         pass

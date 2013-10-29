@@ -88,13 +88,13 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source-field': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testQueueCommunication(config)
 
-    def testOutputQueueFilter(self):
+    def testOutputQueueFilterNoMatch(self):
         config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testOutputQueueFilter(config)
+        super(TestXPathParser, self).testOutputQueueFilterNoMatch(config)
 
-    def testInvertedOutputQueueFilter(self):
+    def testOutputQueueFilterMatch(self):
         config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testInvertedOutputQueueFilter(config)
+        super(TestXPathParser, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
         config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
