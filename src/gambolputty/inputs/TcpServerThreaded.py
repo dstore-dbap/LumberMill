@@ -6,10 +6,16 @@ import sys
 import socket
 import Queue
 import Utils
+import BaseModule
+from Decorators import ModuleDocstringParser
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
     """
-    use a thread pool instead of a new thread on every request
+    Use a thread pool instead of a new thread on every request.
+
+    Using a threadpool prevents the spawning of a new thread for each incoming
+    request. This should increase performance a bit.
+
     See: http://code.activestate.com/recipes/574454/
     """
     numThreads = 15
@@ -20,7 +26,7 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
         """
         Handle one request at a time until doomsday.
         """
-        # set up the threadpool
+        # Set up the threadpool.
         self.requests = Queue.Queue(self.numThreads)
 
         for x in range(self.numThreads):
@@ -56,8 +62,8 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
 
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
-    def __init__(self, queue, *args, **keys):
-        self.output_queues = queue
+    def __init__(self, tcp_server_instance, *args, **keys):
+        self.tcp_server_instance = tcp_server_instance
         self.logger = logging.getLogger(self.__class__.__name__)
         SocketServer.BaseRequestHandler.__init__(self, *args, **keys)
 
@@ -69,16 +75,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 data = self.rfile.readline().strip()
                 if data == "":
                     continue
-                try:
-                    # [queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True, timeout=5) for queue in self.output_queues]
-                    for queue in self.output_queues:
-                        queue.put(Utils.getDefaultDataDict({"received_from": host, "data": data}), block=True,
-                                  timeout=5)
-                except:
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.error(
-                        "Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
-
+                self.tcp_server_instance.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": host, "data": data}))
         except socket.timeout, e:
             # Handle a timeout gracefully
             self.finish()
@@ -89,13 +86,13 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
     pass
 
 class TCPRequestHandlerFactory:
-    def produce(self, output_queues):
+    def produce(self, tcp_server_instance):
         def createHandler(*args, **keys):
-            return ThreadedTCPRequestHandler(output_queues, *args, **keys)
+            return ThreadedTCPRequestHandler(tcp_server_instance, *args, **keys)
         return createHandler
 
-
-class TcpServerThreaded:
+@ModuleDocstringParser
+class TcpServerThreaded(BaseModule.BaseModule):
     """
     Reads data from tcp socket and sends it to its output queues.
 
@@ -112,17 +109,10 @@ class TcpServerThreaded:
     module_type = "input"
     """Set module type"""
 
-    def __init__(self, gp=False):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.gp = gp
-        self.output_queues = []
-
     def configure(self, configuration):
-        self.configuration_data = configuration
-
-    def addOutputQueue(self, queue, filter_by_marker=False, filter_by_field=False):
-        if queue not in self.output_queues:
-            self.output_queues.append(queue)
+        # Call parent configure method
+        BaseModule.BaseModule.configure(self, configuration)
+        self.server = False
 
     def run(self):
         if not self.output_queues:
@@ -130,14 +120,16 @@ class TcpServerThreaded:
             return
         handler_factory = TCPRequestHandlerFactory()
         try:
-            self.server = ThreadedTCPServer((self.configuration_data["interface"], int(self.configuration_data["port"])),
-                                            handler_factory.produce(self.output_queues))
+            self.server = ThreadedTCPServer((self.getConfigurationValue("interface"),
+                                             self.getConfigurationValue("port")),
+                                             handler_factory.produce(self))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (
-            self.configuration_data["interface"], self.configuration_data["port"], etype, evalue))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
+                                                                                       self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
-            # Start a thread with the server -- that thread will then start one
+            return
+        # Start a thread with the server -- that thread will then start one
         # more thread for each request
         self.server_thread = threading.Thread(target=self.server.serve_forever)
         # Exit the server thread when the main thread terminates
@@ -145,5 +137,6 @@ class TcpServerThreaded:
         self.server_thread.start()
 
     def shutDown(self):
-        self.server.server_close()
-        self.server.is_alive = False
+        if self.server:
+            self.server.server_close()
+            self.server.is_alive = False

@@ -8,11 +8,11 @@ import datetime
 import time
 import simplejson as json
 import elasticsearch
-import BaseModule
-from Decorators import GambolPuttyModule
+import BaseThreadedModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class ElasticSearchOutput(BaseModule.BaseModule):
+@ModuleDocstringParser
+class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -23,17 +23,17 @@ class ElasticSearchOutput(BaseModule.BaseModule):
 
     - module: ElasticSearchOutput
         configuration:
-          nodes: ["es-01.dbap.de:9200"]             # <type: list, is: required>
-          index-prefix: agora_access-               # <default: 'gambolputty-'; type: string, is: optional>
-          index-name: "Fixed index name"            # <default: False; type: string, is: optional>
-          store-data-interval: 50                   # <default: 50; type: integer, is: optional>
-          store-data-idle: 1                        # <default: 1; type: integer, is: optional>
+          nodes: ["es-01.dbap.de:9200"]             # <type: list; is: required>
+          index-prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: optional>
+          index-name: "Fixed index name"            # <default: ""; type: string; is: optional>
+          store-data-interval: 50                   # <default: 50; type: integer; is: optional>
+          store-data-idle: 1                        # <default: 1; type: integer; is: optional>
       receivers:
         - NextModule
     """
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.events_container = []
         self.store_data_interval = self.getConfigurationValue('store-data-interval')
         self.store_data_idle = self.getConfigurationValue('store-data-idle')

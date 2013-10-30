@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseModule
+import BaseThreadedModule
 import csv
 from cStringIO import StringIO
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class CsvParser(BaseModule.BaseModule):
+@ModuleDocstringParser
+class CsvParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse a string as csv data.
 

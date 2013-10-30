@@ -1,12 +1,14 @@
 import extendSysPath
 import unittest2
 import Queue
+import ConfigurationValidator
 import BaseQueue
 import Utils
 
 class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
+        self.conf_validator = ConfigurationValidator.ConfigurationValidator()
         self.input_queue = BaseQueue.BaseQueue()
         self.output_queue = BaseQueue.BaseQueue()
         self.test_object = test_object
@@ -15,7 +17,10 @@ class ModuleBaseTestCase(unittest2.TestCase):
 
     def testQueueCommunication(self, config = {}):
         self.test_object.configure(config)
-        self.test_object.start()
+        if hasattr(self.test_object, 'start'):
+            self.test_object.start()
+        else:
+            self.test_object.run()
         self.input_queue.put(Utils.getDefaultDataDict({}))
         queue_emtpy = False
         try:

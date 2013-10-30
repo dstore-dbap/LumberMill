@@ -4,12 +4,14 @@ import mock
 import Queue
 import StringIO
 import Utils
-import BaseModule
+import ConfigurationValidator
+import BaseThreadedModule
 import StdInHandler
 
 class TestStdInHandler(unittest.TestCase):
 
     def setUp(self):
+        self.conf_validator = ConfigurationValidator.ConfigurationValidator()
         self.test_object = StdInHandler.StdInHandler(gp=mock.Mock())
         self.default_dict = Utils.getDefaultDataDict({})
         self.queue = Queue.Queue()
@@ -42,7 +44,9 @@ Bring us a shrubbery!""")
 
     def testStdInHandlerStreamBoundry(self):
         self.test_object.configure({'multiline': True,
-                                    'stream_end_signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
+                                    'stream-end-signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
+        result = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(result)
         input = StringIO.StringIO("""We are the knights who say ni!
 Bring us a shrubbery!
 Ekki-Ekki-Ekki-Ekki-PTANG

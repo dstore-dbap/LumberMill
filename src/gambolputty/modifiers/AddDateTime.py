@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
-import BaseModule
-from Decorators import GambolPuttyModule
+import BaseThreadedModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class AddDateTime(BaseModule.BaseModule):
+@ModuleDocstringParser
+class AddDateTime(BaseThreadedModule.BaseThreadedModule):
     """
     Add a field with the current datetime.
 

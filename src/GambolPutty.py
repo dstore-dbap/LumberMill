@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from gambolputty import Utils
-from gambolputty import BaseModule
+from gambolputty import BaseThreadedModule
 from gambolputty import BaseQueue
+from gambolputty import ConfigurationValidator
 
 module_dirs = {'inputs': {},
                'parsers': {},
@@ -127,6 +128,7 @@ class GambolPutty:
         
             The pool size defines how many threads for this module will be started.
         """
+        configurationValidator = ConfigurationValidator.ConfigurationValidator()
         # Init modules as defined in config
         for module_info in self.configuration:
             pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
@@ -137,9 +139,10 @@ class GambolPutty:
                 # Call configuration of module
                 configuration = module_info['configuration'] if 'configuration' in module_info else {}
                 try:
-                    configuration_sucessful = module_instance.configure(configuration)
-                    if configuration_sucessful == False:
-                        self.logger.error("%sCould not configure module %s. Please check log for error messages.%s" % (Utils.AnsiColors.FAIL, module_info['module'], Utils.AnsiColors.ENDC))
+                    module_instance.configure(configuration)
+                    configuration_errors = configurationValidator.validateModuleInstance(module_instance)
+                    if configuration_errors:
+                        self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, module_info['module'], configuration_errors, Utils.AnsiColors.ENDC))
                         self.shutDown()
                         break
                 except:
@@ -234,7 +237,7 @@ class GambolPutty:
                     instance['instance'].shutDown()
         # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
         shutdown_tries = 0
-        while (BaseQueue.BaseQueue.messages_in_queues > 0 or BaseModule.BaseModule.events_being_processed > 0) and shutdown_tries <= 10:
+        while (BaseQueue.BaseQueue.messages_in_queues > 0 or BaseThreadedModule.BaseThreadedModule.events_being_processed > 0) and shutdown_tries <= 10:
             self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
             shutdown_tries += 1
             time.sleep(.1)
@@ -263,7 +266,7 @@ if "__main__" == __name__:
     if not path_to_config_file:
         usage()
         sys.exit(2)
-    lj = GambolPutty(path_to_config_file)
-    lj.initModulesFromConfig()
-    lj.initEventStream()
-    lj.run()        
+    gp = GambolPutty(path_to_config_file)
+    gp.initModulesFromConfig()
+    gp.initEventStream()
+    gp.run()

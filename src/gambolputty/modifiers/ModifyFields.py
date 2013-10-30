@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
-import BaseModule
-from Decorators import GambolPuttyModule
+import BaseThreadedModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class ModifyFields(BaseModule.BaseModule):
+@ModuleDocstringParser
+class ModifyFields(BaseThreadedModule.BaseThreadedModule):
     """
     Simple module to add/delete/change field values.
 
@@ -82,7 +82,7 @@ class ModifyFields(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Set defaults
         self.typecast_switch = { 'int': self.castToInteger,
                                  'integer': self.castToInteger,

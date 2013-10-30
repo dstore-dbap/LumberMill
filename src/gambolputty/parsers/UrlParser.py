@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 import urlparse
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class UrlParser(BaseModule.BaseModule):
+@ModuleDocstringParser
+class UrlParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse and extract url parameters.
 
@@ -17,7 +17,7 @@ class UrlParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         try:
             if configuration['source-field'].__len__ == 0:
                 raise KeyError

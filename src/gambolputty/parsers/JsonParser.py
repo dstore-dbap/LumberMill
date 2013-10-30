@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseModule
+import BaseThreadedModule
 import simplejson as json
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class JsonParser(BaseModule.BaseModule):
+@ModuleDocstringParser
+class JsonParser(BaseThreadedModule.BaseThreadedModule):
     """
     It will parse the json data and create or replace fields in the internal data dictionary with
     the corresponding json fields.

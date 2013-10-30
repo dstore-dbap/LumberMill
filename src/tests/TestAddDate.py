@@ -3,7 +3,6 @@ import ModuleBaseTestCase
 import unittest
 import mock
 import re
-import Queue
 import Utils
 import AddDateTime
 
@@ -14,6 +13,8 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testIsTimeStamp(self):
         self.test_object.configure({})
+        result = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(result)
         dict_with_date = self.test_object.handleData(Utils.getDefaultDataDict({}))
         self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', dict_with_date['@timestamp'])) # 2013-08-29T10:25:26
 

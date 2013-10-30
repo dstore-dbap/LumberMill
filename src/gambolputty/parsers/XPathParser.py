@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
-import BaseModule
-from Decorators import GambolPuttyModule
+import BaseThreadedModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class XPathParser(BaseModule.BaseModule):
+@ModuleDocstringParser
+class XPathParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse an xml string via xpath.
 

@@ -14,14 +14,18 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestRegexParser, self).setUp(RegexParser.RegexParser(gp=mock.Mock()))
 
     def testHandleData(self):
-        self.test_object.configure({'source-fields': 'data',
+        self.test_object.configure({'source-field': 'data',
                                     'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}})
+        result = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(result)
         data = Utils.getDefaultDataDict({'data': self.raw_data})
         result = self.test_object.handleData(data)
         self.assert_('bytes_send' in result and result['bytes_send'] == '3395')
 
     def testQueueCommunication(self):
         self.test_object.configure({'field-extraction-patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}})
+        result = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(result)
         self.test_object.start()
         self.input_queue.put(Utils.getDefaultDataDict({}))
         queue_emtpy = False

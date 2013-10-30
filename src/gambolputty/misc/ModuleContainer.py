@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
 import traceback
-import BaseModule
-from Decorators import GambolPuttyModule
+import BaseThreadedModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class ModuleContainer(BaseModule.BaseModule):
+@ModuleDocstringParser
+class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
 
     def initModule(self, module_name):
         """ Initalize a module."""
@@ -40,7 +40,7 @@ class ModuleContainer(BaseModule.BaseModule):
             if 'redis-client' in module.configuration_data:
                 module.initRedisClient()
         # Call parent run method
-        BaseModule.BaseModule.run(self)
+        BaseThreadedModule.BaseThreadedModule.run(self)
 
     def handleData(self, data):
         for module in self.modules:

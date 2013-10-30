@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 import ast
-import parser
-import symbol
-import token
 
 def getDefaultDataDict(dict={}):
     default_dict = { "received_from": False, 
@@ -12,6 +9,18 @@ def getDefaultDataDict(dict={}):
     return default_dict
 
 def compileAstConditionalFilterObject(filter_as_string):
+    """
+    Parse a simple queue filter to an ast and replace key names with the actual values of the
+    data dictionary.
+
+    Example:
+     ...
+     - filter: VirtualHostName == "www.gambolutty.com"
+     ...
+
+     will be parsed and compiled to:
+     matched = True if data['VirtualHostName'] == "www.gambolutty.com" else False
+    """
     transformer = AstTransformer()
     try:
         # Build a complete expression from filter.
@@ -24,7 +33,7 @@ def compileAstConditionalFilterObject(filter_as_string):
 
 class AstTransformer(ast.NodeTransformer):
     def visit_Name(self, node):
-        # ignore matched variable
+        # ignore "matched" variable
         if node.id == "matched":
             return node
         new_node = ast.parse(ast.parse('data["%s"]' % node.id)).body[0].value

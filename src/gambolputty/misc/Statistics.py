@@ -4,12 +4,12 @@ import sys
 import gambolputty.Decorators as Decorators
 import gambolputty.StatisticCollector as StatisticCollector
 import gambolputty.Utils as Utils
-import BaseModule
+import BaseThreadedModule
 import BaseQueue
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class Statistics(BaseModule.BaseModule):
+@ModuleDocstringParser
+class Statistics(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log some statistic data.
 
@@ -25,7 +25,7 @@ class Statistics(BaseModule.BaseModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.print_regex_statistics_at_message_count = self.getConfigurationValue('print-regex-statistics-interval')
 
     def regexStatistics(self):

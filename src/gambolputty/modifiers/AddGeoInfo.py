@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 import socket
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
 try:
     import GeoIP 
@@ -11,8 +11,8 @@ except:
     except:
         pass
 
-@GambolPuttyModule
-class AddGeoInfo(BaseModule.BaseModule):
+@ModuleDocstringParser
+class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
     """
     Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
 
@@ -28,7 +28,7 @@ class AddGeoInfo(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.gi = False
         try:
             self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)

@@ -1,7 +1,7 @@
 Base Classes
 ==========
 
-#####BaseModule
+#####BaseThreadedModule
 
 Base class for all gambolputty  modules.
 

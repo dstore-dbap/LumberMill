@@ -2,13 +2,12 @@
 import sys
 import socket
 import Utils
-import time
-import BaseModule
+import BaseThreadedModule
 import BaseQueue
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class StdInHandler(BaseModule.BaseModule):
+@ModuleDocstringParser
+class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from stdin and sends it to its output queues.
 
@@ -17,7 +16,7 @@ class StdInHandler(BaseModule.BaseModule):
     - module: StdInHandler
       configuration:
         multiline: True                  # <default: False; type: boolean; is: optional>
-        stream-end-signal: #########     # <default: False; type: string; is: optional>
+        stream-end-signal: #########     # <default: False; type: boolean||string; is: optional>
       receivers:
         - NextModule
     """
@@ -26,7 +25,7 @@ class StdInHandler(BaseModule.BaseModule):
     """Set module type"""
 
     def configure(self, configuration):
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.multiline = self.getConfigurationValue('multiline')
         self.stream_end_signal = self.getConfigurationValue('stream-end-signal')
             

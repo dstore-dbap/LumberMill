@@ -7,7 +7,7 @@ A simple wrapper around the redis python module.
 
 It can be used to store results of modules in a redis key/value store.
 
-See BaseModule documentation how values can be stored.
+See BaseThreadedModule documentation how values can be stored.
 
 Configuration example:
 

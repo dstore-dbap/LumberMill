@@ -3,12 +3,19 @@ import sys
 import re
 import logging
 import threading
+import traceback
 import cPickle
 import Utils
+import BaseModule
 
-class BaseModule():
+try:
+    import thread # Python 2
+except ImportError:
+    import _thread as thread # Python 3
+
+class BaseThreadedModule(threading.Thread,BaseModule.BaseModule):
     """
-    Base class for all gambolputty modules that will run not run.
+    Base class for all gambolputty modules that will run as separate threads.
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned ;)
 
@@ -16,6 +23,7 @@ class BaseModule():
 
     - module: SomeModuleName
       alias: AliasModuleName                    # <default: ""; type: string; is: optional>
+      pool-size: 4                              # <default: 1; type: integer; is: optional>
       configuration:
         work-on-copy: True                      # <default: False; type: boolean; is: optional>
         redis-client: RedisClientName           # <default: ""; type: string; is: optional>
@@ -26,32 +34,102 @@ class BaseModule():
        - ModuleAlias
     """
 
-    module_type = "generic"
-    """ Set module type. """
+    def __init__(self, gp=False):
+        BaseModule.BaseModule.__init__(self, gp)
+        threading.Thread.__init__(self)
+        self.daemon = True
+
+    def run(self):
+        if not self.input_queue:
+            self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            return
+        while self.is_alive:
+            data = False
+            try:
+                data = self.getEventFromInputQueue()
+                data = self.handleData(data)
+            except:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
+                traceback.print_exception(exc_type, exc_value, exc_tb)
+            if data:
+                self.addEventToOutputQueues(data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class __BaseThreadedModule(threading.Thread):
+    """
+    Base class for all gambolputty modules that will run as separate threads.
+    If you happen to override one of the methods defined here, be sure to know what you
+    are doing ;) You have been warned ;)
+
+    Configuration example:
+
+    - module: SomeModuleName
+      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
+      pool-size: 4                              # <default: 1; type: integer; is: optional>
+      configuration:
+        work-on-copy: True                      # <default: False; type: boolean; is: optional>
+        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
+        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+      receivers:
+       - ModuleName
+       - ModuleAlias
+    """
 
     events_being_processed = 0
 
     lock = threading.Lock()
     """ Class wide access to locking. """
 
+    module_type = "generic"
+    """ Set module type. """
+
     @staticmethod
     def incrementEventsBeingProcessedCounter():
-        BaseModule.lock.acquire()
-        BaseModule.events_being_processed += 1
-        BaseModule.lock.release()
+        BaseThreadedModule.lock.acquire()
+        BaseThreadedModule.events_being_processed += 1
+        BaseThreadedModule.lock.release()
 
     @staticmethod
     def decrementEventsBeingProcessedCounter():
-        BaseModule.lock.acquire()
-        BaseModule.events_being_processed -= 1
-        BaseModule.lock.release()
+        BaseThreadedModule.lock.acquire()
+        BaseThreadedModule.events_being_processed -= 1
+        BaseThreadedModule.lock.release()
 
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
+        threading.Thread.__init__(self)
+        self.daemon = True
         self.gp = gp
-        self.configuration_data = {}
         self.input_queue = False
         self.output_queues = []
+        self.configuration_data = {}
 
     def configure(self, configuration):
         """
@@ -183,9 +261,26 @@ class BaseModule():
         else:
             self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
-
+    
     def getOutputQueues(self):
         return self.output_queues
+
+    def __addOutputQueue(self, queue, filter_by_marker=False, filter_by_field=False):
+        func = filter_field = None
+        if filter_by_marker:
+            if filter_by_marker[:1] == "!":
+                filter_by_marker = filter_by_marker[1:]
+                func = lambda item,marker: False if marker in item['markers'] else True
+            else:
+                func = lambda item,marker: True if marker in item['markers'] else False
+            filter_field = filter_by_marker
+        elif filter_by_field:
+            if filter_by_field[:1] == "!":
+                filter_by_field = filter_by_field[1:]
+                func = lambda item,field: False if field in item else True
+            else:
+                func = lambda item,field: True if field in item else False
+            filter_field = filter_by_field
 
     def addOutputQueue(self, queue, filter = False):
         if queue == self.input_queue:
@@ -219,3 +314,19 @@ class BaseModule():
         self.incrementEventsBeingProcessedCounter()
         self.input_queue.task_done()
         return data
+
+    def run(self):
+        if not self.input_queue:
+            self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            return
+        while self.is_alive:
+            data = False
+            try:
+                data = self.getEventFromInputQueue()
+                data = self.handleData(data)
+            except:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
+                traceback.print_exception(exc_type, exc_value, exc_tb)
+            if data:
+                self.addEventToOutputQueues(data)

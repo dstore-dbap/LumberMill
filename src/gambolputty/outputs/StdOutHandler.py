@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 import pprint
-from Decorators import GambolPuttyModule
+from Decorators import ModuleDocstringParser
 
-@GambolPuttyModule
-class StdOutHandler(BaseModule.BaseModule):
+@ModuleDocstringParser
+class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
     """
     Print the data dictionary to stdout.
 

@@ -26,7 +26,7 @@ def setInterval(interval):
         return wrapper
     return decorator
 
-def GambolPuttyModule(cls):
+def ModuleDocstringParser(cls):
     @wraps(cls)
     def wrapper(*args, **kwargs):
         instance = cls(*args, **kwargs)
@@ -51,6 +51,9 @@ def GambolPuttyModule(cls):
                         etype, evalue, etb = sys.exc_info()
                         instance.logger.error("Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (prop_value,etype, evalue))
                         print "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (prop_value,etype, evalue)
+                # Support for multiple datatypes using the pattern: "type: string||list;"
+                if prop_name == "type":
+                    prop_value = prop_value.split("||")
                 try:
                     instance.configuration_metadata[config_option_info['name'].strip()].update({prop_name: prop_value})
                 except:
