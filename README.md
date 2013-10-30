@@ -54,7 +54,7 @@ GambolPutty makes use of the following projects:
 
 * an input module receives an event.
 * the event data will be wrapped in a default event dictionary of the following structure:
-    { "received_from": False, "data": <received event>, "markers": [] }
+    { "received_from": False, "data": received event, "markers": [] }
 * the input module adds the default event dictionary to its output queues as configured in the config file.
 * each following module will read from its input queue and adds the result to its output queues.
 
