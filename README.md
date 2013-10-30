@@ -75,15 +75,15 @@ Each module configuration follows the same pattern:
        - ModuleAlias:
            filter: event_type == 'httpd_access_log'
 
-module: specifies the module name and maps to the class name of the module.
-alias: use to set an alias name if you run more than just one instance of a module.
-configuration['work-on-copy']: create a copy of the default event dictionary and pass this on to following modules
-receivers: ModuleName or ModuleAlias of the receiving modules. If a filter is provided, only matching events will be send to receiver.
+* module: specifies the module name and maps to the class name of the module.
+* alias: use to set an alias name if you run more than just one instance of a module.
+* configuration['work-on-copy']: create a copy of the default event dictionary and pass this on to following modules
+* receivers: ModuleName or ModuleAlias of the receiving modules. If a filter is provided, only matching events will be send to receiver.
 
 for modules that support the storage of intermediate values in redis:
-configuration['redis-client']: name of the redis client as set in the configuration.
-configuration['redis-key']: key used to store the data in redis.
-configuration['redis-ttl']: ttl of the stored data in redis.
+* configuration['redis-client']: name of the redis client as set in the configuration.
+* configuration['redis-key']: key used to store the data in redis.
+* configuration['redis-ttl']: ttl of the stored data in redis.
 
 For configuration details of each module refer to its docstring.
 
