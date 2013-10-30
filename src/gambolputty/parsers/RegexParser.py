@@ -9,13 +9,16 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse a string by named regular expressions.
 
+    If regex metches, fields in the data dictionary will be set as defined in the named regular expression.
+    Additionally the field "event_type" will be set containing the name of the regex.
+    In the example below this would be "httpd_access_log".
+
     Configuration example:
 
     - module: RegexParser
       configuration:
         source-field: field1                    # <default: 'data'; type: string; is: optional>
-        mark-on-success: True                   # <default: False; type: boolean; is: optional>
-        mark-on-failure: True                   # <default: False; type: boolean; is: optional>
+        mark-unmatched-as: unknown              # <default: 'unknown'; type: string; is: optional>
         break-on-match: True                    # <default: True; type: boolean; is: optional>
         field-extraction-patterns:              # <type: dict; is: required>
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
@@ -26,12 +29,12 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
-        self.add_success_marker = True if 'mark-on-success' in configuration else False
-        self.add_failure_marker = True if 'mark-on-failure' in configuration else False
+        self.target_field = "event_type"
+        self.mark_unmatched_as = self.getConfigurationValue('mark-unmatched-as')
         self.break_on_match = configuration['break-on-match'] if 'break-on-match' in configuration else True
-        self.message_types = []
+        self.event_types = []
         self.fieldextraction_regexpressions = {}
-        for message_type, regex_pattern in configuration['field-extraction-patterns'].items():
+        for event_type, regex_pattern in configuration['field-extraction-patterns'].items():
             regex_options = 0
             regex_match_type = 'search'
             if isinstance(regex_pattern, list):
@@ -61,16 +64,16 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 self.gp.shutDown()
-            self.fieldextraction_regexpressions[message_type] = {'pattern': regex, 'match_type': regex_match_type}
+            self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
 
     def handleData(self, data):
         """
         This method expects a syslog datagram.
-        It might contain more then one message. We split at the newline char.
+        It might contain more then one event. We split at the newline char.
         """
-        self.logger.debug("Received raw message: %s" % data)
+        self.logger.debug("Received raw event: %s" % data)
         # Remove possible remaining syslog error code
-        # i.e. message starts with <141>
+        # i.e. event starts with <141>
         fieldname = self.getConfigurationValue('source-field', data)
         if fieldname not in data:
             return data
@@ -79,24 +82,24 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 data[fieldname] = data[fieldname][data[fieldname].index(">")+1:] + "\n"
         except:
             pass
-        data = self.parseMessage(data, fieldname)
+        data = self.parseEvent(data, fieldname)
         return data
         
-    def parseMessage(self, data, fieldname):
+    def parseEvent(self, data, fieldname):
         """
-        When a message type was successfully detected, extract the fields with to corresponding regex pattern
+        When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
-        message = data[fieldname]
+        event = data[fieldname]
         matches_dict = False
-        self.logger.debug("Input to parseMessage: %s" % message)
-        for message_type, regex_data in self.fieldextraction_regexpressions.iteritems():
+        self.logger.debug("Input to parseEvent: %s" % event)
+        for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
             if regex_data['match_type'] == 'search':
-                matches = regex_data['pattern'].search(message);
+                matches = regex_data['pattern'].search(event);
                 if matches:
                     matches_dict = matches.groupdict()
             elif regex_data['match_type'] == 'findall':
-                for match in regex_data['pattern'].finditer(message):
+                for match in regex_data['pattern'].finditer(event):
                     for key, value in match.groupdict().iteritems():
                         try:
                             matches_dict[key].append(value)
@@ -104,15 +107,9 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                             matches_dict[key] = [value]
             if matches_dict:
                 data.update(matches_dict)
-                data.update({'message_type': message_type})
-                if self.add_success_marker:
-                    data['markers'].append(self.getConfigurationValue('mark-on-success', data))
+                data.update({self.target_field: event_type})
                 if(self.break_on_match):
                     break
         if not matches_dict:
-            if self.add_failure_marker:
-                data['markers'].append(self.getConfigurationValue('mark-on-failure', data))
-            self.logger.debug("Could not extract fields for message %s." % message);
-            data.update({'message_type': 'unknown'})
-        self.logger.debug("Output from parseMessage %s" % data)
+            data.update({self.target_field: self.mark_unmatched_as})
         return data

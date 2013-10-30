@@ -99,6 +99,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
             try:
                 self.logger.error("Server cummunication error: %s" % e[1])
                 self.logger.error("%s/%s" % (self.getConfigurationValue("nodes"),index_name))
+                self.logger.error("Payload: %s" % json_data)
             except:
                 self.logger.error("Server cummunication error: %s" % e)
             finally:
@@ -112,9 +113,9 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         """
         json_data = ""
         for datarow in data:
-            if 'message_type' not in datarow:
+            if 'event_type' not in datarow:
                 continue
-            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, datarow['message_type'], md5(datarow['data']).hexdigest())
+            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, datarow['event_type'], md5(datarow['data']).hexdigest())
             try:
                 json_data += "%s%s\n" % (es_index,json.dumps(datarow))
             except UnicodeDecodeError:

@@ -33,11 +33,11 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
             return
         # log statistic data
         self.logger.info("########## Regex Statistics ##########")
-        for message_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
-            if message_type in ['rps', 'received_messages']:
+        for event_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
+            if event_type in ['rps', 'received_messages']:
                 continue
-            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, message_type, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
-            StatisticCollector.StatisticCollector().resetCounter(message_type)
+            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_type, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
+            StatisticCollector.StatisticCollector().resetCounter(event_type)
         self.logger.info("Total events: %s%s%s." % (Utils.AnsiColors.YELLOW, StatisticCollector.StatisticCollector().getCounter('received_messages'), Utils.AnsiColors.ENDC))
         StatisticCollector.StatisticCollector().resetCounter('received_messages')
         
@@ -76,6 +76,6 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
         StatisticCollector.StatisticCollector().incrementCounter('received_messages')
         StatisticCollector.StatisticCollector().incrementCounter('rps')
         try:
-            StatisticCollector.StatisticCollector().incrementCounter(data['message_type'])
+            StatisticCollector.StatisticCollector().incrementCounter(data['event_type'])
         except: 
             pass

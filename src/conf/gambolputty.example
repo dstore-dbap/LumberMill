@@ -15,10 +15,6 @@
 # The named groups will be put into correspondig fields in the data dictionary
 - module: RegexParser
   configuration:
-    # Set marker if a regex matched
-    mark-on-success: match
-    # Set marker if no regex matched
-    mark-on-failure: nomatch
     field-extraction-patterns:
       httpd_access_log: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+(apache2|nginx): httpd\[(?P<pid>\d+)\]\s+(?P<virtual_host_name>.*)\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<request_time>[\d\.]+)\s+\"(?P<http_method>GET|POST)\s+(?P<uri>.*)\"\s+(?P<http_status>-|\d+)\s+(?P<bytes_sent>-|\d+)\s+(?P<cookie_sid>\S+)\s+(?P<cookie_unique_id>\S+)\s+\"(?P<referer>.*)\"\s+\"(?P<user_agent>.*)\"'
       httpd_log_phperrors: '(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+httpd\[(?P<pid>\d+)\]:?\s(\[(?P<status>\w+)\]\s+)?\[client\s+(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\]\s+PHP (?P<php_error_type>Warning|Notice|Fatal error):\s+(?P<php_error_message>.*)'
@@ -28,10 +24,10 @@
   receivers:
     # Only messages that matched a regex will be send to this handler
     - ModuleContainer:
-        filter-by-marker: match
+        filter: event_type != 'unknown'
     # Print out messages that did not match
     - StdOutHandler:
-        filter-by-marker: nomatch
+        filter: event_type == 'unknown'
 
 # Normal handlers will always run in their own thread and need an input and output queue.
 # To avoid this overhead for simple tasks, wrap them up in a container.
@@ -58,19 +54,5 @@
     store-data-idle: 1
 
 - module: Statistics
-  configuration:
-    print_regex_statistics_at_message_count: 1000
-    regexStatistics: False
-    receiveRateStatistics: True
 
 - module: StdOutHandler
-  configuration:
-    pretty-print: True
-
-#- module: DevNullSink
-
-#- module: TcpServerTwisted
-#  configuration:
-#    TCP: 5152
-#  receivers: 
-#    - RegexParser

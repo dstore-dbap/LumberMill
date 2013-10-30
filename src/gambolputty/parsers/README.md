@@ -10,8 +10,8 @@ Configuration example:
     - module: RegexParser
       configuration:
         source-field: field1                    # <default: 'data'; type: string; is: optional>
-        mark-on-success: True                   # <default: False; type: boolean; is: optional>
-        mark-on-failure: True                   # <default: False; type: boolean; is: optional>
+        target-field: event_type                # <default: 'event_type'; type: string; is: optional>
+        mark-unmatched-as: unknown              # <default: 'unknown'; type: string; is: optional>
         break_on_match: True                    # <default: True; type: boolean; is: optional>
         field_extraction_patterns:              # <type: [string,list]; is: required>
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
