@@ -31,6 +31,10 @@ Configuration example:
 
 Issue an arbitrary http request and store the response in a configured field.
 
+This module supports the storage of the responses in an redis db. If redis-client is set,
+it will first try to retrieve the respone from redis via the key setting.
+If that fails, it will execute the http request and store the result in redis.
+
 Configuration example:
 
     - module: HttpRequest
@@ -38,6 +42,9 @@ Configuration example:
         url: http://%(server_name)s/some/path   # <type: string; is: required>
         socket-timeout: 25                      # <default: 25; type: integer; is: optional>
         target-field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
+        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis-key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
+        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
 

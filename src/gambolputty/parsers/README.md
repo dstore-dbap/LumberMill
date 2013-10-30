@@ -30,12 +30,19 @@ Configuration example:
 
 Parse an xml string via xpath.
 
+This module supports the storage of the results in an redis db. If redis-client is set,
+it will first try to retrieve the result from redis via the key setting.
+If that fails, it will execute the xpath query and store the result in redis.
+
 Configuration example:
 
     - module: XPathParser
       configuration:
         source-field: 'xml_data'                                # <type: string; is: required>
         query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
+        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis-key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
+        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
 
 #####CsvParser
 
