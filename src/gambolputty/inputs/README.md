@@ -11,6 +11,8 @@ Reads data from tcp socket and sends it to its output queues.
       configuration:
         interface: localhost             # <default: 'localhost'; type: string; is: optional>
         port: 5151                       # <default: 5151; type: integer; is: optional>
+        tls: False                       # <default: False; type: boolean; is: optional>
+        cert: /path/to/cert.pem          # <default: False; type: boolean||string; is: optional>
       receivers:
         - NextModuleName
 

@@ -2,6 +2,7 @@
 import logging
 import threading
 import SocketServer
+import ssl
 import sys
 import socket
 import Queue
@@ -82,8 +83,23 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
 
 class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
+
     allow_reuse_address = True
-    pass
+
+    def __init__(self, *args, **kwargs):
+        self.use_tls = kwargs['tls'] if 'tls' in kwargs else False
+        self.cert_file = kwargs['cert'] if 'cert' in kwargs else False
+        SocketServer.TCPServer.__init__(self, *args)
+
+    def server_bind(self):
+        SocketServer.TCPServer.server_bind(self)
+        if(self.use_tls):
+            self.socket = ssl.wrap_socket(self.socket, server_side=True, certfile=self.cert_file, do_handshake_on_connect=False)
+
+    def get_request(self):
+        (socket, addr) = SocketServer.TCPServer.get_request(self)
+        socket.do_handshake()
+        return (socket, addr)
 
 class TCPRequestHandlerFactory:
     def produce(self, tcp_server_instance):
@@ -102,6 +118,8 @@ class TcpServerThreaded(BaseModule.BaseModule):
       configuration:
         interface: localhost             # <default: 'localhost'; type: string; is: optional>
         port: 5151                       # <default: 5151; type: integer; is: optional>
+        tls: False                       # <default: False; type: boolean; is: optional>
+        cert: /path/to/cert.pem          # <default: False; type: boolean||string; is: optional>
       receivers:
         - NextModule
     """
@@ -122,7 +140,9 @@ class TcpServerThreaded(BaseModule.BaseModule):
         try:
             self.server = ThreadedTCPServer((self.getConfigurationValue("interface"),
                                              self.getConfigurationValue("port")),
-                                             handler_factory.produce(self))
+                                             handler_factory.produce(self),
+                                             tls=self.getConfigurationValue("tls"),
+                                             cert=self.getConfigurationValue("cert"))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
