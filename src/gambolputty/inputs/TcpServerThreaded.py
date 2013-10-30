@@ -91,14 +91,17 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
         self.cert_file = kwargs['cert'] if 'cert' in kwargs else False
         SocketServer.TCPServer.__init__(self, *args)
 
-    def server_bind(self):
+    def _server_bind(self):
         SocketServer.TCPServer.server_bind(self)
-        if(self.use_tls):
+        if self.use_tls:
             self.socket = ssl.wrap_socket(self.socket, server_side=True, certfile=self.cert_file, do_handshake_on_connect=False)
+        print "1123"
 
-    def get_request(self):
+    def _get_request(self):
         (socket, addr) = SocketServer.TCPServer.get_request(self)
-        socket.do_handshake()
+        if self.use_tls:
+            print "asdasd"
+            socket.do_handshake()
         return (socket, addr)
 
 class TCPRequestHandlerFactory:
