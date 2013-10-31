@@ -29,7 +29,7 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assert_('@timestamp' in dict_with_date)
 
     def testAddDateTimeCustomField(self):
-        self.test_object.configure({'target-field': 'test'})
+        self.test_object.configure({'target_field': 'test'})
         dict_with_date = self.test_object.handleData(Utils.getDefaultDataDict({}))
         self.assert_('test' in dict_with_date)
 

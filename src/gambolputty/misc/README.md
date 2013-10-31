@@ -15,14 +15,13 @@ Configuration example:
       configuration:
         server: redis.server    # <default: 'localhost'; type: string; is: optional>
         port: 6379              # <default: 6379; type: integer; is: optional>
-        db: 0                   # <default: 0; type: string; is: optional>
-        password: None          # <default: None; type: string; is: optional>
-        socket-timeout: 10      # <default: 10; type: integer; is: optional>
-        connection-pool: 10     # <default: None; type: object; is: optional>
+        db: 0                   # <default: 0; type: integer; is: optional>
+        password: None          # <default: None; type: None||string; is: optional>
+        socket_timeout: 10      # <default: 10; type: integer; is: optional>
         charset: 'utf-8'        # <default: 'utf-8'; type: string; is: optional>
         errors: 'strict'        # <default: 'strict'; type: string; is: optional>
-        decode-responses: False # <default: False; type: boolean; is: optional>
-        unix-socket-path: None  # <default: None; type: object; is: optional>
+        decode_responses: False # <default: False; type: boolean; is: optional>
+        unix_socket_path: ''    # <default: ''; type: string; is: optional>
 
 #####Statistics
 
@@ -32,7 +31,7 @@ Configuration example:
 
     - module: Statistics
       configuration:
-        print-regex-statistics-interval: 1000               # <default: 1000; type: integer; is: optional>
-        regexStatistics: True                               # <default: True; type: boolean; is: optional>
-        receiveRateStatistics: True                         # <default: True; type: boolean; is: optional>
-        waitingEventStatistics: True                        # <default: True; type: boolean; is: optional>
+        print_interval: 1000               # <default: 1000; type: integer; is: optional>
+        regex_statistics: True             # <default: True; type: boolean; is: optional>
+        receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
+        waiting_event_statistics: True     # <default: True; type: boolean; is: optional>

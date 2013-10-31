@@ -9,9 +9,9 @@ Configuration example:
 
     - module: RegexParser
       configuration:
-        source-field: field1                    # <default: 'data'; type: string; is: optional>
-        target-field: event_type                # <default: 'event_type'; type: string; is: optional>
-        mark-unmatched-as: unknown              # <default: 'unknown'; type: string; is: optional>
+        source_field: field1                    # <default: 'data'; type: string; is: optional>
+        target_field: event_type                # <default: 'event_type'; type: string; is: optional>
+        mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
         break_on_match: True                    # <default: True; type: boolean; is: optional>
         field_extraction_patterns:              # <type: [string,list]; is: required>
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
@@ -24,7 +24,7 @@ Configuration example:
 
     - module: UrlParser
       configuration:
-        source-field: uri       # <type: string; is: required>
+        source_field: uri       # <type: string; is: required>
 
 #####XPathParser
 
@@ -38,11 +38,11 @@ Configuration example:
 
     - module: XPathParser
       configuration:
-        source-field: 'xml_data'                                # <type: string; is: required>
+        source_field: 'xml_data'                                # <type: string; is: required>
         query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
-        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis-key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
-        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional if redis_client is False else required>
+        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
 
 #####CsvParser
 
@@ -55,7 +55,7 @@ Configuration example:
 
     - module: CsvParser
       configuration:
-        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
         escapechar: \                           # <default: '\'; type: string; is: optional>
         skipinitialspace: False                 # <default: False; type: boolean; is: optional>
         quotechar: '"'                          # <default: '"'; type: string; is: optional>
@@ -75,6 +75,6 @@ Configuration example:
 
     - module: JsonParser
       configuration:
-        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
       receivers:
         - NextHandler

@@ -9,11 +9,11 @@
 # The named groups will be put into corresponding fields in the data dictionary
 - module: RegexParser
   configuration:
-    field-extraction-patterns:
+    field_extraction_patterns:
       httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
   receivers:
     - StdOutHandler
     
 - module: StdOutHandler
   configuration:
-    pretty-print: True
+    pretty_print: True

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import types
+import Utils
 
 class ConfigurationValidator():
     """
@@ -11,10 +12,12 @@ class ConfigurationValidator():
     ...
 
     Where:
-    - target-field ist the configuration key
-    - default sets a standard value
-    - type sets the variable type
-    - is sets whether the parameter needs to be provided or not
+    - target_field ist the configuration key
+    - default: sets a standard value
+    - type: sets the variable type
+    - is: sets whether the parameter needs to be provided or not.
+      Here a simple conditional syntax is supported, e.g.
+      is: optional if other_key_name is False elsa required
     """
 
     typenames_to_type = {'None': types.NoneType,
@@ -48,10 +51,20 @@ class ConfigurationValidator():
             config_value = moduleInstance.getConfigurationValue(configuration_key)
             config_value_datatype = type(config_value)
             # Check for required parameter.
-            if 'is' in configuration_metadata and configuration_metadata['is'] == "required" and not config_value:
-                error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
-                result.append(error_msg)
-                continue
+            if 'is' in configuration_metadata:
+                dependency = configuration_metadata['is']
+                edits = [('optional', '"optional"'), ('required', '"required"')]
+                for search, replace in edits:
+                    dependency = dependency.replace(search, replace)
+                try:
+                    exec(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
+                except TypeError, e:
+                    error_msg = "%s: Could not parse '%s'. Error: %s" % (moduleInstance.__class__.__name__, e, configuration_key)
+                    result.append(error_msg)
+                if dependency == 'required' and not config_value:
+                    error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
+                    result.append(error_msg)
+                    continue
             # Check for value type
             allowed_datatypes = []
             if 'type' in configuration_metadata:

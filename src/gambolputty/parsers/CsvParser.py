@@ -17,7 +17,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
 
     - module: CsvParser
       configuration:
-        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
         escapechar: \                           # <default: '\'; type: string; is: optional>
         skipinitialspace: False                 # <default: False; type: boolean; is: optional>
         quotechar: '"'                          # <default: '"'; type: string; is: optional>
@@ -29,7 +29,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
 
     def handleData(self, data):
         try:
-            csv_dict = csv.reader(StringIO(data[self.getConfigurationValue('source-field', data)]),
+            csv_dict = csv.reader(StringIO(data[self.getConfigurationValue('source_field', data)]),
                                   escapechar=self.getConfigurationValue('escapechar', data),
                                   skipinitialspace=self.getConfigurationValue('skipinitialspace', data),
                                   quotechar=self.getConfigurationValue('quotechar', data),

@@ -44,7 +44,7 @@ Bring us a shrubbery!""")
 
     def testStdInHandlerStreamBoundry(self):
         self.test_object.configure({'multiline': True,
-                                    'stream-end-signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
+                                    'stream_end_signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         input = StringIO.StringIO("""We are the knights who say ni!

@@ -12,12 +12,12 @@ class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
 
     - module: StdOutHandler
       configuration:
-        pretty-print: True      # <default: True; type: boolean; is: optional>
+        pretty_print: True      # <default: True; type: boolean; is: optional>
       receivers:
         - NextModule
     """
     def handleData(self, data):
-        if self.getConfigurationValue('pretty-print'):
+        if self.getConfigurationValue('pretty_print'):
             pprint.pprint(data)
         else:
             print "%s" % data

@@ -16,14 +16,14 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
 
     - module: JsonParser
       configuration:
-        source-field: 'data'                    # <default: 'data'; type: string; is: optional>
+        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
       receivers:
         - NextHandler
     """
 
     def handleData(self, data):
         try:
-            json_data = json.loads(self.getConfigurationValue('source-field', data))
+            json_data = json.loads(self.getConfigurationValue('source_field', data))
         except:
             etype, evalue, etb = sys.exc_info()
             print "Could not parse json data %s. Exception: %s, Error: %s." % (data, etype, evalue)

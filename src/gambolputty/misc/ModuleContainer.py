@@ -37,12 +37,12 @@ class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
     def run(self):
         for module in self.modules:
             # Init redis client if it is configured by the module
-            if 'redis-client' in module.configuration_data:
+            if 'redis_client' in module.configuration_data:
                 module.initRedisClient()
         # Call parent run method
         BaseThreadedModule.BaseThreadedModule.run(self)
 
     def handleData(self, data):
         for module in self.modules:
-            data = module.handleData(data if 'work-on-copy' not in module.configuration_data else data.copy())
+            data = module.handleData(data if 'work_on_copy' not in module.configuration_data else data.copy())
         return data

@@ -12,7 +12,7 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestCsvParser, self).setUp(CsvParser.CsvParser(gp=mock.Mock()))
 
     def testSimpleCsv(self):
-        config = {'source-field': 'csv-data',
+        config = {'source_field': 'csv-data',
                   'escapechar': '\\',
                   'skipinitialspace': True,
                   'quotechar': '"',
@@ -24,7 +24,7 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue('brain' in result and result['brain'] == "just" )
 
     def testDelimiter(self):
-        config = {'source-field': 'csv-data',
+        config = {'source_field': 'csv-data',
                   'escapechar': '\\',
                   'skipinitialspace': True,
                   'quotechar': '"',

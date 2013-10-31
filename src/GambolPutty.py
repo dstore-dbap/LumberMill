@@ -110,7 +110,7 @@ class GambolPutty:
             for instance in instances:
                 name = instance['alias'] if 'alias' in instance else module_name
                 # Init redis client if it is configured by the module
-                if 'redis-client' in instance["instance"].configuration_data:
+                if 'redis_client' in instance["instance"].configuration_data:
                     instance["instance"].initRedisClient()
                 self.logger.debug("Calling start/run method of %s." % name)
                 try:
@@ -131,7 +131,7 @@ class GambolPutty:
         configurationValidator = ConfigurationValidator.ConfigurationValidator()
         # Init modules as defined in config
         for module_info in self.configuration:
-            pool_size = module_info['pool-size'] if "pool-size" in module_info else 1
+            pool_size = module_info['pool_size'] if "pool_size" in module_info else 1
             for _ in range(pool_size):
                 module_instance = self.initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
@@ -194,7 +194,7 @@ class GambolPutty:
                         try:
                             if not receiver_instance["instance"].getInputQueue():
                                 receiver_instance["instance"].setInputQueue(queues[receiver_name])
-                            filter = receiver_filter_config['filter'] if 'filter' in receiver_filter_config else False
+                            filter = receiver_filter_config['filter'] if receiver_filter_config and 'filter' in receiver_filter_config else False
                             instance["instance"].addOutputQueue(queues[receiver_name], filter)
                         except AttributeError:
                             self.logger.error(

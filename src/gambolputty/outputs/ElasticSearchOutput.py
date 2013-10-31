@@ -24,10 +24,10 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
     - module: ElasticSearchOutput
         configuration:
           nodes: ["es-01.dbap.de:9200"]             # <type: list; is: required>
-          index-prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: optional>
-          index-name: "Fixed index name"            # <default: ""; type: string; is: optional>
-          store-data-interval: 50                   # <default: 50; type: integer; is: optional>
-          store-data-idle: 1                        # <default: 1; type: integer; is: optional>
+          index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+          index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
+          store_data_interval: 50                   # <default: 50; type: integer; is: optional>
+          store_data_idle: 1                        # <default: 1; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -35,8 +35,8 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.events_container = []
-        self.store_data_interval = self.getConfigurationValue('store-data-interval')
-        self.store_data_idle = self.getConfigurationValue('store-data-idle')
+        self.store_data_interval = self.getConfigurationValue('store_data_interval')
+        self.store_data_idle = self.getConfigurationValue('store_data_idle')
         self.es = self.connect()
         if not self.es:
             self.logger.error("No index servers configured or none could be reached.")
@@ -57,10 +57,10 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if self.getConfigurationValue("index-name"):
-            self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index-Name: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index-name")))
+        if self.getConfigurationValue("index_name"):
+            self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index_Name: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index_name")))
         else:
-            self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index-Prefix: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index-prefix")))
+            self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index_Prefix: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index_prefix")))
         while self.is_alive:
             try:
                 data = self.getEventFromInputQueue(timeout=self.store_data_idle)
@@ -87,10 +87,10 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         self.events_container = []
 
     def storeData(self):
-        if self.getConfigurationValue("index-name"):
-            index_name = self.getConfigurationValue("index-name")
+        if self.getConfigurationValue("index_name"):
+            index_name = self.getConfigurationValue("index_name")
         else:
-            index_name = "%s%s" % (self.getConfigurationValue("index-prefix"), datetime.date.today().strftime('%Y.%m.%d'))
+            index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
 
         json_data = self.dataToElasticSearchJson(index_name, self.events_container)
         try:

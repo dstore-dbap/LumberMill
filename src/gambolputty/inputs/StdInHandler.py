@@ -16,7 +16,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     - module: StdInHandler
       configuration:
         multiline: True                  # <default: False; type: boolean; is: optional>
-        stream-end-signal: #########     # <default: False; type: boolean||string; is: optional>
+        stream_end_signal: #########     # <default: False; type: boolean||string; is: optional>
       receivers:
         - NextModule
     """
@@ -27,7 +27,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.multiline = self.getConfigurationValue('multiline')
-        self.stream_end_signal = self.getConfigurationValue('stream-end-signal')
+        self.stream_end_signal = self.getConfigurationValue('stream_end_signal')
             
     def run(self, input=sys.stdin):
         hostname = socket.gethostname()

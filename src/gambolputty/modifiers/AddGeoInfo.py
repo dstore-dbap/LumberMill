@@ -20,8 +20,8 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
 
     - module: AddGeoInfo
       configuration:
-        geoip-dat-path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
-        source-fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
+        source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
       receivers:
         - NextModule
     """
@@ -33,12 +33,8 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         try:
             self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
         except: 
-            if 'geoip-dat-path' not in configuration:
-                self.logger.error("Will not start module %s since 'geoip-dat-path' not configured." % (self.__class__.__name__))
-                self.gp.shutDown()
-                return False
             try:
-                self.gi = pygeoip.GeoIP(configuration['geoip-dat-path'], pygeoip.MEMORY_CACHE)
+                self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
             except NameError:
                 self.logger.error("Will not start module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
                 self.gp.shutDown()
@@ -46,7 +42,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
 
     def handleData(self, message_data):
         hostname_or_ip = False
-        for lookup_field in self.getConfigurationValue('source-fields'):
+        for lookup_field in self.getConfigurationValue('source_fields'):
             if lookup_field not in message_data:
                 continue
             hostname_or_ip = message_data[lookup_field]

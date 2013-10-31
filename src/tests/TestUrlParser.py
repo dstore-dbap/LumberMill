@@ -11,29 +11,29 @@ class TestUrlParser(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestUrlParser, self).setUp(UrlParser.UrlParser(gp=mock.Mock()))
 
     def testHandleData(self):
-        self.test_object.configure({'source-field': 'uri'})
+        self.test_object.configure({'source_field': 'uri'})
         data = Utils.getDefaultDataDict({'uri': 'http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty'})
         result = self.test_object.handleData(data)
         self.assert_('gambol' in result and result['gambol'] == 'putty')
 
     def testQueueCommunication(self):
-        config = {'source-field': 'data'}
+        config = {'source_field': 'data'}
         super(TestUrlParser, self).testQueueCommunication(config)
 
     def testOutputQueueFilterNoMatch(self):
-        config = {'source-field': 'dev_null'}
+        config = {'source_field': 'dev_null'}
         super(TestUrlParser, self).testOutputQueueFilterNoMatch(config)
 
     def testOutputQueueFilterMatch(self):
-        config = {'source-field': 'dev_null'}
+        config = {'source_field': 'dev_null'}
         super(TestUrlParser, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
-        config = {'source-field': 'data'}
+        config = {'source_field': 'data'}
         super(TestUrlParser, self).testWorksOnCopy(config)
 
     def testWorksOnOriginal(self):
-        config = {'source-field': 'data'}
+        config = {'source_field': 'data'}
         super(TestUrlParser, self).testWorksOnOriginal(config)
 
     def tearDown(self):

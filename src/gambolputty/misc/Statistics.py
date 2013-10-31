@@ -17,16 +17,16 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
 
     - module: Statistics
       configuration:
-        print-regex-statistics-interval: 1000               # <default: 1000; type: integer; is: optional>
-        regexStatistics: True                               # <default: True; type: boolean; is: optional>
-        receiveRateStatistics: True                         # <default: True; type: boolean; is: optional>
-        waitingEventStatistics: True                        # <default: True; type: boolean; is: optional>
+        print_interval: 1000               # <default: 1000; type: integer; is: optional>
+        regex_statistics: True             # <default: True; type: boolean; is: optional>
+        receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
+        waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
     """
 
     def configure(self, configuration):
          # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.print_regex_statistics_at_message_count = self.getConfigurationValue('print-regex-statistics-interval')
+        self.print_regex_statistics_at_message_count = self.getConfigurationValue('print_interval')
 
     def regexStatistics(self):
         if not StatisticCollector.StatisticCollector().getCounter('received_messages') % self.print_regex_statistics_at_message_count == 0:
@@ -57,15 +57,15 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
         if not self.input_queue:
             self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
             return
-        if self.getConfigurationValue('receiveRateStatistics'):
+        if self.getConfigurationValue('receive_rate_statistics'):
             self.receiveRateStatistics()
-        if self.getConfigurationValue('waitingEventStatistics'):
+        if self.getConfigurationValue('waiting_event_statistics'):
             self.waitingEventStatistics()
         while True:
             try:
                 item = self.getEventFromInputQueue()
                 self.handleData(item)
-                if self.getConfigurationValue('regexStatistics'):
+                if self.getConfigurationValue('regex_statistics'):
                     self.regexStatistics()
             except:
                 etype, evalue, etb = sys.exc_info()

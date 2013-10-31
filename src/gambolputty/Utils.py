@@ -8,23 +8,22 @@ def getDefaultDataDict(dict={}):
     default_dict.update(dict)
     return default_dict
 
-def compileAstConditionalFilterObject(filter_as_string):
+def compileStringToConditionalObject(condition_as_string, mapping):
     """
-    Parse a simple queue filter to an ast and replace key names with the actual values of the
-    data dictionary.
+    Parse a condition passed in as string.
 
     Example:
-     ...
-     - filter: VirtualHostName == "www.gambolutty.com"
-     ...
+
+    condition_as_string = "matched = VirtualHostName == 'www.gambolutty.com'"
+    mapping = "data['%s']"
 
      will be parsed and compiled to:
-     matched = True if data['VirtualHostName'] == "www.gambolutty.com" else False
+     matched = data['VirtualHostName'] == "www.gambolutty.com"
     """
-    transformer = AstTransformer()
+    transformer = AstTransformer(mapping)
     try:
         # Build a complete expression from filter.
-        conditional_ast = ast.parse("matched = %s" % filter_as_string)
+        conditional_ast = ast.parse(condition_as_string)
         conditional_ast = transformer.visit(conditional_ast)
         conditional = compile(conditional_ast, '<string>', 'exec')
         return conditional
@@ -32,11 +31,18 @@ def compileAstConditionalFilterObject(filter_as_string):
         return False
 
 class AstTransformer(ast.NodeTransformer):
+    def __init__(self, mapping="%s"):
+        ast.NodeTransformer.__init__(self)
+        self.mapping = mapping
+
     def visit_Name(self, node):
         # ignore "matched" variable
-        if node.id == "matched":
+        if node.id in ["matched", "dependency", "True", "False"]:
             return node
-        new_node = ast.parse(ast.parse('data["%s"]' % node.id)).body[0].value
+        #new_node = ast.parse(ast.parse('data["%s"]' % node.id)).body[0].value
+#        if node.id != "dependency":
+#            print self.mapping % node.id
+        new_node = ast.parse(ast.parse(self.mapping % node.id)).body[0].value
         return new_node
 
 class AnsiColors:

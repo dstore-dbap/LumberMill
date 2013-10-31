@@ -9,7 +9,7 @@ Configuration example:
 
     - module: AddDateTime
       configuration:
-        target-field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
+        target_field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
         format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
       receivers:
         - NextModule
@@ -22,8 +22,8 @@ Configuration example:
 
     - module: AddGeoInfo
       configuration:
-        geoip-dat-path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
-        source-fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
+        source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
       receivers:
         - NextModule
 
@@ -40,11 +40,11 @@ Configuration example:
     - module: HttpRequest
       configuration:
         url: http://%(server_name)s/some/path   # <type: string; is: required>
-        socket-timeout: 25                      # <default: 25; type: integer; is: optional>
-        target-field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
-        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis-key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
-        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+        socket_timeout: 25                      # <default: 25; type: integer; is: optional>
+        target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
+        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional if redis_client is False else required>
+        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
 
@@ -52,13 +52,13 @@ Configuration example:
 
 Simple module to add/delete/change field values.
 
-Configuration examples:
+    Configuration examples:
 
     # Keep all fields listed in source-fields, discard all others.
     - module: ModifyFields
       configuration:
         action: keep                                # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -66,7 +66,7 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: delete                              # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -74,7 +74,7 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: replace                             # <type: string; is: required>
-        source-field: field1                        # <type: string; is: required>
+        source_field: field1                        # <type: string; is: required>
         regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
         with: 'Johann Gambolputty'                  # <type: string; is: required>
       receivers:
@@ -84,9 +84,9 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: map                                 # <type: string; is: required>
-        source-field: http_status                   # <type: string; is: required>
+        source_field: http_status                   # <type: string; is: required>
         map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
-        target-field: http_status                   # <default: "%(source-field)s_mapped"; type: string; is: optional>
+        target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
       receivers:
         - NextModule
 
@@ -94,7 +94,7 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: castToInteger                       # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -102,7 +102,7 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: castToFloat                         # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -110,7 +110,7 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: castToString                        # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -118,6 +118,6 @@ Configuration examples:
     - module: ModifyFields
       configuration:
         action: castToBoolean                       # <type: string; is: required>
-        source-fields: [field1, field2, ... ]       # <type: list; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule

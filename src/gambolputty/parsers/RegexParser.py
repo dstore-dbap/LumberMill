@@ -17,10 +17,10 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
 
     - module: RegexParser
       configuration:
-        source-field: field1                    # <default: 'data'; type: string; is: optional>
-        mark-unmatched-as: unknown              # <default: 'unknown'; type: string; is: optional>
-        break-on-match: True                    # <default: True; type: boolean; is: optional>
-        field-extraction-patterns:              # <type: dict; is: required>
+        source_field: field1                    # <default: 'data'; type: string; is: optional>
+        mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
+        break_on_match: True                    # <default: True; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: dict; is: required>
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
     """
 
@@ -30,11 +30,11 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.target_field = "event_type"
-        self.mark_unmatched_as = self.getConfigurationValue('mark-unmatched-as')
-        self.break_on_match = configuration['break-on-match'] if 'break-on-match' in configuration else True
+        self.mark_unmatched_as = self.getConfigurationValue('mark_unmatched_as')
+        self.break_on_match = self.getConfigurationValue('break_on_match')
         self.event_types = []
         self.fieldextraction_regexpressions = {}
-        for event_type, regex_pattern in configuration['field-extraction-patterns'].items():
+        for event_type, regex_pattern in configuration['field_extraction_patterns'].items():
             regex_options = 0
             regex_match_type = 'search'
             if isinstance(regex_pattern, list):
@@ -74,7 +74,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         self.logger.debug("Received raw event: %s" % data)
         # Remove possible remaining syslog error code
         # i.e. event starts with <141>
-        fieldname = self.getConfigurationValue('source-field', data)
+        fieldname = self.getConfigurationValue('source_field', data)
         if fieldname not in data:
             return data
         try:

@@ -14,14 +14,14 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testDelete(self):
         self.default_dict['delme'] = 1
         self.test_object.configure({'action': 'delete',
-                                    'source-fields': ['delme']})
+                                    'source_fields': ['delme']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('delme' not in result)
 
     def testReplaceStatic(self):
         self.default_dict['replaceme'] = 'The Spanish Inquisition'
         self.test_object.configure({'action': 'replace',
-                                    'source-fields': 'replaceme',
+                                    'source_field': 'replaceme',
                                     'regex': 'Sp.*?sh',
                                     'with': 'English'})
         result = self.test_object.handleData(self.default_dict)
@@ -31,7 +31,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['replaceme'] = 'The Spanish Inquisition'
         self.default_dict['withme'] = 'English'
         self.test_object.configure({'action': 'replace',
-                                    'source-fields': 'replaceme',
+                                    'source_field': 'replaceme',
                                     'regex': 'Sp.*?sh',
                                     'with': '%(withme)s'})
         result = self.test_object.handleData(self.default_dict)
@@ -40,7 +40,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testMap(self):
         self.default_dict['http_status'] = 100
         self.test_object.configure({'action': 'map',
-                                    'source-field': 'http_status',
+                                    'source_field': 'http_status',
                                     'map': {100: 'Continue',
                                             200: 'OK'}
                                   })
@@ -51,10 +51,10 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testMapWithTargetField(self):
         self.default_dict['http_status'] = 200
         self.test_object.configure({'action': 'map',
-                                    'source-field': 'http_status',
+                                    'source_field': 'http_status',
                                     'map': {100: 'Continue',
                                             200: 'OK'},
-                                    'target-field': 'http_status'
+                                    'target_field': 'http_status'
                                   })
         result = self.test_object.handleData(self.default_dict)
         self.assertEquals(result['http_status'], 'OK')
@@ -64,7 +64,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['keep-that'] = 'My hovercraft is full of eels!'
         self.default_dict['drop-this'] = 'English'
         self.test_object.configure({'action': 'keep',
-                                    'source-fields': ['keep-this','keep-that']})
+                                    'source_fields': ['keep-this','keep-that']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('keep-this' in result and 'keep-that' in result and 'drop-this' not in result)
 
@@ -72,7 +72,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['castable'] = '3'
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
         self.test_object.configure({'action': 'castToInteger',
-                                    'source-fields': ['castable','non-castable', 'not-existing']})
+                                    'source_fields': ['castable','non-castable', 'not-existing']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('castable' in result and result['castable'] == 3)
         self.assertTrue('non-castable' in result and result['non-castable'] == 0)
@@ -81,7 +81,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['castable'] = '3.0'
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
         self.test_object.configure({'action': 'castToFloat',
-                                    'source-fields': ['castable','non-castable', 'not-existing']})
+                                    'source_fields': ['castable','non-castable', 'not-existing']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('castable' in result and result['castable'] == 3.0)
         self.assertTrue('non-castable' in result and result['non-castable'] == 0)
@@ -89,39 +89,39 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testCastToString(self):
         self.default_dict['castable'] = 3.1415
         self.test_object.configure({'action': 'castToString',
-                                    'source-fields': ['castable', 'not-existing']})
+                                    'source_fields': ['castable', 'not-existing']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('castable' in result and result['castable'] == "3.1415")
 
     def testCastToBoolean(self):
         self.default_dict['castable'] = 'True'
         self.test_object.configure({'action': 'castToBoolean',
-                                    'source-fields': ['castable', 'not-existing']})
+                                    'source_fields': ['castable', 'not-existing']})
         result = self.test_object.handleData(self.default_dict)
         self.assertTrue('castable' in result and result['castable'] == True)
 
     def testQueueCommunication(self):
-        config = {'source-fields': ['data'],
+        config = {'source_fields': ['data'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testQueueCommunication(config)
 
     def testOutputQueueFilterNoMatch(self):
-        config = {'source-fields': ['data'],
+        config = {'source_fields': ['data'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testOutputQueueFilterNoMatch(config)
 
     def testOutputQueueFilterMatch(self):
-        config = {'source-fields': ['data', 'Johann'],
+        config = {'source_fields': ['data', 'Johann'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
-        config = {'source-fields': ['data'],
+        config = {'source_fields': ['data'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testWorksOnCopy(config)
 
     def testWorksOnOriginal(self):
-        config = {'source-fields': ['data'],
+        config = {'source_fields': ['data'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testWorksOnOriginal(config)
 

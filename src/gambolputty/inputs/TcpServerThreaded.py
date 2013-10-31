@@ -77,6 +77,8 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 if data == "":
                     continue
                 self.tcp_server_instance.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": host, "data": data}))
+        #except socket.error, e:
+        #   self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
             # Handle a timeout gracefully
             self.finish()
@@ -86,21 +88,25 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
 
     allow_reuse_address = True
 
-    def __init__(self, *args, **kwargs):
-        self.use_tls = kwargs['tls'] if 'tls' in kwargs else False
-        self.cert_file = kwargs['cert'] if 'cert' in kwargs else False
-        SocketServer.TCPServer.__init__(self, *args)
+    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
+        SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
+        self.socket.settimeout(timeout)
+        self.use_tls = tls
+        self.timeout = timeout
+        if tls == True:
+            self.socket = ssl.wrap_socket(self.socket,
+                                          server_side=True,
+                                          keyfile=key,
+                                          certfile=cert,
+                                          cert_reqs=ssl.CERT_NONE,
+                                          ssl_version=ssl_ver,
+                                          do_handshake_on_connect=False,
+                                          suppress_ragged_eofs=True)
 
-    def _server_bind(self):
-        SocketServer.TCPServer.server_bind(self)
-        if self.use_tls:
-            self.socket = ssl.wrap_socket(self.socket, server_side=True, certfile=self.cert_file, do_handshake_on_connect=False)
-        print "1123"
-
-    def _get_request(self):
+    def get_request(self):
         (socket, addr) = SocketServer.TCPServer.get_request(self)
         if self.use_tls:
-            print "asdasd"
+            socket.settimeout(self.timeout)
             socket.do_handshake()
         return (socket, addr)
 
@@ -121,8 +127,10 @@ class TcpServerThreaded(BaseModule.BaseModule):
       configuration:
         interface: localhost             # <default: 'localhost'; type: string; is: optional>
         port: 5151                       # <default: 5151; type: integer; is: optional>
+        timeout: 5                       # <default: None; type: None||integer; is: optional>
         tls: False                       # <default: False; type: boolean; is: optional>
-        cert: /path/to/cert.pem          # <default: False; type: boolean||string; is: optional>
+        key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
       receivers:
         - NextModule
     """
@@ -144,7 +152,9 @@ class TcpServerThreaded(BaseModule.BaseModule):
             self.server = ThreadedTCPServer((self.getConfigurationValue("interface"),
                                              self.getConfigurationValue("port")),
                                              handler_factory.produce(self),
+                                             timeout=self.getConfigurationValue("timeout"),
                                              tls=self.getConfigurationValue("tls"),
+                                             key=self.getConfigurationValue("key"),
                                              cert=self.getConfigurationValue("cert"))
         except:
             etype, evalue, etb = sys.exc_info()

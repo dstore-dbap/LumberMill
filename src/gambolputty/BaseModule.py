@@ -17,10 +17,10 @@ class BaseModule():
     - module: SomeModuleName
       alias: AliasModuleName                    # <default: ""; type: string; is: optional>
       configuration:
-        work-on-copy: True                      # <default: False; type: boolean; is: optional>
-        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
-        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+        work_on_copy: True                      # <default: False; type: boolean; is: optional>
+        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis_key: XPathParser%(server_name)s   # <default: ""; type: string; is: required if redis_client is True else optional>
+        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
        - ModuleName
        - ModuleAlias
@@ -149,21 +149,21 @@ class BaseModule():
 
     def initRedisClient(self):
         try:
-            self.temp = self.gp.modules[self.getConfigurationValue('redis-client')][0]['instance']
-            self.redis_client = self.gp.modules[self.getConfigurationValue('redis-client')][0]['instance'].getClient()
+            self.temp = self.gp.modules[self.getConfigurationValue('redis_client')][0]['instance']
+            self.redis_client = self.gp.modules[self.getConfigurationValue('redis_client')][0]['instance'].getClient()
         except KeyError:
-            self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis-client'), Utils.AnsiColors.ENDC))
-        if 'redis-ttl' in self.configuration_data:
-            self.redis_ttl = self.getConfigurationValue('redis-ttl')
+            self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis_client'), Utils.AnsiColors.ENDC))
+        if 'redis_ttl' in self.configuration_data:
+            self.redis_ttl = self.getConfigurationValue('redis_ttl')
 
     def setRedisValue(self, key, value, ttl=0):
-        if not self.getConfigurationValue('redis-client'):
+        if not self.getConfigurationValue('redis_client'):
             return None
         pickled_value = cPickle.dumps(value)
         self.redis_client.setex(key, ttl, pickled_value)
 
     def getRedisValue(self, key):
-        if not self.getConfigurationValue('redis-client'):
+        if not self.getConfigurationValue('redis_client'):
             return None
         pickled_value = self.redis_client.get(key)
         if pickled_value is None:
@@ -193,7 +193,7 @@ class BaseModule():
             self.gp.shutDown()
             return
         if filter:
-            filter = Utils.compileAstConditionalFilterObject(filter)
+            filter = Utils.compileStringToConditionalObject("matched = %s" % filter, 'data["%s"]')
         if not any(queue == output_queue['queue'] for output_queue in self.output_queues):
             self.output_queues.append({'queue': queue, 'filter': filter})
 
@@ -204,7 +204,7 @@ class BaseModule():
                     # If the filter fails, the data will not be added to the queue.
                     exec queue['filter']
                     if not matched:
-                        return
+                        continue
                 except:
                     return
             try:
@@ -215,7 +215,7 @@ class BaseModule():
         self.decrementEventsBeingProcessedCounter()
 
     def getEventFromInputQueue(self, block=True, timeout=None):
-        data = self.input_queue.get(block, timeout) if not self.getConfigurationValue('work-on-copy') else self.input_queue.get().copy()
+        data = self.input_queue.get(block, timeout) if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
         self.incrementEventsBeingProcessedCounter()
         self.input_queue.task_done()
         return data

@@ -51,7 +51,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestXPathParser, self).setUp(XPathParser.XPathParser(gp=mock.Mock()))
 
     def testHandleData(self):
-        self.test_object.configure({'source-field': 'agora_product_xml',
+        self.test_object.configure({'source_field': 'agora_product_xml',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
@@ -59,8 +59,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue('gambolputty_xpath' in result and len(result['gambolputty_xpath']) > 0)
 
     def testHandleDataWithTargetField(self):
-        self.test_object.configure({'source-field': 'agora_product_xml',
-                                    'target-field': 'book_title',
+        self.test_object.configure({'source_field': 'agora_product_xml',
+                                    'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
@@ -71,37 +71,38 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         rc = RedisClient.RedisClient(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
         self.test_object.gp.modules = {'RedisClient': [{'instance': rc}]}
-        self.test_object.configure({'source-field': 'agora_product_xml',
-                                    'target-field': 'book_title',
+        self.test_object.configure({'source_field': 'agora_product_xml',
+                                    'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()',
-                                    'redis-client': 'RedisClient',
-                                    'redis-key': '%(category)s',
-                                    'redis-ttl': 5})
+                                    'redis_client': 'RedisClient',
+                                    'redis_key': '%(category)s',
+                                    'redis_ttl': 5})
         self.test_object.initRedisClient()
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
+        print data
         result = self.test_object.handleData(data)
         redis_entry = self.test_object.getRedisValue('COOKING')
         self.assertEquals(result['book_title'], redis_entry)
 
     def testQueueCommunication(self):
-        config = {'source-field': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
+        config = {'source_field': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testQueueCommunication(config)
 
     def testOutputQueueFilterNoMatch(self):
-        config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
+        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testOutputQueueFilterNoMatch(config)
 
     def testOutputQueueFilterMatch(self):
-        config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
+        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testOutputQueueFilterMatch(config)
 
     def testWorksOnCopy(self):
-        config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
+        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testWorksOnCopy(config)
 
     def testWorksOnOriginal(self):
-        config = {'source-fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
+        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testWorksOnOriginal(config)
 
     def tearDown(self):
