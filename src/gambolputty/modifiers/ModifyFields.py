@@ -282,6 +282,12 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                 pass
         return data
 
+    def anonymize(self, data):
+        """
+        Alias function for hash.
+        """
+        return self.hash(data)
+
     def hash(self,data):
         """
         ['source-fields'] values in data dictionary will hashed with hash algorithm set in configuration.

@@ -125,6 +125,14 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         expected = {'received_from': False, 'hash_me': 'Nobody inspects the spammish repetition', 'data': '', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2', 'markers': []}
         self.assertEqual(result, expected)
 
+    def testAnonymize(self):
+        self.test_object.configure({'action': 'anonymize',
+                                    'source_fields': ['anon_me']})
+        result = self.test_object.handleData(Utils.getDefaultDataDict({'anon_me': 'Nobody inspects the spammish repetition'}))
+        expected = {'received_from': False, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9', 'data': '', 'markers': []}
+        self.assertEqual(result, expected)
+
+
     def testQueueCommunication(self):
         config = {'source_fields': ['data'],
                   'action': 'keep'  }
