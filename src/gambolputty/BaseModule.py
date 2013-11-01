@@ -107,12 +107,12 @@ class BaseModule():
                 try:
                     return self.configuration_metadata[key]['default']
                 except KeyError:
-                    self.logger.error("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-                    self.gp.shutDown()
+                    self.logger.debug("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
+                    #self.gp.shutDown()
                     return False
         if not isinstance(config_setting, dict):
-            self.logger.error("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-            self.gp.shutDown()
+            self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
+            #self.gp.shutDown()
             return False
         # Return value directly if it does not contain any placeholders or no mapping dictionary was provided.
         if config_setting['contains_placeholder'] == False or mapping_dict == False:

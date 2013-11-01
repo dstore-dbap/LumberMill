@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 import ast
+import sys
+import logging
+import astpp
+import Utils
 
 def getDefaultDataDict(dict={}):
     default_dict = { "received_from": False, 
@@ -20,14 +24,16 @@ def compileStringToConditionalObject(condition_as_string, mapping):
      will be parsed and compiled to:
      matched = data['VirtualHostName'] == "www.gambolutty.com"
     """
-    transformer = AstTransformer(mapping)
     try:
         # Build a complete expression from filter.
+        transformer = AstTransformer(mapping)
         conditional_ast = ast.parse(condition_as_string)
         conditional_ast = transformer.visit(conditional_ast)
         conditional = compile(conditional_ast, '<string>', 'exec')
         return conditional
-    except:
+    except :
+        etype, evalue, etb = sys.exc_info()
+        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, condition_as_string, etype, evalue, Utils.AnsiColors.ENDC))
         return False
 
 class AstTransformer(ast.NodeTransformer):
@@ -39,10 +45,7 @@ class AstTransformer(ast.NodeTransformer):
         # ignore "matched" variable
         if node.id in ["matched", "dependency", "True", "False"]:
             return node
-        #new_node = ast.parse(ast.parse('data["%s"]' % node.id)).body[0].value
-#        if node.id != "dependency":
-#            print self.mapping % node.id
-        new_node = ast.parse(ast.parse(self.mapping % node.id)).body[0].value
+        new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 
 class AnsiColors:

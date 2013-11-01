@@ -17,7 +17,7 @@ class ConfigurationValidator():
     - type: sets the variable type
     - is: sets whether the parameter needs to be provided or not.
       Here a simple conditional syntax is supported, e.g.
-      is: optional if other_key_name is False elsa required
+      is: optional if other_key_name is Fa
     """
 
     typenames_to_type = {'None': types.NoneType,
@@ -36,7 +36,10 @@ class ConfigurationValidator():
 
     def validateModuleInstance(self, moduleInstance):
         result = []
-        if not hasattr(moduleInstance, 'configuration_metadata'):
+        # The ModifyFields module is an exception as it provides more than one configuration.
+        # This needs to be taken into account when testing for required configuration values.
+        # At the moment, I just skip this module until I have a good idea on how to takle this.
+        if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
             return result
         # Check if the live configuration provides a key that is not documented in modules docstring.
         config_keys_not_in_docstring = set(moduleInstance.configuration_data.keys()) - set(moduleInstance.configuration_metadata.keys())
@@ -57,9 +60,10 @@ class ConfigurationValidator():
                 for search, replace in edits:
                     dependency = dependency.replace(search, replace)
                 try:
-                    exec(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
+                    #print "dependency = %s" % dependency
+                    exec Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")')
                 except TypeError, e:
-                    error_msg = "%s: Could not parse '%s'. Error: %s" % (moduleInstance.__class__.__name__, e, configuration_key)
+                    error_msg = "%s: Could not parse dependency %s in '%s'. Error: %s" % (dependency, moduleInstance.__class__.__name__, e, configuration_key)
                     result.append(error_msg)
                 if dependency == 'required' and not config_value:
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)

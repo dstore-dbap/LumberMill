@@ -43,7 +43,11 @@ def ModuleDocstringParser(cls):
         for matches in regex.finditer(docstring):
             config_option_info = matches.groupdict()
             for prop_info in config_option_info['props'].split(";"):
-                prop_name, prop_value = [ m.strip() for m in prop_info.split(":", 1)]
+                try:
+                    prop_name, prop_value = [ m.strip() for m in prop_info.split(":", 1)]
+                except ValueError:
+                    instance.logger.debug("Could not parse config setting %s." % config_option_info)
+                    continue
                 if prop_name == "default":
                     try:
                         prop_value = ast.literal_eval(prop_value)

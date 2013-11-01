@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
+import hashlib
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
@@ -76,6 +77,19 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
       configuration:
         action: castToBoolean                       # <type: string; is: required>
         source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
+
+    # Create a hash from a field value.
+    # If target_fields is provided, it should have the same length as source_fields.
+    # If target_fields is not provided, source_fields will be replaced with the hashed value.
+    # Hash algorithm can be any of the in hashlib supported algorithms.
+    - module: ModifyFields
+      configuration:
+        action: hash                                # <type: string; is: required>
+        algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+        target_fields: [f1, f2, ... ]               # <default: []; type: list; is: optional>
       receivers:
         - NextModule
 """
@@ -265,5 +279,20 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             except ValueError:
                 data[field] = False
             except KeyError:
+                pass
+        return data
+
+    def hash(self,data):
+        """
+        ['source-fields'] values in data dictionary will hashed with hash algorithm set in configuration.
+
+        @param data: dictionary
+        @return: data: dictionary
+        """
+        for idx, field in enumerate(self.getConfigurationValue('source_fields', data)):
+            target_fieldname = field if not self.getConfigurationValue('target_fields', data) else self.getConfigurationValue('target_fields', data)[idx]
+            try:
+                data[target_fieldname] = getattr(hashlib, self.getConfigurationValue('algorithm', data))(data[field]).hexdigest()
+            except:
                 pass
         return data
