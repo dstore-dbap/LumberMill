@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from lxml import etree
+import sys
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
@@ -40,12 +41,16 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         result = self.getRedisValue(self.getConfigurationValue('redis_key', data))
         if result == None:
             xml_string = data[source_field].decode('utf8').encode('ascii', 'ignore')
-            xml_root = etree.fromstring(xml_string)
-            xml_tree = etree.ElementTree(xml_root)
-            result =  xml_tree.xpath(self.getConfigurationValue('query', data))
-            if(type(result) == list):
-                result = self.castToList(result)
-            self.setRedisValue(self.getConfigurationValue('redis_key', data), result, self.getConfigurationValue('redis_ttl'))
+            try:
+                xml_root = etree.fromstring(xml_string)
+                xml_tree = etree.ElementTree(xml_root)
+                result =  xml_tree.xpath(self.getConfigurationValue('query', data))
+                if(type(result) == list):
+                    result = self.castToList(result)
+                self.setRedisValue(self.getConfigurationValue('redis_key', data), result, self.getConfigurationValue('redis_ttl'))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("%sCould not parse xml doc %s Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, xml_string, etype, evalue, Utils.AnsiColors.ENDC))
         if result:
             target_field_name = self.getConfigurationValue('target_field', data)
             data[target_field_name] = result
