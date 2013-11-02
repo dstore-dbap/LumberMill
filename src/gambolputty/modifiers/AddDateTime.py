@@ -26,4 +26,4 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
         @return data: dictionary
         """
         data[self.getConfigurationValue('target_field', data)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', data))
-        return data
+        yield data

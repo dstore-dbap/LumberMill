@@ -20,4 +20,4 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
         if lookup_field in data:
             parsed_url = urlparse.urlparse('http://www.test.de%s' % (data[lookup_field]))
             data.update(dict(urlparse.parse_qsl(parsed_url.query)))
-        return data
+        yield data

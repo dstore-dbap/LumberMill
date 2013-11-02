@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
+import abc
 import logging
 import threading
 import cPickle
@@ -219,3 +220,9 @@ class BaseModule():
         self.incrementEventsBeingProcessedCounter()
         self.input_queue.task_done()
         return data
+
+    @abc.abstractmethod
+    def handleData(self, data):
+        """
+        This method has to be implemented by modules.
+        """

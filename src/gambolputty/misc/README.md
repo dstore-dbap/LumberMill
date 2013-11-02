@@ -35,3 +35,21 @@ Configuration example:
         regex_statistics: True             # <default: True; type: boolean; is: optional>
         receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
         waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
+
+#####Facet
+
+Collect different values of one field over a defined period of time and pass all
+encountered variations on as new event after period is expired.
+
+The event emitted by this module will be of type: "facet" and will have a "facets" and a "context_data" field.
+
+Configuration example:
+
+    - module: Facet
+      configuration:
+        source_field: url                        # <type:string; is: required>
+        group_by: %(remote_ip)s                  # <type:string; is: required>
+        keep_fields: [user_agent]                # <default: []; type: list; is: optional>
+        interval: 30                             # <default: 5; type: float||integer; is: optional>
+      receivers:
+        - NextModule

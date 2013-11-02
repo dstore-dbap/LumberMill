@@ -28,7 +28,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             print "Could not parse json data %s. Exception: %s, Error: %s." % (data, etype, evalue)
             self.logger.error("Could not parse json data %s. Exception: %s, Error: %s." % (data, etype, evalue))
-            return data
+            yield data
         for field_name, field_value in json_data.iteritems():
             data[field_name] = field_value
-        return data
+        yield data

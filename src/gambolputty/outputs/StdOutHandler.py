@@ -21,3 +21,4 @@ class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
             pprint.pprint(data)
         else:
             print "%s" % data
+        yield None

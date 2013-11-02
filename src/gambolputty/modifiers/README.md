@@ -48,6 +48,19 @@ Configuration example:
       receivers:
         - NextModule
 
+#####Permutate
+
+Configuration example:
+
+    - module: Permutate
+      configuration:
+        source_field: facets                # <type: string; is: required>
+        target_fields: ['field1', 'field2'] # <type: list; is: required>
+        length: 2                           # <default: None; type: None||integer; is: optional>
+        context_data_field: context_data    # <default: ""; type:string; is: optional>
+      receivers:
+        - NextModule
+
 #####ModifyFields
 
 Simple module to add/delete/change field values.

@@ -37,7 +37,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         """
         source_field = self.getConfigurationValue('source_field', data)
         if source_field not in data:
-            return data
+            yield data
         result = self.getRedisValue(self.getConfigurationValue('redis_key', data))
         if result == None:
             xml_string = data[source_field].decode('utf8').encode('ascii', 'ignore')
@@ -54,4 +54,4 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         if result:
             target_field_name = self.getConfigurationValue('target_field', data)
             data[target_field_name] = result
-        return data
+        yield data

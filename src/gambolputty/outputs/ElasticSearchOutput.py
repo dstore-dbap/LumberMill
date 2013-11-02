@@ -64,27 +64,26 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         while self.is_alive:
             try:
                 data = self.getEventFromInputQueue(timeout=self.store_data_idle)
-                self.handleData(data)
             except Queue.Empty:
                 if len(self.events_container) > 0:
                     self.storeData()
                     self.events_container = []
-                pass
+                continue
             except Exception, e:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from input queue." )
                 traceback.print_exception(exc_type, exc_value, exc_tb)
                 time.sleep(.5)
-            if self.output_queues and data:
+            for data in self.handleData(data):
                 self.addEventToOutputQueues(data)
 
     def handleData(self, data):
         # Append event to internal data container
         self.events_container.append(data)
-        if len(self.events_container) < self.store_data_interval:
-            return
-        self.storeData()
-        self.events_container = []
+        if len(self.events_container) >= self.store_data_interval:
+            self.storeData()
+            self.events_container = []
+        yield data
 
     def storeData(self):
         if self.getConfigurationValue("index_name"):

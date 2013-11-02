@@ -129,14 +129,14 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 self.gp.shutDown()
 
-    def handleData(self, data):
+    def handleData(self, event):
         try:
-            data = self.__getattribute__("%s" % self.action)(data)
+            event = self.__getattribute__("%s" % self.action)(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
-        return data
+        yield event
 
     def keep(self,data):
         """

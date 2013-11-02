@@ -40,14 +40,14 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
                 return False
 
-    def handleData(self, message_data):
+    def handleData(self, event):
         hostname_or_ip = False
         for lookup_field in self.getConfigurationValue('source_fields'):
-            if lookup_field not in message_data:
+            if lookup_field not in event:
                 continue
-            hostname_or_ip = message_data[lookup_field]
+            hostname_or_ip = event[lookup_field]
             if not hostname_or_ip or hostname_or_ip == "-":
-                return message_data
+                yield event
             if self.is_valid_ipv4_address(hostname_or_ip) or self.is_valid_ipv6_address(hostname_or_ip):
                 lookup_type = "ip_address"
             else:
@@ -64,13 +64,13 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                 except:
                     self.logger.debug("lookup for %s failed with error: %s" % (hostname_or_ip, e))
             try:
-                message_data['country_code'] = address_geo_info['country_code']
-                message_data['longitude-latitude'] = (address_geo_info['longitude'], address_geo_info['latitude'])
-                return message_data
+                event['country_code'] = address_geo_info['country_code']
+                event['longitude-latitude'] = (address_geo_info['longitude'], address_geo_info['latitude'])
+                yield event
             except:
                 pass
         # Return message date if lookup failed completely
-        return message_data
+        yield event
     
     def is_valid_ipv4_address(self, address):
         try:

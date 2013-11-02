@@ -44,5 +44,6 @@ class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
 
     def handleData(self, data):
         for module in self.modules:
-            data = module.handleData(data if 'work_on_copy' not in module.configuration_data else data.copy())
-        return data
+            for data in module.handleData(data if 'work_on_copy' not in module.configuration_data else data.copy()):
+                pass
+        yield data

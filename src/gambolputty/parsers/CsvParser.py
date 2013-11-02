@@ -37,7 +37,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (data, etype, evalue))
-            return data
+            yield data
         field_names = self.getConfigurationValue('fieldnames', data)
         for values in csv_dict:
             if not field_names:
@@ -48,7 +48,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
                 try:
                     data[field_names[index]] = value
                 except KeyError:
-                    return data
+                    pass
                 except IndexError:
-                    return data
-        return data
+                    pass
+        yield data
