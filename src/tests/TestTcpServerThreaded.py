@@ -40,11 +40,9 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
         except Queue.Empty:
             queue_emtpy = True
         self.test_object.shutDown()
-        # Give server some time to shut socket down.
-        time.sleep(2)
         self.assertEquals(data, expected_ret_val)
 
-    def testTlsTcpConnection(self):
+    def testATlsTcpConnection(self):
         self.test_object.configure({'tls': True,
                                     'key': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.key',
                                     'cert': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.crt',

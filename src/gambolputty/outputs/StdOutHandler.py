@@ -16,9 +16,9 @@ class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
       receivers:
         - NextModule
     """
-    def handleData(self, data):
+    def handleData(self, event):
         if self.getConfigurationValue('pretty_print'):
-            pprint.pprint(data)
+            pprint.pprint(event)
         else:
-            print "%s" % data
-        yield None
+            print "%s" % event
+        yield

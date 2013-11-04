@@ -13,8 +13,8 @@ class TestUrlParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def testHandleData(self):
         self.test_object.configure({'source_field': 'uri'})
         data = Utils.getDefaultDataDict({'uri': 'http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty'})
-        result = self.test_object.handleData(data)
-        self.assert_('gambol' in result and result['gambol'] == 'putty')
+        for result in self.test_object.handleData(data):
+            self.assert_('gambol' in result and result['gambol'] == 'putty')
 
     def testQueueCommunication(self):
         config = {'source_field': 'data'}

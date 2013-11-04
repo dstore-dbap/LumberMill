@@ -15,9 +15,9 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
         source_field: uri       # <type: string; is: required>
     """
 
-    def handleData(self, data):
-        lookup_field = self.getConfigurationValue('source_field', data)
-        if lookup_field in data:
-            parsed_url = urlparse.urlparse('http://www.test.de%s' % (data[lookup_field]))
-            data.update(dict(urlparse.parse_qsl(parsed_url.query)))
-        yield data
+    def handleData(self, event):
+        lookup_field = self.getConfigurationValue('source_field', event)
+        if lookup_field in event:
+            parsed_url = urlparse.urlparse('http://www.test.de%s' % (event[lookup_field]))
+            event.update(dict(urlparse.parse_qsl(parsed_url.query)))
+        yield event

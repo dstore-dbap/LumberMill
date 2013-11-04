@@ -16,8 +16,8 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         data = Utils.getDefaultDataDict({'json_data': "'{\"South African\": \"Fast\", \"unladen\": \"Swallow\"}'"})
-        result = self.test_object.handleData(data)
-        self.assertTrue('South African' in result and result['South African'] == "Fast" )
+        for result in self.test_object.handleData(data):
+            self.assertTrue('South African' in result and result['South African'] == "Fast" )
 
     def tearDown(self):
         pass

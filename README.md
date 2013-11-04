@@ -31,8 +31,9 @@ Running this with pypy instead of python increases performance noticeably! So be
 
 * AddDateTime, adds a timestamp field
 * AddGeoInfo, adds geo info fields
-* ModifyFields, some methods to change extracted fields, e.g. delete, replace, castToInteger etc.
+* ModifyFields, some methods to change extracted fields, e.g. insert, delete, replace, castToInteger etc.
 * HttpRequest, execute an arbritrary http request and store result
+* Permutate, takes a list in the event data emits events for all possible permutations of that list
 
 #### Outputs
 * DevNullSink, discards all data that it receives
@@ -43,6 +44,7 @@ Running this with pypy instead of python increases performance noticeably! So be
 
 * ModuleContainer, wrap modules in a container reducing the overhead to run each module in it's own thread
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul
+* Facet, collect all encountered variations of en event value over a configurable presiod of time
 * Statistics, simple statistic module
 
 GambolPutty makes use of the following projects:

@@ -48,6 +48,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             hostname_or_ip = event[lookup_field]
             if not hostname_or_ip or hostname_or_ip == "-":
                 yield event
+                return
             if self.is_valid_ipv4_address(hostname_or_ip) or self.is_valid_ipv6_address(hostname_or_ip):
                 lookup_type = "ip_address"
             else:
@@ -67,6 +68,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                 event['country_code'] = address_geo_info['country_code']
                 event['longitude-latitude'] = (address_geo_info['longitude'], address_geo_info['latitude'])
                 yield event
+                return
             except:
                 pass
         # Return message date if lookup failed completely
@@ -83,7 +85,6 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             return address.count('.') == 3
         except socket.error: 
             return False
-    
         return True
     
     def is_valid_ipv6_address(self, address):

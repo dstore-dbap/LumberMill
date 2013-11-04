@@ -26,6 +26,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
           nodes: ["es-01.dbap.de:9200"]             # <type: list; is: required>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
+          doc_id_field: 'data'                      # <default: "data"; type: string; is: optional>
           store_data_interval: 50                   # <default: 50; type: integer; is: optional>
           store_data_idle: 1                        # <default: 1; type: integer; is: optional>
       receivers:
@@ -77,13 +78,13 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
             for data in self.handleData(data):
                 self.addEventToOutputQueues(data)
 
-    def handleData(self, data):
+    def handleData(self, event):
         # Append event to internal data container
-        self.events_container.append(data)
+        self.events_container.append(event)
         if len(self.events_container) >= self.store_data_interval:
             self.storeData()
             self.events_container = []
-        yield data
+        yield event
 
     def storeData(self):
         if self.getConfigurationValue("index_name"):
@@ -106,18 +107,18 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
                 time.sleep(.1)
             return
 
-    def dataToElasticSearchJson(self, index_name, data):
+    def dataToElasticSearchJson(self, index_name, events):
         """
         Format data for elasticsearch bulk update
         """
         json_data = ""
-        for datarow in data:
-            if 'event_type' not in datarow:
+        for event in events:
+            if 'event_type' not in event:
                 continue
-            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, datarow['event_type'], md5(datarow['data']).hexdigest())
+            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], md5(event[self.getConfigurationValue("doc_id_field", event)]).hexdigest())
             try:
-                json_data += "%s%s\n" % (es_index,json.dumps(datarow))
+                json_data += "%s%s\n" % (es_index,json.dumps(event))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not  json encode %s. Exception: %s, Error: %s." % (datarow, etype, evalue))
+                self.logger.error("Could not  json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
         return json_data

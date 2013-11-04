@@ -18,12 +18,12 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
         - NextModule
     """
 
-    def handleData(self, data):
+    def handleData(self, event):
         """
         Process the event.
 
-        @param data: dictionary
+        @param event: dictionary
         @return data: dictionary
         """
-        data[self.getConfigurationValue('target_field', data)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', data))
-        yield data
+        event[self.getConfigurationValue('target_field', event)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', event))
+        yield event

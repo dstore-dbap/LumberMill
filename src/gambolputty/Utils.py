@@ -4,6 +4,7 @@ import sys
 import logging
 import astpp
 import Utils
+import __builtin__
 
 def getDefaultDataDict(dict={}):
     default_dict = { "received_from": False, 
@@ -29,6 +30,7 @@ def compileStringToConditionalObject(condition_as_string, mapping):
         transformer = AstTransformer(mapping)
         conditional_ast = ast.parse(condition_as_string)
         conditional_ast = transformer.visit(conditional_ast)
+        #print astpp.dump(conditional_ast)
         conditional = compile(conditional_ast, '<string>', 'exec')
         return conditional
     except :
@@ -42,8 +44,10 @@ class AstTransformer(ast.NodeTransformer):
         self.mapping = mapping
 
     def visit_Name(self, node):
-        # ignore "matched" variable
-        if node.id in ["matched", "dependency", "True", "False"]:
+        # ignore builtins and some other vars
+        ignore_nodes = dir(__builtin__)
+        ignore_nodes.extend(["matched", "dependency"])
+        if node.id in ignore_nodes:
             return node
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node

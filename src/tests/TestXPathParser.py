@@ -55,8 +55,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        result = self.test_object.handleData(data)
-        self.assertTrue('gambolputty_xpath' in result and len(result['gambolputty_xpath']) > 0)
+        for result in self.test_object.handleData(data):
+            self.assertTrue('gambolputty_xpath' in result and len(result['gambolputty_xpath']) > 0)
 
     def testHandleDataWithTargetField(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
@@ -64,8 +64,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        result = self.test_object.handleData(data)
-        self.assertTrue('book_title' in result and len(result['book_title']) > 0)
+        for result in self.test_object.handleData(data):
+            self.assertTrue('book_title' in result and len(result['book_title']) > 0)
 
     def testRedis(self):
         rc = RedisClient.RedisClient(gp=mock.Mock())
@@ -80,10 +80,9 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.initRedisClient()
         data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        print data
-        result = self.test_object.handleData(data)
-        redis_entry = self.test_object.getRedisValue('COOKING')
-        self.assertEquals(result['book_title'], redis_entry)
+        for result in self.test_object.handleData(data):
+            redis_entry = self.test_object.getRedisValue('COOKING')
+            self.assertEquals(result['book_title'], redis_entry)
 
     def testQueueCommunication(self):
         config = {'source_field': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}

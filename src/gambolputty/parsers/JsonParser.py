@@ -21,14 +21,14 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
         - NextHandler
     """
 
-    def handleData(self, data):
+    def handleData(self, event):
         try:
-            json_data = json.loads(self.getConfigurationValue('source_field', data))
+            json_data = json.loads(self.getConfigurationValue('source_field', event))
         except:
             etype, evalue, etb = sys.exc_info()
-            print "Could not parse json data %s. Exception: %s, Error: %s." % (data, etype, evalue)
-            self.logger.error("Could not parse json data %s. Exception: %s, Error: %s." % (data, etype, evalue))
-            yield data
+            self.logger.error("Could not parse json data %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            yield event
+            return
         for field_name, field_value in json_data.iteritems():
-            data[field_name] = field_value
-        yield data
+            event[field_name] = field_value
+        yield event

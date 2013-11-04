@@ -83,6 +83,24 @@ Simple module to add/delete/change field values.
       receivers:
         - NextModule
 
+    # Concat all fields listed in source_fields.
+    - module: ModifyFields
+      configuration:
+        action: concat                              # <type: string; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+        target_field: field5                        # <type: string; is: required>
+      receivers:
+        - NextModule
+
+    # Insert a new field with "target_field" name an "value" as new value.
+    - module: ModifyFields
+      configuration:
+        action: insert                              # <type: string; is: required>
+        target_field: "New field"                   # <type: string; is: required>
+        value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
+      receivers:
+        - NextModule
+
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - module: ModifyFields
       configuration:

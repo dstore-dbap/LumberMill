@@ -41,15 +41,21 @@ Configuration example:
 Collect different values of one field over a defined period of time and pass all
 encountered variations on as new event after period is expired.
 
-The event emitted by this module will be of type: "facet" and will have a "facets" and a "context_data" field.
+The event emitted by this module will be of type: "facet" and will have "facet_field",
+"facet_count", "facets" and "factets_context_data" fields set.
+
+This module supports the storage of the facet info in an redis db. If redis-client is set,
+it will first try to retrieve the facet info from redis via the key setting.
 
 Configuration example:
 
     - module: Facet
       configuration:
-        source_field: url                        # <type:string; is: required>
-        group_by: %(remote_ip)s                  # <type:string; is: required>
-        keep_fields: [user_agent]                # <default: []; type: list; is: optional>
-        interval: 30                             # <default: 5; type: float||integer; is: optional>
+        source_field: url                       # <type:string; is: required>
+        group_by: %(remote_ip)s                 # <type:string; is: required>
+        keep_fields: [user_agent]               # <default: []; type: list; is: optional>
+        interval: 30                            # <default: 5; type: float||integer; is: optional>
+        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule

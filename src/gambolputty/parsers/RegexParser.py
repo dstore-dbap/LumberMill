@@ -66,50 +66,49 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
             self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
 
-    def handleData(self, data):
+    def handleData(self, event):
         """
         This method expects a syslog datagram.
         It might contain more then one event. We split at the newline char.
         """
-        self.logger.debug("Received raw event: %s" % data)
         # Remove possible remaining syslog error code
         # i.e. event starts with <141>
-        fieldname = self.getConfigurationValue('source_field', data)
-        if fieldname not in data:
-            yield data
+        fieldname = self.getConfigurationValue('source_field', event)
+        if fieldname not in event:
+            yield event
+            return
         try:
-            if data[fieldname].index(">") <= 4:
-                data[fieldname] = data[fieldname][data[fieldname].index(">")+1:] + "\n"
+            if event[fieldname].index(">") <= 4:
+                event[fieldname] = event[fieldname][event[fieldname].index(">")+1:] + "\n"
         except:
             pass
-        data = self.parseEvent(data, fieldname)
-        yield data
+        event = self.parseEvent(event, fieldname)
+        yield event
         
-    def parseEvent(self, data, fieldname):
+    def parseEvent(self, event, fieldname):
         """
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
-        event = data[fieldname]
+        string_to_match = event[fieldname]
         matches_dict = False
-        self.logger.debug("Input to parseEvent: %s" % event)
         for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
             if regex_data['match_type'] == 'search':
-                matches = regex_data['pattern'].search(event);
+                matches = regex_data['pattern'].search(string_to_match);
                 if matches:
                     matches_dict = matches.groupdict()
             elif regex_data['match_type'] == 'findall':
-                for match in regex_data['pattern'].finditer(event):
+                for match in regex_data['pattern'].finditer(string_to_match):
                     for key, value in match.groupdict().iteritems():
                         try:
                             matches_dict[key].append(value)
                         except:
                             matches_dict[key] = [value]
             if matches_dict:
-                data.update(matches_dict)
-                data.update({self.target_field: event_type})
+                event.update(matches_dict)
+                event.update({self.target_field: event_type})
                 if(self.break_on_match):
                     break
         if not matches_dict:
-            data.update({self.target_field: self.mark_unmatched_as})
-        return data
+            event.update({self.target_field: self.mark_unmatched_as})
+        return event

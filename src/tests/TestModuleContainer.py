@@ -16,8 +16,8 @@ class TestModuleContainer(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testHandleData(self):
         self.test_object.configure(self.default_config)
-        data = self.test_object.handleData(Utils.getDefaultDataDict({}))
-        self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', data['@timestamp'])) # 2013-08-29T10:25:26
+        for result in self.test_object.handleData(Utils.getDefaultDataDict({})):
+            self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', result['@timestamp'])) # 2013-08-29T10:25:26
 
     def testQueueCommunication(self):
         super(TestModuleContainer, self).testQueueCommunication(self.default_config)

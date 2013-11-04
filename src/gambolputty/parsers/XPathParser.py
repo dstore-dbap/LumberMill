@@ -28,30 +28,31 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
     def castToList(self, value):
         return [str(x) for x in value]
 
-    def handleData(self, data):
+    def handleData(self, event):
         """
         Process the event.
 
-        @param data: dictionary
+        @param event: dictionary
         @return data: dictionary
         """
-        source_field = self.getConfigurationValue('source_field', data)
-        if source_field not in data:
-            yield data
-        result = self.getRedisValue(self.getConfigurationValue('redis_key', data))
+        source_field = self.getConfigurationValue('source_field', event)
+        if source_field not in event:
+            yield event
+            return
+        result = self.getRedisValue(self.getConfigurationValue('redis_key', event))
         if result == None:
-            xml_string = data[source_field].decode('utf8').encode('ascii', 'ignore')
+            xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
                 xml_root = etree.fromstring(xml_string)
                 xml_tree = etree.ElementTree(xml_root)
-                result =  xml_tree.xpath(self.getConfigurationValue('query', data))
+                result =  xml_tree.xpath(self.getConfigurationValue('query', event))
                 if(type(result) == list):
                     result = self.castToList(result)
-                self.setRedisValue(self.getConfigurationValue('redis_key', data), result, self.getConfigurationValue('redis_ttl'))
+                self.setRedisValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("%sCould not parse xml doc %s Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, xml_string, etype, evalue, Utils.AnsiColors.ENDC))
         if result:
-            target_field_name = self.getConfigurationValue('target_field', data)
-            data[target_field_name] = result
-        yield data
+            target_field_name = self.getConfigurationValue('target_field', event)
+            event[target_field_name] = result
+        yield event

@@ -42,8 +42,8 @@ class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
         # Call parent run method
         BaseThreadedModule.BaseThreadedModule.run(self)
 
-    def handleData(self, data):
+    def handleData(self, event):
         for module in self.modules:
-            for data in module.handleData(data if 'work_on_copy' not in module.configuration_data else data.copy()):
+            for event in module.handleData(event if 'work_on_copy' not in module.configuration_data else event.copy()):
                 pass
-        yield data
+        yield event

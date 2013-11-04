@@ -27,18 +27,19 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         - NextHandler
     """
 
-    def handleData(self, data):
+    def handleData(self, event):
         try:
-            csv_dict = csv.reader(StringIO(data[self.getConfigurationValue('source_field', data)]),
-                                  escapechar=self.getConfigurationValue('escapechar', data),
-                                  skipinitialspace=self.getConfigurationValue('skipinitialspace', data),
-                                  quotechar=self.getConfigurationValue('quotechar', data),
-                                  delimiter=self.getConfigurationValue('delimiter', data))
+            csv_dict = csv.reader(StringIO(event[self.getConfigurationValue('source_field', event)]),
+                                  escapechar=self.getConfigurationValue('escapechar', event),
+                                  skipinitialspace=self.getConfigurationValue('skipinitialspace', event),
+                                  quotechar=self.getConfigurationValue('quotechar', event),
+                                  delimiter=self.getConfigurationValue('delimiter', event))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (data, etype, evalue))
-            yield data
-        field_names = self.getConfigurationValue('fieldnames', data)
+            self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            yield event
+            return
+        field_names = self.getConfigurationValue('fieldnames', event)
         for values in csv_dict:
             if not field_names:
                 # Use first line for field names if none were provided.
@@ -46,9 +47,9 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
                 continue
             for index,value in enumerate(values):
                 try:
-                    data[field_names[index]] = value
+                    event[field_names[index]] = value
                 except KeyError:
                     pass
                 except IndexError:
                     pass
-        yield data
+        yield event

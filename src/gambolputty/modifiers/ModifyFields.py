@@ -12,7 +12,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     Configuration examples:
 
-    # Keep all fields listed in source-fields, discard all others.
+    # Keep all fields listed in source_fields, discard all others.
     - module: ModifyFields
       configuration:
         action: keep                                # <type: string; is: required>
@@ -20,11 +20,29 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
       receivers:
         - NextModule
 
-    # Discard all fields listed in source-fields.
+    # Discard all fields listed in source_fields.
     - module: ModifyFields
       configuration:
         action: delete                              # <type: string; is: required>
         source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      receivers:
+        - NextModule
+
+    # Concat all fields listed in source_fields.
+    - module: ModifyFields
+      configuration:
+        action: concat                              # <type: string; is: required>
+        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+        target_field: field5                        # <type: string; is: required>
+      receivers:
+        - NextModule
+
+    # Insert a new field with "target_field" name an "value" as new value.
+    - module: ModifyFields
+      configuration:
+        action: insert                              # <type: string; is: required>
+        target_field: "New field"                   # <type: string; is: required>
+        value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
       receivers:
         - NextModule
 
@@ -138,19 +156,19 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
         yield event
 
-    def keep(self,data):
+    def keep(self,event):
         """
-        Field names not listed in self.configuration_data['source-fields'] will be deleted from data dictionary.
+        Field names not listed in self.configuration_data['source_fields'] will be deleted from data dictionary.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        fields_to_del = set(data).difference(self.getConfigurationValue('source_fields', data))
+        fields_to_del = set(event).difference(self.getConfigurationValue('source_fields', event))
         for field in fields_to_del:
-            data.pop(field, None)
-        return data
+            event.pop(field, None)
+        return event
 
-    def delete(self, data):
+    def delete(self, event):
         """
         Field names listed in ['source_fields'] will be deleted from data dictionary.
 
@@ -166,121 +184,148 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         This problem affects this and some more methods in this class.
         Maybe the code can be altered to take this into account.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', data):
-            data.pop(field, None)
-        return data
+        for field in self.getConfigurationValue('source_fields', event):
+            event.pop(field, None)
+        return event
 
-    def replace(self, data):
+    def insert(self, event):
+        """
+        Insert a new field with a given value.
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        event[self.getConfigurationValue('target_field', event)] = self.getConfigurationValue('value', event)
+        return event
+
+    def concat(self, event):
+        """
+        Field names listed in ['source_fields'] will be concatenated to a new string.
+        The result will be stored in ['target_field']
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        concat_str = ""
+        for field in self.getConfigurationValue('source_fields', event):
+            try:
+                concat_str = "%s%s" % (concat_str,event[field])
+            except KeyError:
+                pass
+        event[self.getConfigurationValue('target_field', event)] = concat_str
+        return event
+
+    def replace(self, event):
         """
         Field value in data dictionary will be replace with ['with']
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        field = self.getConfigurationValue('source_field', data)
+        field = self.getConfigurationValue('source_field', event)
         try:
-            data[field] = self.regex.sub(self.getConfigurationValue('with', data), data[field])
+            event[field] = self.regex.sub(self.getConfigurationValue('with', event), event[field])
         except KeyError:
             pass
-        return data
+        return event
 
-    def map(self, data):
+    def map(self, event):
         """
         Field values in data dictionary will be mapped to ['with'][data[field]].
         By default, the target field is ${fieldname}_mapped and can be overwritten by config
         value "target_field"
 
         Useful e.g. to map http status codes to human readable status codes.
-        @param data: dictionary
-        @return data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        field = self.getConfigurationValue('source_field', data)
-        target_field_name = self.getConfigurationValue('target_field', data) if 'target_field' in self.configuration_data else "%s_mapped" % field
+        field = self.getConfigurationValue('source_field', event)
+        target_field_name = self.getConfigurationValue('target_field', event) if 'target_field' in self.configuration_data else "%s_mapped" % field
         try:
-            data[target_field_name] = self.getConfigurationValue('map', data)[data[field]]
+            event[target_field_name] = self.getConfigurationValue('map', event)[event[field]]
         except KeyError:
             pass
-        return data
+        return event
 
-    def cast(self,data):
+    def cast(self,event):
         """
         Field values in data dictionary will be cast to datatype set in ['type']
         This is just an alias function for the direct call to the castTo{DataType} method.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
         try:
-            return self.typecast_switch[self.getConfigurationValue('type'), data](data)
+            return self.typecast_switch[self.getConfigurationValue('type'), event](event)
         except:
             pass
 
-    def castToInteger(self,data):
+    def castToInteger(self,event):
         """
-       ['source-fields'] values in data dictionary will be cast to integer.
+       ['source_fields'] values in data dictionary will be cast to integer.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', data):
+        for field in self.getConfigurationValue('source_fields', event):
             try:
-                data[field] = int(data[field])
+                event[field] = int(event[field])
             except ValueError:
-                data[field] = 0
+                event[field] = 0
             except KeyError:
                 pass
-        return data
+        return event
 
-    def castToFloat(self,data):
+    def castToFloat(self,event):
         """
-        ['source-fields'] values in data dictionary will be cast to float.
+        ['source_fields'] values in data dictionary will be cast to float.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', data):
+        for field in self.getConfigurationValue('source_fields', event):
             try:
-                data[field] = float(data[field])
+                event[field] = float(event[field])
             except ValueError:
-                data[field] = 0.0
+                event[field] = 0.0
             except KeyError:
                 pass
-        return data
+        return event
 
-    def castToString(self,data):
+    def castToString(self,event):
         """
-        ['source-fields'] values in data dictionary will be cast to string.
+        ['source_fields'] values in data dictionary will be cast to string.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', data):
+        for field in self.getConfigurationValue('source_fields', event):
             try:
-                data[field] = str(data[field])
+                event[field] = str(event[field])
             except ValueError:
-                data[field] = ""
+                event[field] = ""
             except KeyError:
                    pass
-        return data
+        return event
 
-    def castToBoolean(self,data):
+    def castToBoolean(self,event):
         """
-        ['source-fields'] values in data dictionary will be cast to boolean.
+        ['source_fields'] values in data dictionary will be cast to boolean.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', data):
+        for field in self.getConfigurationValue('source_fields', event):
             try:
-                data[field] = bool(data[field])
+                event[field] = bool(event[field])
             except ValueError:
-                data[field] = False
+                event[field] = False
             except KeyError:
                 pass
-        return data
+        return event
 
     def anonymize(self, data):
         """
@@ -288,17 +333,17 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         """
         return self.hash(data)
 
-    def hash(self,data):
+    def hash(self,event):
         """
-        ['source-fields'] values in data dictionary will hashed with hash algorithm set in configuration.
+        ['source_fields'] values in data dictionary will hashed with hash algorithm set in configuration.
 
-        @param data: dictionary
-        @return: data: dictionary
+        @param event: dictionary
+        @return: event: dictionary
         """
-        for idx, field in enumerate(self.getConfigurationValue('source_fields', data)):
-            target_fieldname = field if not self.getConfigurationValue('target_fields', data) else self.getConfigurationValue('target_fields', data)[idx]
+        for idx, field in enumerate(self.getConfigurationValue('source_fields', event)):
+            target_fieldname = field if not self.getConfigurationValue('target_fields', event) else self.getConfigurationValue('target_fields', event)[idx]
             try:
-                data[target_fieldname] = getattr(hashlib, self.getConfigurationValue('algorithm', data))(data[field]).hexdigest()
+                event[target_fieldname] = getattr(hashlib, self.getConfigurationValue('algorithm', event))(event[field]).hexdigest()
             except:
                 pass
-        return data
+        return event

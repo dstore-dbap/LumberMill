@@ -20,8 +20,8 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
         data = Utils.getDefaultDataDict({'csv-data': """It's;just;a;flesh;wound."""})
-        result = self.test_object.handleData(data)
-        self.assertTrue('brain' in result and result['brain'] == "just" )
+        for result in self.test_object.handleData(data):
+            self.assertTrue('brain' in result and result['brain'] == "just" )
 
     def testDelimiter(self):
         config = {'source_field': 'csv-data',
@@ -32,9 +32,8 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
         data = Utils.getDefaultDataDict({'csv-data': """It's#just#a#flesh#wound."""})
-        result = self.test_object.handleData(data)
-        print result
-        self.assertTrue('brain' in result and result['brain'] == "just" )
+        for result in self.test_object.handleData(data):
+            self.assertTrue('brain' in result and result['brain'] == "just" )
 
     def tearDown(self):
         pass
