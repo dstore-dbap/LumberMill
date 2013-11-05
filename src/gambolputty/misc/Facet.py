@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import Utils
+import BaseModule
 import BaseThreadedModule
 import Decorators
 
@@ -28,11 +29,12 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
       receivers:
         - NextModule
     """
+    facet_data = {}
+    """Holds the facet data for all instances"""
 
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.facet_data = {}
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.evaluate_facet_data_func(self)
 
@@ -42,9 +44,9 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         if not facet_info:
             # Try internal dictionary.
             try:
-                facet_info = self.facet_data[key]
+                facet_info = Facet.facet_data[key]
             except KeyError:
-                facet_info = self.facet_data[key] = {'context_data': [], 'facets': []}
+                facet_info = Facet.facet_data[key] = {'context_data': [], 'facets': []}
         return facet_info
 
     def setFacetInfo(self, key, facet_info):
@@ -52,26 +54,28 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         stored = self.setRedisValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
         if stored:
             # Update internal dict with just the facet key.
-            self.facet_data[key] = 'Redis'
+            Facet.facet_data[key] = 'Redis'
             return
         # Use internal dictionary
-        self.facet_data[key] = facet_info
+        Facet.facet_data[key] = facet_info
 
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
         def evaluateFacets(self):
-            if not self.facet_data:
+            if not Facet.facet_data:
               return
-            for key, facet_data in self.facet_data.iteritems():
+            for key, facet_data in Facet.facet_data.iteritems():
                 if facet_data == 'Redis':
                     facet_data = self.getFacetInfo(key)
+                    # Clear redis items
+                    self.redis_client.delete(key)
                 event = Utils.getDefaultDataDict({'event_type': 'facet',
                                                   'facet_field': self.getConfigurationValue('source_field'),
                                                   'facet_count': len(facet_data['facets']),
                                                   'facets': facet_data['facets'],
                                                   'facets_context_data': facet_data['context_data']})
                 self.addEventToOutputQueues(event)
-            self.facet_data = {}
+            Facet.facet_data = {}
         return evaluateFacets
 
     def shutDown(self):
@@ -94,15 +98,29 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
             yield event
             return
         key = self.getConfigurationValue('group_by', event)
-        facet_info = self.getFacetInfo(key)
-        if facet_value not in facet_info['facets']:
-            keep = {}
-            for keep_field in self.getConfigurationValue('keep_fields'):
-                try:
-                    keep[keep_field] = event[keep_field]
-                except KeyError:
-                    pass
-            facet_info['context_data'].append(keep)
-            facet_info['facets'].append(facet_value)
-            self.setFacetInfo(key, facet_info)
+        with BaseModule.BaseModule.lock:
+            redis_lock = False
+            try:
+                # Acquire redis lock as well if configured to use redis store.
+                redis_lock = self.getRedisLock("FacetLocks:%s" % key, timeout=1)
+                if redis_lock:
+                    redis_lock.acquire()
+                facet_info = self.getFacetInfo(key)
+                if facet_value not in facet_info['facets']:
+                    keep = {}
+                    for keep_field in self.getConfigurationValue('keep_fields'):
+                        try:
+                            keep[keep_field] = event[keep_field]
+                        except KeyError:
+                            pass
+                    facet_info['context_data'].append(keep)
+                    facet_info['facets'].append(facet_value)
+                    self.setFacetInfo(key, facet_info)
+            except:
+                # Pass on all exceptions
+                raise
+            finally:
+                # Make sure redis lock is released if we have one.
+                if redis_lock:
+                    redis_lock.release()
         yield event

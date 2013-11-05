@@ -6,6 +6,7 @@ import logging
 import threading
 import cPickle
 import Utils
+import redis
 
 class BaseModule():
     """
@@ -37,15 +38,14 @@ class BaseModule():
 
     @staticmethod
     def incrementEventsBeingProcessedCounter():
-        BaseModule.lock.acquire()
-        BaseModule.events_being_processed += 1
-        BaseModule.lock.release()
+        with BaseModule.lock:
+            BaseModule.events_being_processed += 1
+
 
     @staticmethod
     def decrementEventsBeingProcessedCounter():
-        BaseModule.lock.acquire()
-        BaseModule.events_being_processed -= 1
-        BaseModule.lock.release()
+        with BaseModule.lock:
+            BaseModule.events_being_processed -= 1
 
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -53,6 +53,7 @@ class BaseModule():
         self.configuration_data = {}
         self.input_queue = False
         self.output_queues = []
+        self.redis_client = False
 
     def configure(self, configuration):
         """
@@ -157,19 +158,38 @@ class BaseModule():
         if 'redis_ttl' in self.configuration_data:
             self.redis_ttl = self.getConfigurationValue('redis_ttl')
 
-    def setRedisValue(self, key, value, ttl=0):
-        if not self.getConfigurationValue('redis_client'):
-            return None
-        pickled_value = cPickle.dumps(value)
-        self.redis_client.setex(key, ttl, pickled_value)
+    def redisClientAvailiable(self):
+        return True if self.redis_client and isinstance(self.redis_client, redis.StrictRedis) else False
 
-    def getRedisValue(self, key):
-        if not self.getConfigurationValue('redis_client'):
+    def getRedisLock(self, name, timeout=None, sleep=0.1):
+        if not self.redisClientAvailiable():
             return None
-        pickled_value = self.redis_client.get(key)
-        if pickled_value is None:
+        return self.redis_client.lock(name, timeout, sleep)
+
+    def setRedisValue(self, key, value, ttl=0, pickle=True):
+        if not self.redisClientAvailiable():
             return None
-        value = cPickle.loads(pickled_value)
+        if pickle is True:
+            try:
+                value = cPickle.dumps(value)
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sCould not store %s:%s in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
+                raise
+        self.redis_client.setex(key, ttl, value)
+
+    def getRedisValue(self, key, unpickle=True):
+        if not self.redisClientAvailiable():
+            return None
+        value = self.redis_client.get(key)
+        if unpickle and value:
+            try:
+                value = cPickle.loads(value)
+            except:
+                etype, evalue, etb = sys.exc_info()
+                print "%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC)
+                self.logger.error("%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
+                raise
         return value
 
     def shutDown(self):
@@ -212,7 +232,7 @@ class BaseModule():
                 queue['queue'].put(data)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not add received data to output queue. Excpeption: %s, Error: %s." % (etype, evalue))
+                self.logger.error("%sCould not add received data to output queue. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
         self.decrementEventsBeingProcessedCounter()
 
     def getEventFromInputQueue(self, block=True, timeout=None):
