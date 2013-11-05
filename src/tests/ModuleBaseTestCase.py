@@ -86,7 +86,6 @@ class ModuleBaseTestCase(unittest2.TestCase):
             returned_data_dict = output_queue.get(timeout=1)
         except Queue.Empty:
             queue_emtpy = True
-        print "::%s" % returned_data_dict
         self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
 
     def tearDown(self):

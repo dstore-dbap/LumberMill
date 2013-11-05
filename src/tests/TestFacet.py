@@ -14,7 +14,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
     def testInternalFacet(self):
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '%(remote_ip)s',
-                                    'keep_fields': ['remote_ip','user_agent'],
+                                    'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
@@ -46,7 +46,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.gp.modules = {'RedisClient': [{'instance': rc}]}
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '%(remote_ip)s',
-                                    'keep_fields': ['remote_ip','user_agent'],
+                                    'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1,
                                     'redis_client': 'RedisClient',
                                     'redis_ttl': 5})
@@ -73,7 +73,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
             except:
                 break
         self.assertEquals(len(events), 2)
-        self.assertEquals(events[0]['facets'], ['http://www.gambolputty.com'])
+        self.assertEquals(events[1]['facets'], ['http://www.gambolputty.com'])
 
     def tearDown(self):
         pass

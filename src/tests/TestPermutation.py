@@ -13,15 +13,18 @@ class TestPermutate(ModuleBaseTestCase.ModuleBaseTestCase):
     def testPermutate(self):
         self.test_object.configure({'source_field': 'facets',
                                     'target_fields': ['field1', 'field2'],
-                                    'length': 2,
-                                    'context_data_field': 'context'})
+                                    'context_data_field': 'context',
+                                    'context_target_mapping': {'ctx2': ['ctx2_field1', 'ctx2_field2'], 'ctx': ['ctx_field1', 'ctx_field2']}})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         events = []
-        for result in self.test_object.handleData(Utils.getDefaultDataDict({'facets': [1,2,3,4],
-                                                                            'context': [{'ctx': 'a'},{'ctx': 'b'},{'ctx': 'c'},{'ctx': 'd'}]})):
+        for result in self.test_object.handleData(Utils.getDefaultDataDict({'facets': [1,2], 'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},
+                                                                                                          2: {'ctx': 'b', 'ctx2': 'bb'}
+                                                                                                        }}
+                                                                            )):
             events.append(result)
-        self.assertEquals(len(events), 12)
+        print events
+        self.assertEquals(len(events), 2)
 
     def tearDown(self):
         pass
