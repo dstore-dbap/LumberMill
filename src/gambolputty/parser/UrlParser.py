@@ -15,6 +15,9 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
         source_field: uri       # <type: string; is: required>
     """
 
+    module_type = "parser"
+    """Set module type"""
+
     def handleData(self, event):
         lookup_field = self.getConfigurationValue('source_field', event)
         if lookup_field in event:

@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 import sys
-import re
-import logging
 import threading
 import traceback
-import cPickle
 import Utils
 import BaseModule
+import StatisticCollector
 
-try:
-    import thread # Python 2
-except ImportError:
-    import _thread as thread # Python 3
-
-class BaseThreadedModule(threading.Thread,BaseModule.BaseModule):
+class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
     """
     Base class for all gambolputty modules that will run as separate threads.
     If you happen to override one of the methods defined here, be sure to know what you
@@ -41,7 +34,10 @@ class BaseThreadedModule(threading.Thread,BaseModule.BaseModule):
 
     def run(self):
         if not self.input_queue:
-            self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            # Only issue warning for those modules that are expected to have an input queue.
+            # TODO: A better solution should be implemented...
+            if self.module_type not in ['stand_alone']:
+                self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         while self.is_alive:
             data = False
@@ -53,4 +49,7 @@ class BaseThreadedModule(threading.Thread,BaseModule.BaseModule):
                 traceback.print_exception(exc_type, exc_value, exc_tb)
                 continue
             for data in self.handleData(data):
-                self.addEventToOutputQueues(data)
+                if data is not None:
+                    self.addEventToOutputQueues(data)
+                else:
+                    StatisticCollector.StatisticCollector().decrementCounter('events_in_process')

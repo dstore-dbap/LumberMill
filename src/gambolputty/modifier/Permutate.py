@@ -26,6 +26,9 @@ class Permutate(BaseThreadedModule.BaseThreadedModule):
         - NextModule
     """
 
+    module_type = "modifier"
+    """Set module type"""
+
     def handleData(self, event):
         """
         Process the event.

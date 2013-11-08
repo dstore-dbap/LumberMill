@@ -2,6 +2,7 @@
 import BaseThreadedModule
 import pprint
 from Decorators import ModuleDocstringParser
+import StatisticCollector
 
 @ModuleDocstringParser
 class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
@@ -16,6 +17,10 @@ class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
       receivers:
         - NextModule
     """
+
+    module_type = "output"
+    """Set module type"""
+
     def handleData(self, event):
         if self.getConfigurationValue('pretty_print'):
             pprint.pprint(event)

@@ -24,6 +24,9 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
           httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
     """
 
+    module_type = "parser"
+    """Set module type"""
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

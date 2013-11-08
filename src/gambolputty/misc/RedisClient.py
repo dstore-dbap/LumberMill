@@ -23,6 +23,8 @@ class RedisClient(BaseThreadedModule.BaseThreadedModule):
         decode_responses: False # <default: False; type: boolean; is: optional>
         unix_socket_path: ''    # <default: ''; type: string; is: optional>
     """
+    module_type = "stand_alone"
+    """Set module type"""
 
     def configure(self, configuration):
          # Call parent configure method

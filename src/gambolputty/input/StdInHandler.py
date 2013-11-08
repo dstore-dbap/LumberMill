@@ -2,8 +2,9 @@
 import sys
 import socket
 import Utils
+import StatisticCollector
+import trace
 import BaseThreadedModule
-import BaseQueue
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
@@ -24,6 +25,12 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     module_type = "input"
     """Set module type"""
 
+    def _traceDataWrite(self, *args):
+        print "written"
+
+    def _traceDataRead(self, *args):
+        print "read"
+
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.multiline = self.getConfigurationValue('multiline')
@@ -38,15 +45,14 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
             data = input.readline()
             if data.__len__() > 0:
                 if not self.multiline:
-                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}))
+                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": data}), update_counter=False) # , update_counter=False
                 else:
                     if self.stream_end_signal and self.stream_end_signal == data:
-                        self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
+                        self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
                         multiline_data = ""
                         continue
                     multiline_data += data
             else: # an empty line means stdin has been closed
                 if multiline_data.__len__() > 0:
-                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}))
+                    self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
                 self.gp.shutDown()
-                return

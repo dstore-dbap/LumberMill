@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-from gambolputty import Utils
-from gambolputty import BaseThreadedModule
-from gambolputty import BaseQueue
-from gambolputty import ConfigurationValidator
+import Utils
+import BaseQueue
+import ConfigurationValidator
+import StatisticCollector as StatisticCollector
+import collections
 
-module_dirs = {'inputs': {},
-               'parsers': {},
-               'modifiers': {},
-               'outputs': {},
-               'misc': {}}
+module_dirs = ['input',
+               'parser',
+               'modifier',
+               'misc',
+               'output']
 
 import sys
 import os
@@ -18,15 +19,14 @@ import getopt
 import logging.config
 import threading
 import yaml
+import pprint
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
 # different module directories.
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
-sys.path.append(pathname + "/gambolputty")
-[sys.path.append(pathname + "/gambolputty/" + mod_dir) for mod_dir in module_dirs]
-
+[sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
 
 class Node:
     def __init__(self, module):
@@ -35,7 +35,6 @@ class Node:
 
     def addChild(self, node):
         self.children.append(node)
-
 
 def hasLoop(node, stack=[]):
     if not stack:
@@ -106,22 +105,24 @@ class GambolPutty:
         Start each module in its own thread
         """
         # All modules are completely configured, call modules run method if it exists.
-        for module_name, instances in self.modules.iteritems():
-            for instance in instances:
-                name = instance['alias'] if 'alias' in instance else module_name
+        #pprint.pprint(self.modules.items())
+        #pprint.pprint(sorted(self.modules.items(), key=lambda x: x[1]['idx']))
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            for instance in module_info['instances']:
+                name = module_info['alias'] if 'alias' in module_info else module_name
                 # Init redis client if it is configured by the module
-                if 'redis_client' in instance["instance"].configuration_data:
-                    instance["instance"].initRedisClient()
+                if 'redis_client' in instance.configuration_data:
+                    instance.initRedisClient()
                 self.logger.debug("Calling start/run method of %s." % name)
                 try:
-                    if (isinstance(instance["instance"], threading.Thread)):
-                        instance["instance"].start()
+                    if (isinstance(instance, threading.Thread)):
+                        instance.start()
                     else:
-                        instance["instance"].run()
+                        instance.run()
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
-            self.logger.info("%sStarted module %s with pool size of %s%s" % (Utils.AnsiColors.LIGHTBLUE , module_name, len(instances),Utils.AnsiColors.ENDC))
+            self.logger.info("%sStarted module %s with pool size of %s%s" % (Utils.AnsiColors.LIGHTBLUE , module_name, len(module_info['instances']),Utils.AnsiColors.ENDC))
 
     def initModulesFromConfig(self):
         """ Initalize all modules from the current config.
@@ -130,8 +131,9 @@ class GambolPutty:
         """
         configurationValidator = ConfigurationValidator.ConfigurationValidator()
         # Init modules as defined in config
-        for module_info in self.configuration:
+        for idx,module_info in enumerate(self.configuration):
             pool_size = module_info['pool_size'] if "pool_size" in module_info else 1
+            module_instances = []
             for _ in range(pool_size):
                 module_instance = self.initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
@@ -150,18 +152,20 @@ class GambolPutty:
                     self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_info['module'], etype, evalue, Utils.AnsiColors.ENDC))
                     self.shutDown()
                     break
-                try:
-                    self.modules[module_name].append({'instance': module_instance,
-                                                      'configuration': module_info[
-                                                          'configuration'] if 'configuration' in module_info else None,
-                                                      'receivers': module_info[
-                                                          'receivers'] if 'receivers' in module_info else None})
-                except:
-                    self.modules[module_name] = [{'instance': module_instance,
-                                                  'configuration': module_info[
-                                                      'configuration'] if 'configuration' in module_info else None,
-                                                  'receivers': module_info[
-                                                      'receivers'] if 'receivers' in module_info else None}]
+                module_instances.append(module_instance)
+            self.modules[module_name] = {'idx': idx,
+                                         'instances': module_instances,
+                                         'type': module_instance.module_type,
+                                         'configuration': module_info['configuration'] if 'configuration' in module_info else None,
+                                         'receivers': module_info['receivers'] if 'receivers' in module_info else None}
+            """
+            except:
+                self.modules[module_name] = [{'instance': module_instance,
+                                              'configuration': module_info[
+                                                  'configuration'] if 'configuration' in module_info else None,
+                                              'receivers': module_info[
+                                                  'receivers'] if 'receivers' in module_info else None}]
+            """
 
     def initEventStream(self):
         """ Connect modules via queues.
@@ -173,11 +177,11 @@ class GambolPutty:
         # All modules are initialized, connect producer and consumers via a queue.
         queues = {}
         module_loop_buffer = []
-        for module_name, instances in self.modules.iteritems():
-            for instance in instances:
-                if "receivers" not in instance or instance['receivers'] is None:
+        for module_name, module_info in self.modules.iteritems():
+            for instance in module_info['instances']:
+                if "receivers" not in module_info or module_info['receivers'] is None:
                     continue
-                for receiver_data in instance["receivers"]:
+                for receiver_data in module_info["receivers"]:
                     receiver_filter_config = {}
                     if isinstance(receiver_data, str):
                         receiver_name = receiver_data
@@ -188,28 +192,28 @@ class GambolPutty:
                         self.logger.warning(
                             "%sCould not add %s as receiver for %s. Module not found.%s" % (Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
                         continue
-                    for receiver_instance in self.modules[receiver_name]:
+                    for receiver_instance in self.modules[receiver_name]['instances']:
                         if receiver_name not in queues:
                             queues[receiver_name] = self.produceQueue()
                         try:
-                            if not receiver_instance["instance"].getInputQueue():
-                                receiver_instance["instance"].setInputQueue(queues[receiver_name])
+                            if not receiver_instance.getInputQueue():
+                                receiver_instance.setInputQueue(queues[receiver_name])
                             filter = receiver_filter_config['filter'] if receiver_filter_config and 'filter' in receiver_filter_config else False
-                            instance["instance"].addOutputQueue(queues[receiver_name], filter)
+                            instance.addOutputQueue(queues[receiver_name], filter)
                         except AttributeError:
                             self.logger.error(
                                 "%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
                             # Build a node structure used for the loop test.
                         try:
-                            node = (node for node in module_loop_buffer if node.module == instance["instance"]).next()
+                            node = (node for node in module_loop_buffer if node.module == instance).next()
                         except:
-                            node = Node(instance["instance"])
+                            node = Node(instance)
                             module_loop_buffer.append(node)
                         try:
                             receiver_node = (node for node in module_loop_buffer if \
-                                             node.module == receiver_instance["instance"]).next()
+                                             node.module == receiver_instance).next()
                         except:
-                            receiver_node = Node(receiver_instance["instance"])
+                            receiver_node = Node(receiver_instance)
                             module_loop_buffer.append(receiver_node)
                         node.addChild(receiver_node)
         # Check if the configuration produces a loop.
@@ -229,18 +233,19 @@ class GambolPutty:
             self.shutDown()
 
     def shutDown(self):
-        self.logger.info("%sShutting down...%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         # Shutdown all input modules.
-        for module_name, instances in self.modules.iteritems():
-            for instance in instances:
-                if instance['instance'].module_type == "input":
-                    instance['instance'].shutDown()
+        for module_name, module_info in self.modules.iteritems():
+            for instance in module_info['instances']:
+                if instance.module_type == "input":
+                    self.logger.info("%sShutting down input module: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
+                    instance.shutDown()
         # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
         shutdown_tries = 0
-        while (BaseQueue.BaseQueue.messages_in_queues > 0 or BaseThreadedModule.BaseThreadedModule.events_being_processed > 0) and shutdown_tries <= 10:
-            self.logger.info("%sWaiting for pending events to be processed. Events waiting to be served: %s%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
+        while (StatisticCollector.StatisticCollector().getCounter('events_in_queues') > 0 or StatisticCollector.StatisticCollector().getCounter('events_in_process') > 0) and shutdown_tries <= 20:
+            #pprint.pprint(StatisticCollector.StatisticCollector().counter_stats_per_module)
+            self.logger.info("%sWaiting for pending events. Events waiting in queues: %s. Events in process: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
             shutdown_tries += 1
-            time.sleep(.1)
+            time.sleep(.3)
         self.is_alive = False
         sys.exit()
 
@@ -249,7 +254,7 @@ def usage():
 
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])
-    config_pathname = config_pathname[:config_pathname.rfind("/")] + "/conf"
+    config_pathname = config_pathname[:config_pathname.rfind("/")] + "/../conf"
     logging.config.fileConfig('%s/logger.conf' % config_pathname)
     path_to_config_file = ""
     try:

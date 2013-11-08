@@ -21,6 +21,9 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
         - NextHandler
     """
 
+    module_type = "parser"
+    """Set module type"""
+
     def handleData(self, event):
         try:
             json_data = json.loads(self.getConfigurationValue('source_field', event))

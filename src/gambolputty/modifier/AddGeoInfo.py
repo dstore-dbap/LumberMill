@@ -26,6 +26,9 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         - NextModule
     """
 
+    module_type = "modifier"
+    """Set module type"""
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

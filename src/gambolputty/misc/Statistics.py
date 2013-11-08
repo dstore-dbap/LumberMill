@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import time
 import sys
-import gambolputty.Decorators as Decorators
-import gambolputty.StatisticCollector as StatisticCollector
-import gambolputty.Utils as Utils
+import StatisticCollector
+import Utils
 import BaseThreadedModule
 import BaseQueue
-from Decorators import ModuleDocstringParser
+import Decorators
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class Statistics(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log some statistic data.
@@ -17,65 +16,65 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
 
     - module: Statistics
       configuration:
-        print_interval: 1000               # <default: 1000; type: integer; is: optional>
+        print_interval: 10               # <default: 10; type: integer; is: optional>
         regex_statistics: True             # <default: True; type: boolean; is: optional>
         receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
         waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
+        processing_event_statistics: True  # <default: True; type: boolean; is: optional>
     """
+
+    module_type = "misc"
+    """Set module type"""
 
     def configure(self, configuration):
          # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.print_regex_statistics_at_message_count = self.getConfigurationValue('print_interval')
+        self.printTimedIntervalStatistics()
+
+    @Decorators.setInterval(10.0)
+    def printTimedIntervalStatistics(self):
+        self.logger.info("############# Statistics #############")
+        if self.getConfigurationValue('regex_statistics'):
+            self.regexStatistics()
+        if self.getConfigurationValue('receive_rate_statistics'):
+            self.receiveRateStatistics()
+        if self.getConfigurationValue('waiting_event_statistics'):
+            self.eventsInQueuesStatistics()
+        if self.getConfigurationValue('processing_event_statistics'):
+            self.eventsInProcess()
 
     def regexStatistics(self):
-        if not StatisticCollector.StatisticCollector().getCounter('received_messages') % self.print_regex_statistics_at_message_count == 0:
-            return
-        # log statistic data
-        self.logger.info("########## Regex Statistics ##########")
+        self.logger.info(">> Regex Statistics")
         for event_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
-            if event_type in ['rps', 'received_messages']:
+            if not event_type.startswith('event_type_'):
                 continue
+            event_type = event_type.replace('event_type_', '')
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_type, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             StatisticCollector.StatisticCollector().resetCounter(event_type)
-        self.logger.info("Total events: %s%s%s." % (Utils.AnsiColors.YELLOW, StatisticCollector.StatisticCollector().getCounter('received_messages'), Utils.AnsiColors.ENDC))
         StatisticCollector.StatisticCollector().resetCounter('received_messages')
-        
-    @Decorators.setInterval(5.0)
+
     def receiveRateStatistics(self):
+        self.logger.info(">> Receive rate stats")
         rps = StatisticCollector.StatisticCollector().getCounter('rps')
         if not rps:
             rps = 0
         StatisticCollector.StatisticCollector().resetCounter('rps')
-        self.logger.info("Received events in 5s: %s%s (%s/eps)%s" % (Utils.AnsiColors.YELLOW, rps, (rps/5), Utils.AnsiColors.ENDC))
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('print_interval'), Utils.AnsiColors.YELLOW, rps, (rps/self.getConfigurationValue('print_interval')), Utils.AnsiColors.ENDC))
 
-    @Decorators.setInterval(5.0)
-    def waitingEventStatistics(self):
-        self.logger.info("Events waiting to be served: %s%s%s" % (Utils.AnsiColors.YELLOW, BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.ENDC))
-        
-    def run(self):
-        if not self.input_queue:
-            self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
-            return
-        if self.getConfigurationValue('receive_rate_statistics'):
-            self.receiveRateStatistics()
-        if self.getConfigurationValue('waiting_event_statistics'):
-            self.waitingEventStatistics()
-        while True:
-            try:
-                item = self.getEventFromInputQueue()
-                self.handleData(item)
-                if self.getConfigurationValue('regex_statistics'):
-                    self.regexStatistics()
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not read data from input queue. Excpeption: %s, Error: %s." % (etype, evalue))
-                time.sleep(1)
-    
+    def eventsInQueuesStatistics(self):
+        self.logger.info(">> Queue stats")
+        self.logger.info("Events in queues: %s%s%s" % (BaseQueue.BaseQueue.messages_in_queues, Utils.AnsiColors.YELLOW, Utils.AnsiColors.ENDC))
+
+    def eventsInProcess(self):
+        self.logger.info(">> Processing stats")
+        for module_name, counters in StatisticCollector.StatisticCollector().counter_stats_per_module.iteritems():
+            self.logger.info("Events in process: %s%s - %s%s" % (Utils.AnsiColors.YELLOW, module_name, counters['events_in_process'], Utils.AnsiColors.ENDC))
+
     def handleData(self, data):
         StatisticCollector.StatisticCollector().incrementCounter('received_messages')
         StatisticCollector.StatisticCollector().incrementCounter('rps')
         try:
-            StatisticCollector.StatisticCollector().incrementCounter(data['event_type'])
+            StatisticCollector.StatisticCollector().incrementCounter('event_type_%s' % data['event_type'])
         except: 
             pass
+        yield

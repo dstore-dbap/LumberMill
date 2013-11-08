@@ -11,5 +11,9 @@ class DevNullSink(BaseThreadedModule.BaseThreadedModule):
 
     - module: DevNullSink
     """
+
+    module_type = "output"
+    """Set module type"""
+
     def handleData(self, event):
         yield

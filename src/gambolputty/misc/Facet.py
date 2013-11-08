@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import threading
 import Utils
 import BaseModule
 import BaseThreadedModule
@@ -38,11 +39,15 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
     redis_keys = []
     """Holds just the redis keys to all facet data"""
 
+    module_type = "misc"
+    """Set module type"""
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.evaluate_facet_data_func(self)
+        self.lock = threading.Lock()
 
     def _getFacetInfoRedis(self, key):
         facet_info = self.getRedisValue(key)
@@ -125,7 +130,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
             yield event
             return
         key = self.getConfigurationValue('group_by', event)
-        with BaseModule.BaseModule.lock:
+        with self.lock:
             redis_lock = False
             try:
                 # Acquire redis lock as well if configured to use redis store.

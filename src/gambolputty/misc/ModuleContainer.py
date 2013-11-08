@@ -7,6 +7,9 @@ from Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
 
+    module_type = "misc"
+    """Set module type"""
+
     def initModule(self, module_name):
         """ Initalize a module."""
         self.logger.debug("Initializing module %s." % (module_name))

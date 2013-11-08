@@ -1,7 +1,7 @@
-module_dirs = {'inputs': {},
-               'parsers': {},
-               'modifiers': {},
-               'outputs': {},
+module_dirs = {'input': {},
+               'parser': {},
+               'modifier': {},
+               'output': {},
                'misc': {}}
 
 import sys

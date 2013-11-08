@@ -5,11 +5,17 @@ import re
 import ast
 from functools import wraps
 
-def singleton(cls):
-    """Decorator to create a singleton."""
-    instance = cls()
-    instance.__call__ = lambda: instance
-    return instance
+
+def Singleton(class_):
+    instances = {}
+
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return getinstance
+
 
 def setInterval(interval):
     def decorator(function):
@@ -19,12 +25,16 @@ def setInterval(interval):
             def loop(): # executed in another thread
                 while not stopped.wait(interval): # until stopped
                     function(*args, **kwargs)
+
             t = threading.Thread(target=loop)
             t.daemon = True # stop if the program exits
             t.start()
             return stopped
+
         return wrapper
+
     return decorator
+
 
 def ModuleDocstringParser(cls):
     @wraps(cls)
@@ -32,7 +42,7 @@ def ModuleDocstringParser(cls):
         instance = cls(*args, **kwargs)
         instance.configuration_metadata = {}
         config_option_regex = "\s*(?P<name>.*?):.*?#\s*<(?P<props>.*?)>"
-        regex = re.compile(config_option_regex,re.MULTILINE)
+        regex = re.compile(config_option_regex, re.MULTILINE)
         docstring = ""
         # Get docstring from parents. Only single inheritance supported.
         for parent_class in cls.__bases__:
@@ -44,7 +54,7 @@ def ModuleDocstringParser(cls):
             config_option_info = matches.groupdict()
             for prop_info in config_option_info['props'].split(";"):
                 try:
-                    prop_name, prop_value = [ m.strip() for m in prop_info.split(":", 1)]
+                    prop_name, prop_value = [m.strip() for m in prop_info.split(":", 1)]
                 except ValueError:
                     instance.logger.debug("Could not parse config setting %s." % config_option_info)
                     continue
@@ -53,9 +63,12 @@ def ModuleDocstringParser(cls):
                         prop_value = ast.literal_eval(prop_value)
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        instance.logger.error("Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (prop_value,etype, evalue))
-                        print "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (prop_value,etype, evalue)
-                # Support for multiple datatypes using the pattern: "type: string||list;"
+                        instance.logger.error(
+                            "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (
+                            prop_value, etype, evalue))
+                        print "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (
+                        prop_value, etype, evalue)
+                    # Support for multiple datatypes using the pattern: "type: string||list;"
                 if prop_name == "type":
                     prop_value = prop_value.split("||")
                 try:
@@ -63,4 +76,5 @@ def ModuleDocstringParser(cls):
                 except:
                     instance.configuration_metadata[config_option_info['name'].strip()] = {prop_name: prop_value}
         return instance
+
     return wrapper

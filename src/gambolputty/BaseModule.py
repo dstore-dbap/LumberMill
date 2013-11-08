@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
 import abc
 import logging
-import threading
 import cPickle
 import Utils
 import redis
+import StatisticCollector
 
 class BaseModule():
     """
@@ -31,22 +32,6 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    events_being_processed = 0
-
-    lock = threading.Lock()
-    """ Class wide access to locking. """
-
-    @staticmethod
-    def incrementEventsBeingProcessedCounter():
-        with BaseModule.lock:
-            BaseModule.events_being_processed += 1
-
-
-    @staticmethod
-    def decrementEventsBeingProcessedCounter():
-        with BaseModule.lock:
-            BaseModule.events_being_processed -= 1
-
     def __init__(self, gp=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
@@ -54,6 +39,7 @@ class BaseModule():
         self.input_queue = False
         self.output_queues = []
         self.redis_client = False
+
 
     def configure(self, configuration):
         """
@@ -151,8 +137,9 @@ class BaseModule():
 
     def initRedisClient(self):
         try:
-            self.temp = self.gp.modules[self.getConfigurationValue('redis_client')][0]['instance']
-            self.redis_client = self.gp.modules[self.getConfigurationValue('redis_client')][0]['instance'].getClient()
+            #pprint.pprint(self.gp.modules)
+            self.temp = self.gp.modules[self.getConfigurationValue('redis_client')]['instances']
+            self.redis_client = self.gp.modules[self.getConfigurationValue('redis_client')]['instances'][0].getClient()
         except KeyError:
             self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis_client'), Utils.AnsiColors.ENDC))
         if 'redis_ttl' in self.configuration_data:
@@ -187,7 +174,6 @@ class BaseModule():
                 value = cPickle.loads(value)
             except:
                 etype, evalue, etb = sys.exc_info()
-                print "%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC)
                 self.logger.error("%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
                 raise
         return value
@@ -218,8 +204,8 @@ class BaseModule():
         if not any(queue == output_queue['queue'] for output_queue in self.output_queues):
             self.output_queues.append({'queue': queue, 'filter': filter})
 
-    def addEventToOutputQueues(self, data):
-        for queue in self.output_queues:
+    def addEventToOutputQueues(self, data, update_counter=True):
+        for idx, queue in enumerate(self.output_queues):
             if queue['filter']:
                 try:
                     # If the filter fails, the data will not be added to the queue.
@@ -227,17 +213,21 @@ class BaseModule():
                     if not matched:
                         continue
                 except:
-                    return
+                    continue
             try:
-                queue['queue'].put(data)
+                # Add a copy of the event to queue if we have more than one receiver.
+                # This prevents strange side effects while events are being passed from one module to the next.
+                queue['queue'].put(data if idx is 0 else data.copy())
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not add received data to output queue. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
-        self.decrementEventsBeingProcessedCounter()
+        if update_counter:
+            StatisticCollector.StatisticCollector().decrementCounter('events_in_process')
 
-    def getEventFromInputQueue(self, block=True, timeout=None):
-        data = self.input_queue.get(block, timeout) if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
-        self.incrementEventsBeingProcessedCounter()
+    def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
+        data = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
+        if update_counter:
+            StatisticCollector.StatisticCollector().incrementCounter('events_in_process')
         self.input_queue.task_done()
         return data
 

@@ -32,6 +32,10 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
       receivers:
         - NextModule
     """
+
+    module_type = "output"
+    """Set module type"""
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

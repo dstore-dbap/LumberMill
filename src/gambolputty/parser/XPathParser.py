@@ -25,6 +25,9 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         redis_ttl: 600                          # <default: 60; type: integer; is: optional>
     """
 
+    module_type = "parser"
+    """Set module type"""
+
     def castToList(self, value):
         return [str(x) for x in value]
 

@@ -27,6 +27,9 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         - NextHandler
     """
 
+    module_type = "parser"
+    """Set module type"""
+
     def handleData(self, event):
         try:
             csv_dict = csv.reader(StringIO(event[self.getConfigurationValue('source_field', event)]),

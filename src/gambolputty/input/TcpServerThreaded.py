@@ -8,6 +8,7 @@ import socket
 import Queue
 import Utils
 import BaseModule
+import StatisticCollector
 from Decorators import ModuleDocstringParser
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
@@ -76,7 +77,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 data = self.rfile.readline().strip()
                 if data == "":
                     continue
-                self.tcp_server_instance.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": host, "data": data}))
+                self.tcp_server_instance.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": host, "data": data}), update_counter=False)
         #except socket.error, e:
         #   self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
