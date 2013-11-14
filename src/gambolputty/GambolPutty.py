@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 import Utils
-import BaseQueue
+import Queue
+import multiprocessing
 import ConfigurationValidator
 import StatisticCollector as StatisticCollector
-import collections
+from collections import deque
 
 module_dirs = ['input',
                'parser',
@@ -64,9 +65,12 @@ class GambolPutty:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def produceQueue(self, queue_max_size=0):
+    def produceQueue(self, queue_max_size=512):
         """Returns a queue with queue_max_size"""
-        return BaseQueue.BaseQueue(queue_max_size)
+        return Queue.Queue()
+        # Overhead: 50000 events ~ 4sec
+        #return BaseMultiProcessQueue.BaseMultiProcessQueue(queue_max_size)
+        #return multiprocessing.Queue(queue_max_size)
 
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration
@@ -92,7 +96,7 @@ class GambolPutty:
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
-            instance = module_class(self)
+            instance = module_class(self, StatisticCollector.MultiProcessStatisticCollector())
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
@@ -115,7 +119,7 @@ class GambolPutty:
                     instance.initRedisClient()
                 self.logger.debug("Calling start/run method of %s." % name)
                 try:
-                    if (isinstance(instance, threading.Thread)):
+                    if (isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process)):
                         instance.start()
                     else:
                         instance.run()
@@ -158,14 +162,6 @@ class GambolPutty:
                                          'type': module_instance.module_type,
                                          'configuration': module_info['configuration'] if 'configuration' in module_info else None,
                                          'receivers': module_info['receivers'] if 'receivers' in module_info else None}
-            """
-            except:
-                self.modules[module_name] = [{'instance': module_instance,
-                                              'configuration': module_info[
-                                                  'configuration'] if 'configuration' in module_info else None,
-                                              'receivers': module_info[
-                                                  'receivers'] if 'receivers' in module_info else None}]
-            """
 
     def initEventStream(self):
         """ Connect modules via queues.
@@ -227,26 +223,29 @@ class GambolPutty:
     def run(self):
         self.runModules()
         try:
+            #self.modules['Spam']['instances'][0].join()
             while self.is_alive:
-                time.sleep(.1)
+               time.sleep(1)
         except KeyboardInterrupt:
             self.shutDown()
 
     def shutDown(self):
+        self.is_alive = False
+        self.logger.info("%sShutting down gambolputty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type == "input":
-                    self.logger.info("%sShutting down input module: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
                     instance.shutDown()
         # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
         shutdown_tries = 0
-        while (StatisticCollector.StatisticCollector().getCounter('events_in_queues') > 0 or StatisticCollector.StatisticCollector().getCounter('events_in_process') > 0) and shutdown_tries <= 20:
+        while (StatisticCollector.StatisticCollector().getCounter('events_in_queues') > 0 or StatisticCollector.StatisticCollector().getCounter('events_in_process') > 0) and shutdown_tries <= 10:
             #pprint.pprint(StatisticCollector.StatisticCollector().counter_stats_per_module)
-            self.logger.info("%sWaiting for pending events. Events waiting in queues: %s. Events in process: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, BaseQueue.BaseQueue.messages_in_queues, StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
+            if shutdown_tries % 2 == 0:
+                self.logger.info("%sWaiting for pending events. Events waiting in queues: %s. Events in process: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, StatisticCollector.StatisticCollector().getCounter('events_in_queues'), StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
             shutdown_tries += 1
-            time.sleep(.3)
-        self.is_alive = False
+            time.sleep(.1)
+        self.logger.info("%sShutdown complete. Events waiting in queues: %s. Events in process: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, StatisticCollector.StatisticCollector().getCounter('events_in_queues'), StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
         sys.exit()
 
 def usage():

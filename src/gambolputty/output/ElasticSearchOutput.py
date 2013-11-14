@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from hashlib import md5
+import pprint
 import sys
 import socket
 import traceback
@@ -9,6 +10,8 @@ import time
 import simplejson as json
 import elasticsearch
 import BaseThreadedModule
+import BaseMultiProcessModule
+import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
@@ -27,6 +30,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
           doc_id_field: 'data'                      # <default: "data"; type: string; is: optional>
+          replication: 'sync'                       # <default: "sync"; type: string; is: optional>
           store_data_interval: 50                   # <default: 50; type: integer; is: optional>
           store_data_idle: 1                        # <default: 1; type: integer; is: optional>
       receivers:
@@ -38,6 +42,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
+        #BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.events_container = []
         self.store_data_interval = self.getConfigurationValue('store_data_interval')
@@ -60,7 +65,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
     def run(self):
         socket.setdefaulttimeout(25)
         if not self.input_queue:
-            self.logger.warning("Will not start module %s since no input queue set." % (self.__class__.__name__))
+            self.logger.warning("Shutting down module %s since no input queue set." % (self.__class__.__name__))
             return
         if self.getConfigurationValue("index_name"):
             self.logger.info("Started ElasticSearchOutput. ES-Nodes: %s, Index_Name: %s" % (self.getConfigurationValue("nodes"), self.getConfigurationValue("index_name")))
@@ -82,6 +87,7 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
             for data in self.handleData(data):
                 self.addEventToOutputQueues(data)
 
+
     def handleData(self, event):
         # Append event to internal data container
         self.events_container.append(event)
@@ -97,8 +103,9 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
             index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
 
         json_data = self.dataToElasticSearchJson(index_name, self.events_container)
+        #pprint.pprint(json_data)
         try:
-            self.es.bulk(body=json_data)
+            self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
         except Exception, e:
             try:
                 self.logger.error("Server cummunication error: %s" % e[1])
@@ -119,10 +126,18 @@ class ElasticSearchOutput(BaseThreadedModule.BaseThreadedModule):
         for event in events:
             if 'event_type' not in event:
                 continue
-            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], md5(event[self.getConfigurationValue("doc_id_field", event)]).hexdigest())
+
+            try:
+                #es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], md5(event[self.getConfigurationValue("doc_id_field", event)]).hexdigest())
+                es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], event[self.getConfigurationValue("doc_id_field", event)])
+            except KeyError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("%sCould not store data in elastic search. <event_type> or %s field missing in event.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("doc_id_field", event), Utils.AnsiColors.ENDC))
+                self.logger.warning("%sEvent: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
+                continue
             try:
                 json_data += "%s%s\n" % (es_index,json.dumps(event))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not  json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
         return json_data

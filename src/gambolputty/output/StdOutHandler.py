@@ -2,7 +2,6 @@
 import BaseThreadedModule
 import pprint
 from Decorators import ModuleDocstringParser
-import StatisticCollector
 
 @ModuleDocstringParser
 class StdOutHandler(BaseThreadedModule.BaseThreadedModule):

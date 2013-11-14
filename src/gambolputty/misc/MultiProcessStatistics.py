@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
 import time
 import sys
-import threading
 import StatisticCollector
 import Utils
 import BaseThreadedModule
-import BaseMultiProcessModule
-import multiprocessing
+import threading
 import traceback
 import Decorators
 
 @Decorators.ModuleDocstringParser
-class Statistics(BaseThreadedModule.BaseThreadedModule):
+class MultiProcessStatistics(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log some statistic data.
 
@@ -29,24 +26,21 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
     module_type = "misc"
     """Set module type"""
 
-    ts_last_stats = time.time()
     lock = threading.Lock()
 
-    def __configure(self, configuration):
+    def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-
+        StatisticCollector.StatisticCollector().setCounter('ts_last_stats', time.time())
 
     def printTimedIntervalStatistics(self):
         self.logger.info("############# Statistics #############")
         if self.getConfigurationValue('receive_rate_statistics'):
             self.receiveRateStatistics()
-        return
         if self.getConfigurationValue('waiting_event_statistics'):
             self.eventsInQueuesStatistics()
         if self.getConfigurationValue('processing_event_statistics'):
             self.eventsInProcess()
-
         if self.getConfigurationValue('regex_statistics'):
             self.regexStatistics()
 
@@ -68,11 +62,11 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
 
     def eventsInQueuesStatistics(self):
         self.logger.info(">> Queue stats")
-        self.logger.info("Events in queues: %s%s%s" % (StatisticCollector.StatisticCollector().getCounter('events_in_queues'), Utils.AnsiColors.YELLOW, Utils.AnsiColors.ENDC))
+        self.logger.info("Events in queues: %s%s%s" % (StatisticCollector.MultiProcessStatisticCollector().getCounter('events_in_queues'), Utils.AnsiColors.YELLOW, Utils.AnsiColors.ENDC))
 
     def eventsInProcess(self):
         self.logger.info(">> Processing stats")
-        self.logger.info("Events in process: %s%s%s" % (Utils.AnsiColors.YELLOW, StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
+        self.logger.info("Events in process: %s%s%s" % (Utils.AnsiColors.YELLOW, StatisticCollector.MultiProcessStatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
 
     def run(self):
         if not self.input_queue:
@@ -94,26 +88,14 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
                 self.addEventToOutputQueues(data)
 
     def handleData(self, event):
-        """
-        Statistics.event_counter += 1
-        if Statistics.event_counter % 50000 == 0:
-            now = time.time()
-            self.logger.info("Received events in %ss: 50000 (%s/eps)" % (int(now - Statistics.ts_last_stats), int(50000/(now - Statistics.ts_last_stats))))
-            Statistics.ts_last_stats = now
-        yield
-        """
         StatisticCollector.StatisticCollector().incrementCounter('rps')
         if self.getConfigurationValue('regex_statistics'):
             try:
                 StatisticCollector.StatisticCollector().incrementCounter('event_type_%s' % event['event_type'])
             except:
                 pass
-
         now = time.time()
-        with Statistics.lock:
-            if now - Statistics.ts_last_stats >= self.getConfigurationValue('print_interval'):
-                Statistics.ts_last_stats = now
-        if Statistics.ts_last_stats == now:
+        if now - StatisticCollector.StatisticCollector().getCounter('ts_last_stats') >= self.getConfigurationValue('print_interval'):
+            StatisticCollector.StatisticCollector().setCounter('ts_last_stats', now)
             self.printTimedIntervalStatistics()
         yield
-

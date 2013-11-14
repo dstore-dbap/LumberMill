@@ -8,7 +8,6 @@ import socket
 import Queue
 import Utils
 import BaseModule
-import StatisticCollector
 from Decorators import ModuleDocstringParser
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):

@@ -46,12 +46,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
                   'geoip_dat_path': '../exampleData/GeoIP.dat'}
         super(TestAddGeoInfo, self).testOutputQueueFilterMatch(config)
 
-    def testWorksOnCopy(self):
-        config = {'source_fields': ['f1'],
-                  'geoip_dat_path': '../exampleData/GeoIP.dat'}
-        super(TestAddGeoInfo, self).testWorksOnCopy(config)
-
-    def testWorksOnOriginal(self):
+    def __testWorksOnOriginal(self):
         config = {'source_fields': ['f1'],
                   'geoip_dat_path': '../exampleData/GeoIP.dat'}
         super(TestAddGeoInfo, self).testWorksOnOriginal(config)

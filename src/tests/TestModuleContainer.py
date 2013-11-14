@@ -28,13 +28,5 @@ class TestModuleContainer(ModuleBaseTestCase.ModuleBaseTestCase):
     def testOutputQueueFilterMatch(self):
         super(TestModuleContainer, self).testOutputQueueFilterMatch(self.default_config)
 
-    @unittest2.skip("Skipping testWorksOnCopy because this is tested via the module tests.")
-    def testWorksOnCopy(self):
-        super(TestModuleContainer, self).testWorksOnCopy(self.default_config)
-
-    @unittest2.skip("Skipping testWorksOnCopy because this is tested via the module tests.")
-    def testWorksOnOriginal(self):
-        super(TestModuleContainer, self).testWorksOnOriginal(self.default_config)
-
 if __name__ == '__main__':
     unittest.main()

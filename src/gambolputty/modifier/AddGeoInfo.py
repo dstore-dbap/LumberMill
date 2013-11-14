@@ -39,7 +39,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             try:
                 self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
             except NameError:
-                self.logger.error("Will not start module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
+                self.logger.error("Shutting down module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
                 self.gp.shutDown()
                 return False
 

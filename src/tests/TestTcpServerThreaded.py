@@ -1,5 +1,6 @@
 import extendSysPath
 import ModuleBaseTestCase
+import Utils
 import unittest2
 import sys
 import Queue
@@ -32,7 +33,7 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val = {'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.", 'markers': []}
+        expected_ret_val = Utils.getDefaultDataDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         queue_emtpy = False
         data = {}
         try:
@@ -64,7 +65,7 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val = {'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.", 'markers': []}
+        expected_ret_val =  Utils.getDefaultDataDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         queue_emtpy = False
         data = {}
         try:
@@ -78,23 +79,15 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
 
     @unittest2.skip("Skipping testQueueCommunication.")
     def testQueueCommunication(self):
-        super(TestRedisClient, self).testQueueCommunication(self.default_config)
+        super(TestTcpServerThreaded, self).testQueueCommunication(self.default_config)
 
     @unittest2.skip("Skipping testOutputQueueFilterMatch.")
     def testOutputQueueFilterMatch(self):
-        super(TestRedisClient, self).testOutputQueueFilterMatch(self.default_config)
+        super(TestTcpServerThreaded, self).testOutputQueueFilterMatch(self.default_config)
 
     @unittest2.skip("Skipping testOutputQueueFilterNoMatch.")
     def testOutputQueueFilterNoMatch(self):
-        super(TestRedisClient, self).testOutputQueueFilterNoMatch(self.default_config)
-
-    @unittest2.skip("Skipping testWorksOnCopy.")
-    def testWorksOnCopy(self):
-        super(TestRedisClient, self).testWorksOnCopy(self.default_config)
-
-    @unittest2.skip("Skipping testWorksOnOriginal.")
-    def testWorksOnOriginal(self):
-        super(TestRedisClient, self).testWorksOnOriginal(self.default_config)
+        super(TestTcpServerThreaded, self).testOutputQueueFilterNoMatch(self.default_config)
 
     def tearDown(self):
         pass

@@ -2,12 +2,14 @@
 import ast
 import sys
 import logging
-import astpp
-import Utils
 import __builtin__
 
+import Utils
+
+
 def getDefaultDataDict(dict={}):
-    default_dict = { "received_from": False, 
+    default_dict = { "event_type": "Unknown",
+                     "received_from": False,
                      "data": "",
                      "markers": [] }
     default_dict.update(dict)

@@ -121,7 +121,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testReplaceFieldValueWithMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me']})
-        expected = {'received_from': False, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9', 'data': '', 'markers': []}
+        expected = Utils.getDefaultDataDict({'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
         for result in self.test_object.handleData(Utils.getDefaultDataDict({'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(result, expected)
 
@@ -129,7 +129,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = {'received_from': False, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9','data': '', 'markers': []}
+        expected = Utils.getDefaultDataDict({'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
         for result in self.test_object.handleData(Utils.getDefaultDataDict({'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(result, expected)
 
@@ -138,15 +138,16 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'algorithm': 'sha1',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = {'received_from': False, 'hash_me': 'Nobody inspects the spammish repetition', 'data': '', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2', 'markers': []}
+        expected = Utils.getDefaultDataDict({'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
         for result in self.test_object.handleData(Utils.getDefaultDataDict({'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(result, expected)
 
     def testAnonymize(self):
         self.test_object.configure({'action': 'anonymize',
                                     'source_fields': ['anon_me']})
-        expected = {'received_from': False, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9', 'data': '', 'markers': []}
+        expected = Utils.getDefaultDataDict({'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
         for result in self.test_object.handleData(Utils.getDefaultDataDict({'anon_me': 'Nobody inspects the spammish repetition'})):
+            print result
             self.assertEqual(result, expected)
 
 
@@ -164,16 +165,6 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_fields': ['data', 'Johann'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testOutputQueueFilterMatch(config)
-
-    def testWorksOnCopy(self):
-        config = {'source_fields': ['data'],
-                  'action': 'keep'  }
-        super(TestModifyFields, self).testWorksOnCopy(config)
-
-    def testWorksOnOriginal(self):
-        config = {'source_fields': ['data'],
-                  'action': 'keep'  }
-        super(TestModifyFields, self).testWorksOnOriginal(config)
 
 if __name__ == '__main__':
     unittest.main()

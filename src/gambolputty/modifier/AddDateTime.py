@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import time
 import datetime
 import BaseThreadedModule
+import BaseMultiProcessModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser

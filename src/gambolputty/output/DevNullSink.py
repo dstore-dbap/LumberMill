@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import BaseThreadedModule
+import BaseMultiProcessModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
@@ -16,4 +17,4 @@ class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
 
     def handleData(self, event):
-        yield
+        yield event

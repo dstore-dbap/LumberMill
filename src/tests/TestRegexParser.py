@@ -47,11 +47,7 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testOutputQueueFilterMatch(config)
 
-    def testWorksOnCopy(self):
-        config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
-        super(TestRegexParser, self).testWorksOnCopy(config)
-
-    def testWorksOnOriginal(self):
+    def __testWorksOnOriginal(self):
         config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testWorksOnOriginal(config)
 

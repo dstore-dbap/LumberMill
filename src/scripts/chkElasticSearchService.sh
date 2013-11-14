@@ -13,7 +13,8 @@ NUM_FOUND=$(curl --connect-timeout 2 -m 20 -s -XPOST 'http://es-01.dbap.de:9200/
 if [ "$NUM_FOUND" == "" ]; then
 	logMessage "ElasticSearchOutput did not return an answer to the status query. Restarting ElasticSearchOutput and GambolPutty services."
 	/etc/init.d/elasticsearch restart
-	sleep 5
+    echo "Waiting 15sec. for ES to start"
+	sleep 15
 	/etc/init.d/gambolputty restart
 	exit 255
 fi
@@ -21,7 +22,8 @@ QUERY_HITS=$(echo $NUM_FOUND|egrep -o '[0-9]+')
 if [ $QUERY_HITS -lt $MIN_REQUIERED_QUERY_HITS ]; then
 	logMessage "ElasticSearchOutput query hits of $QUERY_HITS below threshold of $MIN_REQUIERED_QUERY_HITS. Restarting ElasticSearchOutput and GambolPutty services."
 	/etc/init.d/elasticsearch restart
-	sleep 5
+    echo "Waiting 15sec. for ES to start"
+	sleep 15
 	/etc/init.d/gambolputty restart
 	exit 255
 fi

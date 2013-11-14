@@ -70,7 +70,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def testRedis(self):
         rc = RedisClient.RedisClient(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
-        self.test_object.gp.modules = {'RedisClient': [{'instance': rc}]}
+        self.test_object.gp.modules = {'RedisClient': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()',
@@ -96,11 +96,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testOutputQueueFilterMatch(config)
 
-    def testWorksOnCopy(self):
-        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testWorksOnCopy(config)
-
-    def testWorksOnOriginal(self):
+    def __testWorksOnOriginal(self):
         config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
         super(TestXPathParser, self).testWorksOnOriginal(config)
 

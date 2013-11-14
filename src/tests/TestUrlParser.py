@@ -28,11 +28,7 @@ class TestUrlParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_field': 'dev_null'}
         super(TestUrlParser, self).testOutputQueueFilterMatch(config)
 
-    def testWorksOnCopy(self):
-        config = {'source_field': 'data'}
-        super(TestUrlParser, self).testWorksOnCopy(config)
-
-    def testWorksOnOriginal(self):
+    def __testWorksOnOriginal(self):
         config = {'source_field': 'data'}
         super(TestUrlParser, self).testWorksOnOriginal(config)
 

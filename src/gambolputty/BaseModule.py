@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import re
 import abc
 import logging
 import cPickle
+import time
 import Utils
 import redis
 import StatisticCollector
@@ -32,14 +32,14 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    def __init__(self, gp=False):
+    def __init__(self, gp, stats_collector):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
         self.configuration_data = {}
         self.input_queue = False
         self.output_queues = []
         self.redis_client = False
-
+        self.stats_collector = stats_collector
 
     def configure(self, configuration):
         """
@@ -91,7 +91,7 @@ class BaseModule():
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
-                # Try to return a default value for requested setting
+                # Try to return a default value for requested setting.
                 try:
                     return self.configuration_metadata[key]['default']
                 except KeyError:
@@ -104,16 +104,7 @@ class BaseModule():
             return False
         # Return value directly if it does not contain any placeholders or no mapping dictionary was provided.
         if config_setting['contains_placeholder'] == False or mapping_dict == False:
-            try:
-                return config_setting['value']
-            except KeyError:
-                # Try to return a default value for requested setting
-                try:
-                    return self.configuration_metadata[key]['default']
-                except KeyError:
-                    self.logger.error("%sCould not find configuration value for key: %s and no default value was defined." % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-                    self.gp.shutDown()
-                    return False
+            return config_setting.get('value')
         # At the moment, just flat lists and dictionaries are supported.
         # If need arises, recursive parsing of the lists and dictionaries will be added.
         if isinstance(config_setting['value'], list):
@@ -205,6 +196,10 @@ class BaseModule():
             self.output_queues.append({'queue': queue, 'filter': filter})
 
     def addEventToOutputQueues(self, data, update_counter=True):
+        #if update_counter:
+        #    self.stats_collector.decrementCounter('events_in_process')
+        if not self.output_queues or not data:
+            return
         for idx, queue in enumerate(self.output_queues):
             if queue['filter']:
                 try:
@@ -218,17 +213,16 @@ class BaseModule():
                 # Add a copy of the event to queue if we have more than one receiver.
                 # This prevents strange side effects while events are being passed from one module to the next.
                 queue['queue'].put(data if idx is 0 else data.copy())
+                #self.stats_collector.incrementCounter('events_in_queues')
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not add received data to output queue. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
-        if update_counter:
-            StatisticCollector.StatisticCollector().decrementCounter('events_in_process')
 
     def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
         data = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
-        if update_counter:
-            StatisticCollector.StatisticCollector().incrementCounter('events_in_process')
-        self.input_queue.task_done()
+        #self.stats_collector.decrementCounter('events_in_queues')
+        #if update_counter:
+        #    self.stats_collector.incrementCounter('events_in_process')
         return data
 
     @abc.abstractmethod

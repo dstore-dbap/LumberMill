@@ -24,11 +24,11 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.input_queue.put(Utils.getDefaultDataDict({}))
         queue_emtpy = False
         try:
-            self.output_queue.get(timeout=1)
+            self.output_queue.get(timeout=2)
         except Queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy != True)
-
+    """
     def testWorksOnOriginal(self, config = {}):
         config['work_on_copy'] = {'value': False, 'contains_placeholder': False}
         data_dict = Utils.getDefaultDataDict({})
@@ -42,6 +42,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
             queue_emtpy = True
         self.assert_(queue_emtpy == False and returned_data_dict is data_dict)
 
+
     def testWorksOnCopy(self, config = {}):
         config['work_on_copy'] = {'value': True, 'contains_placeholder': False}
         data_dict = Utils.getDefaultDataDict({})
@@ -54,38 +55,41 @@ class ModuleBaseTestCase(unittest2.TestCase):
         except Queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == False and returned_data_dict is not data_dict)
+    """
 
     def testOutputQueueFilterNoMatch(self, config = {}):
         output_queue = BaseQueue.BaseQueue()
         data_dict = Utils.getDefaultDataDict({})
         data_dict['Johann'] = 'Gambolputty'
-        self.test_object.configure(config)
+        result = self.test_object.configure(config)
+        self.assertFalse(result)
         self.test_object.addOutputQueue(output_queue, filter='Johann == "Gambolputty de von ausfern" or Johann != "Gambolputty"')
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         returned_data_dict = {}
         try:
-            returned_data_dict = output_queue.get(timeout=1)
+            returned_data_dict = output_queue.get(timeout=2)
         except Queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == True)
 
     def testOutputQueueFilterMatch(self,config = {}):
         output_queue = BaseQueue.BaseQueue()
-        data_dict = Utils.getDefaultDataDict({})
-        data_dict['Johann'] = 'Gambolputty'
-        data_dict['event_type'] = 'agora_access_log'
-        self.test_object.configure(config)
+        data_dict = Utils.getDefaultDataDict({'Johann': 'Gambolputty', 'event_type': 'agora_access_log'})
+        result = self.test_object.configure(config)
+        self.assertFalse(result)
         self.test_object.addOutputQueue(output_queue, filter='Johann in ["Gambolputty", "Blagr"] or Johan not in ["Gambolputty", "Blagr"]')
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         returned_data_dict = {}
         try:
-            returned_data_dict = output_queue.get(timeout=1)
+            returned_data_dict = output_queue.get(timeout=2)
         except Queue.Empty:
             queue_emtpy = True
+        print data_dict
+        print returned_data_dict
         self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
 
     def tearDown(self):

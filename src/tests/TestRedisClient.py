@@ -39,13 +39,5 @@ class TestRedisClient(ModuleBaseTestCase.ModuleBaseTestCase):
     def testOutputQueueFilterNoMatch(self):
         super(TestRedisClient, self).testOutputQueueFilterNoMatch(self.default_config)
 
-    @unittest2.skip("Skipping testWorksOnCopy.")
-    def testWorksOnCopy(self):
-        super(TestRedisClient, self).testWorksOnCopy(self.default_config)
-
-    @unittest2.skip("Skipping testWorksOnOriginal.")
-    def testWorksOnOriginal(self):
-        super(TestRedisClient, self).testWorksOnOriginal(self.default_config)
-
 if __name__ == '__main__':
     unittest.main()

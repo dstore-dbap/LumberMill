@@ -7,7 +7,7 @@ from Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
 
-    module_type = "misc"
+    module_type = "stand_alone"
     """Set module type"""
 
     def initModule(self, module_name):
@@ -47,6 +47,6 @@ class ModuleContainer(BaseThreadedModule.BaseThreadedModule):
 
     def handleData(self, event):
         for module in self.modules:
-            for event in module.handleData(event if 'work_on_copy' not in module.configuration_data else event.copy()):
+            for event in module.handleData(event): #  if 'work_on_copy' not in module.configuration_data else event.copy()
                 pass
         yield event

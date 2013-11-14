@@ -27,8 +27,8 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
        - ModuleAlias
     """
 
-    def __init__(self, gp=False):
-        BaseModule.BaseModule.__init__(self, gp)
+    def __init__(self, gp, stats_collector):
+        BaseModule.BaseModule.__init__(self, gp, stats_collector)
         threading.Thread.__init__(self)
         self.daemon = True
 
@@ -37,7 +37,7 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
             # Only issue warning for those modules that are expected to have an input queue.
             # TODO: A better solution should be implemented...
             if self.module_type not in ['stand_alone']:
-                self.logger.warning("%sWill not start module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+                self.logger.warning("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         while self.is_alive:
             data = False
@@ -49,7 +49,4 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
                 traceback.print_exception(exc_type, exc_value, exc_tb)
                 continue
             for data in self.handleData(data):
-                if data is not None:
-                    self.addEventToOutputQueues(data)
-                else:
-                    StatisticCollector.StatisticCollector().decrementCounter('events_in_process')
+                self.addEventToOutputQueues(data)

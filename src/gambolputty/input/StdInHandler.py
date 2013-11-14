@@ -2,8 +2,6 @@
 import sys
 import socket
 import Utils
-import StatisticCollector
-import trace
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
@@ -25,23 +23,17 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     module_type = "input"
     """Set module type"""
 
-    def _traceDataWrite(self, *args):
-        print "written"
-
-    def _traceDataRead(self, *args):
-        print "read"
-
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.multiline = self.getConfigurationValue('multiline')
         self.stream_end_signal = self.getConfigurationValue('stream_end_signal')
-            
+
     def run(self, input=sys.stdin):
         hostname = socket.gethostname()
         multiline_data = ""
         if not self.output_queues:
             return
-        while True:
+        while self.is_alive:
             data = input.readline()
             if data.__len__() > 0:
                 if not self.multiline:
@@ -56,3 +48,4 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
                 if multiline_data.__len__() > 0:
                     self.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
                 self.gp.shutDown()
+                self.is_alive = False

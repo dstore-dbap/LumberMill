@@ -3,6 +3,7 @@ import sys
 import threading
 import re
 import ast
+import multiprocessing
 from functools import wraps
 
 
@@ -27,6 +28,24 @@ def setInterval(interval):
                     function(*args, **kwargs)
 
             t = threading.Thread(target=loop)
+            t.daemon = True # stop if the program exits
+            t.start()
+            return stopped
+
+        return wrapper
+
+    return decorator
+
+def setProcessInterval(interval):
+    def decorator(function):
+        def wrapper(*args, **kwargs):
+            stopped = multiprocessing.Event()
+
+            def loop(): # executed in another thread
+                while not stopped.wait(interval): # until stopped
+                    function(*args, **kwargs)
+
+            t = multiprocessing.Process(target=loop)
             t.daemon = True # stop if the program exits
             t.start()
             return stopped
