@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-import re
 import BaseThreadedModule
+import BaseModule
 from Decorators import ModuleDocstringParser
+
+try:
+    import regex as re
+except ImportError:
+    import re
 
 @ModuleDocstringParser
 class RegexParser(BaseThreadedModule.BaseThreadedModule):
@@ -69,7 +74,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
             self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         """
         This method expects a syslog datagram.
         It might contain more then one event. We split at the newline char.
@@ -78,16 +83,15 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         # i.e. event starts with <141>
         fieldname = self.getConfigurationValue('source_field', event)
         if fieldname not in event:
-            yield event
+            self.sendEventToReceivers(event)
             return
         try:
             if event[fieldname].index(">") <= 4:
                 event[fieldname] = event[fieldname][event[fieldname].index(">")+1:] + "\n"
         except:
             pass
-        event = self.parseEvent(event, fieldname)
-        yield event
-        
+        self.sendEventToReceivers(self.parseEvent(event, fieldname))
+
     def parseEvent(self, event, fieldname):
         """
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.

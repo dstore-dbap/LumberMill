@@ -15,9 +15,10 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'source_field': 'json_data'})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        data = Utils.getDefaultDataDict({'json_data': "'{\"South African\": \"Fast\", \"unladen\": \"Swallow\"}'"})
-        for result in self.test_object.handleData(data):
-            self.assertTrue('South African' in result and result['South African'] == "Fast" )
+        data = Utils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})
+        self.test_object.handleEvent(data)
+        for event in self.receiver.getEvent():
+            self.assertTrue('South African' in event and event['South African'] == "Fast" )
 
     def tearDown(self):
         pass

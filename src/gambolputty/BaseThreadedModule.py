@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys
 import threading
-import traceback
+import Queue
 import Utils
 import BaseModule
-import StatisticCollector
 
 class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
     """
@@ -27,26 +26,50 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
        - ModuleAlias
     """
 
-    def __init__(self, gp, stats_collector):
+    def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
         threading.Thread.__init__(self)
         self.daemon = True
 
+    def setInputQueue(self, queue):
+        self.input_queue = queue
+
+    def getInputQueue(self):
+        return self.input_queue
+
+    def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
+        event = False
+        try:
+            event = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
+        except Queue.Empty:
+            raise
+        except:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )
+        #self.stats_collector.decrementCounter('events_in_queues')
+        #if update_counter:
+        #    self.stats_collector.incrementCounter('events_in_process')
+        return event
+
     def run(self):
+        if not self.receivers:
+            # Only issue warning for those modules that are expected to have receivers.
+            # TODO: A better solution should be implemented...
+            if self.module_type not in ['stand_alone']:
+                self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            return
         if not self.input_queue:
             # Only issue warning for those modules that are expected to have an input queue.
             # TODO: A better solution should be implemented...
             if self.module_type not in ['stand_alone']:
-                self.logger.warning("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+                self.logger.error("%sShutting down module %s since no input queue is set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         while self.is_alive:
-            data = False
-            try:
-                data = self.getEventFromInputQueue()
-            except:
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
-                traceback.print_exception(exc_type, exc_value, exc_tb)
+            event = self.getEventFromInputQueue()
+            if not event:
                 continue
-            for data in self.handleData(data):
-                self.addEventToOutputQueues(data)
+            self.handleEvent(event)
+        self.logger.error("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
+
+    def shutDown(self):
+        self.is_alive = False

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
-import BaseMultiProcessModule
 import time
 from Decorators import ModuleDocstringParser
 
@@ -27,8 +26,7 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
 
     def run(self):
         while self.is_alive:
-            event = Utils.getDefaultDataDict(self.getConfigurationValue("event"))
-            event['timestamp'] = 10
-            self.addEventToOutputQueues(event, update_counter=False)
+            event = Utils.getDefaultEventDict(self.getConfigurationValue("event"))
+            self.sendEventToReceivers(event, update_counter=False)
             if self.getConfigurationValue("sleep"):
                 time.sleep(self.getConfigurationValue("sleep"))

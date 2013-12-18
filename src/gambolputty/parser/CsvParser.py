@@ -30,7 +30,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
     module_type = "parser"
     """Set module type"""
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         try:
             csv_dict = csv.reader(StringIO(event[self.getConfigurationValue('source_field', event)]),
                                   escapechar=self.getConfigurationValue('escapechar', event),
@@ -40,7 +40,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (event, etype, evalue))
-            yield event
+            self.sendEventToReceivers(event)
             return
         field_names = self.getConfigurationValue('fieldnames', event)
         for values in csv_dict:
@@ -55,4 +55,4 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
                     pass
                 except IndexError:
                     pass
-        yield event
+        self.sendEventToReceivers(event)

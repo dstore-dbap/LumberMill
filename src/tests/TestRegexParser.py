@@ -13,21 +13,22 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def setUp(self):
         super(TestRegexParser, self).setUp(RegexParser.RegexParser(gp=mock.Mock()))
 
-    def testHandleData(self):
+    def testHandleEvent(self):
         self.test_object.configure({'source_field': 'event',
                                     'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        event = Utils.getDefaultDataDict({'event': self.raw_data})
-        for result in self.test_object.handleData(event):
-            self.assert_('bytes_send' in result and result['bytes_send'] == '3395')
+        event = Utils.getDefaultEventDict({'event': self.raw_data})
+        self.test_object.handleEvent(event)
+        for event in self.receiver.getEvent():
+            self.assert_('bytes_send' in event and event['bytes_send'] == '3395')
 
-    def testQueueCommunication(self):
+    def __testQueueCommunication(self):
         self.test_object.configure({'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         self.test_object.start()
-        self.input_queue.put(Utils.getDefaultDataDict({}))
+        self.input_queue.put(Utils.getDefaultEventDict({}))
         queue_emtpy = False
         try:
             self.output_queue.get(timeout=1)
@@ -35,15 +36,15 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
             queue_emtpy = True
         self.assert_(queue_emtpy != True)
 
-    def testQueueCommunication(self):
+    def __testQueueCommunication(self):
         config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testQueueCommunication(config)
 
-    def testOutputQueueFilterNoMatch(self):
+    def __testOutputQueueFilterNoMatch(self):
         config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testOutputQueueFilterNoMatch(config)
 
-    def testOutputQueueFilterMatch(self):
+    def __testOutputQueueFilterMatch(self):
         config = {'field_extraction_patterns': {'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}}
         super(TestRegexParser, self).testOutputQueueFilterMatch(config)
 

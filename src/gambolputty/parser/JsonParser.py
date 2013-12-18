@@ -24,14 +24,24 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
     module_type = "parser"
     """Set module type"""
 
-    def handleData(self, event):
+    def configure(self, configuration):
+        # Call parent configure method
+        #BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        self.source_field = self.getConfigurationValue('source_field')
+
+    def handleEvent(self, event):
+        if self.source_field not in event:
+            self.sendEventToReceivers(event)
+            return
+        json_string = str(event[self.source_field]).strip("'<>() ").replace('\'', '\"')
         try:
-            json_data = json.loads(self.getConfigurationValue('source_field', event))
+            json_data = json.loads(json_string)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse json data %s. Exception: %s, Error: %s." % (event, etype, evalue))
-            yield event
+            self.sendEventToReceivers(event)
             return
         for field_name, field_value in json_data.iteritems():
             event[field_name] = field_value
-        yield event
+        self.sendEventToReceivers(event)

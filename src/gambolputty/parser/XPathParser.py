@@ -31,7 +31,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
     def castToList(self, value):
         return [str(x) for x in value]
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         """
         Process the event.
 
@@ -40,7 +40,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         """
         source_field = self.getConfigurationValue('source_field', event)
         if source_field not in event:
-            yield event
+            self.sendEventToReceivers(event)
             return
         result = self.getRedisValue(self.getConfigurationValue('redis_key', event))
         if result == None:
@@ -58,4 +58,4 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         if result:
             target_field_name = self.getConfigurationValue('target_field', event)
             event[target_field_name] = result
-        yield event
+        self.sendEventToReceivers(event)

@@ -18,12 +18,11 @@ class TestPermutate(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         events = []
-        for result in self.test_object.handleData(Utils.getDefaultDataDict({'facets': [1,2], 'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},
-                                                                                                          2: {'ctx': 'b', 'ctx2': 'bb'}
-                                                                                                        }}
-                                                                            )):
+        source_event = Utils.getDefaultEventDict({'facets': [1,2],
+                                                  'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},
+                                                               2: {'ctx': 'b', 'ctx2': 'bb'}}})
+        for result in self.test_object.handleMultiplexEvent(source_event):
             events.append(result)
-        print events
         self.assertEquals(len(events), 2)
 
     def tearDown(self):

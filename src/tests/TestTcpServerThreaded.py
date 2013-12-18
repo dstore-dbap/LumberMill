@@ -33,15 +33,10 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val = Utils.getDefaultDataDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
-        queue_emtpy = False
-        data = {}
-        try:
-            data = self.output_queue.get(timeout=2)
-        except Queue.Empty:
-            queue_emtpy = True
+        expected_ret_val = Utils.getDefaultEventDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         self.test_object.shutDown()
-        self.assertEquals(data, expected_ret_val)
+        for event in self.receiver.getEvent():
+            self.assertEquals(event, expected_ret_val)
 
     def testATlsTcpConnection(self):
         self.test_object.configure({'tls': True,
@@ -65,32 +60,12 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val =  Utils.getDefaultDataDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
-        queue_emtpy = False
-        data = {}
-        try:
-            data = self.output_queue.get(timeout=1)
-        except Queue.Empty:
-            queue_emtpy = True
+        expected_ret_val =  Utils.getDefaultEventDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         self.test_object.shutDown()
         # Give server some time to shut socket down.
-        time.sleep(2)
-        self.assertEquals(data, expected_ret_val)
-
-    @unittest2.skip("Skipping testQueueCommunication.")
-    def testQueueCommunication(self):
-        super(TestTcpServerThreaded, self).testQueueCommunication(self.default_config)
-
-    @unittest2.skip("Skipping testOutputQueueFilterMatch.")
-    def testOutputQueueFilterMatch(self):
-        super(TestTcpServerThreaded, self).testOutputQueueFilterMatch(self.default_config)
-
-    @unittest2.skip("Skipping testOutputQueueFilterNoMatch.")
-    def testOutputQueueFilterNoMatch(self):
-        super(TestTcpServerThreaded, self).testOutputQueueFilterNoMatch(self.default_config)
-
-    def tearDown(self):
-        pass
+        time.sleep(.1)
+        for event in self.receiver.getEvent():
+            self.assertEquals(event, expected_ret_val)
 
 if __name__ == '__main__':
     unittest.main()

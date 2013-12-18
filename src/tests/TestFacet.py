@@ -1,11 +1,13 @@
+import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import unittest
 import mock
+import time
+import sys
 import Utils
 import RedisClient
 import Facet
-import pprint
 
 class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -19,32 +21,28 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'interval': .1})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        self.test_object.start()
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.google.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.gambolputty.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.johann.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
         events = []
-        while True:
-            try:
-                event = self.output_queue.get(timeout=1)
-                if event['event_type'] != 'facet':
-                    continue
-                events.append(event)
-            except:
-                break
+        time.sleep(.2)
+        for event in self.receiver.getEvent():
+            if event['event_type'] != 'facet':
+                continue
+            events.append(event)
         self.assertEquals(len(events), 2)
         self.assertEquals(events[0]['facets'], ['http://www.gambolputty.com'])
 
     def testRedisFacet(self):
         rc = RedisClient.RedisClient(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
-        self.test_object.gp.modules = {'RedisClient': {'instance': [rc]}}
+        self.test_object.gp.modules = {'RedisClient': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '%(remote_ip)s',
                                     'add_event_fields': ['remote_ip','user_agent'],
@@ -54,29 +52,23 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         self.test_object.initRedisClient()
-        self.test_object.start()
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.google.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.johann.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
-        self.input_queue.put(Utils.getDefaultDataDict({'url': 'http://www.gambolputty.com',
+        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
-
         events = []
-        while True:
-            try:
-                event = self.output_queue.get(timeout=1)
-                if event['event_type'] != 'facet':
-                    continue
-                events.append(event)
-            except:
-                break
-        #pprint.pprint(events)
+        time.sleep(.2)
+        for event in self.receiver.getEvent():
+            if event['event_type'] != 'facet':
+                continue
+            events.append(event)
         self.assertEquals(len(events), 2)
-        self.assertEquals(events[0]['facets'], ['http://www.gambolputty.com'])
+        self.assertEquals(events[1]['facets'], ['http://www.gambolputty.com'])
 
     def tearDown(self):
         pass

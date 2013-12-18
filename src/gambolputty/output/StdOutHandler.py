@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import BaseThreadedModule
+import BaseModule
 import pprint
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
+class StdOutHandler(BaseModule.BaseModule):
     """
     Print the data dictionary to stdout.
 
@@ -20,9 +20,8 @@ class StdOutHandler(BaseThreadedModule.BaseThreadedModule):
     module_type = "output"
     """Set module type"""
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         if self.getConfigurationValue('pretty_print'):
             pprint.pprint(event)
         else:
             print "%s" % event
-        yield

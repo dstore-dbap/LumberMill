@@ -5,7 +5,7 @@ import BaseModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class Tarpit(BaseThreadedModule.BaseThreadedModule):
+class Tarpit(BaseModule.BaseModule):
     """
     Send an event into a tarpit before passing it on.
 
@@ -23,7 +23,7 @@ class Tarpit(BaseThreadedModule.BaseThreadedModule):
     module_type = "misc"
     """Set module type"""
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         """
         Process the event.
 
@@ -33,4 +33,4 @@ class Tarpit(BaseThreadedModule.BaseThreadedModule):
         #print "aaa %s" % BaseModule.BaseModule.hasPendingEvent()
         time.sleep(self.getConfigurationValue('delay', event))
         #print "bbb %s" % BaseModule.BaseModule.hasPendingEvent()
-        yield event
+        self.sendEventToReceivers(event)

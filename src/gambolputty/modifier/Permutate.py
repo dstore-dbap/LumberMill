@@ -29,7 +29,7 @@ class Permutate(BaseThreadedModule.BaseThreadedModule):
     module_type = "modifier"
     """Set module type"""
 
-    def handleData(self, event):
+    def handleMultiplexEvent(self, event):
         """
         Process the event.
 

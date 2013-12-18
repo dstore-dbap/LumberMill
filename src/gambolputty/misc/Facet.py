@@ -7,7 +7,7 @@ import Decorators
 import sys
 
 @Decorators.ModuleDocstringParser
-class Facet(BaseThreadedModule.BaseThreadedModule):
+class Facet(BaseModule.BaseModule):
     """
     Collect different values of one field over a defined period of time and pass all
     encountered variations on as new event after period is expired.
@@ -44,7 +44,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.evaluate_facet_data_func(self)
         self.lock = threading.Lock()
@@ -86,37 +86,37 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
             return
         self._setFacetInfoInternal(key, facet_info)
 
-    def addFacetEventToOutputQueue(self, facet_data):
-        event = Utils.getDefaultDataDict({'event_type': 'facet',
+    def sendFacetEventToReceivers(self, facet_data):
+        event = Utils.getDefaultEventDict({'event_type': 'facet',
                                           'facet_field': self.getConfigurationValue('source_field'),
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets'],
                                           'other_event_fields': facet_data['other_event_fields']})
-        self.addEventToOutputQueues(event)
+        self.sendEventToReceivers(event)
 
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
         def evaluateFacets(self):
             if self.redisClientAvailiable():
                 for key in Facet.redis_keys:
-                    self.addFacetEventToOutputQueue(self._getFacetInfoRedis(key))
+                    self.sendFacetEventToReceivers(self._getFacetInfoRedis(key))
                     # Clear redis items
                     self.redis_client.delete(key)
                 Facet.redis_keys = []
                 return
             # Just internal facet data.
             for key, facet_data in Facet.facet_data.iteritems():
-                self.addFacetEventToOutputQueue(facet_data)
+                self.sendFacetEventToReceivers(facet_data)
             Facet.facet_data = {}
         return evaluateFacets
 
     def shutDown(self):
-        # Call parent configure method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
         # Push any remaining facet data.
         self.evaluate_facet_data_func(self)
+        # Call parent configure method.
+        BaseModule.BaseModule.shutDown(self)
 
-    def handleData(self, event):
+    def handleMultiplexEvent(self, event):
         """
         Process the event.
 

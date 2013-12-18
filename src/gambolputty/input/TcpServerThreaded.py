@@ -56,10 +56,12 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
         """
         try:
             request, client_address = self.get_request()
-        except socket.error:
+        except:
+            etype, evalue, etb = sys.exc_info()
+            print "Exception: %s, Error: %s." % (etype, evalue)
             return
-        if self.verify_request(request, client_address):
-            self.requests.put((request, client_address))
+        #if self.verify_request(request, client_address):
+        self.requests.put((request, client_address))
 
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
@@ -76,13 +78,13 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 data = self.rfile.readline().strip()
                 if data == "":
                     continue
-                self.tcp_server_instance.addEventToOutputQueues(Utils.getDefaultDataDict({"received_from": host, "data": data}), update_counter=False)
-        #except socket.error, e:
-        #   self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+                self.tcp_server_instance.handleEvent(Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}))
+        except socket.error, e:
+           self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
-            # Handle a timeout gracefully
+            self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+        finally:
             self.finish()
-
 
 class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
 
@@ -91,6 +93,7 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
         SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
         self.socket.settimeout(timeout)
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.use_tls = tls
         self.timeout = timeout
         if tls == True:
@@ -144,7 +147,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
         self.server = False
 
     def run(self):
-        if not self.output_queues:
+        if not self.addReceiver:
             self.logger.warning("Will not start module %s since no output queue set." % (self.__class__.__name__))
             return
         handler_factory = TCPRequestHandlerFactory()
@@ -169,7 +172,9 @@ class TcpServerThreaded(BaseModule.BaseModule):
         self.server_thread.daemon = True
         self.server_thread.start()
 
+    def handleEvent(self, event):
+        self.sendEventToReceivers(event)
+
     def shutDown(self):
-        if self.server:
+        if self.server and self.is_alive:
             self.server.server_close()
-            self.server.is_alive = False

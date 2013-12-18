@@ -53,19 +53,21 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def testHandleData(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
-        data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
+        event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        for result in self.test_object.handleData(data):
-            self.assertTrue('gambolputty_xpath' in result and len(result['gambolputty_xpath']) > 0)
+        self.test_object.handleEvent(event)
+        for event in self.receiver.getEvent():
+            self.assertTrue('gambolputty_xpath' in event and len(event['gambolputty_xpath']) > 0)
 
     def testHandleDataWithTargetField(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
-        data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
+        event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        for result in self.test_object.handleData(data):
-            self.assertTrue('book_title' in result and len(result['book_title']) > 0)
+        self.test_object.handleEvent(event)
+        for event in self.receiver.getEvent():
+            self.assertTrue('book_title' in event and len(event['book_title']) > 0)
 
     def testRedis(self):
         rc = RedisClient.RedisClient(gp=mock.Mock())
@@ -78,30 +80,12 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_key': '%(category)s',
                                     'redis_ttl': 5})
         self.test_object.initRedisClient()
-        data = Utils.getDefaultDataDict({'agora_product_xml': self.xml_string,
+        data = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
-        for result in self.test_object.handleData(data):
+        self.test_object.handleEvent(data)
+        for event in self.receiver.getEvent():
             redis_entry = self.test_object.getRedisValue('COOKING')
-            self.assertEquals(result['book_title'], redis_entry)
-
-    def testQueueCommunication(self):
-        config = {'source_field': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testQueueCommunication(config)
-
-    def testOutputQueueFilterNoMatch(self):
-        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testOutputQueueFilterNoMatch(config)
-
-    def testOutputQueueFilterMatch(self):
-        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testOutputQueueFilterMatch(config)
-
-    def __testWorksOnOriginal(self):
-        config = {'source_fields': 'agora_product_xml', 'query': '//bookstore/book[@category="%(category)s"]/title/text()'}
-        super(TestXPathParser, self).testWorksOnOriginal(config)
-
-    def tearDown(self):
-        pass
+            self.assertEquals(event['book_title'], redis_entry)
 
 if __name__ == '__main__':
     unittest.main()

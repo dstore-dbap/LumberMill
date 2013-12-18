@@ -14,9 +14,9 @@ class TestModuleContainer(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_config = [{'module': 'AddDateTime',
                                 'configuration': {'target-field': '@timestamp'}}]
 
-    def testHandleData(self):
+    def testHandleEvent(self):
         self.test_object.configure(self.default_config)
-        for result in self.test_object.handleData(Utils.getDefaultDataDict({})):
+        for result in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', result['@timestamp'])) # 2013-08-29T10:25:26
 
     def testQueueCommunication(self):

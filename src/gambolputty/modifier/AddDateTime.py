@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import time
 import datetime
-import BaseThreadedModule
-import BaseMultiProcessModule
+import BaseModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class AddDateTime(BaseThreadedModule.BaseThreadedModule):
+class AddDateTime(BaseModule.BaseModule):
     """
     Add a field with the current datetime.
 
@@ -23,12 +21,6 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
     module_type = "modifier"
     """Set module type"""
 
-    def handleData(self, event):
-        """
-        Process the event.
-
-        @param event: dictionary
-        @return data: dictionary
-        """
+    def handleEvent(self, event):
         event[self.getConfigurationValue('target_field', event)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', event))
-        yield event
+        self.sendEventToReceivers(event)

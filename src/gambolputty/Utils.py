@@ -2,12 +2,12 @@
 import ast
 import sys
 import logging
+import collections
 import __builtin__
-
 import Utils
+from pprint import pprint
 
-
-def getDefaultDataDict(dict={}):
+def getDefaultEventDict(dict={}):
     default_dict = { "event_type": "Unknown",
                      "received_from": False,
                      "data": "",
@@ -21,18 +21,17 @@ def compileStringToConditionalObject(condition_as_string, mapping):
 
     Example:
 
-    condition_as_string = "matched = VirtualHostName == 'www.gambolutty.com'"
-    mapping = "data['%s']"
+    condition_as_string = "matched = VirtualHostName == 'www.gambolutty.com'", mapping = "event['%s']"
 
      will be parsed and compiled to:
-     matched = data['VirtualHostName'] == "www.gambolutty.com"
+     matched = event['VirtualHostName'] == "www.gambolutty.com"
+     matched = event.get('VirtualHostName', False) == "www.gambolutty.com"
     """
     try:
         # Build a complete expression from filter.
         transformer = AstTransformer(mapping)
         conditional_ast = ast.parse(condition_as_string)
         conditional_ast = transformer.visit(conditional_ast)
-        #print astpp.dump(conditional_ast)
         conditional = compile(conditional_ast, '<string>', 'exec')
         return conditional
     except :
@@ -51,6 +50,7 @@ class AstTransformer(ast.NodeTransformer):
         ignore_nodes.extend(["matched", "dependency"])
         if node.id in ignore_nodes:
             return node
+        #pprint(ast.dump(ast.parse(self.mapping % node.id)))
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 

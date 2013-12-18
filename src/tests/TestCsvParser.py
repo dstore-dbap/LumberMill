@@ -19,9 +19,10 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'delimiter': ';',
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
-        data = Utils.getDefaultDataDict({'csv-data': """It's;just;a;flesh;wound."""})
-        for result in self.test_object.handleData(data):
-            self.assertTrue('brain' in result and result['brain'] == "just" )
+        data = Utils.getDefaultEventDict({'csv-data': """It's;just;a;flesh;wound."""})
+        self.test_object.handleEvent(data)
+        for event in self.receiver.getEvent():
+            self.assertTrue('brain' in event and event['brain'] == "just" )
 
     def testDelimiter(self):
         config = {'source_field': 'csv-data',
@@ -31,9 +32,10 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'delimiter': '#',
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
-        data = Utils.getDefaultDataDict({'csv-data': """It's#just#a#flesh#wound."""})
-        for result in self.test_object.handleData(data):
-            self.assertTrue('brain' in result and result['brain'] == "just" )
+        data = Utils.getDefaultEventDict({'csv-data': """It's#just#a#flesh#wound."""})
+        self.test_object.handleEvent(data)
+        for event in self.receiver.getEvent():
+            self.assertTrue('brain' in event and event['brain'] == "just" )
 
     def tearDown(self):
         pass

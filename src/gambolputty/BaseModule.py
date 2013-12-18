@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
 import abc
 import logging
 import cPickle
-import time
 import Utils
 import redis
-import StatisticCollector
+import threading
+import multiprocessing
 
 class BaseModule():
     """
@@ -32,12 +33,16 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    def __init__(self, gp, stats_collector):
+    module_can_run_parallel = True
+
+    def __init__(self, gp, stats_collector=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
         self.configuration_data = {}
         self.input_queue = False
         self.output_queues = []
+        self.receivers = []
+        self.filter = {}
         self.redis_client = False
         self.stats_collector = stats_collector
 
@@ -128,8 +133,6 @@ class BaseModule():
 
     def initRedisClient(self):
         try:
-            #pprint.pprint(self.gp.modules)
-            self.temp = self.gp.modules[self.getConfigurationValue('redis_client')]['instances']
             self.redis_client = self.gp.modules[self.getConfigurationValue('redis_client')]['instances'][0].getClient()
         except KeyError:
             self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis_client'), Utils.AnsiColors.ENDC))
@@ -170,63 +173,57 @@ class BaseModule():
         return value
 
     def shutDown(self):
-        self.is_alive = False
+        pass
 
-    def getInputQueue(self):
-        return self.input_queue
+    def addReceiver(self, receiver):
+        if receiver not in self.receivers:
+            self.receivers.append(receiver)
 
-    def setInputQueue(self, queue):
-        if queue not in self.output_queues:
-            self.input_queue = queue
-        else:
-            self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            self.gp.shutDown()
-
-    def getOutputQueues(self):
-        return self.output_queues
-
-    def addOutputQueue(self, queue, filter = False):
-        if queue == self.input_queue:
-            self.logger.error("%sSetting input queue to output queue will create a circular reference. Exiting.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            self.gp.shutDown()
+    def sendEventToReceivers(self, event, update_counter=True):
+        if not self.receivers or not event:
             return
-        if filter:
-            filter = Utils.compileStringToConditionalObject("matched = %s" % filter, 'data["%s"]')
-        if not any(queue == output_queue['queue'] for output_queue in self.output_queues):
-            self.output_queues.append({'queue': queue, 'filter': filter})
-
-    def addEventToOutputQueues(self, data, update_counter=True):
-        #if update_counter:
-        #    self.stats_collector.decrementCounter('events_in_process')
-        if not self.output_queues or not data:
-            return
-        for idx, queue in enumerate(self.output_queues):
-            if queue['filter']:
+        for idx, receiver in enumerate(self.receivers):
+            receiver_filter = self.getFilter(receiver)
+            if receiver_filter:
                 try:
-                    # If the filter fails, the data will not be added to the queue.
-                    exec queue['filter']
+                    matched = False
+                    # If the filter fails, the data will not be send to the receiver.
+                    exec receiver_filter
                     if not matched:
                         continue
                 except:
-                    continue
-            try:
-                # Add a copy of the event to queue if we have more than one receiver.
-                # This prevents strange side effects while events are being passed from one module to the next.
-                queue['queue'].put(data if idx is 0 else data.copy())
-                #self.stats_collector.incrementCounter('events_in_queues')
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not add received data to output queue. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                    raise
+            if isinstance(receiver, threading.Thread) or isinstance(receiver, multiprocessing.Process):
+                receiver.getInputQueue().put(event if idx is 0 else event.copy())
+            else:
+                receiver.handleEvent(event if idx is 0 else event.copy())
 
-    def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
-        data = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
-        #self.stats_collector.decrementCounter('events_in_queues')
-        #if update_counter:
-        #    self.stats_collector.incrementCounter('events_in_process')
-        return data
+    def getFilter(self, receiver):
+        try:
+            return self.filter[receiver.__class__]
+        except KeyError:
+            return False
+
+    def setFilter(self, filter, receiver):
+        self.filter[receiver.__class__] = filter
+
+    def handleEvent(self, event):
+        """
+        Process the event.
+
+        This is, by default, a wrapper method for the private handleMultiplexEvent method.
+        handleMultiplexEvent handles a single incoming event that can trigger multiple outgoing events.
+        If you don't need this, just override this method.
+
+        @param event: dictionary
+        """
+        for event in self.handleMultiplexEvent(event):
+            self.sendEventToReceivers(event)
 
     @abc.abstractmethod
-    def handleData(self, data):
+    def handleMultiplexEvent(self, data):
         """
-        This method has to be implemented by modules.
+        If a module needs to emit more than just the received event, implement this method.
         """
+        self.logger.error("%sPlease implement either the handleEvent or the handleMultiplexEvent in your module.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+        sys.exit(255)

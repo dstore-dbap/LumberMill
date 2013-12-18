@@ -2,11 +2,12 @@
 import sys
 import re
 import hashlib
-import BaseThreadedModule
+import pprint
+import BaseModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class ModifyFields(BaseThreadedModule.BaseThreadedModule):
+class ModifyFields(BaseModule.BaseModule):
     """
     Simple module to add/delete/change field values.
 
@@ -117,7 +118,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         self.typecast_switch = { 'int': self.castToInteger,
                                  'integer': self.castToInteger,
@@ -150,14 +151,14 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                 self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 self.gp.shutDown()
 
-    def handleData(self, event):
+    def handleEvent(self, event):
         try:
-            event = self.__getattribute__("%s" % self.action)(event)
+            event = getattr(self, "%s" % self.action)(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
-        yield event
+        self.sendEventToReceivers(event)
 
     def keep(self,event):
         """

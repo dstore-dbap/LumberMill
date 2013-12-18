@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-import BaseThreadedModule
-import BaseMultiProcessModule
+import BaseModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class DevNullSink(BaseThreadedModule.BaseThreadedModule):
+class DevNullSink(BaseModule.BaseModule):
     """
     Just discard messeages send to this module.BaseThreadedModule
 
@@ -16,5 +15,5 @@ class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     module_type = "output"
     """Set module type"""
 
-    def handleData(self, event):
-        yield event
+    def handleEvent(self, event):
+        pass
