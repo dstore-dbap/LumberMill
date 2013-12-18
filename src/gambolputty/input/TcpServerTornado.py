@@ -50,10 +50,11 @@ class ConnectionHandler(object):
 class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from tcp socket and sends it to its output queues.
+    Should be the best choice perfomancewise if you are on Linux.
 
     Configuration example:
 
-    - module: TcpServerThreaded
+    - module: TcpServerTornado
       configuration:
         interface: localhost             # <default: ''; type: string; is: optional>
         port: 5151                       # <default: 5151; type: integer; is: optional>

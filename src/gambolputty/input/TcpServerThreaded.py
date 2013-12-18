@@ -123,6 +123,7 @@ class TCPRequestHandlerFactory:
 class TcpServerThreaded(BaseModule.BaseModule):
     """
     Reads data from tcp socket and sends it to its output queues.
+    This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
 
     Configuration example:
 
