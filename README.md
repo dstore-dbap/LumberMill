@@ -7,17 +7,16 @@ A simple stream parser in python. To run GambolPutty you will need Python 2.5+.
 
 To analyze i.e. log data, this tool offers a simple approach to parse the streams using regular expressions.
 
-The different modules can be combined in any order. Each module runs in its own thread and data is passed 
-via python queues between the running modules.
-
-Running this with pypy instead of python increases performance noticeably! So be sure to run it via pypy.
+The different modules can be combined in any order.
 
 ##### Working modules:
 
 #### Event inputs
 
-* StdInHandler, read stream from standard in 
+* StdInHandler, read stream from standard in
 * TcpServerThreaded, read stream from a tcp socket
+* TcpServerTornado, read stream from a tcp socket, faster on Linux
+* Spam, what it says on the can - spams GambolPutty for testing.
 
 #### Event parsers
 
@@ -42,10 +41,10 @@ Running this with pypy instead of python increases performance noticeably! So be
 
 #### Misc modules
 
-* ModuleContainer, wrap modules in a container reducing the overhead to run each module in it's own thread
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul
 * Facet, collect all encountered variations of en event value over a configurable presiod of time
 * Statistics, simple statistic module
+* Tarpit, slows event propagation down - for testing.
 
 GambolPutty makes use of the following projects:
 
@@ -55,12 +54,13 @@ GambolPutty makes use of the following projects:
 * https://pypi.python.org/pypi/elasticsearch/
 
 ### Event flow basics
-
 * an input module receives an event.
 * the event data will be wrapped in a default event dictionary of the following structure:
-    { "received_from": False, "data": received event, "markers": [] }
-* the input module adds the default event dictionary to its output queues as configured in the config file.
-* each following module will read from its input queue and adds the result to its output queues.
+    { "event_type": "Unknown", "received_from": False, "data": "", "markers": [] }
+* the input module sends the new event to its receivers. Either by adding it to a queue or by calling the
+  receivers handleEvent method.
+* each following module will process the event via its handleEvent method and pass it on to its
+  receivers.
 
 ### Configuration basics
 
