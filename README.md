@@ -111,7 +111,9 @@ This should produce the following output:
 	 'url': 'GET /cgi-bin/try/ HTTP/1.0',
 	 'user': '-'}
 
-For a more complex configuration refer to the gambolputty.example configuration file in the conf folder.
+For a more complex configuration refer to the gambolputty.conf.tcp-example configuration file in the conf folder.
+
+For a small how-to running GambolPutty on CentOS, feel free to visit http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
 
 ##### A rough sketch for using GambolPutty with syslog-ng:
 
