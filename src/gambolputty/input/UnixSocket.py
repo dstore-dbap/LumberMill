@@ -2,6 +2,8 @@
 #coding:utf-8
 
 import sys
+import socket
+from tornado import netutil
 from tornado.ioloop import IOLoop
 from tornado.tcpserver import TCPServer
 
@@ -9,14 +11,13 @@ import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
-class TcpServer(TCPServer):
+class SocketServer(TCPServer):
 
     def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
         TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
         self.gp_module = gp_module
 
     def handle_stream(self, stream, address):
-        #logging.info('receive a new connection from %s', address)
         ConnectionHandler(stream, address, self.gp_module)
 
 class ConnectionHandler(object):
@@ -27,14 +28,13 @@ class ConnectionHandler(object):
         self.gp_module = gp_module
         self.is_open = True
         self.stream = stream
-        self.address = address
+        self.address = socket.gethostname()
         self.stream.set_close_callback(self._on_close)
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
     def _on_read_line(self, data):
-        (host, port) = self.address
-        self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
+        self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": self.address, "data": data}))
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
@@ -42,21 +42,15 @@ class ConnectionHandler(object):
         self.stream.close()
 
 @ModuleDocstringParser
-class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
+class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     """
-    Reads data from tcp socket and sends it to its output queues.
-    Should be the best choice perfomancewise if you are on Linux.
+    Reads data from an unix socket and sends it to its output queues.
 
     Configuration example:
 
-    - module: TcpServerTornado
+    - module: UnixSocket
       configuration:
-        interface: localhost             # <default: ''; type: string; is: optional>
-        port: 5151                       # <default: 5151; type: integer; is: optional>
-        timeout: 5                       # <default: None; type: None||integer; is: optional>
-        tls: False                       # <default: False; type: boolean; is: optional>
-        key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
+        path_to_socket: /tmp/test.sock        # <type: string; is: required>
       receivers:
         - NextModule
     """
@@ -74,16 +68,17 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         try:
-            ssl_options = None
-            if self.getConfigurationValue("tls"):
-                ssl_options = { 'certfile': self.getConfigurationValue("cert"),
-                                'keyfile': self.getConfigurationValue("key")}
-            self.server = TcpServer(ssl_options=ssl_options, gp_module=self)
-            self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
+            self.unix_socket = netutil.bind_unix_socket(self.getConfigurationValue('path_to_socket'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
-                                                                                       self.getConfigurationValue("port"), etype, evalue))
+            self.logger.error("%sWill not start module %s. Could not access unix socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, self.getConfigurationValue('path_to_socket'), etype, evalue, Utils.AnsiColors.ENDC))
+            return
+        try:
+            self.server = SocketServer(gp_module=self)
+            self.server.add_socket(self.unix_socket)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not access socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
             return
         #self.server.start(0)
         IOLoop.instance().start()

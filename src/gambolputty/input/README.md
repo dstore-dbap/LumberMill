@@ -51,6 +51,18 @@ Reads data from stdin and sends it to its output queues.
       receivers:
         - NextModuleName
 
+#####UnixSocket
+
+Reads data from an unix socket and sends it to its output queues.
+
+    Configuration example:
+
+    - module: UnixSocket
+      configuration:
+        path_to_socket: /tmp/test.sock   # <type: string; is: required>
+      receivers:
+        - NextModule
+
 #####Spam
 
 Emits events as fast as possible.
