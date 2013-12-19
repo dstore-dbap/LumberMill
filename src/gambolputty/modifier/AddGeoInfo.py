@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
-import BaseThreadedModule
 import socket
+import sys
+import Utils
+import pygeoip
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
-
-try:
-    import GeoIP 
-except:
-    try:
-        import pygeoip
-    except:
-        pass
 
 @ModuleDocstringParser
 class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
@@ -34,14 +29,13 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.gi = False
         try:
-            self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
-        except: 
-            try:
-                self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
-            except NameError:
-                self.logger.error("Shutting down module %s since neiter GeoIP nor pygeoip module could be found." % (self.__class__.__name__))
-                self.gp.shutDown()
-                return False
+            self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not init %s. Exception: %s, Error: %s. %s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
+        if not self.gi:
+            self.gp.shutDown()
+            return False
 
     def handleEvent(self, event):
         hostname_or_ip = False

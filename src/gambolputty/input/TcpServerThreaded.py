@@ -149,7 +149,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
 
     def run(self):
         if not self.addReceiver:
-            self.logger.warning("Will not start module %s since no output queue set." % (self.__class__.__name__))
+            self.logger.warning("%sWill not start module %s since no output queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         handler_factory = TCPRequestHandlerFactory()
         try:
@@ -162,8 +162,8 @@ class TcpServerThreaded(BaseModule.BaseModule):
                                              cert=self.getConfigurationValue("cert"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
-                                                                                       self.getConfigurationValue("port"), etype, evalue))
+            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
+                                                                                            self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
             return
         # Start a thread with the server -- that thread will then start one
