@@ -13,37 +13,37 @@ The different modules can be combined in any order.
 
 #### Event inputs
 
-* StdInHandler, read stream from standard in
-* TcpServerThreaded, read stream from a tcp socket
-* TcpServerTornado, read stream from a tcp socket, faster on Linux
+* StdInHandler, read stream from standard in.
+* TcpServerThreaded, read stream from a tcp socket.
+* TcpServerTornado, read stream from a tcp socket, faster on Linux.
 * Spam, what it says on the can - spams GambolPutty for testing.
 
 #### Event parsers
 
-* RegexParser, parse a string using regular expressions and named capturing groups
-* CSVParser, parse a char separated string
-* JsonParser, parse a json formatted string
-* UrlParser, parse the query string from an url
-* XPathParser, parse an XML document via an xpath expression
+* RegexParser, parse a string using regular expressions and named capturing groups.
+* CSVParser, parse a char separated string.
+* JsonParser, parse a json formatted string.
+* UrlParser, parse the query string from an url.
+* XPathParser, parse an XML document via an xpath expression.
 
 #### Field modifiers
 
-* AddDateTime, adds a timestamp field
-* AddGeoInfo, adds geo info fields
+* AddDateTime, adds a timestamp field.
+* AddGeoInfo, adds geo info fields.
 * ModifyFields, some methods to change extracted fields, e.g. insert, delete, replace, castToInteger etc.
-* HttpRequest, execute an arbritrary http request and store result
-* Permutate, takes a list in the event data emits events for all possible permutations of that list
+* HttpRequest, execute an arbritrary http request and store result.
+* Permutate, takes a list in the event data emits events for all possible permutations of that list.
 
 #### Outputs
-* DevNullSink, discards all data that it receives
-* StdOutHandler, prints all received data to standard out
-* ElasticSearchOutput, stores data entries in an elasticsearch index
+* DevNullSink, discards all data that it receives.
+* StdOutHandler, prints all received data to standard out.
+* ElasticSearchOutput, stores data entries in an elasticsearch index.
 
 #### Misc modules
 
-* RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul
-* Facet, collect all encountered variations of en event value over a configurable presiod of time
-* Statistics, simple statistic module
+* RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
+* Facet, collect all encountered variations of en event value over a configurable period of time.
+* Statistics, simple statistic module.
 * Tarpit, slows event propagation down - for testing.
 
 GambolPutty makes use of the following projects:
