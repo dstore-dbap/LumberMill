@@ -16,6 +16,7 @@ The different modules can be combined in any order.
 * StdInHandler, read stream from standard in.
 * TcpServerThreaded, read stream from a tcp socket.
 * TcpServerTornado, read stream from a tcp socket, faster on Linux.
+* RedisChannel, read events from redis channels
 * UnixSocket, read stream from a named socket on unix like systems.
 * Spam, what it says on the can - spams GambolPutty for testing.
 
