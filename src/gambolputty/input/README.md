@@ -63,6 +63,21 @@ Reads data from an unix socket and sends it to its output queues.
       receivers:
         - NextModule
 
+#####RedisChannel
+
+Subscribes to a redis channel and passes incoming events to receivers.
+
+    Configuration example:
+
+    - module: RedisChannel
+      configuration:
+        channels:                   # <type: string; is: required>
+        server: redis.server        # <default: 'localhost'; type: string; is: optional>
+        port: 6379                  # <default: 6379; type: integer; is: optional>
+        db: 0                       # <default: 0; type: integer; is: optional>
+        password: None              # <default: None; type: None||string; is: optional>
+        socket_timeout: 10          # <default: 10; type: integer; is: optional>
+
 #####Spam
 
 Emits events as fast as possible.

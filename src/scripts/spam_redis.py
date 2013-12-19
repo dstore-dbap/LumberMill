@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+import redis
+
 #!/usr/bin/env python
 #
 #  tcp_socket_throughput.py
@@ -12,7 +15,7 @@ from multiprocessing import Process, Value, Lock
 
 
 host = sys.argv[1]
-port = int(sys.argv[2]) if len(sys.argv) == 3 else 5151
+port = int(sys.argv[2]) if len(sys.argv) == 3 else 6379
 
 process_count = 5  # concurrent sender agents
 
@@ -47,6 +50,7 @@ class Agent(Process):
     def __init__(self, count_ref, parent_alive):
         Process.__init__(self)
         self.daemon = True
+        self.client = redis.Redis(host=host, port=port)
         self.count_ref = count_ref
         self.parent_alive = parent_alive
 
@@ -58,15 +62,12 @@ class Agent(Process):
             if time.time() >= start + 20:
                 self.parent_alive = alive = False
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.connect((host, port))
                 now = "%f" % time.time()
                 message ='192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395'
-                s.sendall('%s\n' % message)
+                self.client.publish('GamboPutty', '%s\n' % message)
                 increment(self.count_ref)
                 s.close()
-                time.sleep(.000001) #.0000001
+                time.sleep(.0000001) #.0000001
             except:
                 self.parent_alive = alive = False
                 etype, evalue, etb = sys.exc_info()
@@ -75,3 +76,4 @@ class Agent(Process):
 if __name__ == '__main__':
     controller = Controller()
     controller.start()
+
