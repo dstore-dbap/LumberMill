@@ -2,6 +2,7 @@
 #coding:utf-8
 
 import sys
+import os
 import socket
 from tornado import netutil
 from tornado.ioloop import IOLoop
@@ -16,9 +17,10 @@ class SocketServer(TCPServer):
     def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
         TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
         self.gp_module = gp_module
+        self.address = socket.gethostname()
 
     def handle_stream(self, stream, address):
-        ConnectionHandler(stream, address, self.gp_module)
+        ConnectionHandler(stream, self.address, self.gp_module)
 
 class ConnectionHandler(object):
 
@@ -28,7 +30,7 @@ class ConnectionHandler(object):
         self.gp_module = gp_module
         self.is_open = True
         self.stream = stream
-        self.address = socket.gethostname()
+        self.address = address
         self.stream.set_close_callback(self._on_close)
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
@@ -61,7 +63,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.server = False
+        self.running = False
 
     def run(self):
         if not self.receivers:
@@ -71,7 +73,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
             self.unix_socket = netutil.bind_unix_socket(self.getConfigurationValue('path_to_socket'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sWill not start module %s. Could not access unix socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, self.getConfigurationValue('path_to_socket'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sWill not start module %s. Could not create unix socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, self.getConfigurationValue('path_to_socket'), etype, evalue, Utils.AnsiColors.ENDC))
             return
         try:
             self.server = SocketServer(gp_module=self)
@@ -80,12 +82,18 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not access socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
             return
+        self.running = True
         #self.server.start(0)
         IOLoop.instance().start()
 
     def shutDown(self):
-        if self.server:
-            self.server.stop()
+        if self.running:
+            try:
+                os.remove(self.getConfigurationValue('path_to_socket'))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sCould not remove socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
+        return
 
     def handleEvent(self, event):
         self.sendEventToReceivers(event)
