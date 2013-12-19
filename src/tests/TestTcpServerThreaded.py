@@ -1,9 +1,7 @@
 import extendSysPath
 import ModuleBaseTestCase
 import Utils
-import unittest2
 import sys
-import Queue
 import time
 import mock
 import socket

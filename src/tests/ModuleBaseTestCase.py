@@ -117,4 +117,4 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
     """
     def tearDown(self):
-        pass
+        self.test_object.shutDown()
