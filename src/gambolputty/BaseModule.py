@@ -195,8 +195,10 @@ class BaseModule():
                     raise
             if isinstance(receiver, threading.Thread) or isinstance(receiver, multiprocessing.Process):
                 receiver.getInputQueue().put(event if idx is 0 else event.copy())
+                #receiver.getInputQueue().put(event.copy())
             else:
                 receiver.handleEvent(event if idx is 0 else event.copy())
+                #receiver.handleEvent(event.copy())
 
     def getFilter(self, receiver):
         try:

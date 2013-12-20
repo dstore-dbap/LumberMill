@@ -12,7 +12,8 @@ class StdOutHandler(BaseModule.BaseModule):
 
     - module: StdOutHandler
       configuration:
-        pretty_print: True      # <default: True; type: boolean; is: optional>
+        pretty_print: True          # <default: True; type: boolean; is: optional>
+        fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
       receivers:
         - NextModule
     """
@@ -21,7 +22,11 @@ class StdOutHandler(BaseModule.BaseModule):
     """Set module type"""
 
     def handleEvent(self, event):
-        if self.getConfigurationValue('pretty_print'):
-            pprint.pprint(event)
+        if self.getConfigurationValue('fields'):
+            output = self.getConfigurationValue('fields', event)
         else:
-            print "%s" % event
+            output = event
+        if self.getConfigurationValue('pretty_print'):
+            pprint.pprint(output)
+        else:
+            print "%s" % output

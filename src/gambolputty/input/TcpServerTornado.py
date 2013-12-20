@@ -2,7 +2,9 @@
 #coding:utf-8
 
 import sys
+import logging
 from tornado.ioloop import IOLoop
+from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
 
 import Utils
@@ -24,6 +26,7 @@ class ConnectionHandler(object):
     stream_set = set([])
 
     def __init__(self, stream, address, gp_module):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
         self.is_open = True
         self.stream = stream
@@ -34,9 +37,15 @@ class ConnectionHandler(object):
 
     def _on_read_line(self, data):
         (host, port) = self.address
-        self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
-        if not self.stream.closed():
+        if data.strip() != "":
+            self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
+        try:
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
+        except StreamClosedError:
+            pass
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sFailed to read from strem. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
 
     def _on_close(self):
         self.stream.close()
@@ -82,8 +91,8 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
-                                                                                       self.getConfigurationValue("port"), etype, evalue))
+            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
+                                                                                       self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             return
         #self.server.start(0)
         IOLoop.instance().start()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from hashlib import md5
+import pprint
 import sys
 import datetime
 import time
@@ -27,7 +28,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
           doc_id: 'data'                            # <default: "data"; type: string; is: optional>
           replication: 'sync'                       # <default: "sync"; type: string; is: optional>
           store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
-          max_waiting_events: 2500                  # <default: 2500; type: integer; is: optional>
+          max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -43,14 +44,17 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()
-            return False
+            return
+        self.is_storing = False
         self.timed_store_func = self.getTimedStoreFunc()
         self.timed_store_func(self)
 
     def getTimedStoreFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
         def timedStoreData(self):
-            self.storeData()
+            while self.is_storing:
+                time.sleep(.01)
+            self.storeData(self.events_container)
         return timedStoreData
 
     def connect(self):
@@ -66,11 +70,13 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         return es
 
     def handleEvent(self, event):
+        # Wait till a running store is finished to avoid strange race conditions.
+        while self.is_storing:
+            time.sleep(.01)
         # Append event to internal data container
         self.events_container.append(event)
         if len(self.events_container) >= self.max_waiting_events:
-            self.storeData()
-        self.sendEventToReceivers(event)
+            self.storeData(self.events_container)
 
     def dataToElasticSearchJson(self, index_name, events):
         """
@@ -78,20 +84,16 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         """
         json_data = ""
         for event in events:
-            if 'event_type' not in event:
-                continue
             try:
-                doc_id = event[self.getConfigurationValue("doc_id", event)]
+                event_type = event['event_type']
             except KeyError:
-                doc_id = self.getConfigurationValue("doc_id", event)
+                event_type = 'Unknown'
             try:
-                #es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], md5(event[self.getConfigurationValue("doc_id_field", event)]).hexdigest())
-                es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": "%s"}}\n' % (index_name, event['event_type'], doc_id)
+                doc_id = event[self.getConfigurationValue("doc_id", event)].strip()
             except KeyError:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sCould not store data in elastic search. Document id field %s is missing in event.%s" % (Utils.AnsiColors.WARNING, doc_id, Utils.AnsiColors.ENDC))
-                self.logger.warning("%sEvent: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
-                continue
+                doc_id = self.getConfigurationValue("doc_id", event).strip()
+            doc_id = json.dumps(doc_id)
+            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}\n' % (index_name, event_type, doc_id)
             try:
                 json_data += "%s%s\n" % (es_index,json.dumps(event))
             except UnicodeDecodeError:
@@ -99,15 +101,16 @@ class ElasticSearchOutput(BaseModule.BaseModule):
                 self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
         return json_data
 
-    def storeData(self):
-        if len(self.events_container) == 0:
+    def storeData(self, events):
+        if len(events) == 0:
             return
+        self.is_storing = True
         if self.getConfigurationValue("index_name"):
             index_name = self.getConfigurationValue("index_name")
         else:
             index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
 
-        json_data = self.dataToElasticSearchJson(index_name, self.events_container)
+        json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
         except Exception, e:
@@ -121,6 +124,6 @@ class ElasticSearchOutput(BaseModule.BaseModule):
                 # Try to reconnect
                 self.es = self.connect()
                 time.sleep(.1)
-            return
         finally:
             self.events_container = []
+            self.is_storing = False
