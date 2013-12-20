@@ -18,7 +18,6 @@ class TcpServer(TCPServer):
         self.gp_module = gp_module
 
     def handle_stream(self, stream, address):
-        #logging.info('receive a new connection from %s', address)
         ConnectionHandler(stream, address, self.gp_module)
 
 class ConnectionHandler(object):

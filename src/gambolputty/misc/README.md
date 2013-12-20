@@ -23,6 +23,30 @@ Configuration example:
         decode_responses: False # <default: False; type: boolean; is: optional>
         unix_socket_path: ''    # <default: ''; type: string; is: optional>
 
+
+#####Statistics
+
+Keeps track of all events passing through GambolPutty.
+
+This module stores all events that enter Gambolputty in a redis backend and deletes them, as soon as they
+get destroyed by the BaseModule.destroyEvent method. Events that did not get destroyed will be resent when
+GamboPutty is restarted. This should make sure that nearly every event gets to its destination, even when
+something goes absolutely wrong.
+
+As storage backend a redis client is needed.
+
+Please note, that this will significantly slow down the event processing. You have to decide if speed or
+event delivery is of higher importance to you. Even without this module, GambolPutty tries to make sure
+all events reach their destination.
+
+    Configuration example:
+
+    - module: TrackEvents
+      configuration:
+        redis_client: RedisClientName           # <type: string; is: required>
+        redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
+
+
 #####Statistics
 
 Collect and log some statistic data.
@@ -36,6 +60,7 @@ Configuration example:
         receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
         waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
         processing_event_statistics: True  # <default: False; type: boolean; is: optional>
+
 
 #####Facet
 
@@ -62,6 +87,7 @@ it will first try to retrieve the facet info from redis via the key setting.
         redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
+
 
 #####Tarpit
 

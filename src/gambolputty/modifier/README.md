@@ -65,7 +65,7 @@ Configuration example:
 
 Simple module to add/delete/change field values.
 
-    Configuration examples:
+Configuration examples:
 
     # Keep all fields listed in source-fields, discard all others.
     - module: ModifyFields

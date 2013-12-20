@@ -18,6 +18,15 @@ class ElasticSearchOutput(BaseModule.BaseModule):
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
+    nodes: configures the elasticsearch nodes.
+    index_prefix: es index prefix to use, will be appended with '%Y.%m.%d'.
+    index_name: sets a fixed name for the es index.
+    doc_id: sets the es document id for the committed event data.
+    replication: can be either 'sync' or 'async'.
+    store_interval_in_secs: sending data to es in x seconds intervals.
+    max_waiting_events: sending data to es if event count is above even if store_interval_in_secs is not reached.
+    backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+
     Configuration example:
 
     - module: ElasticSearchOutput
@@ -29,8 +38,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
           replication: 'sync'                       # <default: "sync"; type: string; is: optional>
           store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
           max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
-      receivers:
-        - NextModule
+          backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -41,6 +49,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         self.events_container = []
         self.max_waiting_events = self.getConfigurationValue('max_waiting_events')
+        self.backlog_size = self.getConfigurationValue('backlog_size')
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()
@@ -60,9 +69,9 @@ class ElasticSearchOutput(BaseModule.BaseModule):
     def connect(self):
         es = False
         # Connect to es node and round-robin between them.
-        elasticsearch.connection.Urllib3HttpConnection(maxsize=100)
+        #elasticsearch.connection.Urllib3HttpConnection(maxsize=100)
         try:
-            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), niff_on_start=True)
+            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), sniff_on_start=True)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
@@ -73,7 +82,8 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         # Wait till a running store is finished to avoid strange race conditions.
         while self.is_storing:
             time.sleep(.01)
-        # Append event to internal data container
+        if len(self.events_container) >= self.backlog_size:
+            self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
         self.events_container.append(event)
         if len(self.events_container) >= self.max_waiting_events:
             self.storeData(self.events_container)
@@ -89,16 +99,19 @@ class ElasticSearchOutput(BaseModule.BaseModule):
             except KeyError:
                 event_type = 'Unknown'
             try:
-                doc_id = event[self.getConfigurationValue("doc_id", event)].strip()
+                doc_id = event[self.getConfigurationValue("doc_id", event)]
             except KeyError:
-                doc_id = self.getConfigurationValue("doc_id", event).strip()
-            doc_id = json.dumps(doc_id)
+                doc_id = self.getConfigurationValue("doc_id", event)
+            if not doc_id:
+                self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
+                continue
+            doc_id = json.dumps(doc_id.strip())
             es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}\n' % (index_name, event_type, doc_id)
             try:
                 json_data += "%s%s\n" % (es_index,json.dumps(event))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
         return json_data
 
     def storeData(self, events):
@@ -113,17 +126,18 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
-        except Exception, e:
-            try:
-                self.logger.error("Server cummunication error: %s" % e[1])
-                self.logger.error("%s/%s" % (self.getConfigurationValue("nodes"),index_name))
-                self.logger.error("Payload: %s" % json_data)
-            except:
-                self.logger.error("Server cummunication error: %s" % e)
-            finally:
-                # Try to reconnect
-                self.es = self.connect()
-                time.sleep(.1)
-        finally:
+            self.destroyEvents(events)
             self.events_container = []
+        except elasticsearch.exceptions.ConnectionError:
+            try:
+                self.logger.warning("%sLost connection to %s. Trying to reconnect.%s" % (Utils.AnsiColors.WARNING, (self.getConfigurationValue("nodes"),index_name), Utils.AnsiColors.ENDC))
+                self.es = self.connect()
+            except:
+                time.sleep(.5)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sServer cummunication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.debug("Payload: %s" % json_data)
+            time.sleep(.1)
+        finally:
             self.is_storing = False

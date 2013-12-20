@@ -14,8 +14,6 @@ class StdOutHandler(BaseModule.BaseModule):
       configuration:
         pretty_print: True          # <default: True; type: boolean; is: optional>
         fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
-      receivers:
-        - NextModule
     """
 
     module_type = "output"
@@ -30,3 +28,4 @@ class StdOutHandler(BaseModule.BaseModule):
             pprint.pprint(output)
         else:
             print "%s" % output
+        self.destroyEvents([event])

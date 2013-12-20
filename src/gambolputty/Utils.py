@@ -12,6 +12,7 @@ def getDefaultEventDict(dict={}):
                      "received_from": False,
                      "data": "",
                      "markers": [] }
+    default_dict['__id'] = id(default_dict)
     default_dict.update(dict)
     return default_dict
 

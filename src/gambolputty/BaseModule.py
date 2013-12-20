@@ -5,6 +5,7 @@ import re
 import abc
 import logging
 import cPickle
+import collections
 import Utils
 import redis
 import threading
@@ -44,6 +45,7 @@ class BaseModule():
         self.receivers = []
         self.filter = {}
         self.redis_client = False
+        self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
 
     def configure(self, configuration):
@@ -180,8 +182,10 @@ class BaseModule():
             self.receivers.append(receiver)
 
     def sendEventToReceivers(self, event, update_counter=True):
-        if not self.receivers or not event:
+        if not self.receivers:
+            self.destroyEvent(event)
             return
+        event_dropped = True
         for idx, receiver in enumerate(self.receivers):
             receiver_filter = self.getFilter(receiver)
             if receiver_filter:
@@ -193,12 +197,23 @@ class BaseModule():
                         continue
                 except:
                     raise
+            event_dropped = False
             if isinstance(receiver, threading.Thread) or isinstance(receiver, multiprocessing.Process):
                 receiver.getInputQueue().put(event if idx is 0 else event.copy())
                 #receiver.getInputQueue().put(event.copy())
             else:
                 receiver.handleEvent(event if idx is 0 else event.copy())
                 #receiver.handleEvent(event.copy())
+        if event_dropped:
+            self.destroyEvent(event)
+
+    def registerCallback(self, event_type, callback):
+        self.callbacks[event_type].append(callback)
+
+    def destroyEvents(self, events):
+        for callback in self.callbacks['on_event_delete']:
+            for event in events:
+                callback(event)
 
     def getFilter(self, receiver):
         try:
