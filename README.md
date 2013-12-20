@@ -46,6 +46,7 @@ The different modules can be combined in any order.
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
 * Facet, collect all encountered variations of en event value over a configurable period of time.
 * Statistics, simple statistic module.
+* TrackEvents, keep track of events beeing processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
 
 GambolPutty makes use of the following projects:
