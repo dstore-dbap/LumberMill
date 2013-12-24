@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
 import redis
-import BaseThreadedModule
+import BaseModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class RedisClient(BaseThreadedModule.BaseThreadedModule):
+class RedisClient(BaseModule.BaseModule):
     """
     A simple wrapper around the redis python module.
 
@@ -28,7 +28,7 @@ class RedisClient(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         try:
             self.redis_client = redis.StrictRedis(host=self.getConfigurationValue('server'),
                                                   port=self.getConfigurationValue('port'),

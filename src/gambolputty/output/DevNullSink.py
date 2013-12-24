@@ -16,4 +16,4 @@ class DevNullSink(BaseModule.BaseModule):
     """Set module type"""
 
     def handleEvent(self, event):
-        self.destroyEvents([event])
+        yield event

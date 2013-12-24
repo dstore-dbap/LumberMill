@@ -28,4 +28,4 @@ class StdOutHandler(BaseModule.BaseModule):
             pprint.pprint(output)
         else:
             print "%s" % output
-        self.destroyEvents([event])
+        yield event

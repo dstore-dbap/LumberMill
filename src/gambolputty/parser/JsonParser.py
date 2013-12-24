@@ -32,7 +32,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.source_field not in event:
-            self.sendEventToReceivers(event)
+            yield event
             return
         json_string = str(event[self.source_field]).strip("'<>() ").replace('\'', '\"')
         try:
@@ -40,8 +40,8 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse json data %s. Exception: %s, Error: %s." % (event, etype, evalue))
-            self.sendEventToReceivers(event)
+            yield event
             return
         for field_name, field_value in json_data.iteritems():
             event[field_name] = field_value
-        self.sendEventToReceivers(event)
+        yield event

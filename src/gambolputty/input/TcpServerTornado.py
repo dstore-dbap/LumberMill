@@ -37,14 +37,14 @@ class ConnectionHandler(object):
     def _on_read_line(self, data):
         (host, port) = self.address
         if data.strip() != "":
-            self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
+            self.gp_module.receiveEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
         try:
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
         except StreamClosedError:
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to read from strem. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sFailed to read from stream. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
 
     def _on_close(self):
         self.stream.close()
@@ -99,6 +99,3 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     def shutDown(self):
         if self.server:
             self.server.stop()
-
-    def handleEvent(self, event):
-        self.sendEventToReceivers(event)

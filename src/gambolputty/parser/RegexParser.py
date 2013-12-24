@@ -83,14 +83,15 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         # i.e. event starts with <141>
         fieldname = self.getConfigurationValue('source_field', event)
         if fieldname not in event:
-            self.sendEventToReceivers(event)
+            yield event
             return
         try:
             if event[fieldname].index(">") <= 4:
                 event[fieldname] = event[fieldname][event[fieldname].index(">")+1:] + "\n"
         except:
             pass
-        self.sendEventToReceivers(self.parseEvent(event, fieldname))
+        yield self.parseEvent(event, fieldname)
+        #self.sendEvent(self.parseEvent(event, fieldname))
 
     def parseEvent(self, event, fieldname):
         """

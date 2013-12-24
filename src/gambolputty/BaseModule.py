@@ -8,8 +8,8 @@ import cPickle
 import collections
 import Utils
 import redis
-import threading
-import multiprocessing
+import Queue
+from multiprocessing.queues import Queue as MpQueue
 
 class BaseModule():
     """
@@ -35,6 +35,7 @@ class BaseModule():
     """ Set module type. """
 
     module_can_run_parallel = True
+    event_refcount = collections.defaultdict(int)
 
     def __init__(self, gp, stats_collector=False):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -42,8 +43,8 @@ class BaseModule():
         self.configuration_data = {}
         self.input_queue = False
         self.output_queues = []
-        self.receivers = []
-        self.filter = {}
+        self.receivers = {}
+        self.filters = {}
         self.redis_client = False
         self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
@@ -177,53 +178,77 @@ class BaseModule():
     def shutDown(self):
         pass
 
-    def addReceiver(self, receiver):
-        if receiver not in self.receivers:
-            self.receivers.append(receiver)
-
-    def sendEventToReceivers(self, event, update_counter=True):
-        if not self.receivers:
-            self.destroyEvent(event)
-            return
-        event_dropped = True
-        for idx, receiver in enumerate(self.receivers):
-            receiver_filter = self.getFilter(receiver)
-            if receiver_filter:
-                try:
-                    matched = False
-                    # If the filter fails, the data will not be send to the receiver.
-                    exec receiver_filter
-                    if not matched:
-                        continue
-                except:
-                    raise
-            event_dropped = False
-            if isinstance(receiver, threading.Thread) or isinstance(receiver, multiprocessing.Process):
-                receiver.getInputQueue().put(event if idx is 0 else event.copy())
-                #receiver.getInputQueue().put(event.copy())
-            else:
-                receiver.handleEvent(event if idx is 0 else event.copy())
-                #receiver.handleEvent(event.copy())
-        if event_dropped:
-            self.destroyEvent(event)
+    def addReceiver(self, receiver_name, receiver):
+        #print "Addedd %s (%s) to %s." % (receiver.__class__, id(receiver),self.__class__)
+        if not hasattr(receiver, 'receiveEvent') and not hasattr(receiver, 'put'):
+            self.logger.error("%sCould not add receiver %s to %s. Seems to be incompatible, no <receiveEvent> nor <put> method found.%s" % (Utils.AnsiColors.FAIL, receiver, self.__class__, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
+        self.receivers[receiver_name] = receiver
 
     def registerCallback(self, event_type, callback):
-        self.callbacks[event_type].append(callback)
+        if callback not in self.callbacks[event_type]:
+            self.callbacks[event_type].append(callback)
 
-    def destroyEvents(self, events):
+    def destroyEvent(self, event=False, event_list=False):
         for callback in self.callbacks['on_event_delete']:
-            for event in events:
+            if event_list:
+                for event in event_list:
+                    callback(event)
+            else:
                 callback(event)
 
-    def getFilter(self, receiver):
+    def getFilter(self, receiver_name):
         try:
-            return self.filter[receiver.__class__]
+            return self.filters[receiver_name]
         except KeyError:
             return False
 
-    def setFilter(self, filter, receiver):
-        self.filter[receiver.__class__] = filter
+    def setFilter(self, receiver_name, filter):
+        self.filters[receiver_name] = filter
 
+    def getFilteredReceivers(self, event):
+        if not self.filters:
+            return self.receivers.itervalues()
+        filterd_receivers = []
+        for receiver_name, receiver in self.receivers.iteritems():
+            receiver_filter = self.getFilter(receiver_name)
+            if not receiver_filter:
+                filterd_receivers.append(receiver)
+                continue
+            try:
+                matched = False
+                # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
+                exec receiver_filter
+                if matched:
+                    filterd_receivers.append(receiver)
+            except:
+                raise
+        return filterd_receivers
+
+    def sendEvent(self, event, receivers):
+        for idx, receiver in enumerate(receivers):
+            if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
+                receiver.put(event if idx is 0 else event.copy())
+            else:
+                receiver.receiveEvent(event if idx is 0 else event.copy())
+
+    def receiveEvent(self, event):
+        #print "In receive start %s:" % self.__class__
+        #pprint.pprint(self.event_refcount)
+        BaseModule.event_refcount[event['__id']] += 1
+        for event in self.handleEvent(event):
+            if not event:
+                continue
+            receivers = self.getFilteredReceivers(event)
+            if receivers:
+                self.sendEvent(event, receivers)
+            BaseModule.event_refcount[event['__id']] -= 1
+            #print "In receive end %s:" % self.__class__
+            #pprint.pprint(BaseModule.event_refcount)
+            if BaseModule.event_refcount[event['__id']] == 0:
+                self.destroyEvent(event)
+
+    @abc.abstractmethod
     def handleEvent(self, event):
         """
         Process the event.
@@ -234,13 +259,4 @@ class BaseModule():
 
         @param event: dictionary
         """
-        for event in self.handleMultiplexEvent(event):
-            self.sendEventToReceivers(event)
-
-    @abc.abstractmethod
-    def handleMultiplexEvent(self, data):
-        """
-        If a module needs to emit more than just the received event, implement this method.
-        """
-        self.logger.error("%sPlease implement either the handleEvent or the handleMultiplexEvent in your module.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-        sys.exit(255)
+        yield event

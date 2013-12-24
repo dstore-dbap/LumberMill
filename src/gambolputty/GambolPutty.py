@@ -68,7 +68,7 @@ class GambolPutty:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
 
-    def produceQueue(self, module_instance, queue_max_size=0):
+    def produceQueue(self, module_instance, queue_max_size=20):
         """Returns a queue with queue_max_size"""
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
@@ -229,13 +229,12 @@ class GambolPutty:
                             receiver_node = Node(receiver_instance)
                             module_loop_buffer.append(receiver_node)
                         node.addChild(receiver_node)
-                                            # Add the module to the receivers list of sender module.
                     # Add a single instance as receiver to module. If the receiver is a thread or multiprocess, they share the same queue.
-                    instance.addReceiver(receiver_instance)
+                    instance.addReceiver(receiver_name, receiver_instance)
                     # Set filter if configured.
                     if 'filter' in receiver_filter_config:
                         receiver_filter = Utils.compileStringToConditionalObject("matched = %s" % receiver_filter_config['filter'], 'event.get("%s", False)')
-                        instance.setFilter(receiver_filter, receiver_instance)
+                        instance.setFilter(receiver_name, receiver_filter)
         # Check if the configuration produces a loop.
         # This code can definitely be made more efficient...  
         for node in module_loop_buffer:

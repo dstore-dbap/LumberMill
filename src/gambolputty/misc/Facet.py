@@ -92,7 +92,7 @@ class Facet(BaseModule.BaseModule):
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets'],
                                           'other_event_fields': facet_data['other_event_fields']})
-        self.sendEventToReceivers(event)
+        self.sendEvent(event)
 
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
@@ -116,7 +116,7 @@ class Facet(BaseModule.BaseModule):
         # Call parent configure method.
         BaseModule.BaseModule.shutDown(self)
 
-    def handleMultiplexEvent(self, event):
+    def handleEvent(self, event):
         """
         Process the event.
 

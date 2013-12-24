@@ -174,7 +174,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
         self.server_thread.start()
 
     def handleEvent(self, event):
-        self.sendEventToReceivers(event)
+        self.sendEvent(event)
 
     def shutDown(self):
         if self.server and self.is_alive:

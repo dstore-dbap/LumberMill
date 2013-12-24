@@ -23,4 +23,4 @@ class UrlParser(BaseModule.BaseModule):
         if lookup_field in event:
             parsed_url = urlparse.urlparse('http://www.test.de%s' % (event[lookup_field]))
             event.update(dict(urlparse.parse_qsl(parsed_url.query)))
-        self.sendEventToReceivers(event)
+        yield event

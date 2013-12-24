@@ -87,6 +87,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         self.events_container.append(event)
         if len(self.events_container) >= self.max_waiting_events:
             self.storeData(self.events_container)
+        yield
 
     def dataToElasticSearchJson(self, index_name, events):
         """
@@ -126,7 +127,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
-            self.destroyEvents(events)
+            self.destroyEvent(event_list=events)
             self.events_container = []
         except elasticsearch.exceptions.ConnectionError:
             try:

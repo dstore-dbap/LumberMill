@@ -24,11 +24,11 @@ Configuration example:
         unix_socket_path: ''    # <default: ''; type: string; is: optional>
 
 
-#####Statistics
+#####TrackEvents
 
 Keeps track of all events passing through GambolPutty.
 
-This module stores all events that enter Gambolputty in a redis backend and deletes them, as soon as they
+This module stores all events that enter GambolPutty in a redis backend and deletes them, as soon as they
 get destroyed by the BaseModule.destroyEvent method. Events that did not get destroyed will be resent when
 GamboPutty is restarted. This should make sure that nearly every event gets to its destination, even when
 something goes absolutely wrong.
@@ -37,14 +37,19 @@ As storage backend a redis client is needed.
 
 Please note, that this will significantly slow down the event processing. You have to decide if speed or
 event delivery is of higher importance to you. Even without this module, GambolPutty tries to make sure
-all events reach their destination.
+all events reach their destination. This module is thread based, so playing around with its pool size might
+increase performance.
 
-    Configuration example:
+!!IMPORTANT!!: At the moment, this module will only work with TcpServerTornado as input.
+
+Configuration example:
 
     - module: TrackEvents
+      pool_size: 1
       configuration:
         redis_client: RedisClientName           # <type: string; is: required>
         redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
+
 
 
 #####Statistics

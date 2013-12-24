@@ -33,4 +33,4 @@ class Tarpit(BaseModule.BaseModule):
         #print "aaa %s" % BaseModule.BaseModule.hasPendingEvent()
         time.sleep(self.getConfigurationValue('delay', event))
         #print "bbb %s" % BaseModule.BaseModule.hasPendingEvent()
-        self.sendEventToReceivers(event)
+        yield event

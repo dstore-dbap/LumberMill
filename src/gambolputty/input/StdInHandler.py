@@ -38,15 +38,15 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
             data = input.readline()
             if data.__len__() > 0:
                 if not self.multiline:
-                    self.sendEventToReceivers(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": data}), update_counter=False)
+                    self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": data}), update_counter=False)
                 else:
                     if self.stream_end_signal and self.stream_end_signal == data:
-                        self.sendEventToReceivers(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
+                        self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
                         multiline_data = ""
                         continue
                     multiline_data += data
             else: # an empty line means stdin has been closed
                 if multiline_data.__len__() > 0:
-                    self.sendEventToReceivers(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
+                    self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}), update_counter=False)
                 self.gp.shutDown()
                 self.is_alive = False

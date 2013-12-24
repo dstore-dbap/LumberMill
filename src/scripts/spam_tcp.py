@@ -3,75 +3,101 @@
 #  tcp_socket_throughput.py
 #  TCP Socket Connection Throughput Tester
 #  Corey Goldberg (www.goldb.org), 2008
-
+import random
+import os
 import sys
 import time
 import socket
 from ctypes import c_int, c_bool
-from multiprocessing import Process, Value, Lock
-
+import multiprocessing
+from multiprocessing.pool import ThreadPool
+import threading
+import Queue
 
 host = sys.argv[1]
 port = int(sys.argv[2]) if len(sys.argv) == 3 else 5151
 
-process_count = 5  # concurrent sender agents
+def single():
+        start = time.time()
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.connect((host, port))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            print 'Exception: %s, Error: %s.' % (etype, evalue)
+            return
+        for counter in xrange(0, 10000):
+            if counter % 1000 == 0:
+                print counter
+            #rand = #"%f-%10.9f" % (time.time(), random.random())
+            message ='192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/%s HTTP/1.0" 200 3395\r\n' % counter
+            s.send('%s\n' % message)
+            time.sleep(.00001) #.0000001
+        s.close()
+        print "Took %s" % (time.time() - start)
 
-counter_lock = Lock()
-def increment(counter):
-    with counter_lock:
-        counter.value += 1
+def tcpLoadTestWorkLoad(item):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.connect((host, port))
+        s.send('%s\n' % item)
+        s.close()
+    except:
+        etype, evalue, etb = sys.exc_info()
+        print 'Exception: %s, Error: %s.' % (etype, evalue)
+        return
 
-def reset(counter):
-    with counter_lock:
-        counter.value = 0
+class Worker(threading.Thread):
 
-class Controller:
-    def __init__(self):
-        self.count_ref = Value(c_int)
-        self.alive = Value(c_bool)
-
-    def start(self):
-        self.alive = True
-        for i in range(process_count):
-            agent = Agent(self.count_ref, self.alive)
-            agent.start()
-        print 'started %d threads' % (i + 1)
-        while self.alive:
-            line = 'connects/sec: %s' % self.count_ref.value
-            reset(self.count_ref)
-            print chr(0x08) * len(line)
-            print line
-            time.sleep(1)
-
-class Agent(Process):
-    def __init__(self, count_ref, parent_alive):
-        Process.__init__(self)
+    def __init__(self, queue, callback):
+        threading.Thread.__init__(self)
         self.daemon = True
-        self.count_ref = count_ref
-        self.parent_alive = parent_alive
+        self.queue = queue
+        self.callback = callback
 
     def run(self):
-        start = time.time()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        alive = True
-        while alive:
-            if time.time() >= start + 20:
-                self.parent_alive = alive = False
+        while True:
             try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.connect((host, port))
-                now = "%f" % time.time()
-                message ='192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395'
-                s.sendall('%s\n' % message)
-                increment(self.count_ref)
-                s.close()
-                time.sleep(.000001) #.0000001
-            except:
-                self.parent_alive = alive = False
-                etype, evalue, etb = sys.exc_info()
-                print 'Exception: %s, Error: %s.' % (etype, evalue)
+                item = self.queue.get(timeout=.5)
+                self.callback(item)
+            except Queue.Empty:
+                # do whatever background check needs doing
+                break
+
+class TcpLoadTester():
+
+    def __init__(self, num_workers=100):
+        self.lock = threading.Lock()
+        self.counter = 0
+        self.queue = Queue.Queue(num_workers)
+        self.num_workers = num_workers
+
+    def start(self, callback):
+        total_item_count = 1000
+        workers = set()
+        print "Start load test."
+        for i in xrange(0, self.num_workers):
+            worker = Worker(self.queue, callback)
+            worker.start()
+            workers.add(worker)
+        start = time.time()
+        for counter in xrange(0, total_item_count):
+            if counter % 100 == 0:
+                print counter
+            message ='192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/%s HTTP/1.0" 200 3395\r\n' % counter
+            self.queue.put(message)
+        for worker in workers:
+            worker.join()
+        stop = time.time()
+        print "Finished. Took %s. Mean req/s: %s" % (stop-start, total_item_count / (stop-start))
 
 if __name__ == '__main__':
-    controller = Controller()
-    controller.start()
+    #single()
+    #controller = Controller()
+    #controller.start()
+    lt = TcpLoadTester()
+    lt.start(tcpLoadTestWorkLoad)
+
+

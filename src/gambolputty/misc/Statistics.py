@@ -93,4 +93,4 @@ class Statistics(BaseModule.BaseModule):
                 StatisticCollector.StatisticCollector().incrementCounter('event_type_%s' % event['event_type'])
             except:
                 pass
-        self.sendEventToReceivers(event)
+        yield event

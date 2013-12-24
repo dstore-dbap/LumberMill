@@ -36,17 +36,17 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
 
     def handleEvent(self, event):
         if 'TreeNodeID' not in event:
-            self.sendEventToReceivers(event)
+            yield event
             return
         try:
             is_int = int(event['TreeNodeID'])
         except:
-            self.sendEventToReceivers(event)
+            yield event
             return
         request_url = self.getConfigurationValue('url', event)
         target_field_name = self.getConfigurationValue('target_field', event)
         if not request_url or not target_field_name:
-            self.sendEventToReceivers(event)
+            yield event
             return
         result = self.getRedisValue(self.getConfigurationValue('redis_key', event))
         if result == None:
@@ -55,10 +55,10 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
                 if result:
                     self.setRedisValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
-                self.sendEventToReceivers(event)
+                yield event
                 return
         event[target_field_name] =  result
-        self.sendEventToReceivers(event)
+        yield event
 
     def execRequest(self, url):
         try:

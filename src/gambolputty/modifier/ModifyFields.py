@@ -158,7 +158,7 @@ class ModifyFields(BaseModule.BaseModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
-        self.sendEventToReceivers(event)
+        yield event
 
     def keep(self,event):
         """

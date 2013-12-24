@@ -45,7 +45,7 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
             return
         if not self.client:
             return
-        self.client.fetch(('subscribe', self.getConfigurationValue('channels')), self.handleEvent)
+        self.client.fetch(('subscribe', self.getConfigurationValue('channels')), self.receiveEvent)
         tornado.ioloop.IOLoop.instance().start()
 
     def checkReply(self, answer):
@@ -56,4 +56,5 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
     def handleEvent(self, event):
         if event[0] != 'message':
             return
-        self.sendEventToReceivers(Utils.getDefaultEventDict({"received_from": 'RedisChannel %s' % event[1], "data": event[2]}))
+        yield Utils.getDefaultEventDict({"received_from": 'RedisChannel %s' % event[1], "data": event[2]})
+        #self.sendEvent(Utils.getDefaultEventDict({"received_from": 'RedisChannel %s' % event[1], "data": event[2]}))

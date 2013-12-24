@@ -96,4 +96,4 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
         return
 
     def handleEvent(self, event):
-        self.sendEventToReceivers(event)
+        self.sendEvent(event)
