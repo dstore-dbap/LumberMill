@@ -21,7 +21,7 @@ Configuration example:
 
     - module: ElasticSearchOutput
         configuration:
-          nodes: ["es-01.dbap.de:9200"]             # <type: list; is: required>
+          nodes: ["localhost:9200"]             # <type: list; is: required>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
           doc_id: 'data'                            # <default: "data"; type: string; is: optional>

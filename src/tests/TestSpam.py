@@ -18,10 +18,7 @@ class TestSpam(ModuleBaseTestCase.ModuleBaseTestCase):
         count = 0
         started = time.time()
         for event in self.receiver.getEvent():
-            if count == 100 or time.time() - started > 2:
+            if count == 100 or time.time() - started > 3:
                 break
             count += 1
         self.assertEquals(count, 100)
-
-if __name__ == '__main__':
-    unittest.main()

@@ -177,8 +177,8 @@ class GambolPutty:
                 self.modules[module_name] = {'idx': idx,
                                              'instances': module_instances,
                                              'type': module_instance.module_type,
-                                             'configuration': module_info[
-                                                 'configuration'] if 'configuration' in module_info else None,
+                                             'queue_size': module_info[ 'queue_size'] if 'queue_size' in module_info else 20,
+                                             'configuration': module_info[ 'configuration'] if 'configuration' in module_info else None,
                                              'receivers': module_info['receivers'] if 'receivers' in module_info else None}
 
     def initEventStream(self):
@@ -210,7 +210,7 @@ class GambolPutty:
                         # If the receiver is a thread or a process, produce the needed queue.
                         if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
                             if receiver_name not in queues:
-                                queues[receiver_name] = self.produceQueue(receiver_instance)
+                                queues[receiver_name] = self.produceQueue(receiver_instance, queue_max_size=self.modules[receiver_name]['queue_size'])
                             try:
                                 if not receiver_instance.getInputQueue():
                                     receiver_instance.setInputQueue(queues[receiver_name])

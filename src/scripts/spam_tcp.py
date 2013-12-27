@@ -75,7 +75,7 @@ class TcpLoadTester():
         self.num_workers = num_workers
 
     def start(self, callback):
-        total_item_count = 1000
+        total_item_count = 5000
         workers = set()
         print "Start load test."
         for i in xrange(0, self.num_workers):
