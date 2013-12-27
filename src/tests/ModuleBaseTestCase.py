@@ -2,12 +2,10 @@ import extendSysPath
 import unittest2
 import ConfigurationValidator
 import logging
-import threading
-import multiprocessing
 import Queue
 import Utils
 
-class DummyReceiver():
+class MockReceiver():
 
     def __init__(self):
         self.events = []
@@ -18,6 +16,10 @@ class DummyReceiver():
 
     def getFilter(self):
         return self.filter
+
+    def receiveEvent(self, event):
+        self.handleEvent(event)
+        return event
 
     def handleEvent(self, event):
         self.events.append(event)
@@ -30,11 +32,11 @@ class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
         self.conf_validator = ConfigurationValidator.ConfigurationValidator()
-        self.receiver = DummyReceiver()
+        self.receiver = MockReceiver()
         test_object.logger.addHandler(logging.StreamHandler())
-        test_object.addReceiver(self.receiver)
+        test_object.addReceiver('MockReceiver', self.receiver)
         self.test_object = test_object
-        if isinstance(test_object, threading.Thread) or isinstance(test_object, multiprocessing.Process):
+        if hasattr(test_object, 'setInputQueue'):
             self.input_queue = Queue.Queue()
             self.test_object.setInputQueue(self.input_queue)
 
@@ -116,5 +118,6 @@ class ModuleBaseTestCase(unittest2.TestCase):
         print returned_data_dict
         self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
     """
+
     def tearDown(self):
         self.test_object.shutDown()

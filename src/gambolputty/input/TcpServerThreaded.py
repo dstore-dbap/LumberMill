@@ -83,8 +83,6 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
            self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
             self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
-        finally:
-            self.finish()
 
 class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
 
@@ -177,5 +175,6 @@ class TcpServerThreaded(BaseModule.BaseModule):
         self.sendEvent(event)
 
     def shutDown(self):
-        if self.server and self.is_alive:
+        return
+        if self.server:
             self.server.server_close()

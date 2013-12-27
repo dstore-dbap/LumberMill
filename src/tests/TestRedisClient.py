@@ -27,17 +27,5 @@ class TestRedisClient(ModuleBaseTestCase.ModuleBaseTestCase):
         test = rc.get('Johann Gambolputty')
         self.assertEquals(test, value)
 
-    @unittest2.skip("Skipping testQueueCommunication.")
-    def testQueueCommunication(self):
-        super(TestRedisClient, self).testQueueCommunication(self.default_config)
-
-    @unittest2.skip("Skipping testOutputQueueFilterMatch.")
-    def testOutputQueueFilterMatch(self):
-        super(TestRedisClient, self).testOutputQueueFilterMatch(self.default_config)
-
-    @unittest2.skip("Skipping testOutputQueueFilterNoMatch.")
-    def testOutputQueueFilterNoMatch(self):
-        super(TestRedisClient, self).testOutputQueueFilterNoMatch(self.default_config)
-
 if __name__ == '__main__':
     unittest.main()

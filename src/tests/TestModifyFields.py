@@ -15,8 +15,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['delme'] = 1
         self.test_object.configure({'action': 'delete',
                                     'source_fields': ['delme']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('delme' not in event)
 
     def testConcat(self):
@@ -25,8 +24,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'action': 'concat',
                                     'source_fields': ['First name', 'Last name'],
                                     'target_field': 'Name'})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('Name' in event and event['Name'] == 'JohannGambolputty')
 
     def testInsert(self):
@@ -35,8 +33,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'action': 'insert',
                                     'value': "%(First name)s %(Last name)s de von Ausfern",
                                     'target_field': 'Name'})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('Name' in event and event['Name'] == 'Johann Gambolputty de von Ausfern')
 
     def testReplaceStatic(self):
@@ -45,8 +42,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'source_field': 'replaceme',
                                     'regex': 'Sp.*?sh',
                                     'with': 'English'})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertEquals(event['replaceme'], 'The English Inquisition')
 
     def testReplaceDynamic(self):
@@ -56,8 +52,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'source_field': 'replaceme',
                                     'regex': 'Sp.*?sh',
                                     'with': '%(withme)s'})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertEquals(event['replaceme'], 'The English Inquisition')
 
     def testMap(self):
@@ -67,8 +62,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'map': {100: 'Continue',
                                             200: 'OK'}
                                   })
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assert_('http_status_mapped' in event)
             self.assertEquals(event['http_status_mapped'], 'Continue')
 
@@ -80,8 +74,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                             200: 'OK'},
                                     'target_field': 'http_status'
                                   })
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertEquals(event['http_status'], 'OK')
 
     def testKeep(self):
@@ -90,8 +83,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['drop-this'] = 'English'
         self.test_object.configure({'action': 'keep',
                                     'source_fields': ['keep-this','keep-that']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('keep-this' in event and 'keep-that' in event and 'drop-this' not in event)
 
     def testCastToInteger(self):
@@ -99,8 +91,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
         self.test_object.configure({'action': 'castToInteger',
                                     'source_fields': ['castable','non-castable', 'not-existing']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == 3)
             self.assertTrue('non-castable' in event and event['non-castable'] == 0)
 
@@ -109,8 +100,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
         self.test_object.configure({'action': 'castToFloat',
                                     'source_fields': ['castable','non-castable', 'not-existing']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == 3.0)
             self.assertTrue('non-castable' in event and event['non-castable'] == 0)
 
@@ -118,24 +108,21 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['castable'] = 3.1415
         self.test_object.configure({'action': 'castToString',
                                     'source_fields': ['castable', 'not-existing']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == "3.1415")
 
     def testCastToBoolean(self):
         self.default_dict['castable'] = 'True'
         self.test_object.configure({'action': 'castToBoolean',
                                     'source_fields': ['castable', 'not-existing']})
-        self.test_object.handleEvent(self.default_dict)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == True)
 
     def testReplaceFieldValueWithMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me']})
-        expected = Utils.getDefaultEventDict({'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'hash_me': 'Nobody inspects the spammish repetition'}))
-        for event in self.receiver.getEvent():
+        expected = Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testMd5Hash(self):
@@ -152,17 +139,15 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'algorithm': 'sha1',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = Utils.getDefaultEventDict({'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'hash_me': 'Nobody inspects the spammish repetition'}))
-        for event in self.receiver.getEvent():
+        expected = Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testAnonymize(self):
         self.test_object.configure({'action': 'anonymize',
                                     'source_fields': ['anon_me']})
-        expected = Utils.getDefaultEventDict({'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'anon_me': 'Nobody inspects the spammish repetition'}))
-        for event in self.receiver.getEvent():
+        expected = Utils.getDefaultEventDict({'__id': 1, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'anon_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
 
@@ -180,6 +165,3 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_fields': ['data', 'Johann'],
                   'action': 'keep'  }
         super(TestModifyFields, self).testOutputQueueFilterMatch(config)
-
-if __name__ == '__main__':
-    unittest.main()

@@ -4,7 +4,6 @@ import ModuleBaseTestCase
 import unittest
 import mock
 import time
-import sys
 import Utils
 import RedisClient
 import Facet
@@ -21,13 +20,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'interval': .1})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
         events = []
@@ -52,13 +51,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         self.test_object.initRedisClient()
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
+        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.gambolputty.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
         events = []

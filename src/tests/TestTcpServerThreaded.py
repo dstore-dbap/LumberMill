@@ -58,12 +58,10 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val =  Utils.getDefaultEventDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val =  Utils.getDefaultEventDict({'__id': 1, 'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         self.test_object.shutDown()
         # Give server some time to shut socket down.
         time.sleep(.1)
         for event in self.receiver.getEvent():
+            event['__id'] = 1
             self.assertEquals(event, expected_ret_val)
-
-if __name__ == '__main__':
-    unittest.main()

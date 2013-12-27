@@ -16,26 +16,22 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        self.test_object.handleEvent(Utils.getDefaultEventDict({}))
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', event['@timestamp'])) # 2013-08-29T10:25:26
 
     def testAddDateTimeCustomFormat(self):
         self.test_object.configure({'format': '%Y/%M/%d %H.%M.%S'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({}))
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_(re.match('^\d+/\d+/\d+ \d+.\d+.\d+$', event['@timestamp'])) # 2013/08/29 10.25.26
 
     def testAddDateTimeDefaultField(self):
         self.test_object.configure({})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({}))
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_('@timestamp' in event)
 
     def testAddDateTimeCustomField(self):
         self.test_object.configure({'target_field': 'test'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({}))
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_('test' in event)
 
     def tearDown(self):

@@ -19,8 +19,7 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         event = Utils.getDefaultEventDict({'event': self.raw_data})
-        self.test_object.handleEvent(event)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(event):
             self.assert_('bytes_send' in event and event['bytes_send'] == '3395')
 
     def __testQueueCommunication(self):

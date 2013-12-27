@@ -225,7 +225,10 @@ class BaseModule():
                 raise
         return filterd_receivers
 
-    def sendEvent(self, event, receivers):
+    def sendEvent(self, event):
+        receivers = self.getFilteredReceivers(event)
+        if not receivers:
+            return
         for idx, receiver in enumerate(receivers):
             if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
                 receiver.put(event if idx is 0 else event.copy())
@@ -239,9 +242,7 @@ class BaseModule():
         for event in self.handleEvent(event):
             if not event:
                 continue
-            receivers = self.getFilteredReceivers(event)
-            if receivers:
-                self.sendEvent(event, receivers)
+            self.sendEvent(event)
             BaseModule.event_refcount[event['__id']] -= 1
             #print "In receive end %s:" % self.__class__
             #pprint.pprint(BaseModule.event_refcount)

@@ -20,8 +20,7 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
         data = Utils.getDefaultEventDict({'csv-data': """It's;just;a;flesh;wound."""})
-        self.test_object.handleEvent(data)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(data):
             self.assertTrue('brain' in event and event['brain'] == "just" )
 
     def testDelimiter(self):
@@ -33,12 +32,8 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
         data = Utils.getDefaultEventDict({'csv-data': """It's#just#a#flesh#wound."""})
-        self.test_object.handleEvent(data)
-        for event in self.receiver.getEvent():
+        for event in self.test_object.handleEvent(data):
             self.assertTrue('brain' in event and event['brain'] == "just" )
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()
