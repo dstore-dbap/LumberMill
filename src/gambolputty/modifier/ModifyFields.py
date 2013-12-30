@@ -169,6 +169,9 @@ class ModifyFields(BaseModule.BaseModule):
         """
         fields_to_del = set(event).difference(self.getConfigurationValue('source_fields', event))
         for field in fields_to_del:
+            # Do not delete internal event information.
+            if field == 'gambolputty':
+                continue
             event.pop(field, None)
         return event
 

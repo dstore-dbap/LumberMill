@@ -32,6 +32,8 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
     module_type = "parser"
     """Set module type"""
 
+    can_run_parallel = True
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

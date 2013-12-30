@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import threading
 import Utils
 import BaseModule
@@ -130,6 +131,12 @@ class Facet(BaseModule.BaseModule):
             yield event
             return
         key = self.getConfigurationValue('group_by', event)
+        if not key:
+            self.logger.warning("%sCould not store facet data in redis. group_by value %s could not be generated.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
+            pprint.pprint(event)
+            yield event
+            return
+        key = "FacetValues:%s" % key
         with self.lock:
             redis_lock = False
             try:

@@ -11,12 +11,17 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
 
     Use this module to load test GambolPutty.
 
+    event: Send custom event data.
+    sleep: Time to wait between sending events.
+    events_count: Only send configured number of events. 0 means no limit.
+
     Configuration example:
 
     - module: Spam
       configuration:
         event: {'Lobster': 'Thermidor', 'Truffle': 'Pate'}  # <default: {}; type: dict; is: optional>
         sleep: 0                                            # <default: 0; type: int||float; is: optional>
+        events_count: 1000                                  # <default: 0; type: int; is: optional>
       receivers:
         - NextModule
     """
@@ -25,8 +30,13 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
 
     def run(self):
+        counter = 0
+        max_events_count = self.getConfigurationValue("events_count")
         while self.is_alive:
             event = Utils.getDefaultEventDict(self.getConfigurationValue("event"))
             self.sendEvent(event)
             if self.getConfigurationValue("sleep"):
                 time.sleep(self.getConfigurationValue("sleep"))
+            counter += 1
+            if (counter - max_events_count == 0):
+                self.gp.shutDown()

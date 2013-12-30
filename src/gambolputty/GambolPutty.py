@@ -4,7 +4,6 @@ import Utils
 import multiprocessing
 import ConfigurationValidator
 import StatisticCollector as StatisticCollector
-import operator
 
 module_dirs = ['input',
                'parser',
@@ -21,6 +20,7 @@ import logging.config
 import threading
 import Queue
 import yaml
+import multiprocessing
 import pprint
 
 # Expand the include path to our libs and modules.
@@ -67,6 +67,7 @@ class GambolPutty:
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         self.readConfiguration(path_to_config_file)
+        self.configure()
 
     def produceQueue(self, module_instance, queue_max_size=20):
         """Returns a queue with queue_max_size"""
@@ -89,6 +90,15 @@ class GambolPutty:
             self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (
             Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
+
+    def configure(self):
+        gp_conf = {}
+        for idx, configuration in enumerate(self.configuration):
+            if 'GambolPutty' in configuration:
+                gp_conf = configuration
+                break
+        self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
+        self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
 
     def runModules(self):
         """Start the configured modules
@@ -158,7 +168,10 @@ class GambolPutty:
         """
         # Init modules as defined in config
         for idx, module_info in enumerate(self.configuration):
-            pool_size = module_info['pool_size'] if "pool_size" in module_info else 1
+            # Only consider module configurations.
+            if 'module' not in module_info:
+                continue
+            pool_size = module_info['pool_size'] if "pool_size" in module_info else self.default_pool_size
             module_instances = []
             module_name = False
             for _ in range(pool_size):
@@ -170,14 +183,14 @@ class GambolPutty:
                 self.configureModule(module_instance, module_info)
                 # Append to internal list.
                 module_instances.append(module_instance)
-                # If instance is neither thread nor process only build one instance no matter what the pool_size configuration says.
-                if not (isinstance(module_instance, threading.Thread) or isinstance(module_instance, multiprocessing.Process)):
+                # If instance is not configured to run in parallel, only create one instance, no matter what the pool_size configuration says.
+                if not module_instance.can_run_parallel:
                     break
             if module_name:
                 self.modules[module_name] = {'idx': idx,
                                              'instances': module_instances,
                                              'type': module_instance.module_type,
-                                             'queue_size': module_info[ 'queue_size'] if 'queue_size' in module_info else 20,
+                                             'queue_size': module_info[ 'queue_size'] if 'queue_size' in module_info else self.default_queue_size,
                                              'configuration': module_info[ 'configuration'] if 'configuration' in module_info else None,
                                              'receivers': module_info['receivers'] if 'receivers' in module_info else None}
 
@@ -210,7 +223,7 @@ class GambolPutty:
                         # If the receiver is a thread or a process, produce the needed queue.
                         if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
                             if receiver_name not in queues:
-                                queues[receiver_name] = self.produceQueue(receiver_instance, queue_max_size=self.modules[receiver_name]['queue_size'])
+                                queues[receiver_name] = self.produceQueue(receiver_instance, self.modules[receiver_name]['queue_size'])
                             try:
                                 if not receiver_instance.getInputQueue():
                                     receiver_instance.setInputQueue(queues[receiver_name])

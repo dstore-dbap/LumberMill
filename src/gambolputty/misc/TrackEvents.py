@@ -29,17 +29,18 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: TrackEvents
-      pool_size: 1
       configuration:
         redis_client: RedisClientName           # <type: string; is: required>
-        redis_ttl: 3600
+        queue_size: 5                           # <default: 5; type: integer; is: optional>
+        redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
     """
 
     module_type = "stand_alone"
     """Set module type"""
 
+    can_run_parallel = True
+
     input_queue = False
-    callback_registered = {}
     main_thread = False
 
     def configure(self, configuration):
@@ -49,7 +50,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         self.redis_key_prefix = 'TrackEvents:%s' % socket.gethostname()
         if not TrackEvents.main_thread:
             TrackEvents.main_thread = self
-            TrackEvents.input_queue = self.gp.produceQueue(self)
+            TrackEvents.input_queue = self.gp.produceQueue(self, self.getConfigurationValue('queue_size'))
         self.input_queue = TrackEvents.input_queue
 
     def register(self):
@@ -109,9 +110,9 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         @return data: dictionary
         """
         #m = re.search(self.class_name_re, str(inspect.stack()[1][0].f_locals["self"].__class__))
-        self.setRedisValue("%s:%s" % (self.redis_key_prefix, event['__id']), ('TcpServerTornado.TcpServerTornado', event), self.getConfigurationValue('redis_ttl'))
+        self.setRedisValue("%s:%s" % (self.redis_key_prefix, event['gambolputty']['id']), ('TcpServerTornado.TcpServerTornado', event), self.getConfigurationValue('redis_ttl'))
         yield event
 
     def deleteEventFromRedis(self, event):
         #print "Deleteing %s." % event
-        self.redis_client.delete("%s:%s" % (self.redis_key_prefix, event['__id']))
+        self.redis_client.delete("%s:%s" % (self.redis_key_prefix, event['gambolputty']['id']))

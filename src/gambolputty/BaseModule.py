@@ -34,7 +34,7 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    module_can_run_parallel = True
+    can_run_parallel = False
     event_refcount = collections.defaultdict(int)
 
     def __init__(self, gp, stats_collector=False):
@@ -238,15 +238,15 @@ class BaseModule():
     def receiveEvent(self, event):
         #print "In receive start %s:" % self.__class__
         #pprint.pprint(self.event_refcount)
-        BaseModule.event_refcount[event['__id']] += 1
+        BaseModule.event_refcount[event['gambolputty']['id']] += 1
         for event in self.handleEvent(event):
             if not event:
                 continue
             self.sendEvent(event)
-            BaseModule.event_refcount[event['__id']] -= 1
+            BaseModule.event_refcount[event['gambolputty']['id']] -= 1
             #print "In receive end %s:" % self.__class__
             #pprint.pprint(BaseModule.event_refcount)
-            if BaseModule.event_refcount[event['__id']] == 0:
+            if BaseModule.event_refcount[event['gambolputty']['id']] == 0:
                 self.destroyEvent(event)
 
     @abc.abstractmethod

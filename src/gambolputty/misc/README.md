@@ -45,9 +45,9 @@ increase performance.
 Configuration example:
 
     - module: TrackEvents
-      pool_size: 1
       configuration:
         redis_client: RedisClientName           # <type: string; is: required>
+        queue_size: 5                           # <default: 5; type: integer; is: optional>
         redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
 
 

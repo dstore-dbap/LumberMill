@@ -25,7 +25,7 @@ Should be the best choice perfomancewise if you are on Linux.
 Reads data from tcp socket and sends it to its output queues.
 This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
 
-    Configuration example:
+Configuration example:
 
     - module: TcpServerThreaded
       configuration:
@@ -42,7 +42,7 @@ This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpSe
 
 Reads data from stdin and sends it to its output queues.
 
-    Configuration example:
+Configuration example:
 
     - module: StdInHandler
       configuration:
@@ -55,7 +55,7 @@ Reads data from stdin and sends it to its output queues.
 
 Reads data from an unix socket and sends it to its output queues.
 
-    Configuration example:
+Configuration example:
 
     - module: UnixSocket
       configuration:
@@ -67,7 +67,7 @@ Reads data from an unix socket and sends it to its output queues.
 
 Subscribes to a redis channel and passes incoming events to receivers.
 
-    Configuration example:
+Configuration example:
 
     - module: RedisChannel
       configuration:
@@ -84,11 +84,16 @@ Emits events as fast as possible.
 
 Use this module to load test GambolPutty.
 
-    Configuration example:
+event: Send custom event data.
+sleep: Time to wait between sending events.
+events_count: Only send configured number of events. 0 means no limit.
+
+Configuration example:
 
     - module: Spam
       configuration:
         event: {'Lobster': 'Thermidor', 'Truffle': 'Pate'}  # <default: {}; type: dict; is: optional>
         sleep: 0                                            # <default: 0; type: int||float; is: optional>
+        events_count: 1000                                  # <default: 0; type: int; is: optional>
       receivers:
         - NextModule

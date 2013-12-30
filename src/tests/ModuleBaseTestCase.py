@@ -1,9 +1,24 @@
 import extendSysPath
 import unittest2
+import mock
 import ConfigurationValidator
 import logging
 import Queue
 import Utils
+
+class MockGambolPutty(mock.Mock):
+
+    def __init__(self):
+        mock.Mock.__init__(self)
+        self.modules = []
+
+    def addModule(self, mod):
+        if mod not in self.modules:
+            self.modules.append(mod)
+
+    def shutDown(self):
+        for mod in self.modules:
+            mod.shutDown()
 
 class MockReceiver():
 

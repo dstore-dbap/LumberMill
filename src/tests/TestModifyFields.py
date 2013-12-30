@@ -121,8 +121,8 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testReplaceFieldValueWithMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me']})
-        expected = Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testMd5Hash(self):
@@ -139,15 +139,15 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'algorithm': 'sha1',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testAnonymize(self):
         self.test_object.configure({'action': 'anonymize',
                                     'source_fields': ['anon_me']})
-        expected = Utils.getDefaultEventDict({'__id': 1, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'__id': 1, 'anon_me': 'Nobody inspects the spammish repetition'})):
+        expected = Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
 

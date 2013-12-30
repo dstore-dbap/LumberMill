@@ -11,8 +11,9 @@ def getDefaultEventDict(dict={}):
     default_dict = { "event_type": "Unknown",
                      "received_from": False,
                      "data": "",
-                     "markers": [] }
-    default_dict['__id'] = id(default_dict)
+                     "gambolputty": {}
+                    }
+    default_dict['gambolputty']['id'] = id(default_dict)
     default_dict.update(dict)
     return default_dict
 
