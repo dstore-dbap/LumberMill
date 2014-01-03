@@ -2,18 +2,16 @@
 import ast
 import sys
 import logging
-import collections
 import __builtin__
 import Utils
 from pprint import pprint
 
-def getDefaultEventDict(dict={}):
+def getDefaultEventDict(dict={}, caller_class_name=''):
     default_dict = { "event_type": "Unknown",
                      "received_from": False,
                      "data": "",
-                     "gambolputty": {}
+                     "gambolputty": { "source_module": caller_class_name }
                     }
-    default_dict['gambolputty']['id'] = id(default_dict)
     default_dict.update(dict)
     return default_dict
 

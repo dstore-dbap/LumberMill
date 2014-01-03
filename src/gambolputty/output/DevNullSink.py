@@ -15,5 +15,5 @@ class DevNullSink(BaseModule.BaseModule):
     module_type = "output"
     """Set module type"""
 
-    def handleEvent(self, event):
-        yield event
+    def sendEvent(self, event):
+        return

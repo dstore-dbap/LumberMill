@@ -71,6 +71,7 @@ class GambolPutty:
 
     def produceQueue(self, module_instance, queue_max_size=20):
         """Returns a queue with queue_max_size"""
+        print queue_max_size
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
@@ -102,8 +103,7 @@ class GambolPutty:
 
     def runModules(self):
         """Start the configured modules
-        
-        Start each module in its own thread
+
         """
         # All modules are completely configured, call modules run method if it exists.
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
@@ -118,13 +118,14 @@ class GambolPutty:
                     instance.initRedisClient()
                 try:
                     if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
+                        # The default 'start' method of threading.Thread will call the 'run' method of the module.
                         instance.start()
                     elif getattr(instance, "run", None):
+                        # Call 'run' method directly.
                         instance.run()
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning(
-                        "Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
+                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
 
     def initModule(self, module_name):
         """ Initalize a module.
@@ -264,7 +265,7 @@ class GambolPutty:
         signal.signal(signal.SIGINT, self.shutDown)
         self.runModules()
         while self.is_alive:
-            time.sleep(1)
+            time.sleep(.5)
 
     def shutDown(self, signal=False, frame=False):
         self.is_alive = False

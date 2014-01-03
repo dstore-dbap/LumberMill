@@ -11,7 +11,7 @@ import Utils
 import Decorators
 
 @Decorators.ModuleDocstringParser
-class ElasticSearchOutput(BaseModule.BaseModule):
+class ElasticSearchSink(BaseModule.BaseModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -29,7 +29,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: ElasticSearchOutput
+    - module: ElasticSearchSink
         configuration:
           nodes: ["localhost:9200"]             # <type: list; is: required>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
@@ -87,7 +87,7 @@ class ElasticSearchOutput(BaseModule.BaseModule):
         self.events_container.append(event)
         if len(self.events_container) >= self.max_waiting_events:
             self.storeData(self.events_container)
-        yield
+        yield event
 
     def dataToElasticSearchJson(self, index_name, events):
         """

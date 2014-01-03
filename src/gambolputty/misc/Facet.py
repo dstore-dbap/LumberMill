@@ -92,7 +92,7 @@ class Facet(BaseModule.BaseModule):
                                           'facet_field': self.getConfigurationValue('source_field'),
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets'],
-                                          'other_event_fields': facet_data['other_event_fields']})
+                                          'other_event_fields': facet_data['other_event_fields']}, caller_class_name=self.__class__.__name__)
         self.sendEvent(event)
 
     def getEvaluateFunc(self):

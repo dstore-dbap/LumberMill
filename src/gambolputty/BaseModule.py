@@ -35,7 +35,6 @@ class BaseModule():
     """ Set module type. """
 
     can_run_parallel = False
-    event_refcount = collections.defaultdict(int)
 
     def __init__(self, gp, stats_collector=False):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -228,6 +227,7 @@ class BaseModule():
     def sendEvent(self, event):
         receivers = self.getFilteredReceivers(event)
         if not receivers:
+            self.destroyEvent(event)
             return
         for idx, receiver in enumerate(receivers):
             if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
@@ -236,18 +236,8 @@ class BaseModule():
                 receiver.receiveEvent(event if idx is 0 else event.copy())
 
     def receiveEvent(self, event):
-        #print "In receive start %s:" % self.__class__
-        #pprint.pprint(self.event_refcount)
-        BaseModule.event_refcount[event['gambolputty']['id']] += 1
         for event in self.handleEvent(event):
-            if not event:
-                continue
             self.sendEvent(event)
-            BaseModule.event_refcount[event['gambolputty']['id']] -= 1
-            #print "In receive end %s:" % self.__class__
-            #pprint.pprint(BaseModule.event_refcount)
-            if BaseModule.event_refcount[event['gambolputty']['id']] == 0:
-                self.destroyEvent(event)
 
     @abc.abstractmethod
     def handleEvent(self, event):

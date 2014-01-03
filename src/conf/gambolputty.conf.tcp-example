@@ -22,7 +22,7 @@
     - AddDateTime:
         filter: event_type != 'unknown'
     # Print out messages that did not match
-    - StdOutHandler:
+    - StdOutSink:
         filter: event_type == 'unknown'
 
 # Add a timestamp field.
@@ -39,14 +39,14 @@
     geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
     source_fields: [x_forwarded_for, remote_ip]
   receivers:
-    - ElasticSearchOutput
+    - ElasticSearchSink
     - Statistics
 
-- module: ElasticSearchOutput
+- module: ElasticSearchSink
   configuration:
     nodes: ["localhost:9200"]
     doc_id: '%(@timestamp)s%(received_from)s'
     store_interval_in_secs: 2
 
 - module: Statistics
-- module: StdOutHandler
+- module: StdOutSink

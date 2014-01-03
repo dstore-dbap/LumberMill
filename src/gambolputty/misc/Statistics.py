@@ -1,3 +1,4 @@
+import pprint
 import time
 import sys
 import StatisticCollector
@@ -19,7 +20,6 @@ class Statistics(BaseModule.BaseModule):
         event_type_statistics: True        # <default: True; type: boolean; is: optional>
         receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
         waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
-        processing_event_statistics: True  # <default: False; type: boolean; is: optional>
     """
 
     module_type = "misc"
@@ -30,6 +30,7 @@ class Statistics(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         StatisticCollector.StatisticCollector().setCounter('ts_last_stats', time.time())
         self.printTimedIntervalStatistics()
+        self.module_queues = {}
 
     @Decorators.setInterval(10)
     def printTimedIntervalStatistics(self):
@@ -38,8 +39,6 @@ class Statistics(BaseModule.BaseModule):
             self.receiveRateStatistics()
         if self.getConfigurationValue('waiting_event_statistics'):
             self.eventsInQueuesStatistics()
-        if self.getConfigurationValue('processing_event_statistics'):
-            self.eventsInProcess()
         if self.getConfigurationValue('event_type_statistics'):
             self.regexStatistics()
 
@@ -61,30 +60,16 @@ class Statistics(BaseModule.BaseModule):
 
     def eventsInQueuesStatistics(self):
         self.logger.info(">> Queue stats")
-        self.logger.info("Events in queues: %s%s%s" % (StatisticCollector.StatisticCollector().getCounter('events_in_queues'), Utils.AnsiColors.YELLOW, Utils.AnsiColors.ENDC))
+        for module_name, queue in self.module_queues.iteritems():
+            self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
 
-    def eventsInProcess(self):
-        self.logger.info(">> Processing stats")
-        self.logger.info("Events in process: %s%s%s" % (Utils.AnsiColors.YELLOW, StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
-
-    def __run(self):
-        if not self.input_queue:
-            # Only issue warning for those modules that are expected to have an input queue.
-            # TODO: A better solution should be implemented...
-            if self.module_type not in ['stand_alone']:
-                self.logger.warning("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
-            return
-        while self.is_alive:
-            data = False
-            try:
-                data = self.getEventFromInputQueue()
-            except:
-                exc_type, exc_value, exc_tb = sys.exc_info()
-                self.logger.error("%sCould not read data from input queue.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC) )
-                traceback.print_exception(exc_type, exc_value, exc_tb)
+    def run(self):
+        # Get all configured queues for waiting event stats.
+        for module_name, module_info in self.gp.modules.iteritems():
+            instance = module_info['instances'][0]
+            if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
-            for data in self.handleData(data):
-                self.addEventToOutputQueues(data)
+            self.module_queues[module_name] = instance.getInputQueue()
 
     def handleEvent(self, event):
         StatisticCollector.StatisticCollector().incrementCounter('rps')

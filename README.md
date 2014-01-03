@@ -27,6 +27,7 @@ The different modules can be combined in any order.
 * JsonParser, parse a json formatted string.
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
+* SyslogPrivalParser, parse the syslog prival value (RFC5424).
 
 #### Field modifiers
 
@@ -37,16 +38,17 @@ The different modules can be combined in any order.
 * Permutate, takes a list in the event data emits events for all possible permutations of that list.
 
 #### Outputs
+
 * DevNullSink, discards all data that it receives.
-* StdOutHandler, prints all received data to standard out.
-* ElasticSearchOutput, stores data entries in an elasticsearch index.
+* StdOutSink, prints all received data to standard out.
+* ElasticSearchSink, stores data entries in an elasticsearch index.
 
 #### Misc modules
 
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
 * Facet, collect all encountered variations of en event value over a configurable period of time.
 * Statistics, simple statistic module.
-* TrackEvents, keep track of events beeing processed and requeue them after e.g. a crash.
+* TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
 
 GambolPutty makes use of the following projects:
@@ -73,7 +75,6 @@ Each module configuration follows the same pattern:
     - module: SomeModuleName
       alias: AliasModuleName                    # <default: ""; type: string; is: optional>
       configuration:
-        work-on-copy: True                      # <default: False; type: boolean; is: optional>
         redis-client: RedisClientName           # <default: ""; type: string; is: optional>
         redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
         redis-ttl: 600                          # <default: 60; type: integer; is: optional>

@@ -1,7 +1,7 @@
 Output modules
 ==========
 
-#####ElasticSearchOutput
+#####ElasticSearchSink
 
 Store the data dictionary in an elasticsearch index.
 
@@ -19,7 +19,7 @@ backlog_size: maximum count of events waiting for transmission. Events above cou
 
 Configuration example:
 
-    - module: ElasticSearchOutput
+    - module: ElasticSearchSink
         configuration:
           nodes: ["localhost:9200"]             # <type: list; is: required>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
@@ -30,13 +30,13 @@ Configuration example:
           max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
           backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
 
-#####StdOutHandler
+#####StdOutSink
 
 Print the data dictionary to stdout.
 
 Configuration example:
 
-    - module: StdOutHandler
+    - module: StdOutSink
       configuration:
         pretty_print: True      # <default: True; type: boolean; is: optional>
 

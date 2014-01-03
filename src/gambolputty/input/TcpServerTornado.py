@@ -36,8 +36,9 @@ class ConnectionHandler(object):
 
     def _on_read_line(self, data):
         (host, port) = self.address
-        if data.strip() != "":
-            self.gp_module.receiveEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}))
+        data = data.strip()
+        if data != "":
+            self.gp_module.sendEvent(Utils.getDefaultEventDict({"received_from": host, "data": data}, caller_class_name="TcpServerTornado"))
         try:
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
         except StreamClosedError:

@@ -36,7 +36,7 @@ class ConnectionHandler(object):
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
     def _on_read_line(self, data):
-        self.gp_module.handleEvent(Utils.getDefaultEventDict({"received_from": self.address, "data": data}))
+        self.gp_module.sendEvent(Utils.getDefaultEventDict({"received_from": self.address, "data": data}, caller_class_name='UnixSocket'))
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
@@ -94,6 +94,3 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not remove socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
         return
-
-    def handleEvent(self, event):
-        self.sendEvent(event)

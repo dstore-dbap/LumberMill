@@ -26,6 +26,8 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
        - ModuleAlias
     """
 
+    can_run_parallel = True
+
     def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
         threading.Thread.__init__(self)
@@ -37,18 +39,15 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
     def getInputQueue(self):
         return self.input_queue
 
-    def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
+    def getEventFromInputQueue(self, block=True, timeout=None):
         event = False
         try:
-            event = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
+            event = self.input_queue.get(block, timeout)
         except Queue.Empty:
             raise
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )
-        #self.stats_collector.decrementCounter('events_in_queues')
-        #if update_counter:
-        #    self.stats_collector.incrementCounter('events_in_process')
         return event
 
     def run(self):

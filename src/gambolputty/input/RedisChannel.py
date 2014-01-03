@@ -56,5 +56,4 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
     def handleEvent(self, event):
         if event[0] != 'message':
             return
-        yield Utils.getDefaultEventDict({"received_from": 'RedisChannel %s' % event[1], "data": event[2]})
-        #self.sendEvent(Utils.getDefaultEventDict({"received_from": 'RedisChannel %s' % event[1], "data": event[2]}))
+        yield Utils.getDefaultEventDict(dict={"received_from": 'RedisChannel %s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)

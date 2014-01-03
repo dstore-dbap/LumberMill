@@ -78,7 +78,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 data = self.rfile.readline().strip()
                 if data == "":
                     continue
-                self.tcp_server_instance.handleEvent(Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}))
+                self.tcp_server_instance.sendEvent(Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded'))
         except socket.error, e:
            self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
@@ -146,8 +146,8 @@ class TcpServerThreaded(BaseModule.BaseModule):
         self.server = False
 
     def run(self):
-        if not self.addReceiver:
-            self.logger.warning("%sWill not start module %s since no output queue set.%s" % (Utils.AnsiColors.WARNING, self.__class__.__name__, Utils.AnsiColors.ENDC))
+        if not self.receivers:
+            self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         handler_factory = TCPRequestHandlerFactory()
         try:
@@ -165,16 +165,12 @@ class TcpServerThreaded(BaseModule.BaseModule):
             self.gp.shutDown()
             return
         # Start a thread with the server -- that thread will then start one
-        # more thread for each request
-        self.server_thread = threading.Thread(target=self.server.serve_forever)
-        # Exit the server thread when the main thread terminates
-        self.server_thread.daemon = True
-        self.server_thread.start()
-
-    def handleEvent(self, event):
-        self.sendEvent(event)
+        # more threads for each request.
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        # Exit the server thread when the main thread terminates.
+        server_thread.daemon = True
+        server_thread.start()
 
     def shutDown(self):
-        return
         if self.server:
-            self.server.server_close()
+            self.server.is_alive = False

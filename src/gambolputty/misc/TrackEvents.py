@@ -35,36 +35,25 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
     """
 
-    module_type = "stand_alone"
+    module_type = "misc"
     """Set module type"""
 
     can_run_parallel = True
 
-    input_queue = False
     main_thread = False
 
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.class_name_re = re.compile("'(.*)'")
         self.redis_key_prefix = 'TrackEvents:%s' % socket.gethostname()
         if not TrackEvents.main_thread:
             TrackEvents.main_thread = self
-            TrackEvents.input_queue = self.gp.produceQueue(self, self.getConfigurationValue('queue_size'))
-        self.input_queue = TrackEvents.input_queue
 
     def register(self):
         # Get all input modules an register ourself as receiver.
         for module_name, module_info in self.gp.modules.iteritems():
-            # We only need one instance to register ourselfs.
-            instance = module_info['instances'][0]
-            # Stand alone modules will be skipped.
-            if instance.module_type == "stand_alone":
-                continue
-            if instance.module_type == "input":
-                instance.addReceiver(self.__class__, TrackEvents.input_queue)
-            # Register for on_event_delete.
-            instance.registerCallback('on_event_delete', self.deleteEventFromRedis)
+            for instance in module_info['instances']:
+                instance.registerCallback('on_event_delete', self.deleteEventFromRedis)
 
     def requeueEvents(self):
         # Check if events need to be requeued.
@@ -72,9 +61,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         for module_name, module_info in self.gp.modules.iteritems():
             instance = module_info['instances'][0]
             if instance.module_type == "input":
-                matches = re.search(self.class_name_re, str(instance.__class__))
-                if matches:
-                    input_modules[matches.group(1)] = instance
+                input_modules[instance.__class__.__name__] = instance
         keys = self.redis_client.keys("%s:*" % self.redis_key_prefix)
         if len(keys) > 0:
             self.logger.warning("%sFound %s unfinished events. Requeing...%s" % (Utils.AnsiColors.WARNING, len(keys), Utils.AnsiColors.ENDC))
@@ -87,7 +74,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
                 requeue_counter += 1
                 # Delete event from redis
                 self.deleteEventFromRedis(event[1])
-                input_modules[event[0]].receiveEvent(event[1])
+                input_modules[event[0]].sendEvent(event[1])
             self.logger.warning("%sDone. Requeued %s of %s events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
 
     def run(self):
@@ -109,10 +96,10 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return data: dictionary
         """
-        #m = re.search(self.class_name_re, str(inspect.stack()[1][0].f_locals["self"].__class__))
-        self.setRedisValue("%s:%s" % (self.redis_key_prefix, event['gambolputty']['id']), ('TcpServerTornado.TcpServerTornado', event), self.getConfigurationValue('redis_ttl'))
+        event['gambolputty']['track_id'] = id(event)
+        self.setRedisValue("%s:%s" % (self.redis_key_prefix, id(event)), (event['gambolputty']['source_module'], event), self.getConfigurationValue('redis_ttl'))
         yield event
 
     def deleteEventFromRedis(self, event):
-        #print "Deleteing %s." % event
-        self.redis_client.delete("%s:%s" % (self.redis_key_prefix, event['gambolputty']['id']))
+        if 'track_id' in event['gambolputty']:
+            self.redis_client.delete("%s:%s" % (self.redis_key_prefix, event['gambolputty']['track_id']))

@@ -3,14 +3,14 @@ import sys
 import BaseThreadedModule
 import BaseModule
 from Decorators import ModuleDocstringParser
-
-try:
-    import regex as re
-except ImportError:
-    import re
+import re
+#try:
+#    import regex as re
+#except ImportError:
+#    import re
 
 @ModuleDocstringParser
-class RegexParser(BaseThreadedModule.BaseThreadedModule):
+class RegexParser(BaseModule.BaseModule):
     """
     Parse a string by named regular expressions.
 
@@ -32,11 +32,9 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
     module_type = "parser"
     """Set module type"""
 
-    can_run_parallel = True
-
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.target_field = "event_type"
@@ -81,19 +79,11 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         This method expects a syslog datagram.
         It might contain more then one event. We split at the newline char.
         """
-        # Remove possible remaining syslog error code
-        # i.e. event starts with <141>
         fieldname = self.getConfigurationValue('source_field', event)
         if fieldname not in event:
             yield event
             return
-        try:
-            if event[fieldname].index(">") <= 4:
-                event[fieldname] = event[fieldname][event[fieldname].index(">")+1:] + "\n"
-        except:
-            pass
         yield self.parseEvent(event, fieldname)
-        #self.sendEvent(self.parseEvent(event, fieldname))
 
     def parseEvent(self, event, fieldname):
         """

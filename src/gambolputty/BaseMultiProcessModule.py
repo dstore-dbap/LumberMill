@@ -41,7 +41,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
         data = False
         try:
-            data = self.input_queue.get(block, timeout) #if not self.getConfigurationValue('work_on_copy') else self.input_queue.get().copy()
+            data = self.input_queue.get(block, timeout)
         except Queue.Empty:
             raise
         except KeyboardInterrupt:
@@ -52,9 +52,6 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )
         return data
-        #self.stats_collector.decrementCounter('events_in_queues')
-        #if update_counter:
-        #    self.stats_collector.incrementCounter('events_in_process')
 
     def run(self):
         if not self.input_queue:

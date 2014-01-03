@@ -4,13 +4,13 @@ import pprint
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class StdOutHandler(BaseModule.BaseModule):
+class StdOutSink(BaseModule.BaseModule):
     """
     Print the data dictionary to stdout.
 
     Configuration example:
 
-    - module: StdOutHandler
+    - module: StdOutSink
       configuration:
         pretty_print: True          # <default: True; type: boolean; is: optional>
         fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
