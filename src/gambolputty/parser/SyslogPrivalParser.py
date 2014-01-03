@@ -8,7 +8,7 @@ class SyslogPrivalParser(BaseModule.BaseModule):
     """
     It will parse the source field in the event dictionary for the default severity
     and facility fields (RFC5424, http://tools.ietf.org/html/rfc5424).
-    The source field must contain the prival with the pattern: "<d+>"
+    The source field must contain the prival with the pattern: "<\d+>"
 
     Numerical             Facility
      Code
