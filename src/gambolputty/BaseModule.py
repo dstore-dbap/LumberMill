@@ -178,7 +178,6 @@ class BaseModule():
         pass
 
     def addReceiver(self, receiver_name, receiver):
-        #print "Addedd %s (%s) to %s." % (receiver.__class__, id(receiver),self.__class__)
         if not hasattr(receiver, 'receiveEvent') and not hasattr(receiver, 'put'):
             self.logger.error("%sCould not add receiver %s to %s. Seems to be incompatible, no <receiveEvent> nor <put> method found.%s" % (Utils.AnsiColors.FAIL, receiver, self.__class__, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
@@ -207,7 +206,7 @@ class BaseModule():
 
     def getFilteredReceivers(self, event):
         if not self.filters:
-            return self.receivers.itervalues()
+            return self.receivers.values()
         filterd_receivers = []
         for receiver_name, receiver in self.receivers.iteritems():
             receiver_filter = self.getFilter(receiver_name)

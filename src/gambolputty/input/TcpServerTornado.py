@@ -73,6 +73,8 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     module_type = "input"
     """Set module type"""
 
+    can_run_parallel = False
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

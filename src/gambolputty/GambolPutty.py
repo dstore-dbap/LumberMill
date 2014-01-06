@@ -20,8 +20,6 @@ import logging.config
 import threading
 import Queue
 import yaml
-import multiprocessing
-import pprint
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
@@ -71,7 +69,6 @@ class GambolPutty:
 
     def produceQueue(self, module_instance, queue_max_size=20):
         """Returns a queue with queue_max_size"""
-        print queue_max_size
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
@@ -244,7 +241,10 @@ class GambolPutty:
                             module_loop_buffer.append(receiver_node)
                         node.addChild(receiver_node)
                     # Add a single instance as receiver to module. If the receiver is a thread or multiprocess, they share the same queue.
-                    instance.addReceiver(receiver_name, receiver_instance)
+                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
+                        instance.addReceiver(receiver_name, queues[receiver_name])
+                    else:
+                        instance.addReceiver(receiver_name, receiver_instance)
                     # Set filter if configured.
                     if 'filter' in receiver_filter_config:
                         receiver_filter = Utils.compileStringToConditionalObject("matched = %s" % receiver_filter_config['filter'], 'event.get("%s", False)')
@@ -275,27 +275,14 @@ class GambolPutty:
             for instance in module_info['instances']:
                 if instance.module_type == "input":
                     instance.shutDown()
-        # Wait for all events in queue to be processed but limit number of shutdown tries to avoid endless loop.
-        shutdown_tries = 0
-        while (StatisticCollector.StatisticCollector().getCounter(
-                'events_in_queues') > 0 or StatisticCollector.StatisticCollector().getCounter(
-                'events_in_process') > 0) and shutdown_tries <= 10:
-            #pprint.pprint(StatisticCollector.StatisticCollector().counter_stats_per_module)
-            if shutdown_tries % 2 == 0:
-                self.logger.info(
-                    "%sWaiting for pending events. Events waiting in queues: %s. Events in process: %s.%s" % (
-                    Utils.AnsiColors.LIGHTBLUE, StatisticCollector.StatisticCollector().getCounter('events_in_queues'),
-                    StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
-            shutdown_tries += 1
-            time.sleep(.1)
+        # Give remaining queued events one second.
+        time.sleep(1)
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type != "input":
                     instance.shutDown()
-        self.logger.info("%sShutdown complete. Events waiting in queues: %s. Events in process: %s.%s" % (
-        Utils.AnsiColors.LIGHTBLUE, StatisticCollector.StatisticCollector().getCounter('events_in_queues'),
-        StatisticCollector.StatisticCollector().getCounter('events_in_process'), Utils.AnsiColors.ENDC))
+        self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         sys.exit()
 
 

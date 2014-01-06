@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 from hashlib import md5
-import pprint
 import sys
 import datetime
 import time
 import simplejson as json
 import elasticsearch
+import Queue
+from multiprocessing.queues import Queue as MpQueue
 import BaseModule
+import BaseMultiProcessModule
 import Utils
 import Decorators
 
 @Decorators.ModuleDocstringParser
-class ElasticSearchSink(BaseModule.BaseModule):
+class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -24,14 +26,14 @@ class ElasticSearchSink(BaseModule.BaseModule):
     doc_id: sets the es document id for the committed event data.
     replication: can be either 'sync' or 'async'.
     store_interval_in_secs: sending data to es in x seconds intervals.
-    max_waiting_events: sending data to es if event count is above even if store_interval_in_secs is not reached.
+    max_waiting_events: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
 
     Configuration example:
 
     - module: ElasticSearchSink
         configuration:
-          nodes: ["localhost:9200"]             # <type: list; is: required>
+          nodes: ["localhost:9200"]                 # <type: list; is: required>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
           doc_id: 'data'                            # <default: "data"; type: string; is: optional>
@@ -46,7 +48,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
         self.events_container = []
         self.max_waiting_events = self.getConfigurationValue('max_waiting_events')
         self.backlog_size = self.getConfigurationValue('backlog_size')
@@ -56,7 +58,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
             return
         self.is_storing = False
         self.timed_store_func = self.getTimedStoreFunc()
-        self.timed_store_func(self)
+        #self.timed_store_func(self)
 
     def getTimedStoreFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
@@ -68,15 +70,32 @@ class ElasticSearchSink(BaseModule.BaseModule):
 
     def connect(self):
         es = False
-        # Connect to es node and round-robin between them.
-        #elasticsearch.connection.Urllib3HttpConnection(maxsize=100)
         try:
-            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), sniff_on_start=True)
+            # Connect to es node and round-robin between them.
+            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), sniff_on_start=True) # connection_class=elasticsearch.connection.ThriftConnection, sniff_on_start=True
+            #es = elasticsearch.ElasticSearch(self.getConfigurationValue('nodes'))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             es = False
         return es
+
+    def run(self):
+        self.timed_store_func(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+
+    def sendEvent(self, event):
+        """Override the default behaviour of destroying an event when no receivers are set.
+        This module aggregates a configurable amount of events to use the bulk update feature
+        of elasticsearch. So events must only be destroyed when bulk update was successful"""
+        receivers = self.getFilteredReceivers(event)
+        if not receivers:
+            return
+        for idx, receiver in enumerate(receivers):
+            if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
+                receiver.put(event if idx is 0 else event.copy())
+            else:
+                receiver.receiveEvent(event if idx is 0 else event.copy())
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions.
@@ -84,6 +103,8 @@ class ElasticSearchSink(BaseModule.BaseModule):
             time.sleep(.01)
         if len(self.events_container) >= self.backlog_size:
             self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
+            yield event
+            return
         self.events_container.append(event)
         if len(self.events_container) >= self.max_waiting_events:
             self.storeData(self.events_container)
@@ -127,6 +148,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
+            #self.es.bulk_index(index_name, 'test', events, id_field=self.getConfigurationValue("doc_id"), consistency='one')
             self.destroyEvent(event_list=events)
             self.events_container = []
         except elasticsearch.exceptions.ConnectionError:

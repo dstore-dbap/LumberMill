@@ -1,10 +1,6 @@
-import pprint
 import time
-import sys
-import StatisticCollector
 import Utils
 import BaseModule
-import traceback
 import Decorators
 
 @Decorators.ModuleDocstringParser
@@ -28,7 +24,7 @@ class Statistics(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
-        StatisticCollector.StatisticCollector().setCounter('ts_last_stats', time.time())
+        self.stats_collector.setCounter('ts_last_stats', time.time())
         self.printTimedIntervalStatistics()
         self.module_queues = {}
 
@@ -44,18 +40,18 @@ class Statistics(BaseModule.BaseModule):
 
     def regexStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        for event_type, count in sorted(StatisticCollector.StatisticCollector().getAllCounters().iteritems()):
+        for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
             if not event_type.startswith('event_type_'):
                 continue
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_type.replace('event_type_', ''), Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
-            StatisticCollector.StatisticCollector().resetCounter(event_type)
+            self.stats_collector.resetCounter(event_type)
 
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
-        rps = StatisticCollector.StatisticCollector().getCounter('rps')
+        rps = self.stats_collector.getCounter('rps')
         if not rps:
             rps = 0
-        StatisticCollector.StatisticCollector().resetCounter('rps')
+        self.stats_collector.resetCounter('rps')
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('print_interval'), Utils.AnsiColors.YELLOW, rps, (rps/self.getConfigurationValue('print_interval')), Utils.AnsiColors.ENDC))
 
     def eventsInQueuesStatistics(self):
@@ -71,11 +67,15 @@ class Statistics(BaseModule.BaseModule):
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
 
+    def destroyEvent(self, event=False, event_list=False):
+        """Statistic module will not destroy any events."""
+        pass
+
     def handleEvent(self, event):
-        StatisticCollector.StatisticCollector().incrementCounter('rps')
+        self.stats_collector.incrementCounter('rps')
         if self.getConfigurationValue('event_type_statistics'):
             try:
-                StatisticCollector.StatisticCollector().incrementCounter('event_type_%s' % event['event_type'])
+                self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])
             except:
                 pass
         yield event

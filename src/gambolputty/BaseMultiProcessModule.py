@@ -26,10 +26,11 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
        - ModuleAlias
     """
 
+    can_run_parallel = True
+
     def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
         multiprocessing.Process.__init__(self)
-        self.input_queue = multiprocessing.Queue(1024)
         self.daemon = True
 
     def setInputQueue(self, queue):
@@ -38,30 +39,37 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def getInputQueue(self):
         return self.input_queue
 
-    def getEventFromInputQueue(self, block=True, timeout=None, update_counter=True):
-        data = False
+    def getEventFromInputQueue(self, block=True, timeout=None):
+        event = False
         try:
-            data = self.input_queue.get(block, timeout)
+            event = self.input_queue.get(block, timeout)
         except Queue.Empty:
             raise
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             # Keyboard interrupt is catched in gambolputtys main run method.
             # This will take care to shutdown all running modules.
             pass
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )
-        return data
+        return event
 
     def run(self):
+        if not self.receivers:
+            # Only issue warning for those modules that are expected to have receivers.
+            # TODO: A better solution should be implemented...
+            if self.module_type not in ['stand_alone', 'output']:
+                self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+                return
         if not self.input_queue:
             # Only issue warning for those modules that are expected to have an input queue.
             # TODO: A better solution should be implemented...
-            if self.module_type not in ['stand_alone']:
+            if self.module_type not in ['stand_alone', 'input']:
                 self.logger.error("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         while self.is_alive:
             event = self.getEventFromInputQueue()
-            self.handleEvent(event)
+            self.receiveEvent(event)
 
-
+    def shutDown(self):
+        self.is_alive = False

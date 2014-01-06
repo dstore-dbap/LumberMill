@@ -24,4 +24,3 @@ class AddDateTime(BaseModule.BaseModule):
     def handleEvent(self, event):
         event[self.getConfigurationValue('target_field', event)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', event))
         yield(event)
-        #self.sendEvent(event)

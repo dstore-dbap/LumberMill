@@ -54,7 +54,7 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
         if not self.receivers:
             # Only issue warning for those modules that are expected to have receivers.
             # TODO: A better solution should be implemented...
-            if self.module_type not in ['stand_alone', 'input']:
+            if self.module_type not in ['stand_alone', 'output']:
                 self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
                 return
         if not self.input_queue:
