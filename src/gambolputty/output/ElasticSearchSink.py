@@ -21,10 +21,14 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
     Requests will the be loadbalanced via round robin.
 
     nodes: configures the elasticsearch nodes.
+    connection_type: one of: 'thrift', 'http'
+    http_auth: 'user:password'
+    use_ssl: one of: True, False
     index_prefix: es index prefix to use, will be appended with '%Y.%m.%d'.
     index_name: sets a fixed name for the es index.
     doc_id: sets the es document id for the committed event data.
-    replication: can be either 'sync' or 'async'.
+    consistency: one of: 'one', 'quorum', 'all'
+    replication: one of: 'sync', 'async'.
     store_interval_in_secs: sending data to es in x seconds intervals.
     max_waiting_events: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
@@ -34,9 +38,13 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
     - module: ElasticSearchSink
         configuration:
           nodes: ["localhost:9200"]                 # <type: list; is: required>
+          connection_type: http                     # <default: "thrift"; type: string; is: optional>
+          http_auth: 'user:password'                # <default: ""; type: string; is: optional>
+          use_ssl: True                             # <default: False; type: boolean; is: optional>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
           doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+          consistency: 'one'                        # <default: "quorum"; type: string; is: optional>
           replication: 'sync'                       # <default: "sync"; type: string; is: optional>
           store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
           max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
@@ -52,6 +60,12 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.events_container = []
         self.max_waiting_events = self.getConfigurationValue('max_waiting_events')
         self.backlog_size = self.getConfigurationValue('backlog_size')
+        self.replication = self.getConfigurationValue("replication")
+        self.consistency = self.getConfigurationValue("consistency")
+        self.connection_class = elasticsearch.connection.ThriftConnection
+        if self.getConfigurationValue("connection_type") == 'http':
+            self.connection_class = elasticsearch.connection.Urllib3HttpConnection
+
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()
@@ -72,8 +86,13 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
         es = False
         try:
             # Connect to es node and round-robin between them.
-            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'), sniff_on_start=True) # connection_class=elasticsearch.connection.ThriftConnection, sniff_on_start=True
-            #es = elasticsearch.ElasticSearch(self.getConfigurationValue('nodes'))
+            # connection_class=elasticsearch.connection.ThriftConnection
+            # connection_class=elasticsearch.connection.Urllib3HttpConnection
+            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
+                                             connection_class=self.connection_class,
+                                             sniff_on_start=True, maxsize=20,
+                                             use_ssl=self.getConfigurationValue('use_ssl'),
+                                             http_auth=self.getConfigurationValue('http_auth'))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
@@ -147,7 +166,7 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
-            self.es.bulk(body=json_data, replication=self.getConfigurationValue("replication"))
+            self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
             #self.es.bulk_index(index_name, 'test', events, id_field=self.getConfigurationValue("doc_id"), consistency='one')
             self.destroyEvent(event_list=events)
             self.events_container = []
