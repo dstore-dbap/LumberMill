@@ -65,18 +65,32 @@ Configuration example:
 
 #####RedisChannel
 
-Subscribes to a redis channel and passes incoming events to receivers.
+Subscribes to a redis channels and passes incoming events to receivers.
 
 Configuration example:
 
     - module: RedisChannel
       configuration:
-        channels:                   # <type: string; is: required>
+        channel: my_channel         # <type: string; is: required>
         server: redis.server        # <default: 'localhost'; type: string; is: optional>
         port: 6379                  # <default: 6379; type: integer; is: optional>
         db: 0                       # <default: 0; type: integer; is: optional>
         password: None              # <default: None; type: None||string; is: optional>
-        socket_timeout: 10          # <default: 10; type: integer; is: optional>
+
+#####RedisList
+
+Subscribes to redis lists and passes incoming events to receivers.
+
+Configuration example:
+
+    - module: RedisList
+      configuration:
+        lists: ['my_list']          # <type: list; is: required>
+        server: redis.server        # <default: 'localhost'; type: string; is: optional>
+        port: 6379                  # <default: 6379; type: integer; is: optional>
+        db: 0                       # <default: 0; type: integer; is: optional>
+        password: None              # <default: None; type: None||string; is: optional>
+        timeout: 10                 # <default: 0; type: integer; is: optional>
 
 #####Spam
 
