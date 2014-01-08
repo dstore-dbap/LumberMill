@@ -39,7 +39,7 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
         configuration:
           nodes: ["localhost:9200"]                 # <type: list; is: required>
           connection_type: http                     # <default: "thrift"; type: string; is: optional>
-          http_auth: 'user:password'                # <default: ""; type: string; is: optional>
+          http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
           use_ssl: True                             # <default: False; type: boolean; is: optional>
           index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
           index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>

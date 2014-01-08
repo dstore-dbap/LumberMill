@@ -107,7 +107,7 @@ class SyslogPrivalParser(BaseModule.BaseModule):
         self.severity_mappings = dict(self.rfc_5424_severities.items() + self.getConfigurationValue('severity_mappings').items())
 
     def handleEvent(self, event):
-        if self.source_field not in event:
+        if self.source_field not in event or not event[self.source_field]:
             yield event
             return
         prival = event[self.source_field].replace('<','')

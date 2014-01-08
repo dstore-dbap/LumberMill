@@ -68,7 +68,7 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
             if not event:
                 continue
             self.receiveEvent(event)
-        self.logger.error("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
+        self.logger.info("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
     def shutDown(self):
         self.is_alive = False

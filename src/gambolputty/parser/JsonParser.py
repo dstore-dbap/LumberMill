@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseThreadedModule
+import BaseModule
 import simplejson as json
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class JsonParser(BaseThreadedModule.BaseThreadedModule):
+class JsonParser(BaseModule.BaseModule):
     """
     It will parse the json data and create or replace fields in the internal data dictionary with
     the corresponding json fields.
@@ -27,7 +27,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         #BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
 
     def handleEvent(self, event):

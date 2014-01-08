@@ -178,7 +178,7 @@ class AsyncRedisClient(object):
     def fetch(self, request, callback):
         """Executes a request, calling callback with an redis `result`.
 
-        The request shuold be a string tuple. like ('set', 'foo', 'bar')
+        The request should be a string tuple. like ('set', 'foo', 'bar')
 
         If an error occurs during the fetch, a `RedisError` exception will
         throw out. You can use try...except to catch the exception (if any)
