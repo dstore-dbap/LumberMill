@@ -26,6 +26,7 @@ The different modules can be combined in any order.
 * RegexParser, parse a string using regular expressions and named capturing groups.
 * CSVParser, parse a char separated string.
 * JsonParser, parse a json formatted string.
+* MsgPackParser, parse a msgpack encoded string.
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
 * SyslogPrivalParser, parse the syslog prival value (RFC5424).
