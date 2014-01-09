@@ -48,13 +48,15 @@ class Statistics(BaseModule.BaseModule):
 
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
-        rps = self.stats_collector.getCounter('rps')
-        if not rps:
-            rps = 0
-        self.stats_collector.resetCounter('rps')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('print_interval'), Utils.AnsiColors.YELLOW, rps, (rps/self.getConfigurationValue('print_interval')), Utils.AnsiColors.ENDC))
+        eps = self.stats_collector.getCounter('eps')
+        if not eps:
+            eps = 0
+        self.stats_collector.resetCounter('eps')
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('print_interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('print_interval')), Utils.AnsiColors.ENDC))
 
     def eventsInQueuesStatistics(self):
+        if len(self.module_queues) == 0:
+            return
         self.logger.info(">> Queue stats")
         for module_name, queue in self.module_queues.iteritems():
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
@@ -72,7 +74,7 @@ class Statistics(BaseModule.BaseModule):
         pass
 
     def handleEvent(self, event):
-        self.stats_collector.incrementCounter('rps')
+        self.stats_collector.incrementCounter('eps')
         if self.getConfigurationValue('event_type_statistics'):
             try:
                 self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])

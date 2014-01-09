@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import pprint
 import sys
-import tornado
+import threading
+from tornado.ioloop import IOLoop
 import RedisAsyncClient
 import BaseThreadedModule
 import Utils
@@ -48,7 +49,9 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
         if not self.client:
             return
         self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
-        tornado.ioloop.IOLoop.instance().start()
+        # Reinit main loop if already running.
+        IOLoop.instance().stop()
+        IOLoop.instance().start()
 
     def checkReply(self, answer):
         if answer != "OK":

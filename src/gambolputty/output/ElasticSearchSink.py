@@ -3,7 +3,6 @@ from hashlib import md5
 import sys
 import datetime
 import time
-import simplejson as json
 import elasticsearch
 import Queue
 from multiprocessing.queues import Queue as MpQueue
@@ -12,8 +11,18 @@ import BaseMultiProcessModule
 import Utils
 import Decorators
 
+json = False
+for module_name in ['yajl', 'simplejson', 'json']:
+    try:
+        json = __import__(module_name)
+        break
+    except ImportError:
+        pass
+if not json:
+    raise ImportError
+
 @Decorators.ModuleDocstringParser
-class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class ElasticSearchSink(BaseModule.BaseModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -56,7 +65,7 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.events_container = []
         self.max_waiting_events = self.getConfigurationValue('max_waiting_events')
         self.backlog_size = self.getConfigurationValue('backlog_size')
@@ -72,7 +81,7 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
             return
         self.is_storing = False
         self.timed_store_func = self.getTimedStoreFunc()
-        #self.timed_store_func(self)
+        self.timed_store_func(self)
 
     def getTimedStoreFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
@@ -86,8 +95,6 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
         es = False
         try:
             # Connect to es node and round-robin between them.
-            # connection_class=elasticsearch.connection.ThriftConnection
-            # connection_class=elasticsearch.connection.Urllib3HttpConnection
             es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                              connection_class=self.connection_class,
                                              sniff_on_start=True, maxsize=20,
@@ -99,7 +106,7 @@ class ElasticSearchSink(BaseMultiProcessModule.BaseMultiProcessModule):
             es = False
         return es
 
-    def run(self):
+    def __run(self):
         self.timed_store_func(self)
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 

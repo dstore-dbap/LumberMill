@@ -3,10 +3,10 @@
 
 import sys
 import logging
+import threading
 from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
-
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
@@ -96,8 +96,8 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
                                                                                        self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             return
-        #self.server.start(0)
         IOLoop.instance().start()
+
 
     def shutDown(self):
         if self.server:
