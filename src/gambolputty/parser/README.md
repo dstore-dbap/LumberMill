@@ -76,6 +76,21 @@ Configuration example:
     - module: JsonParser
       configuration:
         source_field: 'data'                    # <default: 'data'; type: string; is: optional>
+        keep_original: True                     # <default: False; type: boolean; is: optional>
+      receivers:
+        - NextHandler
+
+#####MsgPackParser
+
+It will parse the msgpack data and create or replace fields in the internal data dictionary with
+the corresponding json fields.
+
+Configuration example:
+
+    - module: MsgPackParser
+      configuration:
+        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
+        keep_original: True                     # <default: False; type: boolean; is: optional>
       receivers:
         - NextHandler
 
