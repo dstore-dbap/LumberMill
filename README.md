@@ -52,6 +52,10 @@ The different modules can be combined in any order.
 * Statistics, simple statistic module.
 * TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
+* WebGui, a web interface to GambolPutty.
+
+#### Cluster modules
+* ClusterConfiguration, syncs master configuration to slaves.
 
 GambolPutty makes use of the following projects:
 
@@ -76,10 +80,9 @@ Each module configuration follows the same pattern:
 
     - module: SomeModuleName
       alias: AliasModuleName                    # <default: ""; type: string; is: optional>
-      configuration:
-        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
-        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+      redis-client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
+      redis-ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
        - ModuleName
        - ModuleAlias:
@@ -142,7 +145,6 @@ Configure GambolPutty to listen on localhost 5151(./conf/gambolputty.conf):
 
 	...
 	- module: TcpServerThreaded
-	  configuration:
-        interface: localhost
-        port: 5151
+      interface: localhost
+      port: 5151
 	...
