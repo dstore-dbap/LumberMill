@@ -1,19 +1,16 @@
 # A handler for stin, just for testing purposes
 - module: StdInHandler
-  configuration:
-    multiline: False  
+  multiline: False
   receivers:
     - RegexParser
 
 # Parse the message using named regex patterns.
 # The named groups will be put into corresponding fields in the data dictionary
 - module: RegexParser
-  configuration:
-    field_extraction_patterns:
-      httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
+  field_extraction_patterns:
+    httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
   receivers:
     - StdOutSink
     
 - module: StdOutSink
-  configuration:
-    pretty_print: True
+  pretty_print: True

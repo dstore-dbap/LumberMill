@@ -17,13 +17,12 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: HttpRequest
-      configuration:
-        url: http://%(server_name)s/some/path   # <type: string; is: required>
-        socket_timeout: 25                      # <default: 25; type: integer; is: optional>
-        target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional if redis_client == "" else required>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      url: http://%(server_name)s/some/path   # <type: string; is: required>
+      socket_timeout: 25                      # <default: 25; type: integer; is: optional>
+      target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
+      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_key: HttpRequest:%(server_name)s   # <default: None; type: None||string; is: optional if redis_client == "" else required>
+      redis_ttl: 600                           # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -48,12 +47,14 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
         if not request_url or not target_field_name:
             yield event
             return
-        result = self.getRedisValue(self.getConfigurationValue('redis_key', event))
+        result = None
+        if self.redis_client:
+            result = self.redis_client.getValue(self.getConfigurationValue('redis_key', event))
         if result == None:
             try:
                 result = self.execRequest(request_url).read()
-                if result:
-                    self.setRedisValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                if result and self.redis_client:
+                    self.redis_client.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
                 yield event
                 return

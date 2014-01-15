@@ -11,8 +11,7 @@ class UrlParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: UrlParser
-      configuration:
-        source_field: uri       # <type: string; is: required>
+      source_field: uri       # <type: string; is: required>
     """
 
     module_type = "parser"

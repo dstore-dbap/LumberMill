@@ -1,16 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseModule
 import msgpack
+import BaseModule
 from Decorators import ModuleDocstringParser
-
-for module_name in ['msgpack', 'msgpack_pure']:
-    try:
-        msgpack = __import__(module_name)
-        break
-    except ImportError:
-        pass
-
 
 @ModuleDocstringParser
 class MsgPackParser(BaseModule.BaseModule):
@@ -21,9 +13,8 @@ class MsgPackParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: MsgPackParser
-      configuration:
-        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-        keep_original: True                     # <default: False; type: boolean; is: optional>
+      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
+      keep_original: True                     # <default: False; type: boolean; is: optional>
       receivers:
         - NextHandler
     """

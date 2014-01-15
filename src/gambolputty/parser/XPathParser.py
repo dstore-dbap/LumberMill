@@ -2,6 +2,7 @@
 from lxml import etree
 import sys
 import BaseThreadedModule
+import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
@@ -16,13 +17,12 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: XPathParser
-      configuration:
-        source_field: 'xml_data'                                # <type: string; is: required>
-        target_field: xpath                                     # <default: "gambolputty_xpath"; type: string; is: optional>
-        query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      source_field: 'xml_data'                                # <type: string; is: required>
+      target_field: xpath                                     # <default: "gambolputty_xpath"; type: string; is: optional>
+      query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
+      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
+      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
     """
 
     module_type = "parser"
@@ -42,7 +42,9 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         if source_field not in event:
             yield event
             return
-        result = self.getRedisValue(self.getConfigurationValue('redis_key', event))
+        result = None
+        if self.redis_client:
+            result = self.redis_client.getValue(self.getConfigurationValue('redis_key', event))
         if result == None:
             xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
@@ -51,7 +53,8 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
                 result =  xml_tree.xpath(self.getConfigurationValue('query', event))
                 if(type(result) == list):
                     result = self.castToList(result)
-                self.setRedisValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                if self.redis_client:
+                    self.redis_client.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("%sCould not parse xml doc %s Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, xml_string, etype, evalue, Utils.AnsiColors.ENDC))

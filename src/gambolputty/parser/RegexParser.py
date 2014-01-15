@@ -21,12 +21,13 @@ class RegexParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: RegexParser
-      configuration:
-        source_field: field1                    # <default: 'data'; type: string; is: optional>
-        mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
-        break_on_match: True                    # <default: True; type: boolean; is: optional>
-        field_extraction_patterns:              # <type: dict; is: required>
-          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+      source_field: field1                    # <default: 'data'; type: string; is: optional>
+      mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
+      break_on_match: True                    # <default: True; type: boolean; is: optional>
+      field_extraction_patterns:              # <type: dict; is: required>
+        httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+      receivers:
+        - NextModule
     """
 
     module_type = "parser"

@@ -14,9 +14,8 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: AddGeoInfo
-      configuration:
-        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
-        source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+      geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
+      source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
       receivers:
         - NextModule
     """

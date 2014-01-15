@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
-import threading
 from tornado.ioloop import IOLoop
+from tornado import autoreload
 import RedisAsyncClient
 import BaseThreadedModule
 import Utils
@@ -16,12 +15,11 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: RedisChannel
-      configuration:
-        channel: my_channel         # <type: string; is: required>
-        server: redis.server        # <default: 'localhost'; type: string; is: optional>
-        port: 6379                  # <default: 6379; type: integer; is: optional>
-        db: 0                       # <default: 0; type: integer; is: optional>
-        password: None              # <default: None; type: None||string; is: optional>
+      channel: my_channel         # <type: string; is: required>
+      server: redis.server        # <default: 'localhost'; type: string; is: optional>
+      port: 6379                  # <default: 6379; type: integer; is: optional>
+      db: 0                       # <default: 0; type: integer; is: optional>
+      password: None              # <default: None; type: None||string; is: optional>
     """
 
     module_type = "input"
@@ -49,9 +47,14 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
         if not self.client:
             return
         self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
-        # Reinit main loop if already running.
-        IOLoop.instance().stop()
-        IOLoop.instance().start()
+        autoreload.add_reload_hook(self.shutDown)
+        ioloop = IOLoop.instance()
+        ioloop.make_current()
+        try:
+            ioloop.start()
+        except ValueError:
+            # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
+            pass
 
     def checkReply(self, answer):
         if answer != "OK":

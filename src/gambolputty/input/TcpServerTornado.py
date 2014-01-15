@@ -1,17 +1,18 @@
-#!/usr/bin/env python
-#coding:utf-8
-
+# -*- coding: utf-8 -*-
+import pprint
 import sys
 import logging
-import threading
+import time
+import socket
 from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
+from tornado import autoreload
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
-class TcpServer(TCPServer):
+class TornadoTcpServer(TCPServer):
 
     def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
         TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
@@ -59,13 +60,12 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: TcpServerTornado
-      configuration:
-        interface: localhost             # <default: ''; type: string; is: optional>
-        port: 5151                       # <default: 5151; type: integer; is: optional>
-        timeout: 5                       # <default: None; type: None||integer; is: optional>
-        tls: False                       # <default: False; type: boolean; is: optional>
-        key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
+      interface: localhost             # <default: ''; type: string; is: optional>
+      port: 5151                       # <default: 5151; type: integer; is: optional>
+      timeout: 5                       # <default: None; type: None||integer; is: optional>
+      tls: False                       # <default: False; type: boolean; is: optional>
+      key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
+      cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
       receivers:
         - NextModule
     """
@@ -89,16 +89,28 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             if self.getConfigurationValue("tls"):
                 ssl_options = { 'certfile': self.getConfigurationValue("cert"),
                                 'keyfile': self.getConfigurationValue("key")}
-            self.server = TcpServer(ssl_options=ssl_options, gp_module=self)
+            self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self)
             self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
+            for fd, server_socket in self.server._sockets.iteritems():
+                server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
                                                                                        self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             return
-        IOLoop.instance().start()
-
+        autoreload.add_reload_hook(self.shutDown)
+        ioloop = IOLoop.instance()
+        ioloop.make_current()
+        try:
+            ioloop.start()
+        except ValueError:
+            # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
+            pass
 
     def shutDown(self):
+        # Call parent shutDown method
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
         if self.server:
             self.server.stop()
+            # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
+            time.sleep(.2)

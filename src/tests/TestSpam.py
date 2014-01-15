@@ -7,7 +7,7 @@ class TestSpam(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         test_object = Spam.Spam(gp=ModuleBaseTestCase.MockGambolPutty())
-        test_object.gp.addModule(test_object)
+        test_object.gp.addModule('Spam',test_object)
         super(TestSpam, self).setUp(test_object)
 
     def testSpam(self):

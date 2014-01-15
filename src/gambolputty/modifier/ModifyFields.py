@@ -2,7 +2,6 @@
 import sys
 import re
 import hashlib
-import pprint
 import BaseModule
 from Decorators import ModuleDocstringParser
 
@@ -15,87 +14,77 @@ class ModifyFields(BaseModule.BaseModule):
 
     # Keep all fields listed in source_fields, discard all others.
     - module: ModifyFields
-      configuration:
-        action: keep                                # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: keep                                # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Discard all fields listed in source_fields.
     - module: ModifyFields
-      configuration:
-        action: delete                              # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: delete                              # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Concat all fields listed in source_fields.
     - module: ModifyFields
-      configuration:
-        action: concat                              # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
-        target_field: field5                        # <type: string; is: required>
+      action: concat                              # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      target_field: field5                        # <type: string; is: required>
       receivers:
         - NextModule
 
     # Insert a new field with "target_field" name an "value" as new value.
     - module: ModifyFields
-      configuration:
-        action: insert                              # <type: string; is: required>
-        target_field: "New field"                   # <type: string; is: required>
-        value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
+      action: insert                              # <type: string; is: required>
+      target_field: "New field"                   # <type: string; is: required>
+      value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
       receivers:
         - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - module: ModifyFields
-      configuration:
-        action: replace                             # <type: string; is: required>
-        source_field: field1                        # <type: string; is: required>
-        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-        with: 'Johann Gambolputty'                  # <type: string; is: required>
+      action: replace                             # <type: string; is: required>
+      source_field: field1                        # <type: string; is: required>
+      regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+      with: 'Johann Gambolputty'                  # <type: string; is: required>
       receivers:
         - NextModule
 
     # Map a field value.
     - module: ModifyFields
-      configuration:
-        action: map                                 # <type: string; is: required>
-        source_field: http_status                   # <type: string; is: required>
-        map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
-        target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
+      action: map                                 # <type: string; is: required>
+      source_field: http_status                   # <type: string; is: required>
+      map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
+      target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
       receivers:
         - NextModule
 
     # Cast field values to integer.
     - module: ModifyFields
-      configuration:
-        action: castToInteger                       # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToInteger                       # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to float.
     - module: ModifyFields
-      configuration:
-        action: castToFloat                         # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToFloat                         # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
     - module: ModifyFields
-      configuration:
-        action: castToString                        # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToString                        # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to boolean.
     - module: ModifyFields
-      configuration:
-        action: castToBoolean                       # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToBoolean                       # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -104,11 +93,10 @@ class ModifyFields(BaseModule.BaseModule):
     # If target_fields is not provided, source_fields will be replaced with the hashed value.
     # Hash algorithm can be any of the in hashlib supported algorithms.
     - module: ModifyFields
-      configuration:
-        action: hash                                # <type: string; is: required>
-        algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
-        target_fields: [f1, f2, ... ]               # <default: []; type: list; is: optional>
+      action: hash                                # <type: string; is: required>
+      algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      target_fields: [f1, f2, ... ]               # <default: []; type: list; is: optional>
       receivers:
         - NextModule
 """

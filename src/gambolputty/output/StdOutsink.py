@@ -11,9 +11,8 @@ class StdOutSink(BaseModule.BaseModule):
     Configuration example:
 
     - module: StdOutSink
-      configuration:
-        pretty_print: True          # <default: True; type: boolean; is: optional>
-        fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
+      pretty_print: True          # <default: True; type: boolean; is: optional>
+      fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
     """
 
     module_type = "output"

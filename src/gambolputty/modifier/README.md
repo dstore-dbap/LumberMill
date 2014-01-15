@@ -8,9 +8,8 @@ Add a field with the current datetime.
 Configuration example:
 
     - module: AddDateTime
-      configuration:
-        target_field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
-        format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
+      target_field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
+      format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
       receivers:
         - NextModule
 
@@ -21,9 +20,8 @@ Add country_code and longitude-latitude fields based  on a geoip lookup for a gi
 Configuration example:
 
     - module: AddGeoInfo
-      configuration:
-        geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
-        source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+      geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
+      source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
       receivers:
         - NextModule
 
@@ -38,13 +36,12 @@ If that fails, it will execute the http request and store the result in redis.
 Configuration example:
 
     - module: HttpRequest
-      configuration:
-        url: http://%(server_name)s/some/path   # <type: string; is: required>
-        socket_timeout: 25                      # <default: 25; type: integer; is: optional>
-        target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional if redis_client is False else required>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      url: http://%(server_name)s/some/path   # <type: string; is: required>
+      socket_timeout: 25                      # <default: 25; type: integer; is: optional>
+      target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
+      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_key: HttpRequest:%(server_name)s   # <default: None; type: None||string; is: optional if redis_client == "" else required>
+      redis_ttl: 600                           # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
 
@@ -53,11 +50,10 @@ Configuration example:
 Configuration example:
 
     - module: Permutate
-      configuration:
-        source_field: facets                # <type: string; is: required>
-        target_fields: ['field1', 'field2'] # <type: list; is: required>
-        length: 2                           # <default: None; type: None||integer; is: optional>
-        context_data_field: context_data    # <default: ""; type:string; is: optional>
+      source_field: facets                # <type: string; is: required>
+      target_fields: ['field1', 'field2'] # <type: list; is: required>
+      length: 2                           # <default: None; type: None||integer; is: optional>
+      context_data_field: context_data    # <default: ""; type:string; is: optional>
       receivers:
         - NextModule
 
@@ -69,86 +65,76 @@ Configuration examples:
 
     # Keep all fields listed in source-fields, discard all others.
     - module: ModifyFields
-      configuration:
-        action: keep                                # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: keep                                # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Discard all fields listed in source-fields.
     - module: ModifyFields
-      configuration:
-        action: delete                              # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: delete                              # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Concat all fields listed in source_fields.
     - module: ModifyFields
-      configuration:
-        action: concat                              # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
-        target_field: field5                        # <type: string; is: required>
+      action: concat                              # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      target_field: field5                        # <type: string; is: required>
       receivers:
         - NextModule
 
     # Insert a new field with "target_field" name an "value" as new value.
     - module: ModifyFields
-      configuration:
-        action: insert                              # <type: string; is: required>
-        target_field: "New field"                   # <type: string; is: required>
-        value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
+      action: insert                              # <type: string; is: required>
+      target_field: "New field"                   # <type: string; is: required>
+      value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
       receivers:
         - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - module: ModifyFields
-      configuration:
-        action: replace                             # <type: string; is: required>
-        source_field: field1                        # <type: string; is: required>
-        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-        with: 'Johann Gambolputty'                  # <type: string; is: required>
+      action: replace                             # <type: string; is: required>
+      source_field: field1                        # <type: string; is: required>
+      regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+      with: 'Johann Gambolputty'                  # <type: string; is: required>
       receivers:
         - NextModule
 
     # Map a field value.
     - module: ModifyFields
-      configuration:
-        action: map                                 # <type: string; is: required>
-        source_field: http_status                   # <type: string; is: required>
-        map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
-        target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
+      action: map                                 # <type: string; is: required>
+      source_field: http_status                   # <type: string; is: required>
+      map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
+      target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
       receivers:
         - NextModule
 
     # Cast field values to integer.
     - module: ModifyFields
-      configuration:
-        action: castToInteger                       # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToInteger                       # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to float.
     - module: ModifyFields
-      configuration:
-        action: castToFloat                         # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToFloat                         # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
     - module: ModifyFields
-      configuration:
-        action: castToString                        # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToString                        # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to boolean.
     - module: ModifyFields
-      configuration:
-        action: castToBoolean                       # <type: string; is: required>
-        source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: castToBoolean                       # <type: string; is: required>
+      source_fields: [field1, field2, ... ]       # <type: list; is: required>
       receivers:
         - NextModule

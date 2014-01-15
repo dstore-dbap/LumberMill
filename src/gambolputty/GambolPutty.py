@@ -1,16 +1,10 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import pprint
 import Utils
 import multiprocessing
 import ConfigurationValidator
 import StatisticCollector as StatisticCollector
-
-module_dirs = ['input',
-               'parser',
-               'modifier',
-               'misc',
-               'output']
-
 import sys
 import os
 import signal
@@ -20,6 +14,13 @@ import logging.config
 import threading
 import Queue
 import yaml
+
+module_dirs = ['input',
+               'parser',
+               'modifier',
+               'misc',
+               'output',
+               'cluster']
 
 # Expand the include path to our libs and modules.
 # TODO: Check for problems with similar named modules in 
@@ -60,12 +61,12 @@ class GambolPutty:
     and connects them via queues as configured.
     """
 
-    def __init__(self, path_to_config_file):
+    def __init__(self, path_to_config_file=False):
         self.is_alive = True
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.readConfiguration(path_to_config_file)
-        self.configure()
+        if path_to_config_file:
+            self.readConfiguration(path_to_config_file)
 
     def produceQueue(self, module_instance, queue_max_size=20):
         """Returns a queue with queue_max_size"""
@@ -89,6 +90,15 @@ class GambolPutty:
             Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
 
+    def setConfiguration(self, configuration, merge=True):
+        if type(configuration) is not list:
+            return
+        if merge:
+            # If merge is true keep currently configured modules and only merge new ones.
+            self.configuration = configuration.update(self.configuration)
+        else:
+            self.configuration = configuration
+
     def configure(self):
         gp_conf = {}
         for idx, configuration in enumerate(self.configuration):
@@ -99,8 +109,8 @@ class GambolPutty:
         self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
 
     def runModules(self):
-        """Start the configured modules
-
+        """
+        Start the configured modules
         """
         # All modules are completely configured, call modules run method if it exists.
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
@@ -110,9 +120,6 @@ class GambolPutty:
                 self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
             for instance in module_info['instances']:
                 name = module_info['alias'] if 'alias' in module_info else module_name
-                # Init redis client if it is configured by the module
-                if 'redis_client' in instance.configuration_data:
-                    instance.initRedisClient()
                 try:
                     if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
                         # The default 'start' method of threading.Thread will call the 'run' method of the module.
@@ -122,7 +129,7 @@ class GambolPutty:
                         instance.run()
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("Error calling run/start method of %s. Exception: %s, Error: %s." % (name, etype, evalue))
+                    self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
 
     def initModule(self, module_name):
         """ Initalize a module.
@@ -142,23 +149,6 @@ class GambolPutty:
             sys.exit(255)
         return instance
 
-    def configureModule(self, module_instance, module_info={}):
-        # Call configuration of module
-        configurationValidator = ConfigurationValidator.ConfigurationValidator()
-        configuration = module_info['configuration'] if 'configuration' in module_info else {}
-        try:
-            module_instance.configure(configuration)
-            configuration_errors = configurationValidator.validateModuleInstance(module_instance)
-            if configuration_errors:
-                self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (
-                Utils.AnsiColors.FAIL, module_info['module'], configuration_errors, Utils.AnsiColors.ENDC))
-                self.shutDown()
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (
-            Utils.AnsiColors.FAIL, module_info['module'], etype, evalue, Utils.AnsiColors.ENDC))
-            self.shutDown()
-
     def initModulesFromConfig(self):
         """ Initalize all modules from the current config.
         
@@ -177,8 +167,6 @@ class GambolPutty:
                 module_instance = self.initModule(module_info['module'])
                 # Set module name. Use alias if it was set in configuration.
                 module_name = module_info['module'] if 'alias' not in module_info else module_info['alias']
-                # Configure module.
-                self.configureModule(module_instance, module_info)
                 # Append to internal list.
                 module_instances.append(module_instance)
                 # If instance is not configured to run in parallel, only create one instance, no matter what the pool_size configuration says.
@@ -189,8 +177,25 @@ class GambolPutty:
                                              'instances': module_instances,
                                              'type': module_instance.module_type,
                                              'queue_size': module_info[ 'queue_size'] if 'queue_size' in module_info else self.default_queue_size,
-                                             'configuration': module_info[ 'configuration'] if 'configuration' in module_info else None,
+                                             'configuration': module_info,
                                              'receivers': module_info['receivers'] if 'receivers' in module_info else None}
+
+    def configureModules(self):
+        # Call configuration of module
+        configurationValidator = ConfigurationValidator.ConfigurationValidator()
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            configuration = module_info['configuration'] if 'configuration' in module_info else {}
+            for module_instance in module_info['instances']:
+                try:
+                    module_instance.configure(module_info['configuration'])
+                    configuration_errors = configurationValidator.validateModuleInstance(module_instance)
+                    if configuration_errors:
+                        self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, module_name, configuration_errors, Utils.AnsiColors.ENDC))
+                        self.shutDown()
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_name, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.shutDown()
 
     def initEventStream(self):
         """ Connect modules.
@@ -258,33 +263,52 @@ class GambolPutty:
                     Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
                 self.shutDown()
 
-    def run(self, queues=False):
+    def getModuleByName(self, module_name):
+        try:
+            return self.modules[module_name]
+        except KeyError:
+            self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+            return None
+
+    def run(self):
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
         signal.signal(signal.SIGINT, self.shutDown)
+        signal.signal(signal.SIGALRM, self.restart)
         self.runModules()
         while self.is_alive:
             time.sleep(.5)
 
-    def shutDown(self, signal=False, frame=False):
-        self.is_alive = False
+    def restart(self, signum=False, frame=False):
+        self.logger.info("%sRestarting GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        self.shutDownModules()
+        self.configure()
+        self.initModulesFromConfig()
+        self.configureModules()
+        self.initEventStream()
+        self.runModules()
+
+    def shutDown(self, signum=False, frame=False):
         self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        self.is_alive = False
+        self.shutDownModules()
+        self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        sys.exit(0)
+
+    def shutDownModules(self):
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type == "input":
                     instance.shutDown()
-        # Give remaining queued events one second.
-        time.sleep(1)
+        # Give remaining queued events some time.
+        time.sleep(.5)
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type != "input":
                     instance.shutDown()
-        self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
-        sys.exit()
-
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'
@@ -309,6 +333,8 @@ if "__main__" == __name__:
         usage()
         sys.exit(2)
     gp = GambolPutty(path_to_config_file)
+    gp.configure()
     gp.initModulesFromConfig()
+    gp.configureModules()
     gp.initEventStream()
     gp.run()

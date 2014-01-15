@@ -48,7 +48,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 </bookstore>"""
 
     def setUp(self):
-        super(TestXPathParser, self).setUp(XPathParser.XPathParser(gp=mock.Mock()))
+        super(TestXPathParser, self).setUp(XPathParser.XPathParser(gp=ModuleBaseTestCase.MockGambolPutty()))
 
     def testHandleData(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
@@ -77,9 +77,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_client': 'RedisClient',
                                     'redis_key': '%(category)s',
                                     'redis_ttl': 5})
-        self.test_object.initRedisClient()
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
-            redis_entry = self.test_object.getRedisValue('COOKING')
+            redis_entry = self.test_object.redis_client.getValue('COOKING')
             self.assertEquals(event['book_title'], redis_entry)

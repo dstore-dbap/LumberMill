@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pprint
-import threading
 import Utils
 import BaseModule
 import BaseThreadedModule
@@ -24,13 +23,12 @@ class Facet(BaseModule.BaseModule):
     Configuration example:
 
     - module: Facet
-      configuration:
-        source_field: url                       # <type:string; is: required>
-        group_by: %(remote_ip)s                 # <type:string; is: required>
-        add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
-        interval: 30                            # <default: 5; type: float||integer; is: optional>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      source_field: url                       # <type:string; is: required>
+      group_by: %(remote_ip)s                 # <type:string; is: required>
+      add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
+      interval: 30                            # <default: 5; type: float||integer; is: optional>
+      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -48,10 +46,9 @@ class Facet(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.evaluate_facet_data_func(self)
-        self.lock = threading.Lock()
 
     def _getFacetInfoRedis(self, key):
-        facet_info = self.getRedisValue(key)
+        facet_info = self.redis_client.getValue(key)
         if not facet_info:
             facet_info = {'other_event_fields': {}, 'facets': []}
         return facet_info
@@ -64,13 +61,13 @@ class Facet(BaseModule.BaseModule):
         return facet_info
 
     def getFacetInfo(self, key):
-        if self.redisClientAvailiable():
+        if self.redis_client:
             return self._getFacetInfoRedis(key)
         return self._getFacetInfoInternal(key)
 
     def _setFacetInfoRedis(self, key, facet_info):
         try:
-            self.setRedisValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
+            self.redis_client.setValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
             if key not in Facet.redis_keys:
                 Facet.redis_keys.append(key)
         except:
@@ -82,7 +79,7 @@ class Facet(BaseModule.BaseModule):
         Facet.facet_data[key] = facet_info
 
     def setFacetInfo(self, key, facet_info):
-        if self.redisClientAvailiable():
+        if self.redis_client:
             self._setFacetInfoRedis(key, facet_info)
             return
         self._setFacetInfoInternal(key, facet_info)
@@ -98,11 +95,11 @@ class Facet(BaseModule.BaseModule):
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
         def evaluateFacets(self):
-            if self.redisClientAvailiable():
+            if self.redis_client:
                 for key in Facet.redis_keys:
                     self.sendFacetEventToReceivers(self._getFacetInfoRedis(key))
                     # Clear redis items
-                    self.redis_client.delete(key)
+                    self.redis_client.redis_client.delete(key)
                 Facet.redis_keys = []
                 return
             # Just internal facet data.
@@ -137,29 +134,31 @@ class Facet(BaseModule.BaseModule):
             yield event
             return
         key = "FacetValues:%s" % key
-        with self.lock:
-            redis_lock = False
-            try:
-                # Acquire redis lock as well if configured to use redis store.
-                redis_lock = self.getRedisLock("FacetLocks:%s" % key, timeout=1)
-                if redis_lock:
-                    redis_lock.acquire()
-                facet_info = self.getFacetInfo(key)
-                if facet_value not in facet_info['facets']:
-                    keep = {}
-                    for keep_field in self.getConfigurationValue('add_event_fields'):
-                        try:
-                            keep[keep_field] = event[keep_field]
-                        except KeyError:
-                            pass
-                    facet_info['other_event_fields'][facet_value] = keep
-                    facet_info['facets'].append(facet_value)
-                    self.setFacetInfo(key, facet_info)
-            except:
-                # Pass on all exceptions
-                raise
-            finally:
-                # Make sure redis lock is released if we have one.
-                if redis_lock:
-                    redis_lock.release()
+        redis_lock = False
+        try:
+            # Acquire redis lock as well if configured to use redis store.
+            if self.redis_client:
+                redis_lock = self.redis_client.getLock("FacetLocks:%s" % key, timeout=1)
+                if not redis_lock:
+                    yield event
+                    return
+                redis_lock.acquire()
+            facet_info = self.getFacetInfo(key)
+            if facet_value not in facet_info['facets']:
+                keep = {}
+                for keep_field in self.getConfigurationValue('add_event_fields'):
+                    try:
+                        keep[keep_field] = event[keep_field]
+                    except KeyError:
+                        pass
+                facet_info['other_event_fields'][facet_value] = keep
+                facet_info['facets'].append(facet_value)
+                self.setFacetInfo(key, facet_info)
+        except:
+            # Pass on all exceptions
+            raise
+        finally:
+            # Make sure redis lock is released if we have one.
+            if redis_lock:
+                redis_lock.release()
         yield event

@@ -53,11 +53,10 @@ class SyslogPrivalParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: SyslogPrivalParser
-      configuration:
-        source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
-        map_values: False                           # <default: True; type: boolean; is: optional>
-        facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
-        severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
+      source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
+      map_values: False                           # <default: True; type: boolean; is: optional>
+      facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
+      severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
       receivers:
         - NextHandler
     """

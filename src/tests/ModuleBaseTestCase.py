@@ -10,14 +10,21 @@ class MockGambolPutty(mock.Mock):
 
     def __init__(self):
         mock.Mock.__init__(self)
-        self.modules = []
+        self.modules = {}
 
-    def addModule(self, mod):
-        if mod not in self.modules:
-            self.modules.append(mod)
+    def getModuleByName(self, module_name):
+        try:
+            return self.modules[module_name]
+        except KeyError:
+            self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+            return None
+
+    def addModule(self, module_name, mod):
+        if module_name not in self.modules:
+            self.modules[module_name] = mod
 
     def shutDown(self):
-        for mod in self.modules:
+        for module_name, mod in self.modules.iteritems():
             mod.shutDown()
 
 class MockReceiver():

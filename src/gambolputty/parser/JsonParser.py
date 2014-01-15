@@ -24,9 +24,8 @@ class JsonParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: JsonParser
-      configuration:
-        source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-        keep_original: True                     # <default: False; type: boolean; is: optional>
+       source_field: 'data'                    # <default: 'data'; type: string; is: optional>
+      keep_original: True                     # <default: False; type: boolean; is: optional>
       receivers:
         - NextHandler
     """
@@ -38,6 +37,7 @@ class JsonParser(BaseModule.BaseModule):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
+        self.drop_original = not self.getConfigurationValue('keep_original')
 
     def handleEvent(self, event):
         if self.source_field not in event:

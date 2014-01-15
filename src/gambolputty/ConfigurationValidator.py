@@ -34,6 +34,8 @@ class ConfigurationValidator():
                          'Dictionary': types.DictType,
                          'Dict': types.DictType}
 
+    default_module_config_keys = ('module', 'alias', 'receivers', 'pool_size', 'queue_size')
+
     def validateModuleInstance(self, moduleInstance):
         result = []
         # The ModifyFields module is an exception as it provides more than one configuration.
@@ -42,7 +44,7 @@ class ConfigurationValidator():
         if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
             return result
         # Check if the live configuration provides a key that is not documented in modules docstring.
-        config_keys_not_in_docstring = set(moduleInstance.configuration_data.keys()) - set(moduleInstance.configuration_metadata.keys())
+        config_keys_not_in_docstring = set(moduleInstance.configuration_data.keys()) - set(moduleInstance.configuration_metadata.keys()) - set(self.default_module_config_keys)
         if config_keys_not_in_docstring:
             keys = []
             for key in config_keys_not_in_docstring:

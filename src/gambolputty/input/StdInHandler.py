@@ -13,9 +13,8 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: StdInHandler
-      configuration:
-        multiline: True                  # <default: False; type: boolean; is: optional>
-        stream_end_signal: #########     # <default: False; type: boolean||string; is: optional>
+      multiline: True                  # <default: False; type: boolean; is: optional>
+      stream_end_signal: #########     # <default: False; type: boolean||string; is: optional>
       receivers:
         - NextModule
     """

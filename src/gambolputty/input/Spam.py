@@ -18,10 +18,9 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: Spam
-      configuration:
-        event: {'Lobster': 'Thermidor', 'Truffle': 'Pate'}  # <default: {}; type: dict; is: optional>
-        sleep: 0                                            # <default: 0; type: int||float; is: optional>
-        events_count: 1000                                  # <default: 0; type: int; is: optional>
+      event: {'Lobster': 'Thermidor', 'Truffle': 'Pate'}  # <default: {}; type: dict; is: optional>
+      sleep: 0                                            # <default: 0; type: int||float; is: optional>
+      events_count: 1000                                  # <default: 0; type: int; is: optional>
       receivers:
         - NextModule
     """

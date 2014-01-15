@@ -1,0 +1,31 @@
+<html>
+<head>
+        <title>{{ escape(page_title) }}</title>
+<!-- jQuery -->
+<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+<script>
+    var ws = new WebSocket('ws://'+window.location.host+'/websockets/statistics');
+    ws.onopen = function() {
+       ws.send("Hello, world");
+    };
+    ws.onmessage = function (evt) {
+        $('#content').html(evt.data)
+    };
+</script>
+</head>
+<body>
+        <div id="container">
+                <header>
+                        {% block head %}<h1>Hello.</h1>{% end %}
+                </header>
+                <div id="main">
+                        <div id="content">
+
+                        </div>
+                </div>
+                <footer>
+                        {% block footer %}{% end %}
+                </footer>
+        </div>
+        </body>
+</html>

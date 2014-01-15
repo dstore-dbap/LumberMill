@@ -9,7 +9,7 @@ import RedisClient
 class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestHttpRequest, self).setUp(HttpRequest.HttpRequest(gp=mock.Mock()))
+        super(TestHttpRequest, self).setUp(HttpRequest.HttpRequest(gp=ModuleBaseTestCase.MockGambolPutty()))
 
     def testQuery(self):
         self.test_object.configure({'url': 'http://www.google.com'})
@@ -63,7 +63,6 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_ttl': 5})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        self.test_object.initRedisClient()
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})):
-            redis_entry = self.test_object.getRedisValue('Johann')
+            redis_entry = self.test_object.redis_client.getValue('Johann')
             self.assertEquals(event['Johann Gambolputty'], redis_entry)

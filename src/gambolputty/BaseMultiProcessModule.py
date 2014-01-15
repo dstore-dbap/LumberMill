@@ -72,4 +72,6 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
             self.receiveEvent(event)
 
     def shutDown(self):
+        # Call parent shutDown method
+        BaseModule.BaseModule.shutDown(self)
         self.is_alive = False

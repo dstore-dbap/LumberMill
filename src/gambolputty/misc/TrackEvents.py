@@ -29,10 +29,9 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: TrackEvents
-      configuration:
-        redis_client: RedisClientName           # <type: string; is: required>
-        queue_size: 5                           # <default: 5; type: integer; is: optional>
-        redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
+      redis_client: RedisClientName           # <type: string; is: required>
+      queue_size: 5                           # <default: 5; type: integer; is: optional>
+      redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
     """
 
     module_type = "misc"
@@ -45,7 +44,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.redis_key_prefix = 'TrackEvents:%s' % socket.gethostname()
+        self.redis_key_prefix = 'GambolPutty:TrackEvents:%s' % socket.gethostname()
         if not TrackEvents.main_thread:
             TrackEvents.main_thread = self
 
@@ -67,7 +66,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
             self.logger.warning("%sFound %s unfinished events. Requeing...%s" % (Utils.AnsiColors.WARNING, len(keys), Utils.AnsiColors.ENDC))
             requeue_counter = 0
             for key in keys:
-                event = self.getRedisValue(key)
+                event = self.redis_client.getValue(key)
                 if event[0] not in input_modules:
                     self.logger.error("%sCould not requeue event. Module %s not found.%s" % (Utils.AnsiColors.WARNING, event[0], Utils.AnsiColors.ENDC))
                     continue
@@ -79,7 +78,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
 
     def run(self):
         # Check if redis client is availiable.
-        if not self.redisClientAvailiable():
+        if not self.redis_client:
             self.logger.error("%sThis module needs a redis client as backend but none could be found. Event tracking will be disabled!%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
             return
         # Only the main thread will execute configuration of running modules.
@@ -97,7 +96,7 @@ class TrackEvents(BaseThreadedModule.BaseThreadedModule):
         @return data: dictionary
         """
         event['gambolputty']['track_id'] = id(event)
-        self.setRedisValue("%s:%s" % (self.redis_key_prefix, id(event)), (event['gambolputty']['source_module'], event), self.getConfigurationValue('redis_ttl'))
+        self.redis_client.setValue("%s:%s" % (self.redis_key_prefix, id(event)), (event['gambolputty']['source_module'], event), self.getConfigurationValue('redis_ttl'))
         yield event
 
     def deleteEventFromRedis(self, event):

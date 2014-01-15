@@ -24,19 +24,18 @@ backlog_size: maximum count of events waiting for transmission. Events above cou
 Configuration example:
 
     - module: ElasticSearchSink
-        configuration:
-          nodes: ["localhost:9200"]                 # <type: list; is: required>
-          connection_type: http                     # <default: "thrift"; type: string; is: optional>
-          http_auth: 'user:password'                # <default: ""; type: string; is: optional>
-          use_ssl: True                             # <default: False; type: boolean; is: optional>
-          index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-          index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-          doc_id: 'data'                            # <default: "data"; type: string; is: optional>
-          consistency: 'one'                        # <default: "quorum"; type: string; is: optional>
-          replication: 'sync'                       # <default: "sync"; type: string; is: optional>
-          store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
-          max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
-          backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+        nodes: ["localhost:9200"]                 # <type: list; is: required>
+        connection_type: http                     # <default: "thrift"; type: string; is: optional>
+        http_auth: 'user:password'                # <default: ""; type: string; is: optional>
+        use_ssl: True                             # <default: False; type: boolean; is: optional>
+        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+        consistency: 'one'                        # <default: "quorum"; type: string; is: optional>
+        replication: 'sync'                       # <default: "sync"; type: string; is: optional>
+        store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
+        max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
+        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
 
 #####StdOutSink
 
@@ -45,8 +44,7 @@ Print the data dictionary to stdout.
 Configuration example:
 
     - module: StdOutSink
-      configuration:
-        pretty_print: True      # <default: True; type: boolean; is: optional>
+      pretty_print: True      # <default: True; type: boolean; is: optional>
 
 #####DevNullSink
 

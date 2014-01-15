@@ -30,6 +30,8 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
 
     def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
+        self.input_queue = False
+        self.output_queues = []
         threading.Thread.__init__(self)
         self.daemon = True
 
@@ -71,4 +73,6 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
         self.logger.info("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
     def shutDown(self):
+        # Call parent shutDown method
+        BaseModule.BaseModule.shutDown(self)
         self.is_alive = False

@@ -12,16 +12,15 @@ See BaseModule documentation how values can be stored.
 Configuration example:
 
     - module: RedisClient
-      configuration:
-        server: redis.server    # <default: 'localhost'; type: string; is: optional>
-        port: 6379              # <default: 6379; type: integer; is: optional>
-        db: 0                   # <default: 0; type: integer; is: optional>
-        password: None          # <default: None; type: None||string; is: optional>
-        socket_timeout: 10      # <default: 10; type: integer; is: optional>
-        charset: 'utf-8'        # <default: 'utf-8'; type: string; is: optional>
-        errors: 'strict'        # <default: 'strict'; type: string; is: optional>
-        decode_responses: False # <default: False; type: boolean; is: optional>
-        unix_socket_path: ''    # <default: ''; type: string; is: optional>
+      server: redis.server    # <default: 'localhost'; type: string; is: optional>
+      port: 6379              # <default: 6379; type: integer; is: optional>
+      db: 0                   # <default: 0; type: integer; is: optional>
+      password: None          # <default: None; type: None||string; is: optional>
+      socket_timeout: 10      # <default: 10; type: integer; is: optional>
+      charset: 'utf-8'        # <default: 'utf-8'; type: string; is: optional>
+      errors: 'strict'        # <default: 'strict'; type: string; is: optional>
+      decode_responses: False # <default: False; type: boolean; is: optional>
+      unix_socket_path: ''    # <default: ''; type: string; is: optional>
 
 
 #####TrackEvents
@@ -45,11 +44,9 @@ increase performance.
 Configuration example:
 
     - module: TrackEvents
-      configuration:
-        redis_client: RedisClientName           # <type: string; is: required>
-        queue_size: 5                           # <default: 5; type: integer; is: optional>
-        redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
-
+      redis_client: RedisClientName           # <type: string; is: required>
+      queue_size: 5                           # <default: 5; type: integer; is: optional>
+      redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
 
 
 #####Statistics
@@ -59,12 +56,11 @@ Collect and log some statistic data.
 Configuration example:
 
     - module: Statistics
-      configuration:
-        print_interval: 10                 # <default: 10; type: integer; is: optional>
-        event_type_statistics: True        # <default: True; type: boolean; is: optional>
-        receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
-        waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
-        processing_event_statistics: True  # <default: False; type: boolean; is: optional>
+      print_interval: 10                 # <default: 10; type: integer; is: optional>
+      event_type_statistics: True        # <default: True; type: boolean; is: optional>
+      receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
+      waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
+      processing_event_statistics: True  # <default: False; type: boolean; is: optional>
 
 
 #####Facet
@@ -80,16 +76,15 @@ The event emitted by this module will be of type: "facet" and will have "facet_f
 This module supports the storage of the facet info in an redis db. If redis-client is set,
 it will first try to retrieve the facet info from redis via the key setting.
 
-    Configuration example:
+Configuration example:
 
     - module: Facet
-      configuration:
-        source_field: url                       # <type:string; is: required>
-        group_by: %(remote_ip)s                 # <type:string; is: required>
-        add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
-        interval: 30                            # <default: 5; type: float||integer; is: optional>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      source_field: url                       # <type:string; is: required>
+      group_by: %(remote_ip)s                 # <type:string; is: required>
+      add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
+      interval: 30                            # <default: 5; type: float||integer; is: optional>
+      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
 
@@ -100,10 +95,19 @@ Send an event into a tarpit before passing it on.
 
 Useful only for testing purposes of threading problems and concurrent access to event data.
 
-    Configuration example:
+Configuration example:
 
     - module: Tarpit
-      configuration:
-        delay: 10  # <default: 10; type: integer; is: optional>
+      delay: 10  # <default: 10; type: integer; is: optional>
       receivers:
         - NextModule
+
+#####WebGui
+
+A WebGui plugin for GambolPutty. At the moment this is just a stub.
+
+Configuration example:
+
+    - module: WebGui
+      port: 6060                 # <default: 5100; type: integer; is: optional>
+      document_root: other_root  # <default: 'webgui_docroot'; type: string; is: optional>

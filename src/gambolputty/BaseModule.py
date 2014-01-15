@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
-import pprint
-import sys
 import re
 import abc
 import logging
-import cPickle
 import collections
 import Utils
-import redis
 import Queue
 from multiprocessing.queues import Queue as MpQueue
 
@@ -40,15 +36,13 @@ class BaseModule():
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
         self.configuration_data = {}
-        self.input_queue = False
-        self.output_queues = []
         self.receivers = {}
         self.filters = {}
-        self.redis_client = False
+        self.redis_client = None
         self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
 
-    def configure(self, configuration):
+    def configure(self, configuration=None):
         """
         Configure the module.
         This method will be called by the GambolPutty main class after initializing the module
@@ -58,7 +52,8 @@ class BaseModule():
         @param configuration: dictionary
         @return: void
         """
-        self.configuration_data.update(configuration)
+        if configuration:
+            self.configuration_data.update(configuration)
         # Test for dynamic value patterns
         dynamic_var_regex = re.compile('%\((.*?)\)[sd]')
         for key, value in self.configuration_data.iteritems():
@@ -84,6 +79,8 @@ class BaseModule():
                 if dynamic_var_regex.search(value):
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
+            # Init redis_client if configured.
+            self.initRedisClient()
 
     def getConfigurationValue(self, key, mapping_dict=False):
         """
@@ -102,9 +99,9 @@ class BaseModule():
                 try:
                     return self.configuration_metadata[key]['default']
                 except KeyError:
-                    self.logger.debug("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-                    #self.gp.shutDown()
-                    return False
+                    self.logger.warning("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
+                    self.gp.shutDown()
+                    #return False
         if not isinstance(config_setting, dict):
             self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
             #self.gp.shutDown()
@@ -133,49 +130,8 @@ class BaseModule():
             except KeyError:
                 return False
 
-    def initRedisClient(self):
-        try:
-            self.redis_client = self.gp.modules[self.getConfigurationValue('redis_client')]['instances'][0].getClient()
-        except KeyError:
-            self.logger.warning("%sWill not use redis client %s because it could not be found. Please be sure it is configured.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('redis_client'), Utils.AnsiColors.ENDC))
-        if 'redis_ttl' in self.configuration_data:
-            self.redis_ttl = self.getConfigurationValue('redis_ttl')
-
-    def redisClientAvailiable(self):
-        return True if self.redis_client and isinstance(self.redis_client, redis.StrictRedis) else False
-
-    def getRedisLock(self, name, timeout=None, sleep=0.1):
-        if not self.redisClientAvailiable():
-            return None
-        return self.redis_client.lock(name, timeout, sleep)
-
-    def setRedisValue(self, key, value, ttl=0, pickle=True):
-        if not self.redisClientAvailiable():
-            return None
-        if pickle is True:
-            try:
-                value = cPickle.dumps(value)
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not store %s:%s in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
-                raise
-        self.redis_client.setex(key, ttl, value)
-
-    def getRedisValue(self, key, unpickle=True):
-        if not self.redisClientAvailiable():
-            return None
-        value = self.redis_client.get(key)
-        if unpickle and value:
-            try:
-                value = cPickle.loads(value)
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
-                raise
-        return value
-
     def shutDown(self):
-        pass
+        self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
     def addReceiver(self, receiver_name, receiver):
         if not hasattr(receiver, 'receiveEvent') and not hasattr(receiver, 'put'):
@@ -250,3 +206,10 @@ class BaseModule():
         @param event: dictionary
         """
         yield event
+
+    def initRedisClient(self):
+        if not self.getConfigurationValue('redis_client') or self.getConfigurationValue('redis_client') == "":
+            return
+        redis_client_instances = self.gp.getModuleByName(self.getConfigurationValue('redis_client'))
+        if redis_client_instances:
+            self.redis_client = redis_client_instances['instances'][0]

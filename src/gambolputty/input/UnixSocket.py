@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 #coding:utf-8
-
 import sys
 import os
 import socket
@@ -51,8 +49,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: UnixSocket
-      configuration:
-        path_to_socket: /tmp/test.sock        # <type: string; is: required>
+      path_to_socket: /tmp/test.sock        # <type: string; is: required>
       receivers:
         - NextModule
     """

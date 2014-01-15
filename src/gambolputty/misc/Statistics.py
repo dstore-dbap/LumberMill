@@ -11,11 +11,10 @@ class Statistics(BaseModule.BaseModule):
     Configuration example:
 
     - module: Statistics
-      configuration:
-        print_interval: 10                 # <default: 10; type: integer; is: optional>
-        event_type_statistics: True        # <default: True; type: boolean; is: optional>
-        receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
-        waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
+      print_interval: 10                 # <default: 10; type: integer; is: optional>
+      event_type_statistics: True        # <default: True; type: boolean; is: optional>
+      receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
+      waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
     """
 
     module_type = "misc"
@@ -25,20 +24,41 @@ class Statistics(BaseModule.BaseModule):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.stats_collector.setCounter('ts_last_stats', time.time())
-        self.printTimedIntervalStatistics()
+        self.timed_functions = {'default': self.printIntervalStatistics}
+        self.run_timed_functions_event = False
+        self.run_timed_functions_func = self.getRunTimedFunctionsFunc()
         self.module_queues = {}
 
-    @Decorators.setInterval(10)
-    def printTimedIntervalStatistics(self):
+    def registerTimedFunction(self, key, func):
+        self.stopTimedFunctions()
+        self.timed_functions[key] = func
+        self.startTimedFunctions()
+
+    def unregisterTimedFunction(self, key):
+        self.stopTimedFunctions()
+        self.timed_functions.pop(key, None)
+        self.startTimedFunctions()
+
+    def getRunTimedFunctionsFunc(self):
+        @Decorators.setInterval(self.getConfigurationValue('print_interval'))
+        def runTimedFunctionsFunc(self):
+            for key, func in self.timed_functions.iteritems():
+                try:
+                    func()
+                except:
+                    self.unregisterTimedFunction(key)
+        return runTimedFunctionsFunc
+
+    def printIntervalStatistics(self):
         self.logger.info("############# Statistics #############")
         if self.getConfigurationValue('receive_rate_statistics'):
             self.receiveRateStatistics()
         if self.getConfigurationValue('waiting_event_statistics'):
             self.eventsInQueuesStatistics()
         if self.getConfigurationValue('event_type_statistics'):
-            self.regexStatistics()
+            self.eventTypeStatistics()
 
-    def regexStatistics(self):
+    def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
         for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
             if not event_type.startswith('event_type_'):
@@ -68,6 +88,15 @@ class Statistics(BaseModule.BaseModule):
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
+        self.startTimedFunctions()
+
+    def startTimedFunctions(self):
+        if not self.run_timed_functions_event or self.run_timed_functions_event.isSet():
+            self.run_timed_functions_event = self.run_timed_functions_func(self)
+
+    def stopTimedFunctions(self):
+        if self.run_timed_functions_event:
+            self.run_timed_functions_event.set()
 
     def destroyEvent(self, event=False, event_list=False):
         """Statistic module will not destroy any events."""

@@ -11,7 +11,7 @@ import Facet
 class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestFacet, self).setUp(Facet.Facet(gp=mock.Mock()))
+        super(TestFacet, self).setUp(Facet.Facet(gp=ModuleBaseTestCase.MockGambolPutty()))
 
     def testInternalFacet(self):
         self.test_object.configure({'source_field': 'url',
@@ -50,7 +50,6 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_ttl': 5})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        self.test_object.initRedisClient()
         self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
@@ -61,7 +60,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
         events = []
-        time.sleep(.2)
+        time.sleep(.3)
         for event in self.receiver.getEvent():
             if event['event_type'] != 'facet':
                 continue

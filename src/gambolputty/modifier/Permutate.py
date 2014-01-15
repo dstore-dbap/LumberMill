@@ -17,11 +17,10 @@ class Permutate(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: Permutate
-      configuration:
-        source_field: facets                                                # <type: string; is: required>
-        target_fields: ['field1', 'field2']                                 # <type: list; is: required>
-        context_data_field: context_data                                    # <default: ""; type:string; is: optional>
-        context_target_mapping: {'field1': ['ctx_field1', 'ctx_field2']}    # <default: {}; type: dict; is: optional if context_data_field == "" else required>
+      source_field: facets                                                # <type: string; is: required>
+      target_fields: ['field1', 'field2']                                 # <type: list; is: required>
+      context_data_field: context_data                                    # <default: ""; type:string; is: optional>
+      context_target_mapping: {'field1': ['ctx_field1', 'ctx_field2']}    # <default: {}; type: dict; is: optional if context_data_field == "" else required>
       receivers:
         - NextModule
     """
