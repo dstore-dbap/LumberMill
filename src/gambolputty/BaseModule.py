@@ -17,11 +17,10 @@ class BaseModule():
 
     - module: SomeModuleName
       alias: AliasModuleName                    # <default: ""; type: string; is: optional>
-      configuration:
-        work_on_copy: True                      # <default: False; type: boolean; is: optional>
-        redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis_key: XPathParser%(server_name)s   # <default: ""; type: string; is: required if redis_client is True else optional>
-        redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      redis_client: RedisClientName             # <default: ""; type: string; is: optional>
+      redis_key: XPathParser%(server_name)s     # <default: ""; type: string; is: required if redis_client is True else optional>
+      redis_ttl: 600                            # <default: 60; type: integer; is: optional>
+      ...
       receivers:
        - ModuleName
        - ModuleAlias
