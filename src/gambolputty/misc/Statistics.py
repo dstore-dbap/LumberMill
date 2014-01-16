@@ -42,11 +42,18 @@ class Statistics(BaseModule.BaseModule):
     def getRunTimedFunctionsFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('print_interval'))
         def runTimedFunctionsFunc(self):
-            for key, func in self.timed_functions.iteritems():
-                try:
-                    func()
-                except:
-                    self.unregisterTimedFunction(key)
+            try:
+                for key, func in self.timed_functions.iteritems():
+                    try:
+                        func()
+                    except:
+                        self.unregisterTimedFunction(key)
+            except RuntimeError:
+                # Changing the dictionary in un/registerTimedFunction may cause a
+                # RuntimeError: dictionary changed size during iteration
+                # even though we stop the timed functions before changing the dict.
+                # We ignore this error, otherwise we would need to implement locks.
+                pass
         return runTimedFunctionsFunc
 
     def printIntervalStatistics(self):

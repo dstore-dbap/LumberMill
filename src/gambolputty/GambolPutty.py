@@ -19,6 +19,7 @@ module_dirs = ['input',
                'modifier',
                'misc',
                'output',
+               'webgui',
                'cluster']
 
 # Expand the include path to our libs and modules.
@@ -27,7 +28,6 @@ module_dirs = ['input',
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
 [sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
-
 
 class Node:
     def __init__(self, module):
@@ -129,6 +129,8 @@ class GambolPutty:
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
+        import tornado.ioloop
+        tornado.ioloop.IOLoop.instance().start()
 
     def initModule(self, module_name):
         """ Initalize a module.

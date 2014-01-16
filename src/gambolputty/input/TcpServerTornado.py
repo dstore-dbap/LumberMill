@@ -99,6 +99,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
                                                                                        self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             return
         autoreload.add_reload_hook(self.shutDown)
+        return
         ioloop = IOLoop.instance()
         ioloop.make_current()
         try:

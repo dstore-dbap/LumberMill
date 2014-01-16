@@ -1,0 +1,12 @@
+      <div class="row" style="padding: 0px 20px 0px 20px; position: relative; top: -15px">
+        <div class="col-md-1" style="text-align: center">
+          <h1><i class="fa fa-desktop icon"></i></h1><br clear="all">
+        </div>
+        <div class="col-md-3 invisible" id="{{ escape(server_name) }}_sysinfo">
+          <h5 title="CPUs" alt="CPUs"><i class="fa fa-th-large pull-left icon"></i><span id="{{ escape(server_name) }}_cpus"></span></h5>
+          <h5 title="RAM" alt="RAM"><i class="fa fa-tasks pull-left"></i><span id="{{ escape(server_name) }}_ram"></span></h5>
+          <h5 title="Systemload" alt="Systemload"><i class="fa fa-tachometer pull-left"></i><span id="{{ escape(server_name) }}_load"></span></h5>
+          <div  title="HDDs" alt="HDDs" id="{{ escape(server_name) }}_hdds"></div>
+        </div>
+        <div class="col-md-8"></div>
+      </div>
