@@ -1,22 +1,31 @@
 $(document).ready(function()	{
 	updateServerSystemInfo()
 	setInterval(updateServerSystemInfo,5000);
+	updateLogs()
 })
 
-function bla() {
-	var ws = new WebSocket('ws://' + window.location.host + '/websockets/statistics');
-    ws.onopen = function() {
-    	ws.send("Hello, world");
-    };
-    ws.onmessage = function(evt) {
-        $('#statistics').html(evt.data)
-    };
+function updateLogs() {
+	// Select all log divs.
+	$("div:regex(id, .*_log)").each(function(idx)	{
+		// Extract hostname.
+		var hostname = $(this).attr('id').replace('_log', '');
+		var container = this
+		var ws = new WebSocket('ws://' + hostname +":5153/"+ globalSettings.getLogsUrl);
+	    ws.onmessage = function(evt) {
+	    	data = JSON.parse(evt.data);
+	    	log_message = ansi_up.ansi_to_html(data.log_message);
+	    	content = $(container).html() + log_message + "<br>"
+	        $(container).html(content)
+	    };
+	   	//ws.onerror = function(evt) { console.log(evt) };
+	})
 }
 
 function confirmRestartGambolPuttyService(hostname)	{
 	bootbox.confirm("Really restart GambolPutty service on server "+hostname+"?", function(result) {
-		if(result) 
+		if(result)	{
 			restartGambolPuttyService(hostname)
+		}
 	}); 	
 }
 

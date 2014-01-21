@@ -27,7 +27,7 @@ class Facet(BaseModule.BaseModule):
       group_by: %(remote_ip)s                 # <type:string; is: required>
       add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
       interval: 30                            # <default: 5; type: float||integer; is: optional>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_client: RedisClientName           # <default: None; type: None||string; is: optional>
       redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule

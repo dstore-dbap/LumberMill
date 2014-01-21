@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import pprint
 import Utils
 import multiprocessing
 import ConfigurationValidator
@@ -19,7 +20,7 @@ module_dirs = ['input',
                'modifier',
                'misc',
                'output',
-               'webgui',
+               'webserver',
                'cluster']
 
 # Expand the include path to our libs and modules.
@@ -89,12 +90,17 @@ class GambolPutty:
             Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
 
+    def getConfiguration(self):
+        return self.configuration
+
     def setConfiguration(self, configuration, merge=True):
         if type(configuration) is not list:
             return
         if merge:
             # If merge is true keep currently configured modules and only merge new ones.
-            self.configuration = configuration.update(self.configuration)
+            for module_info in configuration:
+                if module_info not in self.configuration:
+                    self.configuration.append(module_info)
         else:
             self.configuration = configuration
 
@@ -186,13 +192,16 @@ class GambolPutty:
         configurationValidator = ConfigurationValidator.ConfigurationValidator()
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
             configuration = module_info['configuration'] if 'configuration' in module_info else {}
+            passed_config_test = False
             for module_instance in module_info['instances']:
                 try:
                     module_instance.configure(module_info['configuration'])
-                    configuration_errors = configurationValidator.validateModuleInstance(module_instance)
+                    if not passed_config_test:
+                        configuration_errors = configurationValidator.validateModuleInstance(module_instance)
                     if configuration_errors:
                         self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, module_name, configuration_errors, Utils.AnsiColors.ENDC))
                         self.shutDown()
+                    passed_config_test = True
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_name, etype, evalue, Utils.AnsiColors.ENDC))
@@ -215,10 +224,10 @@ class GambolPutty:
                     continue
                 for receiver_data in module_info["receivers"]:
                     receiver_filter_config = {}
-                    if isinstance(receiver_data, str):
-                        receiver_name = receiver_data
-                    else:
+                    if isinstance(receiver_data, dict):
                         receiver_name, receiver_filter_config = receiver_data.iteritems().next()
+                    else:
+                        receiver_name = receiver_data
                     self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
                     if receiver_name not in self.modules:
                         self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))

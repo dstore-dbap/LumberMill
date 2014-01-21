@@ -3,26 +3,62 @@ import tornado.web
 import tornado.escape
 import tornado.websocket
 import tornado.gen
+import logging
+import time
+
+class WebsocketLoggingHandler(logging.Handler):
+    """
+    A handler class which allows to log to a websocket.
+    """
+
+    def __init__(self, websocket_handler):
+        logging.Handler.__init__(self)
+        self.websocket_handler = websocket_handler
+        self.formatter = None
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            self.websocket_handler.write_message(tornado.escape.json_encode({'timestamp': time.time(),
+                                                                             'log_message': msg}))
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
-    def WebGui(self):
-        return self.settings['WebGui']
+    def webserver_module(self):
+        return self.settings['TornadoWebserver']
 
     def __get_current_user(self):
         user_json = self.get_secure_cookie("gambolputty_web")
         if not user_json: return None
         return tornado.escape.json_decode(user_json)
 
+class LogToWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler):
+    def open(self):
+        # Create new log handler.
+        self.ws_stream_handler = WebsocketLoggingHandler(self)
+        # Get all configured modules and register our log handler.
+        for module_name, module_info in sorted(self.webserver_module.gp.modules.items(), key=lambda x: x[1]['idx']):
+            for instance in module_info['instances']:
+                instance.logger.addHandler(self.ws_stream_handler)
+
+    def on_close(self):
+        # Get all configured modules and unregister our log handler.
+        for module_name, module_info in sorted(self.webserver_module.gp.modules.items(), key=lambda x: x[1]['idx']):
+            for instance in module_info['instances']:
+                instance.logger.removeHandler(self.ws_stream_handler)
+
 class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler):
     """
     Redirect the output of the statistics module to a websocket.
     This will only work, if the statistic module is configured for the running GambolPutty.
     """
-
     def open(self):
         # Try to get the statistics module
-        statistic_module_info = self.WebGui.gp.getModuleByName('Statistics')
+        statistic_module_info = self.webserver_module.gp.getModuleByName('Statistics')
         if not statistic_module_info:
             self.write_message(tornado.escape.json_encode(False))
             return

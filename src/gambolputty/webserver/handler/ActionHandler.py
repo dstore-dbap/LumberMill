@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import socket
 import os
 import psutil
@@ -9,8 +10,8 @@ import tornado.gen
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
-    def WebGui(self):
-        return self.settings['WebGui']
+    def webserver_module(self):
+        return self.settings['TornadoWebserver']
 
     def __get_current_user(self):
         user_json = self.get_secure_cookie("gambolputty_web")
@@ -30,12 +31,19 @@ class GetServerInformation(BaseHandler):
                                                 'load': os.getloadavg(),
                                                 'memory': {'total': mem.total, 'used': mem.used, 'available': mem.available, 'percent': mem.percent},
                                                 'disk_usage': disk_usage,
-                                                'configuration': self.WebGui.gp.configuration}))
+                                                'configuration': self.webserver_module.gp.configuration}))
 
 class RestartHandler(BaseHandler):
     def get(self):
-        self.WebGui.gp.restart()
-        self.write(tornado.escape.json_encode({True}))
+        self.add_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.write(tornado.escape.json_encode({'restart': True}))
+        self.flush()
+        self.webserver_module.gp.restart()
+
+class RegisterSlave(BaseHandler):
+    def get(self, *args, **kwargs):
+        pprint.pprint(args, kwargs)
+
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     @tornado.gen.coroutine

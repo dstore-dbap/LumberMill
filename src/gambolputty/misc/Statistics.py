@@ -1,3 +1,4 @@
+import pprint
 import time
 import Utils
 import BaseModule
@@ -11,7 +12,7 @@ class Statistics(BaseModule.BaseModule):
     Configuration example:
 
     - module: Statistics
-      print_interval: 10                 # <default: 10; type: integer; is: optional>
+      interval: 10                       # <default: 10; type: integer; is: optional>
       event_type_statistics: True        # <default: True; type: boolean; is: optional>
       receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
       waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
@@ -24,36 +25,12 @@ class Statistics(BaseModule.BaseModule):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.stats_collector.setCounter('ts_last_stats', time.time())
-        self.timed_functions = {'default': self.printIntervalStatistics}
-        self.run_timed_functions_event = False
-        self.run_timed_functions_func = self.getRunTimedFunctionsFunc()
         self.module_queues = {}
 
-    def registerTimedFunction(self, key, func):
-        self.stopTimedFunctions()
-        self.timed_functions[key] = func
-        self.startTimedFunctions()
-
-    def unregisterTimedFunction(self, key):
-        self.stopTimedFunctions()
-        self.timed_functions.pop(key, None)
-        self.startTimedFunctions()
-
     def getRunTimedFunctionsFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('print_interval'))
-        def runTimedFunctionsFunc(self):
-            try:
-                for key, func in self.timed_functions.iteritems():
-                    try:
-                        func()
-                    except:
-                        self.unregisterTimedFunction(key)
-            except RuntimeError:
-                # Changing the dictionary in un/registerTimedFunction may cause a
-                # RuntimeError: dictionary changed size during iteration
-                # even though we stop the timed functions before changing the dict.
-                # We ignore this error, otherwise we would need to implement locks.
-                pass
+        @Decorators.setInterval(self.getConfigurationValue('interval'))
+        def runTimedFunctionsFunc():
+            self.printIntervalStatistics()
         return runTimedFunctionsFunc
 
     def printIntervalStatistics(self):
@@ -79,7 +56,7 @@ class Statistics(BaseModule.BaseModule):
         if not eps:
             eps = 0
         self.stats_collector.resetCounter('eps')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('print_interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('print_interval')), Utils.AnsiColors.ENDC))
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
@@ -95,15 +72,8 @@ class Statistics(BaseModule.BaseModule):
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
-        self.startTimedFunctions()
-
-    def startTimedFunctions(self):
-        if not self.run_timed_functions_event or self.run_timed_functions_event.isSet():
-            self.run_timed_functions_event = self.run_timed_functions_func(self)
-
-    def stopTimedFunctions(self):
-        if self.run_timed_functions_event:
-            self.run_timed_functions_event.set()
+        timed_func = self.getRunTimedFunctionsFunc()
+        self.startTimedFunction(timed_func)
 
     def destroyEvent(self, event=False, event_list=False):
         """Statistic module will not destroy any events."""

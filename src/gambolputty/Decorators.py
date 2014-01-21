@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import time
 import threading
 import re
 import ast
@@ -17,14 +18,20 @@ def Singleton(class_):
 
     return getinstance
 
-
-def setInterval(interval):
+def setInterval(interval, max_run_count=0, call_on_init=False):
     def decorator(function):
         def wrapper(*args, **kwargs):
             stopped = threading.Event()
             def loop(): # executed in another thread
+                run_count = 0
+                if call_on_init:
+                    function(*args, **kwargs)
                 while not stopped.wait(interval): # until stopped
                     function(*args, **kwargs)
+                    if max_run_count > 0:
+                        run_count += 1
+                        if run_count == max_run_count:
+                            break
             t = threading.Thread(target=loop)
             t.daemon = True # stop if the program exits
             t.start()
@@ -69,19 +76,18 @@ def ModuleDocstringParser(cls):
                 except ValueError:
                     instance.logger.debug("Could not parse config setting %s." % config_option_info)
                     continue
-                if prop_name == "default":
+                if prop_name in ["default", "values"]:
                     try:
                         prop_value = ast.literal_eval(prop_value)
                     except:
                         etype, evalue, etb = sys.exc_info()
                         instance.logger.error(
-                            "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (
-                            prop_value, etype, evalue))
-                        print "Could not parse default value %s from docstring. Excpeption: %s, Error: %s." % (
-                        prop_value, etype, evalue)
+                            "Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue))
+                        print "Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue)
                     # Support for multiple datatypes using the pattern: "type: string||list;"
                 if prop_name == "type":
                     prop_value = prop_value.split("||")
+                    prop_value.append('Unicode')
                 try:
                     instance.configuration_metadata[config_option_info['name'].strip()].update({prop_name: prop_value})
                 except:

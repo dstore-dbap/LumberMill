@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
-import tornado.websocket
 import tornado.web
 import tornado.httpserver
 import tornado.autoreload
@@ -11,19 +10,16 @@ import os.path
 import BaseThreadedModule
 import Decorators
 import Utils
-import handler.ActionHandler
-import handler.HtmlHandler
-import handler.WebsocketHandler
 import uimodules.ServerListItem
 
 @Decorators.ModuleDocstringParser
-class WebGui(BaseThreadedModule.BaseThreadedModule):
+class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
     """
-    A WebGui plugin for GambolPutty. At the moment this is just a stub.
+    A tornado based web server.
 
     Configuration example:
 
-    - module: WebGui
+    - module: WebserverTornado
       port: 6060                 # <default: 5100; type: integer; is: optional>
       document_root: other_root  # <default: 'docroot'; type: string; is: optional>
     """
@@ -37,8 +33,10 @@ class WebGui(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.server = False
         self.settings = self.getSettings()
-        self.handlers = self.getHandlers()
-        self.application = tornado.web.Application(self.handlers, **self.settings)
+        self.application = tornado.web.Application([], **self.settings)
+
+    def addHandlers(self, host_handlers=[], host_pattern='.*$'):
+        self.application.add_handlers(host_pattern, host_handlers)
 
     def getSettings(self):
         base_path = self.getConfigurationValue('document_root')
@@ -48,22 +46,8 @@ class WebGui(BaseThreadedModule.BaseThreadedModule):
                      'static_path': "%s/static" % base_path,
                      'ui_modules': uimodules.ServerListItem,
                      'debug': True,
-                     'WebGui': self}
+                     'TornadoWebserver': self}
         return settings
-
-    def getHandlers(self):
-        handlers =  [# HtmlHandler
-                     (r"/", handler.HtmlHandler.MainHandler),
-                     # StaticFilesHandler
-                     (r"/images/(.*)",tornado.web.StaticFileHandler, {"path": "%s/images/" % self.settings['static_path']}),
-                     (r"/css/(.*)",tornado.web.StaticFileHandler, {"path": "%s/css/" % self.settings['static_path']}),
-                     (r"/js/(.*)",tornado.web.StaticFileHandler, {"path": "%s/js/" % self.settings['static_path']},),
-                     # ActionHandler
-                     (r"/actions/restart", handler.ActionHandler.RestartHandler),
-                     (r"/actions/get_server_info", handler.ActionHandler.GetServerInformation),
-                     # WebsocketHandler
-                     (r"/websockets/statistics", handler.WebsocketHandler.StatisticsWebSocketHandler)]
-        return handlers
 
     def run(self):
         try:
@@ -73,7 +57,7 @@ class WebGui(BaseThreadedModule.BaseThreadedModule):
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not start webgui on %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('port'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sCould not start webserver on %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('port'), etype, evalue, Utils.AnsiColors.ENDC))
             return
         tornado.autoreload.add_reload_hook(self.shutDown)
         return

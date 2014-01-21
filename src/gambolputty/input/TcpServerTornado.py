@@ -61,7 +61,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
 
     - module: TcpServerTornado
       interface: localhost             # <default: ''; type: string; is: optional>
-      port: 5151                       # <default: 5151; type: integer; is: optional>
+      port: 5050                       # <default: 5151; type: integer; is: optional>
       timeout: 5                       # <default: None; type: None||integer; is: optional>
       tls: False                       # <default: False; type: boolean; is: optional>
       key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
@@ -97,6 +97,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
                                                                                        self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
             return
         autoreload.add_reload_hook(self.shutDown)
         return

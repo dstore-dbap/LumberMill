@@ -5,8 +5,8 @@ import socket
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
-    def WebGui(self):
-        return self.settings['WebGui']
+    def webserver_module(self):
+        return self.settings['TornadoWebserver']
 
     def __get_current_user(self):
         user_json = self.get_secure_cookie("gambolputty_web")
@@ -17,7 +17,7 @@ class MainHandler(BaseHandler):
     def get(self):
         # Check if cluster module is available.
         server_type = "Master"
-        cluster_info = self.WebGui.gp.getModuleByName('Cluster')
+        cluster_info = self.webserver_module.gp.getModuleByName('Cluster')
         if cluster_info:
             server_type = "Master" if not cluster_info['instances'][0].my_master else "Slave"
         self.render(

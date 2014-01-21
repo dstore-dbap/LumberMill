@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import sys
+import pprint
+import logging
 import signal
 import BaseModule
 import Decorators
@@ -8,22 +9,22 @@ import Utils
 @Decorators.ModuleDocstringParser
 class ClusterConfiguration(BaseModule.BaseModule):
     """
-    Synchronize configuration from master to slaves.
-    The running master configuration will be stored in the required redis backend.
-    Any changes to the masters configuration will be synced to the redis backend.
-    Slaves will check in an configurabe interval if any changes were made to the
-    configuration. If so, the new configuration will be imported from redis backend
-    and a reload will be executed.
+    Synchronize configuration from leader to pack members.
+    Any changes to the leaders configuration will be synced to all pack members.
 
-    Locally configured modules in slaves will not be overwritten by the master configuration.
+    Locally configured modules of pack members will not be overwritten by the leaders configuration.
+
+    Module dependencies:    Cluster
+
+    cluster: Name of the cluster module.
+    ignore_modules: List of module names to exclude from sync process.
+    interval: Time in seconds between checks if master config did change.
 
     Configuration example:
 
     - module: ClusterConfiguration
-      ignore_modules: [WebGui,LocalModule]    # <default: None; type: None||list; is: optional>
-      redis_client: RedisClientName           # <type: string; is: required>
-      redis_key: Cluster1:configuration       # <default: 'gambolputty:configuration'; type: string; is: optional>
-      redis_ttl: 600                          # <default: 3600; type: integer; is: optional>
+      cluster:                                # <default: 'Cluster'; type: string; is: optional>
+      ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
       interval: 10                            # <default: 60; type: integer; is: optional>
     """
 
@@ -33,58 +34,67 @@ class ClusterConfiguration(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
-        self.master = True if self.cluster.my_master == None else False
-        if self.master:
+        #self.logger.setLevel(logging.DEBUG)
+        # Get cluster module instance.
+        mod_info = self.gp.getModuleByName(self.getConfigurationValue('cluster'))
+        if not mod_info:
+            self.logger.error("%sCould not start cluster configuration module. Required cluster module %s not found. Please check your configuration.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('cluster'), Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
+            return
+        self.cluster_module = mod_info['instances'][0]
+        if self.cluster_module.leader:
             self.update_config_func = self.getMasterConfigurationUpdateFunc()
+            self.cluster_module.addHandler(action='discovery_finish', callback=self.handleDiscoveryFinish)
         else:
-            self.update_config_func = self.getSlaveConfigurationUpdateFunc()
+            self.cluster_module.addHandler(action='update_configuration_call', callback=self.handleUpdateConfigurationCall)
+
+    def syncConfigurationToPack(self, configuration):
+        message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': configuration})
+        self.cluster_module.sendMessageToPack(message)
 
     def getMasterConfigurationUpdateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
-        def updateConfiguration():
-            redis_configuration = self.redis_client.getValue(self.getConfigurationValue('redis_key'))
-            running_configuration = self.filterIgnoredModules(self.gp.configuration)
-            if running_configuration != redis_configuration:
-                self.syncConfigurationToRedis(running_configuration)
-        return updateConfiguration
+        def updateMasterConfiguration():
+            filtered_running_configuration = self.filterIgnoredModules(self.gp.getConfiguration())
+            if self.filtered_startup_config != filtered_running_configuration:
+                self.filtered_startup_config = filtered_running_configuration
+                self.syncConfigurationToPack(self.filtered_startup_config)
+        return updateMasterConfiguration
 
-    def getSlaveConfigurationUpdateFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('interval'))
-        def updateConfiguration():
-            redis_configuration = self.redis_client.getValue(self.getConfigurationValue('redis_key'))
-            redis_configuration = self.filterIgnoredModules(redis_configuration)
-            if type(redis_configuration) is not list:
-                return
-            running_configuration = self.filterIgnoredModules(self.gp.configuration)
-            if running_configuration != redis_configuration:
-                self.logger.info("%sGot new cluster configuration %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue('redis_key'), Utils.AnsiColors.ENDC))
-                self.gp.setConfiguration(redis_configuration, merge=True)
-                # Send signal to reload GambolPutty.
-                signal.alarm(1)
-        return updateConfiguration
+    def handleDiscoveryFinish(self, message, host):
+        """
+        Sync current configuration to newly discovered hosts.
+        """
+        message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
+        self.logger.debug('%shandleDiscoveryReply called.%s' % (Utils.AnsiColors.OKBLUE, Utils.AnsiColors.ENDC))
+        self.cluster_module.sendMessageToPackMember(message, host)
+
+    def handleUpdateConfigurationCall(self, message, host):
+        """
+        Receive update configuration calls and handle them.
+        """
+        leader_configuration = message['configuration']
+        leader_configuration = self.filterIgnoredModules(leader_configuration)
+        if leader_configuration != self.filtered_startup_config:
+            self.logger.info("%sGot new cluster configuration from %s.%s" % (Utils.AnsiColors.LIGHTBLUE, host, Utils.AnsiColors.ENDC))
+            self.gp.setConfiguration(leader_configuration, merge=True)
+            # Send signal to reload GambolPutty.
+            signal.alarm(1)
 
     def filterIgnoredModules(self, configuration):
         filtered_configuration = []
-        if self.getConfigurationValue('ignore_modules'):
-            for module_info in self.gp.configuration:
-                if 'module' not in module_info or module_info['module'] in self.getConfigurationValue('ignore_modules'):
-                    continue
+        for idx, module_info in enumerate(configuration):
+            # Never sync cluster modules.
+            if not 'module' in module_info or module_info['module'] in ['Cluster', 'ClusterConfiguration']:
+                continue
+            # Filter ignored modules.
+            if module_info['module'] not in self.getConfigurationValue('ignore_modules'):
                 filtered_configuration.append(module_info)
         return filtered_configuration
 
-    def syncConfigurationToRedis(self, configuration):
-        try:
-            self.logger.info("%sUpdating %s cluster configuration.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue('redis_key'), Utils.AnsiColors.ENDC))
-            self.redis_client.setValue(self.getConfigurationValue('redis_key'), configuration, self.getConfigurationValue('redis_ttl'))
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not store configuration data in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
-            pass
-
     def run(self):
-        if not self.redis_client:
-            self.logger.error('%sRedis backend for clustered configuration not available.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
-            self.gp.shutDown()
-            return
-        self.update_config_func()
+        # Get currently running configuration.
+        self.filtered_startup_config = self.filterIgnoredModules(self.gp.getConfiguration())
+        if self.cluster_module.leader:
+            self.startTimedFunction(self.update_config_func)
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import types
 import Utils
 
@@ -40,7 +41,7 @@ class ConfigurationValidator():
         result = []
         # The ModifyFields module is an exception as it provides more than one configuration.
         # This needs to be taken into account when testing for required configuration values.
-        # At the moment, I just skip this module until I have a good idea on how to takle this.
+        # At the moment, I just skip this module until I have a good idea on how to tackle this.
         if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
             return result
         # Check if the live configuration provides a key that is not documented in modules docstring.
@@ -71,7 +72,7 @@ class ConfigurationValidator():
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
                     result.append(error_msg)
                     continue
-            # Check for value type
+            # Check for value type.
             allowed_datatypes = []
             if 'type' in configuration_metadata:
                 for allowed_datatypes_as_string in configuration_metadata['type']:
@@ -83,6 +84,12 @@ class ConfigurationValidator():
                 if config_value_datatype not in allowed_datatypes:
                     error_msg = "%s: '%s' not of correct datatype. Is: %s, should be: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value_datatype, allowed_datatypes)
                     result.append(error_msg)
+            # Check for value restrictions.
+            if 'values' in configuration_metadata:
+                if config_value not in configuration_metadata['values']:
+                    error_msg = "%s: '%s' has no allowed value. Is: %s, should be on of: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value, configuration_metadata['values'])
+                    result.append(error_msg)
+
         return result
 
 

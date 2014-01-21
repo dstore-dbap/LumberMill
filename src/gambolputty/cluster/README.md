@@ -20,7 +20,7 @@ Cluster submodules
 Synchronize configuration from master to slaves.
 The running master configuration will be stored in the required redis backend.
 Any changes to the masters configuration will be synced to the redis backend.
-Slaves will check in an configurabe interval if any changes were made to the
+Slaves will check in an configurable interval if any changes were made to the
 configuration. If so, the new configuration will be imported from redis backend
 and a reload will be executed.
 

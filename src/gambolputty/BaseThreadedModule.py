@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import threading
 import Queue
 import Utils
 import BaseModule
 
-class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
+class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     """
     Base class for all gambolputty modules that will run as separate threads.
     If you happen to override one of the methods defined here, be sure to know what you
@@ -29,9 +30,9 @@ class BaseThreadedModule(BaseModule.BaseModule,threading.Thread):
 
     def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
+        threading.Thread.__init__(self)
         self.input_queue = False
         self.output_queues = []
-        threading.Thread.__init__(self)
         self.daemon = True
 
     def setInputQueue(self, queue):

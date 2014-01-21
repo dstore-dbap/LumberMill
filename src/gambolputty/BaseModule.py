@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import re
 import abc
 import logging
@@ -38,6 +39,7 @@ class BaseModule():
         self.receivers = {}
         self.filters = {}
         self.redis_client = None
+        self.timed_function_events = []
         self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
 
@@ -131,6 +133,7 @@ class BaseModule():
 
     def shutDown(self):
         self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
+        self.stopTimedFunctions()
 
     def addReceiver(self, receiver_name, receiver):
         if not hasattr(receiver, 'receiveEvent') and not hasattr(receiver, 'put'):
@@ -212,3 +215,30 @@ class BaseModule():
         redis_client_instances = self.gp.getModuleByName(self.getConfigurationValue('redis_client'))
         if redis_client_instances:
             self.redis_client = redis_client_instances['instances'][0]
+
+    def startTimedFunction(self, timed_function, *args, **kwargs):
+        """
+        Start a timed function and keep track of all running functions.
+        """
+        event = timed_function(*args, **kwargs)
+        self.timed_function_events.append(event)
+        return event
+
+    def stopTimedFunctions(self, event=False):
+        """
+        Stop all timed functions. They are started as daemon, so when a reaload occurs, they will not finish cause the
+        main thread still is running. This takes care of this issue.
+        """
+        #print "Stopping func"
+        if not self.timed_function_events:
+            return
+        # Clear provided event only.
+        if event and event in self.timed_function_events:
+            event.set()
+            self.timed_function_events.remove(event)
+            return
+        # Clear all timed functions
+        for event in self.timed_function_events:
+            event.set()
+        self.timed_function_events = []
+
