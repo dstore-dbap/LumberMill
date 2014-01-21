@@ -19,7 +19,7 @@ class MainHandler(BaseHandler):
         server_type = "Master"
         cluster_info = self.webserver_module.gp.getModuleByName('Cluster')
         if cluster_info:
-            server_type = "Master" if not cluster_info['instances'][0].my_master else "Slave"
+            server_type = "PackLeader" if cluster_info['instances'][0].leader else "PackMember"
         self.render(
                 "index.html",
                 page_title="GambolPutty WebGui",

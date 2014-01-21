@@ -10,7 +10,7 @@ function updateLogs() {
 		// Extract hostname.
 		var hostname = $(this).attr('id').replace('_log', '');
 		var container = this
-		var ws = new WebSocket('ws://' + hostname +":5153/"+ globalSettings.getLogsUrl);
+		var ws = new WebSocket('ws://' + hostname +":"+location.port+"/"+ globalSettings.getLogsUrl);
 	    ws.onmessage = function(evt) {
 	    	data = JSON.parse(evt.data);
 	    	log_message = ansi_up.ansi_to_html(data.log_message);
@@ -30,7 +30,7 @@ function confirmRestartGambolPuttyService(hostname)	{
 }
 
 function restartGambolPuttyService(hostname)	{
-	$.getJSON("http://"+hostname+":5153/"+globalSettings.restartServiceUrl, function(jsonData) {
+	$.getJSON("http://"+hostname+":"+location.port+"/"+globalSettings.restartServiceUrl, function(jsonData) {
 		console.log(jsonData)
 	})
 }
@@ -42,7 +42,7 @@ function updateServerSystemInfo()	{
 		var hostname = $(this).attr('id').replace('_sysinfo', '');
 		var container = this
 		// Get info from server.
-		$.getJSON("http://"+hostname+":5153/"+globalSettings.serverInfoUrl, function(jsonData) {
+		$.getJSON("http://"+hostname+":"+location.port+"/"+globalSettings.serverInfoUrl, function(jsonData) {
 			// Set CPU count.
 			var selector = '#'+escapeSelector(hostname+"_cpus")
 			$(selector).html("&nbsp;"+jsonData.cpu_count+"&nbsp;CPUs")
