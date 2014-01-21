@@ -52,10 +52,14 @@ The different modules can be combined in any order.
 * Statistics, simple statistic module.
 * TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
-* WebGui, a web interface to GambolPutty.
 
 #### Cluster modules
-* ClusterConfiguration, syncs master configuration to slaves.
+* Cluster, base cluster module. Handles pack leader and pack member discovery.
+* ClusterConfiguration, syncs leader configuration to pack members.
+
+#### Webserver modules
+* WebserverTornado, base webserver module. Handles all incoming requests.
+* WebGui, a web interface to GambolPutty.
 
 GambolPutty makes use of the following projects:
 
