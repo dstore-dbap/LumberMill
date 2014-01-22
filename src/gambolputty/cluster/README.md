@@ -5,7 +5,7 @@ Cluster modules
 Cluster base module. Handles pack leader discovery and alive checks of pack followers.
 
 IMPORTANT:
-This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
+This is just a first alpha implementation. No leader election, no fail over, no sanity checks for conflicting leaders.
 
 interface:  Ipaddress to listen on.
 port:   Port to listen on.
