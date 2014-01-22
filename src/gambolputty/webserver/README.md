@@ -1,4 +1,4 @@
-Parser modules
+Webserver modules
 ==========
 
 #####WebserverTornado
@@ -11,6 +11,8 @@ Configuration example:
       port: 6060                 # <default: 5100; type: integer; is: optional>
       document_root: other_root  # <default: 'docroot'; type: string; is: optional>
 
+WebserverTornado submodules
+==========
 #####WebGui
 
 A WebGui plugin for GambolPutty. At the moment this is just a stub.

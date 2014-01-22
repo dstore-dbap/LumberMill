@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import socket
 import os
 import psutil
@@ -51,11 +50,6 @@ class RestartHandler(BaseHandler):
         self.write(tornado.escape.json_encode({'restart': True}))
         self.flush()
         self.webserver_module.gp.restart()
-
-class RegisterSlave(BaseHandler):
-    def get(self, *args, **kwargs):
-        pprint.pprint(args, kwargs)
-
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     @tornado.gen.coroutine

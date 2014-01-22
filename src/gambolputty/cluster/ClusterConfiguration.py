@@ -10,11 +10,11 @@ import Utils
 class ClusterConfiguration(BaseModule.BaseModule):
     """
     Synchronize configuration from leader to pack members.
-    Any changes to the leaders configuration will be synced to all pack members.
+    Any changes to the leaders configuration will be synced to all pack followers.
 
     Locally configured modules of pack members will not be overwritten by the leaders configuration.
 
-    Module dependencies:    Cluster
+    Module dependencies: ['Cluster']
 
     cluster: Name of the cluster module.
     ignore_modules: List of module names to exclude from sync process.

@@ -2,35 +2,49 @@ Cluster modules
 ==========
 #####Cluster
 
-Container module for all cluster related plugins.
+Cluster base module. Handles pack leader discovery and alive checks of pack followers.
+
+IMPORTANT:
+This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
+
+interface:  Ipaddress to listen on.
+port:   Port to listen on.
+broadcast: Ipaddress for udp broadcasts.
+interval: Autodiscover interval.
+tornado_webserver: Name of the webserver module. Needed for leader - pack communication.
+pack: Set this node to be either leader or member.
+name: Name of the cluster. Used for auto-discovery in same network.
+shared_secret: pre shared key to en/decrypt cluster messages.
 
 Configuration example:
 
     - module: Cluster
-      master: master.gp.server   # <default: None; type: None||string; is: optional>
-      submodules:
-        - module: ClusterConfiguration
-          ignore_modules: [...]
-          ...
+      interface:                            # <default: '0.0.0.0'; type: string; is: optional>
+      port:                                 # <default: 5252; type: integer; is: optional>
+      broadcast:                            # <type: string; is: required>
+      interval:                             # <default: 10; type: integer; is: optional>
+      pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
+      name:                                 # <type: string; is: required>
+      secret:                               # <type: string; is: required>
 
 Cluster submodules
 ==========
 #####ClusterConfiguration
 
-Synchronize configuration from master to slaves.
-The running master configuration will be stored in the required redis backend.
-Any changes to the masters configuration will be synced to the redis backend.
-Slaves will check in an configurable interval if any changes were made to the
-configuration. If so, the new configuration will be imported from redis backend
-and a reload will be executed.
+Synchronize configuration from leader to pack members.
+Any changes to the leaders configuration will be synced to all pack followers.
 
-Locally configured modules in slaves will not be overwritten by the master configuration.
+Locally configured modules of pack members will not be overwritten by the leaders configuration.
+
+Module dependencies: ['Cluster']
+
+cluster: Name of the cluster module.
+ignore_modules: List of module names to exclude from sync process.
+interval: Time in seconds between checks if master config did change.
 
 Configuration example:
 
     - module: ClusterConfiguration
-      ignore_modules: [WebGui,LocalModule]    # <default: None; type: None||list; is: optional>
-      redis_client: RedisClientName           # <type: string; is: required>
-      redis_key: Cluster1:configuration       # <default: 'gambolputty:configuration'; type: string; is: optional>
-      redis_ttl: 600                          # <default: 3600; type: integer; is: optional>
+      cluster:                                # <default: 'Cluster'; type: string; is: optional>
+      ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
       interval: 10                            # <default: 60; type: integer; is: optional>

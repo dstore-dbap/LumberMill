@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import socket
 import time
@@ -48,7 +47,7 @@ class PackMember:
 @Decorators.ModuleDocstringParser
 class Cluster(BaseThreadedModule.BaseThreadedModule):
     """
-    Container module for all cluster related plugins.
+    Cluster base module. Handles pack leader discovery and alive checks of pack followers.
 
     IMPORTANT:
     This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
@@ -61,8 +60,6 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     pack: Set this node to be either leader or member.
     name: Name of the cluster. Used for auto-discovery in same network.
     shared_secret: pre shared key to en/decrypt cluster messages.
-
-    Module dependencies: WebserverTornado
 
     Configuration example:
 
@@ -198,8 +195,6 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         drop_dead_pack_member_timed_func = self.getDropDeadPackMemberTimedFunc()
         for ip_address, pack_member in self.pack_followers.iteritems():
             message = self.getDefaultMessageDict(action='alive_call')
-            # As udp is not completely reliable, send 3 messages to each pack member.
-            #for redundant_count in range(0, 2):
             self.sendMessageToPackMember(message, pack_member)
             self.dying_pack_followers.append(ip_address)
             self.pending_alive_resonses.update({ip_address: self.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
@@ -253,8 +248,6 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             return
         self.logger.debug('%sGot alive request from %s.%s' % (Utils.AnsiColors.OKBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
         message = self.getDefaultMessageDict(action='alive_reply', custom_dict={'reply': 'I am not dead!'})
-        # As udp is not completely reliable, send 3 messages to pack leader.
-        #for redundant_count in range(0, 2):
         self.sendMessage(message, pack_member.getHost())
 
     def handleAliveReply(self, message, pack_member):
