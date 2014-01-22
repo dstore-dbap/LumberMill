@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import logging
+import pprint
 import sys
 import socket
 import time
@@ -20,6 +20,30 @@ for module_name in ['yajl', 'simplejson', 'json']:
         pass
 if not json:
     raise ImportError
+
+class PackMember:
+
+    def __init__(self, host, message):
+        self.host = host
+        self.ip_address = host[0]
+        self.port = host[1]
+        self.message = message
+        self.leader = message['leader']
+
+    def getHost(self):
+        return self.host
+
+    def getIp(self):
+        return self.ip_address
+
+    def getPort(self):
+        return self.port
+
+    def getHostName(self):
+        return self.message['sender']
+
+    def getMessage(self):
+        return self.message
 
 @Decorators.ModuleDocstringParser
 class Cluster(BaseThreadedModule.BaseThreadedModule):
@@ -47,7 +71,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
       port:                                 # <default: 5252; type: integer; is: optional>
       broadcast:                            # <type: string; is: required>
       interval:                             # <default: 10; type: integer; is: optional>
-      pack:                                 # <default: 'leader'; type: string; values: ['leader', 'member']; is: optional>
+      pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
       name:                                 # <type: string; is: required>
       secret:                               # <type: string; is: required>
     """
@@ -62,8 +86,8 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         #self.logger.setLevel(logging.DEBUG)
         self.leader = True if self.getConfigurationValue('pack') == 'leader' else False
-        self.pack_members = []
-        self.dying_pack_members = []
+        self.pack_followers = {}
+        self.dying_pack_followers = []
         self.pending_alive_resonses = {}
         self.cluster_name = self.getConfigurationValue('name')
         self.discovered_leader = None
@@ -102,6 +126,12 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         message_dict.update(custom_dict)
         return message_dict
 
+    def getPackMembers(self):
+        return self.pack_followers
+
+    def getDiscoveredLeader(self):
+        return self.discovered_leader
+
     def sendMessage(self, message, host):
          # Json encode end encrypt message.
         message = self.encrypt(json.dumps(message))
@@ -109,14 +139,19 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
 
     def sendMessageToPackMember(self, message, pack_member):
         self.logger.debug("%sSending message %s to %s.%s" % (Utils.AnsiColors.OKBLUE, message, pack_member, Utils.AnsiColors.ENDC))
-        if pack_member not in self.pack_members:
+        ip_address = pack_member.getIp()
+        if ip_address not in self.pack_followers.keys():
             self.logger.warning('%sCan not send message to unknown pack member %s.%s' % (Utils.AnsiColors.WARNING, pack_member,Utils.AnsiColors.ENDC))
             return
-        self.sendMessage(message, pack_member)
+        self.sendMessage(message, pack_member.getHost())
 
     def sendMessageToPack(self, message):
-        for pack_member in self.pack_members:
+        for pack_member in self.pack_followers.itervalues():
             self.sendMessageToPackMember(message, pack_member)
+
+    def addHandler(self, action, callback):
+        self.logger.debug('%sAdding handler %s for %s.%s' % (Utils.AnsiColors.OKBLUE, callback, action, Utils.AnsiColors.ENDC))
+        self.handlers[action].append(callback)
 
     def run(self):
         try:
@@ -146,19 +181,13 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             if message['sender'] == self.hostname or message['cluster'] != self.cluster_name:
                 continue
             self.logger.debug("%sReceived action %s.%s" % (Utils.AnsiColors.OKBLUE, message['action'], Utils.AnsiColors.ENDC))
+            pack_member = PackMember(host, message)
             # Excecute callbacks
             for callback in self.handlers["%s" % message['action']]:
                 self.logger.debug('%sCalling callback %s for %s.%s' % (Utils.AnsiColors.OKBLUE, callback, message['action'], Utils.AnsiColors.ENDC))
-                callback(message, host)
+                callback(message, pack_member)
 
-    def getPackMembers(self):
-        return self.pack_members
-
-    def addHandler(self, action, callback):
-        self.logger.debug('%sAdding handler %s for %s.%s' % (Utils.AnsiColors.OKBLUE, callback, action, Utils.AnsiColors.ENDC))
-        self.handlers[action].append(callback)
-
-    @Decorators.setInterval(60, call_on_init=True)
+    @Decorators.setInterval(30, call_on_init=True)
     def sendDiscoverBroadcast(self):
         message = self.getDefaultMessageDict(action='discovery_call')
         self.logger.debug('%sSending broadcast pack discovery.%s' % (Utils.AnsiColors.OKBLUE, Utils.AnsiColors.ENDC))
@@ -167,19 +196,22 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     @Decorators.setInterval(10)
     def sendAliveRequests(self):
         drop_dead_pack_member_timed_func = self.getDropDeadPackMemberTimedFunc()
-        for pack_member in self.pack_members:
+        for ip_address, pack_member in self.pack_followers.iteritems():
             message = self.getDefaultMessageDict(action='alive_call')
+            # As udp is not completely reliable, send 3 messages to each pack member.
+            #for redundant_count in range(0, 2):
             self.sendMessageToPackMember(message, pack_member)
-            self.dying_pack_members.append(pack_member)
-            self.pending_alive_resonses.update({pack_member: self.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
+            self.dying_pack_followers.append(ip_address)
+            self.pending_alive_resonses.update({ip_address: self.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
 
     def getDropDeadPackMemberTimedFunc(self):
         @Decorators.setInterval(5, max_run_count=1)
-        def dropDeadPackMembers(dying_pack_member):
+        def dropDeadPackMembers(pack_member):
             try:
-                self.dying_pack_members.remove(dying_pack_member)
-                self.pack_members.remove(dying_pack_member)
-                self.logger.warning('%sDropping dead pack member %s.%s' % (Utils.AnsiColors.WARNING, dying_pack_member, Utils.AnsiColors.ENDC))
+                pack_member_ip = pack_member.getIp()
+                self.dying_pack_followers.remove(pack_member_ip)
+                self.pack_followers.pop(pack_member_ip)
+                self.logger.warning('%sDropping dead pack member %s, %s.%s' % (Utils.AnsiColors.WARNING, pack_member.getHostName(), pack_member.getHost(), Utils.AnsiColors.ENDC))
             except ValueError:
                 self.logger.info("asdasd")
         return dropDeadPackMembers
@@ -187,53 +219,53 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     ####
     # Pack member discovery.
     ####
-    def handleDiscoveryCall(self, message, host):
+    def handleDiscoveryCall(self, message, pack_member):
         # Only send reply to discover call if we are a pack leader.
         if not self.leader:
             return
         message = self.getDefaultMessageDict(action='discovery_reply')
-        self.sendMessage(message, host)
+        self.sendMessage(message, pack_member.getHost())
 
-    def handleDiscoveryReply(self, message, host):
+    def handleDiscoveryReply(self, message, pack_member):
         # Only pack members should handle discover replies.
         if self.leader:
             return
         message = self.getDefaultMessageDict(action='discovery_finish', custom_dict={'success': True})
-        self.sendMessage(message, host)
-        if self.discovered_leader != host:
-            self.logger.info("%sDiscovered %s as pack leader.%s" % (Utils.AnsiColors.LIGHTBLUE, host, Utils.AnsiColors.ENDC))
-            self.discovered_leader = host
+        self.sendMessage(message, pack_member.getHost())
+        if not self.discovered_leader or self.discovered_leader.getHost() != pack_member.getHost():
+            self.logger.info("%sDiscovered %s as pack leader.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+            self.discovered_leader = pack_member
 
-    def handleDiscoveryFinish(self, message, host):
+    def handleDiscoveryFinish(self, message, pack_member):
         # Only send reply to discover finish call if we are a pack leader.
         if not self.leader:
             return
-        if message['success'] and host not in self.pack_members:
-            self.logger.info("%sDiscovered %s as pack member.%s" % (Utils.AnsiColors.LIGHTBLUE, host, Utils.AnsiColors.ENDC))
-            self.pack_members.append(host)
+        if message['success'] and pack_member.getIp() not in self.pack_followers.keys():
+            self.logger.info("%sDiscovered %s as pack member.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+            self.pack_followers[pack_member.getIp()] = pack_member
 
     ####
     # Pack member alive check.
     ####
-    def handleAliveCall(self, message, host):
+    def handleAliveCall(self, message, pack_member):
         # Only send reply to alive call if we are a pack member.
         if self.leader:
             return
-        self.logger.debug('%sGot alive request from %s.%s' % (Utils.AnsiColors.OKBLUE, host, Utils.AnsiColors.ENDC))
+        self.logger.debug('%sGot alive request from %s.%s' % (Utils.AnsiColors.OKBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
         message = self.getDefaultMessageDict(action='alive_reply', custom_dict={'reply': 'I am not dead!'})
-        self.sendMessage(message, host)
+        # As udp is not completely reliable, send 3 messages to pack leader.
+        #for redundant_count in range(0, 2):
+        self.sendMessage(message, pack_member.getHost())
 
-    def handleAliveReply(self, message, host):
+    def handleAliveReply(self, message, pack_member):
         # Only leader may handle alive replies.
         if not self.leader:
             return
-        try:
-            if message['reply'] == 'I am not dead!':
-                # Stop timed function to remove pending host from pack members.
-                self.stopTimedFunctions(self.pending_alive_resonses[host])
-        except ValueError:
-            self.logger.info("asdasd")
-            pass
+        if pack_member.getIp() not in self.pending_alive_resonses:
+            return
+        if message['reply'] == 'I am not dead!':
+            # Stop timed function to remove pending host from pack members.
+            self.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
 
     def shutDown(self):
         # Call parent configure method.

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import tornado.web
 import tornado.escape
 import socket
@@ -15,14 +16,21 @@ class BaseHandler(tornado.web.RequestHandler):
 
 class MainHandler(BaseHandler):
     def get(self):
+        nodes = []
+        localnode = {'server_name': socket.gethostname(),
+                     'server_type': 'StandAlone'}
         # Check if cluster module is available.
-        server_type = "Master"
         cluster_info = self.webserver_module.gp.getModuleByName('Cluster')
         if cluster_info:
-            server_type = "PackLeader" if cluster_info['instances'][0].leader else "PackMember"
+            cluster_module = cluster_info['instances'][0]
+            localnode['server_type'] = "PackLeader" if cluster_module.leader else "PackMember"
+            if cluster_module.leader:
+                for pack_member in cluster_module.getPackMembers().itervalues():
+                    nodes.append({'server_name': pack_member.getHostName(),
+                                  'server_type': "PackLeader" if pack_member.leader else "PackMember"})
+        nodes.insert(0,localnode)
         self.render(
                 "index.html",
                 page_title="GambolPutty WebGui",
-                server_name=socket.gethostname(),
-                server_type=server_type
+                nodes = nodes,
         )

@@ -273,11 +273,12 @@ class GambolPutty:
                     Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
                 self.shutDown()
 
-    def getModuleByName(self, module_name):
+    def getModuleByName(self, module_name, silent=True):
         try:
             return self.modules[module_name]
         except KeyError:
-            self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+            if not silent:
+                self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
             return None
 
     def run(self):

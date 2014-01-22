@@ -45,7 +45,7 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
         settings =  {'template_path' : "%s/templates" % base_path,
                      'static_path': "%s/static" % base_path,
                      'ui_modules': uimodules.ServerListItem,
-                     'debug': True,
+                     'debug': False,
                      'TornadoWebserver': self}
         return settings
 

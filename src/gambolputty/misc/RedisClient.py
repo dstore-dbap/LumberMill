@@ -12,7 +12,7 @@ class RedisClient(BaseModule.BaseModule):
     """
     A simple wrapper around the redis python module.
 
-    cluster: dictionary of redis masters as keys and pack_members as values.
+    cluster: dictionary of redis masters as keys and pack_followers as values.
 
     Configuration example:
 

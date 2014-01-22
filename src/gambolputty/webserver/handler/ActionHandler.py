@@ -13,6 +13,18 @@ class BaseHandler(tornado.web.RequestHandler):
     def webserver_module(self):
         return self.settings['TornadoWebserver']
 
+    def set_default_headers(self):
+        # If we are a pack follower, allow leader to access these handlers.
+        cluster_info = self.webserver_module.gp.getModuleByName('Cluster')
+        if cluster_info:
+            cluster_module = cluster_info['instances'][0]
+            if cluster_module.leader:
+                return
+            self.set_header("Access-Control-Allow-Origin", "http://%s:%s" % (cluster_module.getDiscoveredLeader().getHostName(), cluster_module.getDiscoveredLeader().getPort()))
+            self.set_header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+            self.set_header("Access-Control-Allow-Headers","Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With,\
+                                                            X-Requested-By, If-Modified-Since, X-File-Name, Cache-Control")
+
     def __get_current_user(self):
         user_json = self.get_secure_cookie("gambolputty_web")
         if not user_json: return None

@@ -61,22 +61,22 @@ class ClusterConfiguration(BaseModule.BaseModule):
                 self.syncConfigurationToPack(self.filtered_startup_config)
         return updateMasterConfiguration
 
-    def handleDiscoveryFinish(self, message, host):
+    def handleDiscoveryFinish(self, message, pack_member):
         """
         Sync current configuration to newly discovered hosts.
         """
         message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
         self.logger.debug('%shandleDiscoveryReply called.%s' % (Utils.AnsiColors.OKBLUE, Utils.AnsiColors.ENDC))
-        self.cluster_module.sendMessageToPackMember(message, host)
+        self.cluster_module.sendMessageToPackMember(message, pack_member)
 
-    def handleUpdateConfigurationCall(self, message, host):
+    def handleUpdateConfigurationCall(self, message, pack_member):
         """
         Receive update configuration calls and handle them.
         """
         leader_configuration = message['configuration']
         leader_configuration = self.filterIgnoredModules(leader_configuration)
         if leader_configuration != self.filtered_startup_config:
-            self.logger.info("%sGot new cluster configuration from %s.%s" % (Utils.AnsiColors.LIGHTBLUE, host, Utils.AnsiColors.ENDC))
+            self.logger.info("%sGot new cluster configuration from %s.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
             self.gp.setConfiguration(leader_configuration, merge=True)
             # Send signal to reload GambolPutty.
             signal.alarm(1)
