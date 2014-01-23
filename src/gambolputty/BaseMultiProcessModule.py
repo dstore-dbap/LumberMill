@@ -31,6 +31,8 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def __init__(self, gp, stats_collector=False):
         BaseModule.BaseModule.__init__(self, gp, stats_collector)
         multiprocessing.Process.__init__(self)
+        self.input_queue = False
+        self.output_queues = []
         self.daemon = True
 
     def setInputQueue(self, queue):
