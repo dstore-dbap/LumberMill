@@ -2,6 +2,7 @@
 import socket
 import os
 import psutil
+import subprocess
 import tornado.web
 import tornado.escape
 import tornado.auth
@@ -35,8 +36,18 @@ class GetServerInformation(BaseHandler):
         partitions = psutil.disk_partitions()
         disk_usage = {}
         for partition in partitions:
-            du = psutil.disk_usage(partition.mountpoint)
-            disk_usage[partition.mountpoint] = {'total': du.total, 'used': du.used, 'free': du.free, 'percent': du.percent}
+            try:
+                # When running with pypy, check for missing os.statvfs module. (https://bugs.pypy.org/issue833)
+                os.statvfs
+                du = psutil.disk_usage(partition.mountpoint)
+                disk_usage[partition.mountpoint] = {'total': du.total, 'used': du.used, 'free': du.free, 'percent': du.percent}
+            except AttributeError:
+                # Use fallback.
+                df = subprocess.Popen(["df", partition.mountpoint], stdout=subprocess.PIPE)
+                output = df.communicate()[0]
+                device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
+                disk_usage[partition.mountpoint] = {'total': int(size)*1024, 'used': int(used)*1024, 'free': int(available)*1024, 'percent': percent}
+
         self.write(tornado.escape.json_encode({ 'hostname': socket.gethostname(),
                                                 'cpu_count': psutil.NUM_CPUS,
                                                 'load': os.getloadavg(),

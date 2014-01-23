@@ -5,6 +5,9 @@ Webserver modules
 
 A tornado based web server.
 
+port: Port to listen on.
+document_root: Location of documents and templates.
+
 Configuration example:
 
     - module: WebserverTornado

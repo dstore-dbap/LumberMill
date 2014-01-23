@@ -131,8 +131,13 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
 
     def sendMessage(self, message, host):
          # Json encode end encrypt message.
-        message = self.encrypt(json.dumps(message))
-        self.socket.sendto(message, host)
+        str_msg = json.dumps(message)
+        str_msg = self.encrypt(str_msg)
+        try:
+            self.socket.sendto(str_msg, host)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.warning("%sCould not send message %s to %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, message, host, etype, evalue, Utils.AnsiColors.ENDC))
 
     def sendMessageToPackMember(self, message, pack_member):
         self.logger.debug("%sSending message %s to %s.%s" % (Utils.AnsiColors.OKBLUE, message, pack_member, Utils.AnsiColors.ENDC))
@@ -260,8 +265,11 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             # Stop timed function to remove pending host from pack members.
             self.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
 
-    def shutDown(self):
+    def shutDown(self, silent=False):
         # Call parent configure method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
-        self.socket.close()
-        self.socket = None
+        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+        # Try to close socket. Failure to do so should be no problem.
+        try:
+            self.socket.close()
+        except:
+            pass

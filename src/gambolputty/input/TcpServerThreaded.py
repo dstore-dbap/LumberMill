@@ -170,6 +170,6 @@ class TcpServerThreaded(BaseModule.BaseModule):
         server_thread.daemon = True
         server_thread.start()
 
-    def shutDown(self):
+    def shutDown(self, silent):
         if self.server:
             self.server.is_alive = False

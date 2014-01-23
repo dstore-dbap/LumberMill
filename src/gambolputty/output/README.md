@@ -37,6 +37,15 @@ Configuration example:
         max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
         backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
 
+
+#####ElasticSearchMultiProcessSink
+
+Same configuration as above but with multiple processes.
+
+!!IMPORTANT!!: In contrast to the normal ElasticSearchSink module, this module uses multiple processes to store
+the events in the elasticsearch backend. This module is experimental and may cause strange side effects.
+The speedup is considerable though: around 2 to 3 times faster...
+
 #####StdOutSink
 
 Print the data dictionary to stdout.

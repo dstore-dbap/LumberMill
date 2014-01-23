@@ -62,7 +62,8 @@ class GambolPutty:
     """
 
     def __init__(self, path_to_config_file=False):
-        self.is_alive = True
+        self.alive = True
+        self.main_process_pid = os.getpid()
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
         if path_to_config_file:
@@ -288,7 +289,7 @@ class GambolPutty:
         signal.signal(signal.SIGINT, self.shutDown)
         signal.signal(signal.SIGALRM, self.restart)
         self.runModules()
-        while self.is_alive:
+        while self.alive:
             time.sleep(.5)
 
     def restart(self, signum=False, frame=False):
@@ -301,25 +302,30 @@ class GambolPutty:
         self.runModules()
 
     def shutDown(self, signum=False, frame=False):
-        self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
-        self.is_alive = False
-        self.shutDownModules()
-        self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        # If a module started a subprocess, this will get called for all subprocesses started.
+        # Still we know the pid of the main process. So only log if we are in the finaly shutdown stage.
+        silent = self.main_process_pid != os.getpid()
+        if not silent:
+            self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        self.alive = False
+        self.shutDownModules(silent)
+        if not silent:
+            self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         sys.exit(0)
 
-    def shutDownModules(self):
+    def shutDownModules(self, silent=False):
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type == "input":
-                    instance.shutDown()
+                    instance.shutDown(silent)
         # Give remaining queued events some time.
         time.sleep(.5)
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
             for instance in module_info['instances']:
                 if instance.module_type != "input":
-                    instance.shutDown()
+                    instance.shutDown(silent)
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'

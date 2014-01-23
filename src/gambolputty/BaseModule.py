@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import re
 import abc
 import logging
@@ -131,8 +130,9 @@ class BaseModule():
             except KeyError:
                 return False
 
-    def shutDown(self):
-        self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
+    def shutDown(self, silent=False):
+        if not silent:
+            self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
         self.stopTimedFunctions()
 
     def addReceiver(self, receiver_name, receiver):

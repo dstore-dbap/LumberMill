@@ -5,9 +5,7 @@ import datetime
 import time
 import elasticsearch
 import Queue
-from multiprocessing.queues import Queue as MpQueue
 import BaseModule
-import BaseMultiProcessModule
 import Utils
 import Decorators
 
@@ -105,10 +103,6 @@ class ElasticSearchSink(BaseModule.BaseModule):
             es = False
         return es
 
-    def __run(self):
-        self.timed_store_func(self)
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
-
     def sendEvent(self, event):
         """Override the default behaviour of destroying an event when no receivers are set.
         This module aggregates a configurable amount of events to use the bulk update feature
@@ -117,7 +111,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
         if not receivers:
             return
         for idx, receiver in enumerate(receivers):
-            if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
+            if isinstance(receiver, Queue.Queue):
                 receiver.put(event if idx is 0 else event.copy())
             else:
                 receiver.receiveEvent(event if idx is 0 else event.copy())
@@ -125,7 +119,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions.
         while self.is_storing:
-            time.sleep(.01)
+            time.sleep(.001)
         if len(self.events_container) >= self.backlog_size:
             self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
             yield event

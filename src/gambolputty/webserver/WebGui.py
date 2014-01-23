@@ -52,7 +52,6 @@ class WebGui(BaseModule.BaseModule):
                      # ActionHandler
                      (r"/actions/restart", handler.ActionHandler.RestartHandler),
                      (r"/actions/get_server_info", handler.ActionHandler.GetServerInformation),
-                     (r"/actions/register_slave", handler.ActionHandler.RegisterSlave),
                      # WebsocketHandler
                      (r"/websockets/statistics", handler.WebsocketHandler.StatisticsWebSocketHandler),
                      (r"/websockets/get_logs", handler.WebsocketHandler.LogToWebSocketHandler)]

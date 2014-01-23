@@ -83,7 +83,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
         #self.server.start(0)
         IOLoop.instance().start()
 
-    def shutDown(self):
+    def shutDown(self, silent):
         if self.running:
             try:
                 os.remove(self.getConfigurationValue('path_to_socket'))

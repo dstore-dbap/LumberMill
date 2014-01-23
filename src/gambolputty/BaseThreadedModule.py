@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import threading
 import Queue
@@ -72,7 +71,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
             self.receiveEvent(event)
         self.logger.info("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
-    def shutDown(self):
+    def shutDown(self, silent=False):
         # Call parent shutDown method
-        BaseModule.BaseModule.shutDown(self)
+        BaseModule.BaseModule.shutDown(self, silent=False)
         self.is_alive = False

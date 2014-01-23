@@ -108,11 +108,11 @@ class Facet(BaseModule.BaseModule):
             Facet.facet_data = {}
         return evaluateFacets
 
-    def shutDown(self):
+    def shutDown(self, silent):
         # Push any remaining facet data.
         self.evaluate_facet_data_func(self)
         # Call parent configure method.
-        BaseModule.BaseModule.shutDown(self)
+        BaseModule.BaseModule.shutDown(self, silent)
 
     def handleEvent(self, event):
         """

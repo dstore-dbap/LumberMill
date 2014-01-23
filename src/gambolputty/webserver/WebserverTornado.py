@@ -69,9 +69,9 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
             # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
             pass
 
-    def shutDown(self):
+    def shutDown(self, silent):
         # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
         if self.server:
             self.server.stop()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
