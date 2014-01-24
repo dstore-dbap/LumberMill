@@ -81,7 +81,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
 
     def shutDown(self, silent=False):
         # Call parent shutDown method
-        BaseModule.BaseModule.shutDown(self, silent=False)
+        BaseModule.BaseModule.shutDown(self, silent)
         self.alive = False
         if self.input_queue:
             self.input_queue.close()

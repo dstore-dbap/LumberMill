@@ -70,7 +70,6 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
             if not event:
                 continue
             self.receiveEvent(event)
-        self.logger.info("%sShutting down module %s.%s" % (Utils.AnsiColors.OKGREEN, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
     def shutDown(self, silent=False):
         # Call parent shutDown method

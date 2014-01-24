@@ -86,6 +86,26 @@ Configuration example:
       password: None              # <default: None; type: None||string; is: optional>
       timeout: 10                 # <default: 0; type: integer; is: optional>
 
+#####Zmq
+
+Read events from a zeromq.
+
+servers: Servers to poll. Pattern: hostname:port.
+pattern: Either pull or subscribe.
+mode: Wether to run a server or client.
+multipart: When using the sub pattern, messages can have a topic. If send via multipart set this to true.
+seperator: When using the sub pattern, messages can have a topic. Set seperator to split message from topic.
+
+Configuration example:
+
+- module: Zmq
+  servers:                    # <default: ['localhost:5570']; type: list; is: optional>
+  pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
+  mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
+  topic:                      # <default: ''; type: string; is: optional>
+  multipart:                  # <default: False; type: boolean; is: optional>
+  seperator:                  # <default: None; type: None||string; is: optional>
+
 #####Spam
 
 Emits events as fast as possible.
