@@ -44,6 +44,7 @@ The different modules can be combined in any order.
 * DevNullSink, discards all data that it receives.
 * StdOutSink, prints all received data to standard out.
 * ElasticSearchSink, stores data entries in an elasticsearch index.
+* ElasticSearchMultiProcessSink, same as above but multiprocessed.
 
 #### Misc modules
 
