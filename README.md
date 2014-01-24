@@ -18,6 +18,7 @@ The different modules can be combined in any order.
 * TcpServerTornado, read stream from a tcp socket, faster on Linux.
 * RedisChannel, read events from redis channels.
 * RedisList, read events from redis lists.
+* Zmq, read events from a zeromq.
 * UnixSocket, read stream from a named socket on unix like systems.
 * Spam, what it says on the can - spams GambolPutty for testing.
 
