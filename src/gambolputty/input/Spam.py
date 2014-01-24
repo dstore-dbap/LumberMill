@@ -31,7 +31,7 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
     def run(self):
         counter = 0
         max_events_count = self.getConfigurationValue("events_count")
-        while self.is_alive:
+        while self.alive:
             event = Utils.getDefaultEventDict(self.getConfigurationValue("event"), caller_class_name=self.__class__.__name__)
             self.sendEvent(event)
             if self.getConfigurationValue("sleep"):

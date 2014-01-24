@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
 import Utils
 import multiprocessing
 import ConfigurationValidator
@@ -49,7 +48,6 @@ def hasLoop(node, stack=[]):
         return hasLoop(current_node, stack)
     return []
 
-
 class GambolPutty:
     """A stream parser with configurable modules and message paths.
     
@@ -74,7 +72,9 @@ class GambolPutty:
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
-            return multiprocessing.Queue(queue_max_size)
+            queue = multiprocessing.Queue(queue_max_size)
+            queue = Utils.BufferedQueue(queue)
+            return queue
 
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration
@@ -113,6 +113,7 @@ class GambolPutty:
                 break
         self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
         self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
+        self.default_mp_queue_buffer_size = configuration['default_queue_buffer_size'] if 'default_queue_buffer_size' in gp_conf else 100
 
     def runModules(self):
         """

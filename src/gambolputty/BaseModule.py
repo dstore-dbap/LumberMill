@@ -4,8 +4,6 @@ import abc
 import logging
 import collections
 import Utils
-import Queue
-from multiprocessing.queues import Queue as MpQueue
 
 class BaseModule():
     """
@@ -187,10 +185,15 @@ class BaseModule():
             self.destroyEvent(event)
             return
         for idx, receiver in enumerate(receivers):
-            if isinstance(receiver, Queue.Queue) or isinstance(receiver, MpQueue):
-                receiver.put(event if idx is 0 else event.copy())
-            else:
+            try:
                 receiver.receiveEvent(event if idx is 0 else event.copy())
+            except AttributeError:
+                try:
+                    receiver.put(event if idx is 0 else event.copy())
+                except AttributeError:
+                    self.logger.error("%s%s has neither receiveEvent nor put method.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, Utils.AnsiColors.ENDC))
+                    self.gp.shutDown()
+
 
     def receiveEvent(self, event):
         for event in self.handleEvent(event):

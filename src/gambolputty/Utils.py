@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import time
 import os
 import sys
 import subprocess
@@ -7,6 +8,7 @@ import logging
 import __builtin__
 import signal
 import Utils
+import Decorators
 
 try:
     import __pypy__
@@ -104,6 +106,43 @@ class AstTransformer(ast.NodeTransformer):
         #pprint(ast.dump(ast.parse(self.mapping % node.id)))
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
+
+class BufferedQueue():
+    def __init__(self, queue, buffersize=100, ):
+        self.queue = queue
+        self.buffersize = buffersize
+        self.buffer = []
+        self.is_sending = False
+        self.flushBuffer()
+
+    @Decorators.setInterval(1)
+    def flushBuffer(self):
+        if self.is_sending or len(self.buffer) == 0:
+            return
+        self.sendBuffer()
+
+    def put(self, payload):
+        # Wait till a running store is finished to avoid strange race conditions.
+        while self.is_sending:
+            time.sleep(.001)
+        self.buffer.append(payload)
+        if len(self.buffer) == self.buffersize:
+            self.sendBuffer()
+
+    def sendBuffer(self):
+        self.is_sending = True
+        self.queue.put(self.buffer)
+        self.buffer = []
+        self.is_sending = False
+
+    def get(self, block=True, timeout=None):
+        return self.queue.get(block, timeout)
+
+    def qsize(self):
+        return len(self.buffer) + self.queue.qsize()
+
+    def __getattr__(self, name):
+        return getattr(self.queue, name)
 
 class AnsiColors:
     HEADER = '\033[95m'

@@ -44,7 +44,9 @@ Same configuration as above but with multiple processes.
 
 !!IMPORTANT!!: In contrast to the normal ElasticSearchSink module, this module uses multiple processes to store
 the events in the elasticsearch backend. This module is experimental and may cause strange side effects.
-The speedup is considerable though: around 2 to 3 times faster...
+The performance gain is considerable though:
+ - when run under CPython it is around 20% - 30%
+ - when run under pypy it is around 40% - 60%
 
 #####StdOutSink
 

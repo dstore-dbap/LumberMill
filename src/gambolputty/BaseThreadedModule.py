@@ -33,6 +33,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
         self.input_queue = False
         self.output_queues = []
         self.daemon = True
+        self.alive = True
 
     def setInputQueue(self, queue):
         self.input_queue = queue
@@ -64,7 +65,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
             if self.module_type not in ['stand_alone', 'input']:
                 self.logger.error("%sShutting down module %s since no input queue is set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
                 return
-        while self.is_alive:
+        while self.alive:
             event = self.getEventFromInputQueue()
             if not event:
                 continue
@@ -74,4 +75,6 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     def shutDown(self, silent=False):
         # Call parent shutDown method
         BaseModule.BaseModule.shutDown(self, silent=False)
-        self.is_alive = False
+        self.alive = False
+        if self.input_queue:
+            self.input_queue.close()

@@ -36,7 +36,7 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
             t.start()
 
         # server main loop
-        while self.is_alive:
+        while self.alive:
             self.handle_request()
 
         self.server_close()
@@ -172,4 +172,4 @@ class TcpServerThreaded(BaseModule.BaseModule):
 
     def shutDown(self, silent):
         if self.server:
-            self.server.is_alive = False
+            self.server.alive = False

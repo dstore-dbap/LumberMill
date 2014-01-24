@@ -33,7 +33,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
             return
         hostname = socket.gethostname()
         multiline_data = ""
-        while self.is_alive:
+        while self.alive:
             data = input.readline()
             if data.__len__() > 0:
                 if not self.multiline:
@@ -48,4 +48,4 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
                 if multiline_data.__len__() > 0:
                     self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}, caller_class_name=self.__class__.__name__))
                 self.gp.shutDown()
-                self.is_alive = False
+                self.alive = False

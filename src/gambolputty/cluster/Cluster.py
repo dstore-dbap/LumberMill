@@ -170,7 +170,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         # Start discovery of master server if we are a simple pack member.
         if not self.leader:
             self.startTimedFunction(self.sendDiscoverBroadcast)
-        while self.is_alive:
+        while self.alive:
             message, host = self.socket.recvfrom(16384)
             try:
                 # Decrypt and json decode message.

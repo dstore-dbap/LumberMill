@@ -78,15 +78,17 @@ class ElasticSearchSink(BaseModule.BaseModule):
             return
         self.is_storing = False
         self.timed_store_func = self.getTimedStoreFunc()
-        self.timed_store_func(self)
 
     def getTimedStoreFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
-        def timedStoreData(self):
-            while self.is_storing:
-                time.sleep(.01)
+        def timedStoreData():
+            if self.is_storing:
+                return
             self.storeData(self.events_container)
         return timedStoreData
+
+    def run(self):
+        self.timed_store_func()
 
     def connect(self):
         es = False
@@ -167,7 +169,6 @@ class ElasticSearchSink(BaseModule.BaseModule):
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
-            #self.es.bulk_index(index_name, 'test', events, id_field=self.getConfigurationValue("doc_id"), consistency='one')
             self.destroyEvent(event_list=events)
             self.events_container = []
         except elasticsearch.exceptions.ConnectionError:
