@@ -46,6 +46,8 @@ The different modules can be combined in any order.
 * StdOutSink, prints all received data to standard out.
 * ElasticSearchSink, stores data entries in an elasticsearch index.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
+* SyslogSink, send events to syslog.
+* FileSink, store events in a file.
 
 #### Misc modules
 
