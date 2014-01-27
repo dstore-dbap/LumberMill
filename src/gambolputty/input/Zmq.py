@@ -31,7 +31,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     module_type = "input"
     """Set module type"""
 
-    can_run_parallel = True
+    can_run_parallel = False
 
     def configure(self, configuration):
          # Call parent configure method
@@ -48,15 +48,20 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             self.receiver.setsockopt(zmq.SUBSCRIBE, str(self.topic))
         mode = self.getConfigurationValue('mode')
         for server in self.getConfigurationValue('servers'):
+            server_name, server_port = server.split(":")
+            try:
+                server_addr = socket.gethostbyname(server_name)
+            except socket.gaierror:
+                server_addr = server_name
             try:
                 if mode == 'connect':
-                    self.receiver.connect('tcp://%s' % server)
+                    self.receiver.connect('tcp://%s:%s' % (server_addr, server_port))
                 else:
-                    self.receiver.bind('tcp://%s' % server)
+                    self.receiver.bind('tcp://%s:%s' % (server_addr, server_port))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, server, etype, evalue, Utils.AnsiColors.ENDC))
-                self.gp.shutDown()
+                #self.gp.shutDown()
 
     def getEventFromInputQueue(self):
         try:
@@ -72,11 +77,14 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sCould not read data from zeromq. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC))
 
     def handleEvent(self, event):
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
+        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event}, caller_class_name=self.__class__.__name__)
 
     def shutDown(self, silent=False):
         # Call parent shutDown method.
         BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
-        if self.receiver:
+        return
+        try:
             self.receiver.close()
             self.zmq_context.term()
+        except AttributeError:
+            pass

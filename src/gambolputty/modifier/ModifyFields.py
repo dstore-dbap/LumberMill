@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
 import hashlib
@@ -39,6 +40,16 @@ class ModifyFields(BaseModule.BaseModule):
       action: insert                              # <type: string; is: required>
       target_field: "New field"                   # <type: string; is: required>
       value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
+      receivers:
+        - NextModule
+
+    # Replace field values matching string "old" in data dictionary with "new".
+    - module: ModifyFields
+      action: string_replace                      # <type: string; is: required>
+      source_field: field1                        # <type: string; is: required>
+      old:                                        # <type: string; is: required>
+      new:                                        # <type: string; is: required>
+      max:                                        # <default: -1; type: integer; is: optional>
       receivers:
         - NextModule
 
@@ -223,6 +234,20 @@ class ModifyFields(BaseModule.BaseModule):
         field = self.getConfigurationValue('source_field', event)
         try:
             event[field] = self.regex.sub(self.getConfigurationValue('with', event), event[field])
+        except KeyError:
+            pass
+        return event
+
+    def string_replace(self, event):
+        """
+        Field value matching srting in data dictionary will be replace with new.
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        field = self.getConfigurationValue('source_field', event)
+        try:
+            event[field] = event[field].replace(self.getConfigurationValue('old', event), self.getConfigurationValue('new', event), self.getConfigurationValue('max'))
         except KeyError:
             pass
         return event

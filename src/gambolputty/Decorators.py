@@ -92,6 +92,8 @@ def ModuleDocstringParser(cls):
                     instance.configuration_metadata[config_option_info['name'].strip()].update({prop_name: prop_value})
                 except:
                     instance.configuration_metadata[config_option_info['name'].strip()] = {prop_name: prop_value}
+        # Set self_hostname
+
         return instance
 
     return wrapper

@@ -57,6 +57,44 @@ Configuration example:
     - module: StdOutSink
       pretty_print: True      # <default: True; type: boolean; is: optional>
 
+#####SyslogSink
+
+Send events to syslog.
+
+address: Either a server:port pattern or a filepath to an unix socket, e.g. /dev/log.
+proto: Protocol to use.
+facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names
+format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
+
+Configuration example:
+
+    - module: SyslogSink
+      address:              # <default: 'localhost:514'; type: string; is: required>
+      proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
+      facility:             # <default: 'user'; type: string; is: optional>
+      format:               # <type: string; is: required>
+
+#####FileSink
+
+Store events in a file.
+
+path: Path to logfiles. String my contain any of pythons strtime directives.
+name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
+format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
+store_interval_in_secs: sending data to es in x seconds intervals.
+max_waiting_events: sending data to es if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration example:
+
+    - module: FileSink
+      path:                                 # <type: string; is: required>
+      name_pattern:                         # <type: string; is: required>
+      format:                               # <type: string; is: required>
+      store_interval_in_secs:               # <default: 1; type: integer; is: optional>
+      max_waiting_events:                   # <default: 500; type: integer; is: optional>
+      backlog_size:                         # <default: 5000; type: integer; is: optional>
+
 #####DevNullSink
 
 Just discard messages send to this module.BaseThreadedModule

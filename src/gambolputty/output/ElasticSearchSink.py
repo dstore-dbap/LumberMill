@@ -43,18 +43,18 @@ class ElasticSearchSink(BaseModule.BaseModule):
     Configuration example:
 
     - module: ElasticSearchSink
-        nodes: ["localhost:9200"]                 # <type: list; is: required>
-        connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
-        use_ssl: True                             # <default: False; type: boolean; is: optional>
-        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
-        consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-        store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
-        max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
-        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+      nodes: ["localhost:9200"]                 # <type: list; is: required>
+      connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
+      http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
+      use_ssl: True                             # <default: False; type: boolean; is: optional>
+      index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+      index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
+      doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+      consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+      replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+      store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
+      max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
+      backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"

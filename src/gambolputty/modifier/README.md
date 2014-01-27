@@ -102,6 +102,16 @@ Configuration examples:
       receivers:
         - NextModule
 
+    # Replace field values matching string "old" in data dictionary with "new".
+    - module: ModifyFields
+      action: string_replace                      # <type: string; is: required>
+      source_field: field1                        # <type: string; is: required>
+      old:                                        # <type: string; is: required>
+      new:                                        # <type: string; is: required>
+      max:                                        # <default: -1; type: integer; is: optional>
+      receivers:
+        - NextModule
+
     # Map a field value.
     - module: ModifyFields
       action: map                                 # <type: string; is: required>

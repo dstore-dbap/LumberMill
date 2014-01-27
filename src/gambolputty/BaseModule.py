@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import socket
 import abc
 import logging
 import collections
@@ -77,8 +78,8 @@ class BaseModule():
                 if dynamic_var_regex.search(value):
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
-            # Init redis_client if configured.
-            self.initRedisClient()
+        # Init redis_client if configured.
+        self.initRedisClient()
 
     def getConfigurationValue(self, key, mapping_dict=False):
         """

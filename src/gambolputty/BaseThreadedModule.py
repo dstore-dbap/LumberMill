@@ -75,5 +75,3 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
         # Call parent shutDown method
         BaseModule.BaseModule.shutDown(self, silent=False)
         self.alive = False
-        if self.input_queue:
-            self.input_queue.close()
