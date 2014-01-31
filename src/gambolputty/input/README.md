@@ -5,18 +5,30 @@ Input modules
 Reads data from tcp socket and sends it to its output queues.
 Should be the best choice perfomancewise if you are on Linux.
 
+interface:  Ipaddress to listen on.
+port:       Port to listen on.
+timeout:    Sockettimeout in seconds.
+tls:        Use tls or not.
+key:        Path to tls key file.
+cert:       Path to tls cert file.
+mode:       Receive mode, line or stream.
+seperator:  If mode is line, set seperator between lines.
+chunksize:  If mode is stream, set chunksize in bytes to read from stream.
+
 Configuration example:
 
     - module: TcpServerTornado
-      interface: localhost             # <default: 'localhost'; type: string; is: optional>
-      port: 5151                       # <default: 5151; type: integer; is: optional>
-      timeout: 5                       # <default: None; type: None||integer; is: optional>
-      tls: False                       # <default: False; type: boolean; is: optional>
-      key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
-      cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
+      interface:                       # <default: ''; type: string; is: optional>
+      port:                            # <default: 5151; type: integer; is: optional>
+      timeout:                         # <default: None; type: None||integer; is: optional>
+      tls:                             # <default: False; type: boolean; is: optional>
+      key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+      cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+      mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
+      seperator:                       # <default: '\n'; type: string; is: optional>
+      chunksize:                       # <default: 16384; type: integer; is: optional>
       receivers:
         - NextModule
-    """
 
 
 #####TcpServerThreaded

@@ -135,25 +135,6 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
         self.events_container = []
         self.is_storing = False
 
-    def __storeEvents(self, events):
-        if len(events) == 0:
-            return
-        self.is_storing = True
-        key = 'Test'
-        for event in events:
-            try:
-                #key = time.strftime(self.getConfigurationValue('name_pattern'))
-                #key = key % event
-                logger = self.getLogger(key)
-                logger.info("asdasdasd") #self.getConfigurationValue('format', event)
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error('%sCould no log event %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
-        #self.destroyEvent(event_list=events, do_it=True)
-        self.events_container = []
-        self.is_storing = False
-
-
     def shutDown(self, silent=False):
         for key in self.fileloggers.keys():
             for handler in self.fileloggers[key][0].handlers:

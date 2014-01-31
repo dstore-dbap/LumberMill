@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import pprint
 import re
 import socket
 import abc
 import logging
 import collections
+import sys
 import Utils
 
 class BaseModule():
@@ -98,7 +100,7 @@ class BaseModule():
                 try:
                     return self.configuration_metadata[key]['default']
                 except KeyError:
-                    self.logger.warning("%sCould not find configuration setting for key: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
+                    self.logger.warning("%sCould not find configuration setting for required setting: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
                     #return False
         if not isinstance(config_setting, dict):
@@ -151,6 +153,7 @@ class BaseModule():
                     callback(event)
             else:
                 callback(event)
+        event = None
 
     def getFilter(self, receiver_name):
         try:
@@ -160,41 +163,62 @@ class BaseModule():
 
     def setFilter(self, receiver_name, filter):
         self.filters[receiver_name] = filter
+        # Replace default sendEvent method with filtered one.
+        self.sendEvent = self.sendEventFiltered
 
     def getFilteredReceivers(self, event):
         if not self.filters:
-            return self.receivers.values()
-        filterd_receivers = []
+            return self.receivers
+        filterd_receivers = {}
         for receiver_name, receiver in self.receivers.iteritems():
             receiver_filter = self.getFilter(receiver_name)
             if not receiver_filter:
-                filterd_receivers.append(receiver)
+                filterd_receivers[receiver_name] = receiver
                 continue
             try:
                 matched = False
                 # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
                 exec receiver_filter
                 if matched:
-                    filterd_receivers.append(receiver)
+                    filterd_receivers[receiver_name] = receiver
             except:
                 raise
         return filterd_receivers
 
     def sendEvent(self, event):
+        if not self.receivers:
+            self.destroyEvent(event)
+            return
+        copy_event = False
+        for receiver in self.receivers.itervalues():
+            try:
+                receiver.receiveEvent(event if copy_event is False else event.copy())
+                copy_event = True
+            except AttributeError:
+                try:
+                    receiver.put(event if copy_event is False else event.copy())
+                except AttributeError:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%s%s failed to receive event. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.gp.shutDown()
+
+    def sendEventFiltered(self, event):
         receivers = self.getFilteredReceivers(event)
         if not receivers:
             self.destroyEvent(event)
             return
-        for idx, receiver in enumerate(receivers):
+        copy_event = False
+        for receiver in receivers.itervalues():
             try:
-                receiver.receiveEvent(event if idx is 0 else event.copy())
+                receiver.receiveEvent(event if copy_event is False else event.copy())
+                copy_event = True
             except AttributeError:
                 try:
-                    receiver.put(event if idx is 0 else event.copy())
+                    receiver.put(event if copy_event is False else event.copy())
                 except AttributeError:
-                    self.logger.error("%s%s has neither receiveEvent nor put method.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, Utils.AnsiColors.ENDC))
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%s%s failed to receive event. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
-
 
     def receiveEvent(self, event):
         for event in self.handleEvent(event):

@@ -71,7 +71,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
-
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()

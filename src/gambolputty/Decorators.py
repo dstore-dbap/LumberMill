@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+import codecs
 import sys
-import time
+import functools
 import threading
 import re
 import ast
 import multiprocessing
-from functools import wraps
-
 
 def Singleton(class_):
     instances = {}
@@ -55,7 +54,7 @@ def setProcessInterval(interval):
 
 
 def ModuleDocstringParser(cls):
-    @wraps(cls)
+    @functools.wraps(cls)
     def wrapper(*args, **kwargs):
         instance = cls(*args, **kwargs)
         instance.configuration_metadata = {}
@@ -73,6 +72,9 @@ def ModuleDocstringParser(cls):
             for prop_info in config_option_info['props'].split(";"):
                 try:
                     prop_name, prop_value = [m.strip() for m in prop_info.split(":", 1)]
+                    # Replace escaped backslashes.
+                    if "//" in prop_value:
+                        prop_value = codecs.escape_decode(prop_value)
                 except ValueError:
                     instance.logger.debug("Could not parse config setting %s." % config_option_info)
                     continue
@@ -97,3 +99,13 @@ def ModuleDocstringParser(cls):
         return instance
 
     return wrapper
+
+def memoize(obj):
+    cache = obj.cache = {}
+    @functools.wraps(obj)
+    def memoizer(*args, **kwargs):
+        key = str(args) + str(kwargs)
+        if key not in cache:
+            cache[key] = obj(*args, **kwargs)
+        return cache[key]
+    return memoizer

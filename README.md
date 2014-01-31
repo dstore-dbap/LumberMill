@@ -48,6 +48,7 @@ The different modules can be combined in any order.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
 * SyslogSink, send events to syslog.
 * FileSink, store events in a file.
+* WebHdfsSink, store events in hdfs via webhdfs.
 
 #### Misc modules
 

@@ -21,7 +21,7 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
     """
     numThreads = 15
     allow_reuse_address = True  # seems to fix socket.error on server restart
-    is_alive = True
+    alive = True
 
     def serve_forever(self):
         """
@@ -38,7 +38,6 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
         # server main loop
         while self.alive:
             self.handle_request()
-
         self.server_close()
 
 
@@ -78,7 +77,8 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 data = self.rfile.readline().strip()
                 if data == "":
                     continue
-                self.tcp_server_instance.sendEvent(Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded'))
+                event = Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded')
+                self.tcp_server_instance.sendEvent(event)
         except socket.error, e:
            self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
@@ -91,7 +91,6 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
         SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
         self.socket.settimeout(timeout)
-        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.use_tls = tls
         self.timeout = timeout
         if tls == True:

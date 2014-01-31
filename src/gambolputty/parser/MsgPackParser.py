@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import types
 import msgpack
 import BaseModule
 from Decorators import ModuleDocstringParser
@@ -13,8 +14,10 @@ class MsgPackParser(BaseModule.BaseModule):
     Configuration example:
 
     - module: MsgPackParser
-      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-      keep_original: True                     # <default: False; type: boolean; is: optional>
+      mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+      source_fields:                          # <default: 'data'; type: string||list; is: optional>
+      target_field:                           # <default: None; type: None||string; is: optional>
+      keep_original:                          # <default: False; type: boolean; is: optional>
       receivers:
         - NextHandler
     """
@@ -25,22 +28,52 @@ class MsgPackParser(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
-        self.source_field = self.getConfigurationValue('source_field')
+        self.source_fields = self.getConfigurationValue('source_fields')
+        # Allow single string as well.
+        if isinstance(self.source_fields, types.StringTypes):
+            self.source_fields = [self.source_fields]
+        self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')
+        if self.getConfigurationValue('mode') == 'decode':
+            self.handleEvent = self.decodeEvent
+        else:
+            self.handleEvent = self.encodeEvent
 
-    def handleEvent(self, event):
-        if self.source_field not in event:
-            yield event
-            return
-        #json_string = str(event[self.source_field]).strip("'<>() ").replace('\'', '\"')
+    def decodeEvent(self, event):
+        for source_field in self.source_fields:
+            if source_field not in event:
+                continue
+            try:
+                decoded_data = msgpack.unpackb(event[source_field])
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not parse msgpack event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                continue
+            if self.drop_original:
+                event.pop(source_field, None)
+            if self.target_field:
+                event.update({self.target_field: decoded_data})
+            else:
+                event.update(decoded_data)
+        yield event
+
+    def encodeEvent(self, event):
+        if self.source_fields == 'all':
+            encode_data = event
+        else:
+            encode_data = []
+            for source_field in self.source_fields:
+                if source_field not in event:
+                    continue
+                encode_data.append({source_field: event[source_field]})
+                if self.drop_original:
+                    event.pop(source_field, None)
         try:
-            msgpack_data = msgpack.unpackb(event[self.source_field])
+            encode_data = msgpack.packb(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not parse msgpack data %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.error("Could not msgpack encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
             yield event
             return
-        if self.drop_original:
-            event.pop(self.source_field, None)
-        event.update(msgpack_data)
+        event.update({self.target_field: encode_data})
         yield event

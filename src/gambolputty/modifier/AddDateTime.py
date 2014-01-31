@@ -2,6 +2,8 @@
 import datetime
 import BaseModule
 from Decorators import ModuleDocstringParser
+import pprint
+
 
 @ModuleDocstringParser
 class AddDateTime(BaseModule.BaseModule):
@@ -22,4 +24,4 @@ class AddDateTime(BaseModule.BaseModule):
 
     def handleEvent(self, event):
         event[self.getConfigurationValue('target_field', event)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', event))
-        yield(event)
+        yield event
