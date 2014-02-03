@@ -17,12 +17,12 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: HttpRequest
-      url: http://%(server_name)s/some/path   # <type: string; is: required>
-      socket_timeout: 25                      # <default: 25; type: integer; is: optional>
-      target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-      redis_key: HttpRequest:%(server_name)s   # <default: None; type: None||string; is: optional if redis_client == "" else required>
-      redis_ttl: 600                           # <default: 60; type: integer; is: optional>
+      url:                                    # <type: string; is: required>
+      socket_timeout:                         # <default: 25; type: integer; is: optional>
+      target_field:                           # <default: "gambolputty_http_request"; type: string; is: optional>
+      redis_store:                            # <default: None; type: None||string; is: optional>
+      redis_key:                              # <default: None; type: None||string; is: optional if redis_store is None else required>
+      redis_ttl:                              # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -32,6 +32,12 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         socket.setdefaulttimeout(self.getConfigurationValue('socket_timeout'))
+        # Get redis client module.
+        if self.getConfigurationValue('redis_store'):
+            mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
+            self.redis_store = mod_info['instances'][0]
+        else:
+            self.redis_store = None
 
     def handleEvent(self, event):
         if 'TreeNodeID' not in event:
@@ -48,13 +54,13 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
             yield event
             return
         result = None
-        if self.redis_client:
-            result = self.redis_client.getValue(self.getConfigurationValue('redis_key', event))
+        if self.redis_store:
+            result = self.redis_store.getValue(self.getConfigurationValue('redis_key', event))
         if result == None:
             try:
                 result = self.execRequest(request_url).read()
-                if result and self.redis_client:
-                    self.redis_client.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                if result and self.redis_store:
+                    self.redis_store.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
                 yield event
                 return

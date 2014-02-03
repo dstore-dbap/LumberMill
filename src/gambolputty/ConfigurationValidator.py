@@ -35,7 +35,7 @@ class ConfigurationValidator():
                          'Dictionary': types.DictType,
                          'Dict': types.DictType}
 
-    default_module_config_keys = ('module', 'alias', 'receivers', 'pool_size', 'queue_size', 'redis_client', 'redis_key', 'redis_ttl')
+    default_module_config_keys = ('module', 'id', 'receivers', 'pool_size', 'queue_size', 'redis_store', 'redis_key', 'redis_ttl')
 
     def validateModuleInstance(self, moduleInstance):
         result = []

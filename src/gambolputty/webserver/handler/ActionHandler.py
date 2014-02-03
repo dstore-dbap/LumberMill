@@ -15,7 +15,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def set_default_headers(self):
         # If we are a pack follower, allow leader to access these handlers.
-        cluster_info = self.webserver_module.gp.getModuleByName('Cluster')
+        cluster_info = self.webserver_module.gp.getModuleInfoById('Cluster')
         if cluster_info:
             cluster_module = cluster_info['instances'][0]
             if cluster_module.leader:

@@ -36,12 +36,12 @@ If that fails, it will execute the http request and store the result in redis.
 Configuration example:
 
     - module: HttpRequest
-      url: http://%(server_name)s/some/path   # <type: string; is: required>
-      socket_timeout: 25                      # <default: 25; type: integer; is: optional>
-      target_field: http_response             # <default: "gambolputty_http_request"; type: string; is: optional>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-      redis_key: HttpRequest:%(server_name)s   # <default: None; type: None||string; is: optional if redis_client == "" else required>
-      redis_ttl: 600                           # <default: 60; type: integer; is: optional>
+      url:                                    # <type: string; is: required>
+      socket_timeout:                         # <default: 25; type: integer; is: optional>
+      target_field:                           # <default: "gambolputty_http_request"; type: string; is: optional>
+      redis_store:                            # <default: None; type: None||string; is: optional>
+      redis_key:                              # <default: None; type: None||string; is: optional if redis_client == "" else required>
+      redis_ttl:                              # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
 

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-import pprint
 import re
-import socket
 import abc
 import logging
 import collections
@@ -17,10 +15,7 @@ class BaseModule():
     Configuration example:
 
     - module: SomeModuleName
-      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
-      redis_client: RedisClientName             # <default: ""; type: string; is: optional>
-      redis_key: XPathParser%(server_name)s     # <default: ""; type: string; is: required if redis_client is True else optional>
-      redis_ttl: 600                            # <default: 60; type: integer; is: optional>
+      id:                                       # <default: ""; type: string; is: optional>
       ...
       receivers:
        - ModuleName
@@ -38,7 +33,6 @@ class BaseModule():
         self.configuration_data = {}
         self.receivers = {}
         self.filters = {}
-        self.redis_client = None
         self.timed_function_events = []
         self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
@@ -80,8 +74,6 @@ class BaseModule():
                 if dynamic_var_regex.search(value):
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
-        # Init redis_client if configured.
-        self.initRedisClient()
 
     def getConfigurationValue(self, key, mapping_dict=False):
         """
@@ -236,13 +228,6 @@ class BaseModule():
         @param event: dictionary
         """
         yield event
-
-    def initRedisClient(self):
-        if not self.getConfigurationValue('redis_client') or self.getConfigurationValue('redis_client') == "":
-            return
-        redis_client_instances = self.gp.getModuleByName(self.getConfigurationValue('redis_client'))
-        if redis_client_instances:
-            self.redis_client = redis_client_instances['instances'][0]
 
     def startTimedFunction(self, timed_function, *args, **kwargs):
         """

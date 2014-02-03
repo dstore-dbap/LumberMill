@@ -37,7 +37,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     consistency: one of: 'one', 'quorum', 'all'
     replication: one of: 'sync', 'async'.
     store_interval_in_secs: sending data to es in x seconds intervals.
-    max_waiting_events: sending data to es if event count is above, even if store_interval_in_secs is not reached.
+    batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
 
     Configuration example:
@@ -52,8 +52,8 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         doc_id: 'data'                            # <default: "data"; type: string; is: optional>
         consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
         replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-        store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
-        max_waiting_events: 500                   # <default: 500; type: integer; is: optional>
+        store_interval_in_secs: 1                 # <default: 5; type: integer; is: optional>
+        batch_size: 500                           # <default: 500; type: integer; is: optional>
         backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
     """
 
@@ -64,7 +64,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         # Call parent configure method
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
         self.events_container = []
-        self.max_waiting_events = self.getConfigurationValue('max_waiting_events')
+        self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -128,7 +128,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             yield event
             return
         self.events_container.append(event)
-        if len(self.events_container) >= self.max_waiting_events:
+        if len(self.events_container) >= self.batch_size:
             self.storeData(self.events_container)
         yield event
 

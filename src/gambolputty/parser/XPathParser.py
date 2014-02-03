@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 from lxml import etree
 import sys
 import BaseThreadedModule
@@ -17,19 +18,28 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - module: XPathParser
-      source_field: 'xml_data'                                # <type: string; is: required>
-      target_field: xpath                                     # <default: "gambolputty_xpath"; type: string; is: optional>
-      query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-      redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional>
-      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      source_field:                          # <type: string; is: required>
+      target_field:                          # <default: "gambolputty_xpath"; type: string; is: optional>
+      query:                                 # <type: string; is: required>
+      redis_store:                           # <default: None; type: None||string; is: optional>
+      redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
+      redis_ttl:                             # <default: 60; type: integer; is: optional>
     """
 
     module_type = "parser"
     """Set module type"""
 
+    def configure(self, configuration):
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        # Get redis client module.
+        if self.getConfigurationValue('redis_store'):
+            mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
+            self.redis_store = mod_info['instances'][0]
+        else:
+            self.redis_store = None
+
     def castToList(self, value):
-        return [str(x) for x in value]
+        return [etree.tostring(x) for x in value]
 
     def handleEvent(self, event):
         """
@@ -43,8 +53,8 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
             yield event
             return
         result = None
-        if self.redis_client:
-            result = self.redis_client.getValue(self.getConfigurationValue('redis_key', event))
+        if self.redis_store:
+            result = self.redis_store.getValue(self.getConfigurationValue('redis_key', event))
         if result == None:
             xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
@@ -53,8 +63,8 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
                 result =  xml_tree.xpath(self.getConfigurationValue('query', event))
                 if(type(result) == list):
                     result = self.castToList(result)
-                if self.redis_client:
-                    self.redis_client.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                if self.redis_store:
+                    self.redis_store.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("%sCould not parse xml doc %s Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, xml_string, etype, evalue, Utils.AnsiColors.ENDC))

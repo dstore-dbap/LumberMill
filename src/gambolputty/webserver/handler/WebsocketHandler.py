@@ -58,7 +58,7 @@ class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler
     """
     def open(self):
         # Try to get the statistics module
-        statistic_module_info = self.webserver_module.gp.getModuleByName('Statistics')
+        statistic_module_info = self.webserver_module.gp.getModuleInfoById('Statistics')
         if not statistic_module_info:
             self.write_message(tornado.escape.json_encode(False))
             return

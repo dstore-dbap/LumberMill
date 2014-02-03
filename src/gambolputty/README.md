@@ -10,10 +10,7 @@ are doing ;) You have been warned ;)
 Configuration example:
 
     - module: SomeModuleName
-      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
-      redis_client: RedisClientName             # <default: ""; type: string; is: optional>
-      redis_key: XPathParser%(server_name)s     # <default: ""; type: string; is: required if redis_client is True else optional>
-      redis_ttl: 600                            # <default: 60; type: integer; is: optional>
+      id:                                       # <default: ""; type: string; is: optional>
       ...
       receivers:
        - ModuleName
@@ -32,12 +29,9 @@ Otherwise a threaded module is prone to slow everything down.
 Configuration example:
 
     - module: SomeModuleName
-      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
+      id:                                       # <default: ""; type: string; is: optional>
       pool_size: 4                              # <default: None; type: None||integer; is: optional>
       queue_size: 20                            # <default: None; type: None||integer; is: optional>
-      redis_client: RedisClientName             # <default: ""; type: string; is: optional>
-      redis_key: XPathParser%(server_name)s     # <default: ""; type: string; is: required if redis_client is True else optional>
-      redis_ttl: 600                            # <default: 60; type: integer; is: optional>
       ...
       receivers:
        - ModuleName
@@ -59,12 +53,9 @@ so not every single event will get pickled/unpickled.
     Configuration example:
 
     - module: SomeModuleName
-      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
+      id:                                       # <default: ""; type: string; is: optional>
       pool_size: 4                              # <default: None; type: None||integer; is: optional>
       queue_size: 20                            # <default: None; type: None||integer; is: optional>
-      redis_client: RedisClientName             # <default: ""; type: string; is: optional>
-      redis_key: XPathParser%(server_name)s     # <default: ""; type: string; is: required if redis_client is True else optional>
-      redis_ttl: 600                            # <default: 60; type: integer; is: optional>
       ...
       receivers:
        - ModuleName

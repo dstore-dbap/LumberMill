@@ -12,7 +12,7 @@ class MockGambolPutty(mock.Mock):
         mock.Mock.__init__(self)
         self.modules = {}
 
-    def getModuleByName(self, module_name):
+    def getModuleById(self, module_name):
         try:
             return self.modules[module_name]
         except KeyError:

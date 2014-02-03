@@ -5,7 +5,7 @@ import unittest
 import mock
 import time
 import Utils
-import RedisClient
+import RedisStore
 import Facet
 
 class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -39,14 +39,14 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertEquals(events[0]['facets'], ['http://www.gambolputty.com'])
 
     def testRedisFacet(self):
-        rc = RedisClient.RedisClient(gp=mock.Mock())
+        rc = RedisStore.RedisStore(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
-        self.test_object.gp.modules = {'RedisClient': {'instances': [rc]}}
+        self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '%(remote_ip)s',
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1,
-                                    'redis_client': 'RedisClient',
+                                    'redis_store': 'RedisStore',
                                     'redis_ttl': 5})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)

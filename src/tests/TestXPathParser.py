@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import extendSysPath
-import unittest
 import ModuleBaseTestCase
 import mock
 import Utils
 import XPathParser
-import RedisClient
+import RedisStore
 
 class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -68,13 +67,13 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertTrue('book_title' in event and len(event['book_title']) > 0)
 
     def testRedis(self):
-        rc = RedisClient.RedisClient(gp=mock.Mock())
+        rc = RedisStore.RedisStore(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
-        self.test_object.gp.modules = {'RedisClient': {'instances': [rc]}}
+        self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()',
-                                    'redis_client': 'RedisClient',
+                                    'redis_store': 'RedisStore',
                                     'redis_key': '%(category)s',
                                     'redis_ttl': 5})
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,

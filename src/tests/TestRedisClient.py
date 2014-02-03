@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import extendSysPath
 import ModuleBaseTestCase
-import unittest2
 import mock
-import RedisClient
+import RedisStore
 
-class TestRedisClient(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestRedisStore(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestRedisClient, self).setUp(RedisClient.RedisClient(gp=mock.Mock()))
+        super(TestRedisStore, self).setUp(RedisStore.RedisStore(gp=mock.Mock()))
 
     def testGetClient(self):
         self.test_object.configure({'server': 'es-01.dbap.de'})

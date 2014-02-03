@@ -126,7 +126,7 @@ class GambolPutty:
             else:
                 self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
             for instance in module_info['instances']:
-                name = module_info['alias'] if 'alias' in module_info else module_name
+                name = module_info['id'] if 'id' in module_info else module_name
                 try:
                     if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
                         # The default 'start' method of threading.Thread will call the 'run' method of the module.
@@ -174,8 +174,8 @@ class GambolPutty:
             for _ in range(pool_size):
                 # Build first instance.
                 module_instance = self.initModule(module_info['module'])
-                # Set module name. Use alias if it was set in configuration.
-                module_name = module_info['module'] if 'alias' not in module_info else module_info['alias']
+                # Set module name. Use id if it was set in configuration.
+                module_name = module_info['module'] if 'id' not in module_info else module_info['id']
                 # Append to internal list.
                 module_instances.append(module_instance)
                 # If instance is not configured to run in parallel, only create one instance, no matter what the pool_size configuration says.
@@ -275,12 +275,12 @@ class GambolPutty:
                     Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
                 self.shutDown()
 
-    def getModuleByName(self, module_name, silent=True):
+    def getModuleInfoById(self, module_id, silent=True):
         try:
-            return self.modules[module_name]
+            return self.modules[module_id]
         except KeyError:
             if not silent:
-                self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+                self.logger.error("%sGet module by id %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
             return None
 
     def run(self):

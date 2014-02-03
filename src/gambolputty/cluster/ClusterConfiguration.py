@@ -36,7 +36,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         #self.logger.setLevel(logging.DEBUG)
         # Get cluster module instance.
-        mod_info = self.gp.getModuleByName(self.getConfigurationValue('cluster'))
+        mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('cluster'))
         if not mod_info:
             self.logger.error("%sCould not start cluster configuration module. Required cluster module %s not found. Please check your configuration.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('cluster'), Utils.AnsiColors.ENDC))
             self.gp.shutDown()

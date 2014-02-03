@@ -23,7 +23,7 @@ Configuration example:
       unix_socket_path: ''    # <default: ''; type: string; is: optional>
 
 
-#####TrackEvents
+#####RedisEventBuffer
 
 Keeps track of all events passing through GambolPutty.
 
@@ -43,8 +43,8 @@ increase performance.
 
 Configuration example:
 
-    - module: TrackEvents
-      redis_client: RedisClientName           # <type: string; is: required>
+    - module: RedisEventBuffer
+      redis_store: RedisClientName            # <type: string; is: required>
       queue_size: 5                           # <default: 5; type: integer; is: optional>
       redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
 
@@ -83,7 +83,7 @@ Configuration example:
       group_by: %(remote_ip)s                 # <type:string; is: required>
       add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
       interval: 30                            # <default: 5; type: float||integer; is: optional>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
+      redis_store:                            # <default: None; type: None||string; is: optional>
       redis_ttl: 600                          # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule

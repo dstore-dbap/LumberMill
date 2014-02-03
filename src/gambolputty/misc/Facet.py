@@ -23,12 +23,12 @@ class Facet(BaseModule.BaseModule):
     Configuration example:
 
     - module: Facet
-      source_field: url                       # <type:string; is: required>
-      group_by: %(remote_ip)s                 # <type:string; is: required>
-      add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
-      interval: 30                            # <default: 5; type: float||integer; is: optional>
-      redis_client: RedisClientName           # <default: None; type: None||string; is: optional>
-      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+      source_field:                           # <type:string; is: required>
+      group_by:                               # <type:string; is: required>
+      add_event_fields:                       # <default: []; type: list; is: optional>
+      interval:                               # <default: 5; type: float||integer; is: optional>
+      redis_store:                            # <default: None; type: None||string; is: optional>
+      redis_ttl:                              # <default: 60; type: integer; is: optional>
       receivers:
         - NextModule
     """
@@ -44,11 +44,17 @@ class Facet(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
+        # Get redis client module.
+        if self.getConfigurationValue('redis_store'):
+            mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
+            self.redis_store = mod_info['instances'][0]
+        else:
+            self.redis_store = None
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.evaluate_facet_data_func(self)
 
     def _getFacetInfoRedis(self, key):
-        facet_info = self.redis_client.getValue(key)
+        facet_info = self.redis_store.getValue(key)
         if not facet_info:
             facet_info = {'other_event_fields': {}, 'facets': []}
         return facet_info
@@ -61,13 +67,13 @@ class Facet(BaseModule.BaseModule):
         return facet_info
 
     def getFacetInfo(self, key):
-        if self.redis_client:
+        if self.redis_store:
             return self._getFacetInfoRedis(key)
         return self._getFacetInfoInternal(key)
 
     def _setFacetInfoRedis(self, key, facet_info):
         try:
-            self.redis_client.setValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
+            self.redis_store.setValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
             if key not in Facet.redis_keys:
                 Facet.redis_keys.append(key)
         except:
@@ -79,7 +85,7 @@ class Facet(BaseModule.BaseModule):
         Facet.facet_data[key] = facet_info
 
     def setFacetInfo(self, key, facet_info):
-        if self.redis_client:
+        if self.redis_store:
             self._setFacetInfoRedis(key, facet_info)
             return
         self._setFacetInfoInternal(key, facet_info)
@@ -95,11 +101,11 @@ class Facet(BaseModule.BaseModule):
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
         def evaluateFacets(self):
-            if self.redis_client:
+            if self.redis_store:
                 for key in Facet.redis_keys:
                     self.sendFacetEventToReceivers(self._getFacetInfoRedis(key))
                     # Clear redis items
-                    self.redis_client.redis_client.delete(key)
+                    self.redis_store.redis_client.delete(key)
                 Facet.redis_keys = []
                 return
             # Just internal facet data.
@@ -137,8 +143,8 @@ class Facet(BaseModule.BaseModule):
         redis_lock = False
         try:
             # Acquire redis lock as well if configured to use redis store.
-            if self.redis_client:
-                redis_lock = self.redis_client.getLock("FacetLocks:%s" % key, timeout=1)
+            if self.redis_store:
+                redis_lock = self.redis_store.getLock("FacetLocks:%s" % key, timeout=1)
                 if not redis_lock:
                     yield event
                     return

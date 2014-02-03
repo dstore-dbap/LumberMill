@@ -12,7 +12,7 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestJsonParser, self).setUp(JsonParser.JsonParser(gp=mock.Mock()))
 
     def testSimpleJson(self):
-        self.test_object.configure({'source_field': 'json_data'})
+        self.test_object.configure({'source_fields': ['json_data']})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
         data = Utils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import Utils
 import itertools
-import BaseThreadedModule
+import BaseModule
 import Decorators
 import Utils
 import sys
 
 @Decorators.ModuleDocstringParser
-class Permutate(BaseThreadedModule.BaseThreadedModule):
+class Permutate(BaseModule.BaseModule):
     """
     Creates successive len('target_fields') length permutations of elements in 'source_field'.
 

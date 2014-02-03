@@ -4,18 +4,40 @@ import sys
 import Utils
 import pygeoip
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
     """
     Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
 
+    {'city': 'Hanover', 'region_name': '06', 'area_code': 0, 'time_zone': 'Europe/Berlin', 'dma_code': 0, 'metro_code': None, 'country_code3': 'DEU', 'latitude': 52.36670000000001, 'postal_code': '', 'longitude': 9.716700000000003, 'country_code': 'DE', 'country_name': 'Germany', 'continent': 'EU'}
+
+    geoip_dat_path: path to maxmind geoip database file.
+    source_fields: list of fields to use for lookup. The first list entry that produces a hit is used.
+    target: field to populate with the geoip data. If none is provided, the field will be added directly to the event.
+    geo_info_fields: fields to add. Available field names:
+     - area_code
+     - city
+     - continent
+     - country_code
+     - country_code3
+     - country_name
+     - dma_code
+     - metro_code
+     - postal_code
+     - region_name
+     - time_zone
+     - latitude
+     - longitude
+
     Configuration example:
 
     - module: AddGeoInfo
-      geoip_dat_path: /usr/share/GeoIP/GeoIP.dat          # <type: string; is: required>
-      source_fields: ["x_forwarded_for", "remote_ip"]     # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+      geoip_dat_path:           # <type: string; is: required>
+      geo_info_fields:          # <type: list; is: required>
+      source_fields:            # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+      target:                   # <default: None; type: None||string; is: optional>
       receivers:
         - NextModule
     """
@@ -35,6 +57,8 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         if not self.gi:
             self.gp.shutDown()
             return False
+        self.geo_info_fields = self.getConfigurationValue('geo_info_fields')
+        self.target = self.getConfigurationValue('target')
 
     def handleEvent(self, event):
         hostname_or_ip = False
@@ -43,33 +67,41 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                 continue
             hostname_or_ip = event[lookup_field]
             if not hostname_or_ip or hostname_or_ip == "-":
-                yield event
-                return
-            if self.is_valid_ipv4_address(hostname_or_ip) or self.is_valid_ipv6_address(hostname_or_ip):
-                lookup_type = "ip_address"
+                continue
+            geo_info_fields = self.getGeoIpInfo(hostname_or_ip)
+            if self.target:
+                event[self.target] = geo_info_fields
             else:
-                lookup_type = "host"
-     
-            if lookup_type == "ip_address":
-                try:
-                    address_geo_info = self.gi.record_by_addr(hostname_or_ip);
-                except Exception,e:
-                    self.logger.debug("lookup for %s failed with error: %s" % (hostname_or_ip, e))
-            else:
-                try:
-                    address_geo_info = self.gi.record_by_name(hostname_or_ip);
-                except:
-                    self.logger.debug("lookup for %s failed with error: %s" % (hostname_or_ip, e))
+                event.update(geo_info_fields)
+            break
+        yield event
+
+    @Decorators.memoize
+    def getGeoIpInfo(self, hostname_or_ip):
+        all_geo_info_fields = {}
+        if self.is_valid_ipv4_address(hostname_or_ip) or self.is_valid_ipv6_address(hostname_or_ip):
+            lookup_type = "ip_address"
+        else:
+            lookup_type = "host"
+        if lookup_type == "ip_address":
             try:
-                event['country_code'] = address_geo_info['country_code']
-                event['longitude-latitude'] = (address_geo_info['longitude'], address_geo_info['latitude'])
-                yield event
-                return
+                all_geo_info_fields = self.gi.record_by_addr(hostname_or_ip)
+            except Exception,e:
+                pass
+        else:
+            try:
+                all_geo_info_fields = self.gi.record_by_name(hostname_or_ip)
             except:
                 pass
-        # Return message date if lookup failed completely
-        yield event
-    
+        configured_geo_info_fields = {}
+        for field_name in self.geo_info_fields:
+            try:
+                configured_geo_info_fields[field_name] = all_geo_info_fields[field_name]
+            except:
+                pass
+        return configured_geo_info_fields
+
+
     def is_valid_ipv4_address(self, address):
         try:
             addr = socket.inet_pton(socket.AF_INET, address)
@@ -82,7 +114,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         except socket.error: 
             return False
         return True
-    
+
     def is_valid_ipv6_address(self, address):
         try:
             addr= socket.inet_pton(socket.AF_INET6, address)

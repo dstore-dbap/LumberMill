@@ -34,11 +34,13 @@
 - module: AddGeoInfo
   geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
   source_fields: [x_forwarded_for, remote_ip]
+  geo_info_fields: ['latitude', 'longitude', 'country_code']
   receivers:
     - ElasticSearchSink
     - Statistics
 
-- module: ElasticSearchSink
+- module: ElasticSearchMultiProcessSink
+  pool_size: 2
   nodes: ["localhost:9200"]
   doc_id: '%(@timestamp)s%(received_from)s'
   store_interval_in_secs: 2

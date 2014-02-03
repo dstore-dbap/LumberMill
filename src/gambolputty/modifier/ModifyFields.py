@@ -71,6 +71,15 @@ class ModifyFields(BaseModule.BaseModule):
       receivers:
         - NextModule
 
+    # Merge source fields to target field as list.
+    - module: ModifyFields
+      action: merge                               # <type: string; is: required>
+      source_fields:                              # <type: list; is: required>
+      target_field:                               # <type: string; is: reuired>
+      receivers:
+        - NextModule
+
+
     # Cast field values to integer.
     - module: ModifyFields
       action: castToInteger                       # <type: string; is: required>
@@ -270,7 +279,20 @@ class ModifyFields(BaseModule.BaseModule):
             pass
         return event
 
-    def cast(self,event):
+    def merge(self, event):
+        """
+        Merge source fields to target field.
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        merged_fields = []
+        for source_field in self.getConfigurationValue('source_fields'):
+            merged_fields.append(source_field)
+        event.update({self.getConfigurationValue('target_field'): merged_fields})
+        return event
+
+    def cast(self, event):
         """
         Field values in data dictionary will be cast to datatype set in ['type']
         This is just an alias function for the direct call to the castTo{DataType} method.
@@ -283,7 +305,7 @@ class ModifyFields(BaseModule.BaseModule):
         except:
             pass
 
-    def castToInteger(self,event):
+    def castToInteger(self, event):
         """
        ['source_fields'] values in data dictionary will be cast to integer.
 
@@ -299,7 +321,7 @@ class ModifyFields(BaseModule.BaseModule):
                 pass
         return event
 
-    def castToFloat(self,event):
+    def castToFloat(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to float.
 
@@ -315,7 +337,7 @@ class ModifyFields(BaseModule.BaseModule):
                 pass
         return event
 
-    def castToString(self,event):
+    def castToString(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to string.
 
@@ -331,7 +353,7 @@ class ModifyFields(BaseModule.BaseModule):
                    pass
         return event
 
-    def castToBoolean(self,event):
+    def castToBoolean(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to boolean.
 
@@ -353,7 +375,7 @@ class ModifyFields(BaseModule.BaseModule):
         """
         return self.hash(data)
 
-    def hash(self,event):
+    def hash(self, event):
         """
         ['source_fields'] values in data dictionary will hashed with hash algorithm set in configuration.
 

@@ -3,6 +3,7 @@ import ast
 import time
 import os
 import sys
+import re
 import subprocess
 import logging
 import __builtin__

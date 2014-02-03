@@ -1,10 +1,9 @@
 import extendSysPath
-import unittest
 import ModuleBaseTestCase
 import mock
 import Utils
 import HttpRequest
-import RedisClient
+import RedisStore
 
 class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -53,12 +52,12 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertTrue('Johann Gambolputty' in event and len(event['Johann Gambolputty']) > 0)
 
     def testRedis(self):
-        rc = RedisClient.RedisClient(gp=mock.Mock())
+        rc = RedisStore.RedisStore(gp=mock.Mock())
         rc.configure({'server': 'es-01.dbap.de'})
-        self.test_object.gp.modules = {'RedisClient': {'instances': [rc]}}
+        self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'url': 'https://www.google.com',
                                     'target_field': '%(surname)s Gambolputty',
-                                    'redis_client': 'RedisClient',
+                                    'redis_store': 'RedisStore',
                                     'redis_key': '%(surname)s',
                                     'redis_ttl': 5})
         result = self.conf_validator.validateModuleInstance(self.test_object)
