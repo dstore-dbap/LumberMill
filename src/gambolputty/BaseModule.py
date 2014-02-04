@@ -156,6 +156,7 @@ class BaseModule():
     def setFilter(self, receiver_name, filter):
         self.filters[receiver_name] = filter
         # Replace default sendEvent method with filtered one.
+        #print "Setting filter for %s in %s." % (receiver_name, self.__class__.__name__)
         self.sendEvent = self.sendEventFiltered
 
     def getFilteredReceivers(self, event):
@@ -181,36 +182,40 @@ class BaseModule():
         if not self.receivers:
             self.destroyEvent(event)
             return
+        if len(self.receivers) > 1:
+            event_clone = event.copy()
         copy_event = False
         for receiver in self.receivers.itervalues():
             try:
-                receiver.receiveEvent(event if copy_event is False else event.copy())
-                copy_event = True
+                receiver.receiveEvent(event if copy_event is False else event_clone.copy())
             except AttributeError:
                 try:
-                    receiver.put(event if copy_event is False else event.copy())
+                    receiver.put(event if copy_event is False else event_clone.copy())
                 except AttributeError:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("%s%s failed to receive event. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
+            copy_event = True
 
     def sendEventFiltered(self, event):
         receivers = self.getFilteredReceivers(event)
         if not receivers:
             self.destroyEvent(event)
             return
+        if len(receivers) > 1:
+            event_clone = event.copy()
         copy_event = False
         for receiver in receivers.itervalues():
             try:
-                receiver.receiveEvent(event if copy_event is False else event.copy())
-                copy_event = True
+                receiver.receiveEvent(event if copy_event is False else event_clone.copy())
             except AttributeError:
                 try:
-                    receiver.put(event if copy_event is False else event.copy())
+                    receiver.put(event if copy_event is False else event_clone.copy())
                 except AttributeError:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("%s%s failed to receive event. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
+            copy_event = True
 
     def receiveEvent(self, event):
         for event in self.handleEvent(event):

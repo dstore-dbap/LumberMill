@@ -244,6 +244,10 @@ class GambolPutty:
                                     receiver_instance.setInputQueue(queues[receiver_name])
                             except AttributeError:
                                 self.logger.error("%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
+                                            # Set filter if configured.
+                        if 'filter' in receiver_filter_config:
+                            receiver_filter = Utils.compileStringToConditionalObject("matched = %s" % receiver_filter_config['filter'], 'event.get("%s", False)')
+                            instance.setFilter(receiver_name, receiver_filter)
                         # Build a node structure used for the loop test.
                         try:
                             node = (node for node in module_loop_buffer if node.module == instance).next()
@@ -262,10 +266,6 @@ class GambolPutty:
                         instance.addReceiver(receiver_name, queues[receiver_name])
                     else:
                         instance.addReceiver(receiver_name, receiver_instance)
-                    # Set filter if configured.
-                    if 'filter' in receiver_filter_config:
-                        receiver_filter = Utils.compileStringToConditionalObject("matched = %s" % receiver_filter_config['filter'], 'event.get("%s", False)')
-                        instance.setFilter(receiver_name, receiver_filter)
         # Check if the configuration produces a loop.
         # This code can definitely be made more efficient...  
         for node in module_loop_buffer:

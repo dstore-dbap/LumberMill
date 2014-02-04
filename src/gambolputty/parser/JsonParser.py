@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import re
 import sys
 import types
@@ -106,7 +107,7 @@ class JsonParser(BaseModule.BaseModule):
                     decoded_datasets = json.loads(json_string, cls=ConcatJSONDecoder)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("Could not json decode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                    self.logger.warning("%sCould not json decode event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
                     continue
             if not isinstance(decoded_datasets, list):
                 decoded_datasets = [decoded_datasets]
@@ -124,21 +125,21 @@ class JsonParser(BaseModule.BaseModule):
                 yield event
 
     def encodeEvent(self, event):
-        if self.source_fields == 'all':
+        if 'all' in self.source_fields:
             encode_data = event
         else:
-            encode_data = []
+            encode_data = {}
             for source_field in self.source_fields:
                 if source_field not in event:
                     continue
-                encode_data.append({source_field: event[source_field]})
+                encode_data.update({source_field: event[source_field]})
                 if self.drop_original:
                     event.pop(source_field, None)
         try:
             encode_data = json.dumps(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not json encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.warning("%sCould not json encode event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
             yield event
             return
         event.update({self.target_field: encode_data})

@@ -62,7 +62,7 @@ class Statistics(BaseModule.BaseModule):
         if len(self.module_queues) == 0:
             return
         self.logger.info(">> Queue stats")
-        for module_name, queue in self.module_queues.iteritems():
+        for module_name, queue in sorted(self.module_queues.iteritems()):
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
 
     def run(self):

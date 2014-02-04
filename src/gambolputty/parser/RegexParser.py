@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseThreadedModule
-import BaseModule
-from Decorators import ModuleDocstringParser
 import re
+import BaseModule
+import Utils
+from Decorators import ModuleDocstringParser
 #try:
 #    import regex as re
 #except ImportError:
@@ -55,8 +55,9 @@ class RegexParser(BaseModule.BaseModule):
                     regex_options = eval(i.next())
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("RegEx error for options %s. Exception: %s, Error: %s" % (regex_options, etype, evalue))
+                    self.logger.error("%sRegEx error for options %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, regex_options, etype, evalue, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
+                    return
                 # Regex match type the third (optional)
                 try:
                     regex_match_type = i.next()
@@ -65,13 +66,14 @@ class RegexParser(BaseModule.BaseModule):
             # Make sure regex_match_type is valid
             # At the moment only search and findall are supported
             if regex_match_type not in supported_regex_match_types:
-                self.logger.error("RegEx error for match type %s. Only %s are supported." % (regex_options, supported_regex_match_types))
+                self.logger.error("%sRegEx error for match type %s. Only %s are supported.%s" % (Utils.AnsiColors.FAIL, regex_options, supported_regex_match_types, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
+                return
             try:
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
+                self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
             self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
 

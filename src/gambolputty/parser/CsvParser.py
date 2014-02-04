@@ -38,7 +38,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
                                   delimiter=self.getConfigurationValue('delimiter', event))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not parse csv data %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.warning("%sCould not parse csv data %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
             yield event
             return
         field_names = self.getConfigurationValue('fieldnames', event)

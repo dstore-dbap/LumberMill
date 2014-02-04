@@ -47,7 +47,7 @@ class MsgPackParser(BaseModule.BaseModule):
                 decoded_data = msgpack.unpackb(event[source_field])
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not parse msgpack event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                self.logger.warning("%sCould not parse msgpack event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
                 continue
             if self.drop_original:
                 event.pop(source_field, None)
@@ -72,7 +72,7 @@ class MsgPackParser(BaseModule.BaseModule):
             encode_data = msgpack.packb(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not msgpack encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.warning("%sCould not msgpack encode event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
             yield event
             return
         event.update({self.target_field: encode_data})
