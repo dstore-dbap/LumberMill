@@ -3,12 +3,13 @@ import sys
 from tornado.ioloop import IOLoop
 from tornado import autoreload
 import RedisAsyncClient
+import BaseModule
 import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class RedisChannel(BaseThreadedModule.BaseThreadedModule):
+class RedisChannel(BaseModule.BaseModule):
     """
     Subscribes to a redis channels and passes incoming events to receivers.
 
@@ -29,7 +30,7 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         try:
             self.client = RedisAsyncClient.AsyncRedisClient(address=(self.getConfigurationValue('server'),self.getConfigurationValue('port')))
             if self.getConfigurationValue('db') != 0:
@@ -46,15 +47,19 @@ class RedisChannel(BaseThreadedModule.BaseThreadedModule):
             return
         if not self.client:
             return
-        self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
-        autoreload.add_reload_hook(self.shutDown)
-        ioloop = IOLoop.instance()
-        ioloop.make_current()
         try:
-            ioloop.start()
-        except ValueError:
+            self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not fetch event from redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
+        autoreload.add_reload_hook(self.shutDown)
+        #ioloop = IOLoop.instance()
+        #ioloop.make_current()
+        #try:
+        #    ioloop.start()
+        #except ValueError:
             # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
-            pass
+        #    pass
 
     def checkReply(self, answer):
         if answer != "OK":

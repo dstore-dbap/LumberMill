@@ -31,6 +31,7 @@ The different modules can be combined in any order.
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
 * SyslogPrivalParser, parse the syslog prival value (RFC5424).
+* LineParser, split lines at a seperator and emit each line as new event.
 
 #### Field modifiers
 
@@ -49,6 +50,7 @@ The different modules can be combined in any order.
 * SyslogSink, send events to syslog.
 * FileSink, store events in a file.
 * WebHdfsSink, store events in hdfs via webhdfs.
+* RedisChannelSink, publish incoming events to redis channel.
 
 #### Misc modules
 

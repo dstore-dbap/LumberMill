@@ -26,7 +26,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     store_interval_in_secs: Sending data to es in x seconds intervals.
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
-    compress: Compress output as gzip file.
+    compress: Compress output as gzip file. For this to be effective, the batch size should not be too small.
 
     Configuration example:
 

@@ -34,6 +34,10 @@ class ElasticSearchSink(BaseModule.BaseModule):
     index_prefix: es index prefix to use, will be appended with '%Y.%m.%d'.
     index_name: sets a fixed name for the es index.
     doc_id: sets the es document id for the committed event data.
+    ttl: When set, documents will be automatically deleted after ttl expired.
+         Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+         This feature needs to be enabled for the index.
+         @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
     consistency: one of: 'one', 'quorum', 'all'
     replication: one of: 'sync', 'async'.
     store_interval_in_secs: sending data to es in x seconds intervals.
@@ -43,18 +47,19 @@ class ElasticSearchSink(BaseModule.BaseModule):
     Configuration example:
 
     - module: ElasticSearchSink
-      nodes: ["localhost:9200"]                 # <type: list; is: required>
-      connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
-      http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
-      use_ssl: True                             # <default: False; type: boolean; is: optional>
-      index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-      index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-      doc_id: 'data'                            # <default: "data"; type: string; is: optional>
-      consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-      replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-      store_interval_in_secs: 1                 # <default: 1; type: integer; is: optional>
-      batch_size: 500                           # <default: 500; type: integer; is: optional>
-      backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+        nodes: ["localhost:9200"]                 # <type: list; is: required>
+        connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
+        use_ssl: True                             # <default: False; type: boolean; is: optional>
+        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+        ttl:                                      # <default: None; type: None||string; is: optional>
+        consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        store_interval_in_secs: 1                 # <default: 5; type: integer; is: optional>
+        batch_size: 500                           # <default: 500; type: integer; is: optional>
+        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -149,6 +154,8 @@ class ElasticSearchSink(BaseModule.BaseModule):
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
                 continue
             doc_id = json.dumps(doc_id.strip())
+            if self.ttl:
+                event['_ttl'] = self.ttl
             es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}\n' % (index_name, event_type, doc_id)
             try:
                 json_data += "%s%s\n" % (es_index,json.dumps(event))

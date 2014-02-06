@@ -7,7 +7,7 @@ from Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class LineParser(BaseModule.BaseModule):
     r"""
-    Line codec.
+    Line parser.
 
     Decode:
     Will split the data in source fields and emit parts as new events. Original event will be discarded.

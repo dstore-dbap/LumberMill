@@ -44,6 +44,10 @@ class ConfigurationValidator():
         # At the moment, I just skip this module until I have a good idea on how to tackle this.
         if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
             return result
+        # Check for pool_size > 1 in single threaded/processed modules.
+        if 'pool_size' in moduleInstance.configuration_data and moduleInstance.getConfigurationValue('pool_size') > 1 and moduleInstance.can_run_parallel is False:
+            error_msg = "%s: 'pool_size' has invalid value. Is: %s but the module can only run in one thread/process." % (moduleInstance.__class__.__name__, moduleInstance.getConfigurationValue('pool_size'))
+            result.append(error_msg)
         # Check if the live configuration provides a key that is not documented in modules docstring.
         config_keys_not_in_docstring = set(moduleInstance.configuration_data.keys()) - set(moduleInstance.configuration_metadata.keys()) - set(self.default_module_config_keys)
         if config_keys_not_in_docstring:
@@ -87,9 +91,8 @@ class ConfigurationValidator():
             # Check for value restrictions.
             if 'values' in configuration_metadata:
                 if config_value not in configuration_metadata['values']:
-                    error_msg = "%s: '%s' has no allowed value. Is: %s, should be on of: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value, configuration_metadata['values'])
+                    error_msg = "%s: '%s' has invalid value. Is: %s, should be on of: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value, configuration_metadata['values'])
                     result.append(error_msg)
-
-        return result
+            return result
 
 

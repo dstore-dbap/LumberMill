@@ -3,6 +3,7 @@ import logging
 import logging.handlers
 import os
 import BaseThreadedModule
+import BaseMultiProcessModule
 import Decorators
 import Utils
 import time
@@ -10,7 +11,7 @@ import sys
 
 
 @Decorators.ModuleDocstringParser
-class FileSink(BaseThreadedModule.BaseThreadedModule):
+class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Store events in a file.
 
@@ -27,19 +28,19 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
       path:                                 # <type: string; is: required>
       name_pattern:                         # <type: string; is: required>
       format:                               # <type: string; is: required>
-      store_interval_in_secs:               # <default: 1; type: integer; is: optional>
-      batch_size:                   # <default: 500; type: integer; is: optional>
+      store_interval_in_secs:               # <default: 10; type: integer; is: optional>
+      batch_size:                           # <default: 500; type: integer; is: optional>
       backlog_size:                         # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
 
-    can_run_parallel = True
+    can_run_parallel = False
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
         self.events_container = []
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
@@ -103,7 +104,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
         self.startTimedFunction(self.clearStaleLoggers)
         self.startTimedFunction(self.timed_store_func)
          # Call parent run method
-        BaseThreadedModule.BaseThreadedModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions.
@@ -143,4 +144,4 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
                 except:
                     pass
             del self.fileloggers[key]
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent=False)
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)
