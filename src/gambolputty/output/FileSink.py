@@ -137,11 +137,12 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.is_storing = False
 
     def shutDown(self, silent=False):
-        for key in self.fileloggers.keys():
-            for handler in self.fileloggers[key][0].handlers:
-                try:
-                    handler.stream.close()
-                except:
-                    pass
-            del self.fileloggers[key]
+        if hasattr(self, 'fileloggers'):
+            for key in self.fileloggers.keys():
+                for handler in self.fileloggers[key][0].handlers:
+                    try:
+                        handler.stream.close()
+                    except:
+                        pass
+                del self.fileloggers[key]
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)

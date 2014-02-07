@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
+import os
 import BaseModule
 import Utils
 from Decorators import ModuleDocstringParser
-#try:
-#    import regex as re
-#except ImportError:
-#    import re
 
 @ModuleDocstringParser
 class RegexParser(BaseModule.BaseModule):
     """
     Parse a string by named regular expressions.
 
-    If regex metches, fields in the data dictionary will be set as defined in the named regular expression.
+    If regex matches, fields in the data dictionary will be set as defined in the named regular expression.
     Additionally the field "event_type" will be set containing the name of the regex.
     In the example below this would be "httpd_access_log".
 
@@ -43,6 +41,8 @@ class RegexParser(BaseModule.BaseModule):
         self.break_on_match = self.getConfigurationValue('break_on_match')
         self.event_types = []
         self.fieldextraction_regexpressions = {}
+        self.logstash_patterns = {}
+        self.readLogstashPatterns()
         for event_type, regex_pattern in configuration['field_extraction_patterns'].items():
             regex_options = 0
             regex_match_type = 'search'
@@ -70,12 +70,41 @@ class RegexParser(BaseModule.BaseModule):
                 self.gp.shutDown()
                 return
             try:
+                regex_pattern = self.replaceLogstashPatterns(regex_pattern)
+                #print regex_pattern
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("%sRegEx error for %s pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event_type, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
             self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
+
+    def readLogstashPatterns(self):
+        path = "%s/../patterns" % os.path.dirname(os.path.realpath(__file__))
+        for (dirpath, dirnames, filenames) in os.walk(path):
+            for filename in filenames:
+                lines = [line.strip() for line in open('%s%s%s' % (dirpath,  os.sep, filename))]
+                for line_no,line in enumerate(lines):
+                    if line == "" or line.startswith('#'):
+                        continue
+                    try:
+                        pattern_name, pattern = line.split(' ', 1)
+                        self.logstash_patterns[pattern_name] = pattern
+                    except:
+                        etype, evalue, etb = sys.exc_info()
+                        self.logger.warning("%sCould not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, dirpath,  os.sep, filename, line_no+1, etype, evalue, Utils.AnsiColors.ENDC))
+
+    def replaceLogstashPatterns(self, regex_pattern):
+        pattern_name_re = re.compile('%\{(.*?)\}')
+        for match in pattern_name_re.finditer(regex_pattern):
+            for pattern_name in match.groups():
+                try:
+                    logstash_pattern = self.replaceLogstashPatterns(self.logstash_patterns[pattern_name])
+                    regex_pattern = regex_pattern.replace('%%{%s}' % pattern_name, logstash_pattern)
+                except KeyError:
+                    self.logger.warning("%sCould not parse logstash pattern %s. Pattern name not found in pattern files.%s" % (Utils.AnsiColors.WARNING, pattern_name, Utils.AnsiColors.ENDC))
+                    continue
+        return regex_pattern
 
     def handleEvent(self, event):
         """
@@ -97,7 +126,7 @@ class RegexParser(BaseModule.BaseModule):
         for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
             if regex_data['match_type'] == 'search':
-                matches = regex_data['pattern'].search(string_to_match);
+                matches = regex_data['pattern'].search(string_to_match)
                 if matches:
                     matches_dict = matches.groupdict()
             elif regex_data['match_type'] == 'findall':

@@ -8,7 +8,7 @@ class SyslogPrivalParser(BaseModule.BaseModule):
     """
     It will parse the source field in the event dictionary for the default severity
     and facility fields (RFC5424, http://tools.ietf.org/html/rfc5424).
-    The source field must contain the prival with the pattern: "<\d+>"
+    The source field must contain the prival with the pattern: "\d+"
 
     Numerical             Facility
      Code
@@ -109,11 +109,7 @@ class SyslogPrivalParser(BaseModule.BaseModule):
         if self.source_field not in event or not event[self.source_field]:
             yield event
             return
-        prival = event[self.source_field].replace('<','')
-        try:
-            prival = int(prival.replace('>',''))
-        except ValueError:
-            prival = 13
+        prival = event[self.source_field]
         # Calculate facility and priority from PRIVAL (@see: http://tools.ietf.org/html/rfc5424#section-6.2.1)
         event['syslog_facility'] = prival >> 3
         event['syslog_severity'] = prival & 7
