@@ -10,15 +10,19 @@ import hashlib
 from Crypto import Random
 from Crypto.Cipher import AES
 
-json = False
-for module_name in ['yajl', 'simplejson', 'json']:
-    try:
-        json = __import__(module_name)
-        break
-    except ImportError:
-        pass
-if not json:
-    raise ImportError
+# For pypy the default json module is the fastest.
+if Utils.is_pypy:
+    import json
+else:
+    json = False
+    for module_name in ['ujson', 'yajl', 'simplejson', 'json']:
+        try:
+            json = __import__(module_name)
+            break
+        except ImportError:
+            pass
+    if not json:
+        raise ImportError
 
 class PackMember:
 
@@ -63,14 +67,14 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: Cluster
-      interface:                            # <default: '0.0.0.0'; type: string; is: optional>
-      port:                                 # <default: 5252; type: integer; is: optional>
-      broadcast:                            # <type: string; is: required>
-      interval:                             # <default: 10; type: integer; is: optional>
-      pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
-      name:                                 # <type: string; is: required>
-      secret:                               # <type: string; is: required>
+    - Cluster:
+        interface:                            # <default: '0.0.0.0'; type: string; is: optional>
+        port:                                 # <default: 5252; type: integer; is: optional>
+        broadcast:                            # <type: string; is: required>
+        interval:                             # <default: 10; type: integer; is: optional>
+        pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
+        name:                                 # <type: string; is: required>
+        secret:                               # <type: string; is: required>
     """
 
     module_type = "stand_alone"

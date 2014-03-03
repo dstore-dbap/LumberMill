@@ -1,25 +1,65 @@
 # -*- coding: utf-8 -*-
 import BaseModule
+import urllib
 import urlparse
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
 class UrlParser(BaseModule.BaseModule):
     """
-    Parse and extract url parameters.
+    Urlencode or decode an event field and extract url parameters.
+
+    mode: Either encode or decode data.
+    source_field: Event field to en/decode.
+    target_field: Event field to update with en/decode result. If not set source will be replaced.
+    parse_querystring: Parse url for query parameters and extract them.
+    querystring_target_field: Event field to update with url parameters.
+    querystring_prefix: Prefix string to prepend to url parameter keys.
 
     Configuration example:
 
-    - module: UrlParser
-      source_field: uri       # <type: string; is: required>
+    - UrlParser:
+        mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_field:             # <type: string; is: required>
+        target_field:             # <default: None; type: None||string; is: optional>
+        parse_querystring:        # <default: False; type: boolean; is: optional>
+        querystring_target_field: # <default: None; type: None||string; is: optional>
+        querystring_prefix:       # <default: None; type: string; is: optional>
     """
 
     module_type = "parser"
     """Set module type"""
 
-    def handleEvent(self, event):
-        lookup_field = self.getConfigurationValue('source_field', event)
-        if lookup_field in event:
-            parsed_url = urlparse.urlparse('http://www.test.de%s' % (event[lookup_field]))
-            event.update(dict(urlparse.parse_qsl(parsed_url.query)))
+    def configure(self, configuration):
+        # Call parent configure method
+        BaseModule.BaseModule.configure(self, configuration)
+        self.source_field = self.getConfigurationValue('source_field')
+        if not self.getConfigurationValue('target_field'):
+            self.target_field = self.source_field
+        self.parse_querystring = self.getConfigurationValue('parse_querystring')
+        self.querystring_target_field = self.getConfigurationValue('querystring_target_field')
+        self.querystring_prefix = self.getConfigurationValue('querystring_prefix')
+        if self.getConfigurationValue('mode') == 'decode':
+            self.handleEvent = self.decodeEvent
+        else:
+            self.handleEvent = self.encodeEvent
+
+    def decodeEvent(self, event):
+        if self.source_field in event:
+            decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
+            parsed_url = urlparse.urlparse('%s' % decoded_field)
+            event[self.target_field] = parsed_url
+            if self.parse_querystring:
+                query_params_dict = dict(urlparse.parse_qsl(parsed_url.query))
+                if self.querystring_prefix:
+                    query_params_dict = dict(map(lambda (key, value): ("%s%s" % (self.querystring_prefix, str(key)), value), query_params_dict.items()))
+                if self.querystring_target_field:
+                    event[self.querystring_target_field] = query_params_dict
+                else:
+                    event.update(query_params_dict)
+        yield event
+
+    def encodeEvent(self, event):
+        if self.source_field in event:
+            urllib.quote(event[self.source_field]).encode('utf8')
         yield event

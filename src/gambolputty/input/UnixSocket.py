@@ -48,10 +48,10 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: UnixSocket
-      path_to_socket: /tmp/test.sock        # <type: string; is: required>
-      receivers:
-        - NextModule
+    - UnixSocket:
+        path_to_socket:         # <type: string; is: required>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"

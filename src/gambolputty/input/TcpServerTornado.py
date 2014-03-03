@@ -101,24 +101,23 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: TcpServerTornado
-      interface:                       # <default: ''; type: string; is: optional>
-      port:                            # <default: 5151; type: integer; is: optional>
-      timeout:                         # <default: None; type: None||integer; is: optional>
-      tls:                             # <default: False; type: boolean; is: optional>
-      key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-      cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-      mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-      seperator:                       # <default: '\n'; type: string; is: optional>
-      chunksize:                       # <default: 16384; type: integer; is: optional>
-      max_buffer_size:                 # <default: 1024; type: integer; is: optional>
-      receivers:
-        - NextModule
+    - TcpServerTornado:
+        interface:                       # <default: ''; type: string; is: optional>
+        port:                            # <default: 5151; type: integer; is: optional>
+        timeout:                         # <default: None; type: None||integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
+        seperator:                       # <default: '\n'; type: string; is: optional>
+        chunksize:                       # <default: 16384; type: integer; is: optional>
+        max_buffer_size:                 # <default: 1024; type: integer; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"
     """Set module type"""
-
     can_run_parallel = False
 
     def configure(self, configuration):
@@ -128,9 +127,9 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 102400
 
     def run(self):
-        if not self.receivers:
-            self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
-            return
+        #if not self.receivers:
+        #    self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+        #    return
         try:
             ssl_options = None
             if self.getConfigurationValue("tls"):

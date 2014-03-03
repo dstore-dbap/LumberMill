@@ -14,9 +14,10 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     Configuration example:
 
     - module: SomeModuleName
-      id:                                       # <default: ""; type: string; is: optional>
-      pool_size: 4                              # <default: None; type: None||integer; is: optional>
-      queue_size: 20                            # <default: None; type: None||integer; is: optional>
+      id:                               # <default: ""; type: string; is: optional>
+      filter:                           # <default: None; type: None||string; is: optional>
+      pool_size: 4                      # <default: None; type: None||integer; is: optional>
+      queue_size: 20                    # <default: None; type: None||integer; is: optional>
       receivers:
        - ModuleName
        - ModuleAlias

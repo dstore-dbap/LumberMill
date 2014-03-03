@@ -16,13 +16,13 @@ class LineParser(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: LineParser
-      source_fields:                        # <default: 'data'; type: string||list; is: optional>
-      seperator:                            # <default: '\n'; type: string; is: optional>
-      target_field:                         # <default: 'data'; type:string; is: optional>
-      keep_original:                        # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - LineParser:
+        source_fields:                        # <default: 'data'; type: string||list; is: optional>
+        seperator:                            # <default: '\n'; type: string; is: optional>
+        target_field:                         # <default: 'data'; type:string; is: optional>
+        keep_original:                        # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
     """
 
     module_type = "parser"

@@ -4,30 +4,23 @@ import re
 import sys
 import types
 import BaseModule
+import Utils
 from json import JSONDecoder
 from Decorators import ModuleDocstringParser
 
-json = False
-for module_name in [ 'yajl', 'simplejson', 'json']:
-    try:
-        json = __import__(module_name)
-        #print "Using %s" % module_name
-        break
-    except ImportError:
-        pass
-if not json:
-    raise ImportError
-
-json_decoder = False
-for module_name in ['yajl', 'simplejson', 'json']:
-    try:
-        json_decoder = __import__(module_name).JSONDecoder
-        #print "Using %s" % module_name
-        break
-    except:
-        pass
-if not json_decoder:
-    raise ImportError
+# For pypy the default json module is the fastest.
+if Utils.is_pypy:
+    import json
+else:
+    json = False
+    for module_name in ['ujson', 'yajl', 'simplejson', 'json']:
+        try:
+            json = __import__(module_name)
+            break
+        except ImportError:
+            pass
+    if not json:
+        raise ImportError
 
 #shameless copy paste from json/decoder.py
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
@@ -67,13 +60,13 @@ class JsonParser(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: JsonParser
-      mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-      source_fields:                          # <default: 'data'; type: string||list; is: optional>
-      target_field:                           # <default: None; type: None||string; is: optional>
-      keep_original:                          # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - JsonParser:
+        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_fields:                          # <default: 'data'; type: string||list; is: optional>
+        target_field:                           # <default: None; type: None||string; is: optional>
+        keep_original:                          # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
     """
 
     module_type = "parser"

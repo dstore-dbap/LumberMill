@@ -1,26 +1,52 @@
 Misc modules
 ==========
 
-#####RedisClient
+#####ExecPython
+
+Execute python code.
+
+To make sure that the yaml parser keeps the tabs in the source code, ensure that the code is preceded by a comment.
+E.g.:
+
+- ExecPython:
+source: |
+  # Useless comment...
+    try:
+        imported = math
+    except NameError:
+        import math
+    event['request_time'] = math.ceil(event['request_time'] * 1000)
+
+code: Code to execute.
+debug: Set to True to output the string that will be executed.
+
+Configuration example:
+
+    - ExecPython:
+        source:               # <type: string; is: required>
+        debug:                # <default: False; type: boolean; is: optional>
+
+#####RedisStore
 
 A simple wrapper around the redis python module.
 
 It can be used to store results of modules in a redis key/value store.
 
-See BaseModule documentation how values can be stored.
+cluster: dictionary of redis masters as keys and pack_followers as values.
 
 Configuration example:
 
-    - module: RedisClient
-      server: redis.server    # <default: 'localhost'; type: string; is: optional>
-      port: 6379              # <default: 6379; type: integer; is: optional>
-      db: 0                   # <default: 0; type: integer; is: optional>
-      password: None          # <default: None; type: None||string; is: optional>
-      socket_timeout: 10      # <default: 10; type: integer; is: optional>
-      charset: 'utf-8'        # <default: 'utf-8'; type: string; is: optional>
-      errors: 'strict'        # <default: 'strict'; type: string; is: optional>
-      decode_responses: False # <default: False; type: boolean; is: optional>
-      unix_socket_path: ''    # <default: ''; type: string; is: optional>
+    - RedisStore:
+        server:                                  # <default: 'localhost'; type: string; is: optional>
+        cluster:                                 # <default: {}; type: dictionary; is: optional>
+        port:                                    # <default: 6379; type: integer; is: optional>
+        db:                                      # <default: 0; type: integer; is: optional>
+        password:                                # <default: None; type: None||string; is: optional>
+        socket_timeout:                          # <default: 10; type: integer; is: optional>
+        charset:                                 # <default: 'utf-8'; type: string; is: optional>
+        errors:                                  # <default: 'strict'; type: string; is: optional>
+        decode_responses:                        # <default: False; type: boolean; is: optional>
+        unix_socket_path:                        # <default: ''; type: string; is: optional>
 
 
 #####RedisEventBuffer
@@ -39,14 +65,14 @@ event delivery is of higher importance to you. Even without this module, GambolP
 all events reach their destination. This module is thread based, so playing around with its pool size might
 increase performance.
 
-!!IMPORTANT!!: At the moment, this module will only work with TcpServerTornado as input.
+!!IMPORTANT!!: At the moment, this module does not work. Will be rewritten...
 
 Configuration example:
 
-    - module: RedisEventBuffer
-      redis_store: RedisClientName            # <type: string; is: required>
-      queue_size: 5                           # <default: 5; type: integer; is: optional>
-      redis_ttl: 3600                         # <default: 3600; type: integer; is: optional>
+    - RedisEventBuffer:
+        redis_store:                            # <type: string; is: required>
+        queue_size:                             # <default: 5; type: integer; is: optional>
+        redis_ttl:                              # <default: 3600; type: integer; is: optional>
 
 
 #####Statistics
@@ -55,13 +81,11 @@ Collect and log some statistic data.
 
 Configuration example:
 
-    - module: Statistics
-      interval: 10                       # <default: 10; type: integer; is: optional>
-      event_type_statistics: True        # <default: True; type: boolean; is: optional>
-      receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
-      waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
-      processing_event_statistics: True  # <default: False; type: boolean; is: optional>
-
+    - Statistics:
+        interval:                      # <default: 10; type: integer; is: optional>
+        event_type_statistics:         # <default: True; type: boolean; is: optional>
+        receive_rate_statistics:       # <default: True; type: boolean; is: optional>
+        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
 
 #####Facet
 
@@ -78,15 +102,15 @@ it will first try to retrieve the facet info from redis via the key setting.
 
 Configuration example:
 
-    - module: Facet
-      source_field: url                       # <type:string; is: required>
-      group_by: %(remote_ip)s                 # <type:string; is: required>
-      add_event_fields: [user_agent]          # <default: []; type: list; is: optional>
-      interval: 30                            # <default: 5; type: float||integer; is: optional>
-      redis_store:                            # <default: None; type: None||string; is: optional>
-      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
-      receivers:
-        - NextModule
+    - Facet:
+        source_field:                           # <type:string; is: required>
+        group_by:                               # <type:string; is: required>
+        add_event_fields:                       # <default: []; type: list; is: optional>
+        interval:                               # <default: 5; type: float||integer; is: optional>
+        redis_store:                            # <default: None; type: None||string; is: optional>
+        redis_ttl:                              # <default: 60; type: integer; is: optional>
+        receivers:
+          - NextModule
 
 
 #####Tarpit
@@ -97,17 +121,7 @@ Useful only for testing purposes of threading problems and concurrent access to 
 
 Configuration example:
 
-    - module: Tarpit
-      delay: 10  # <default: 10; type: integer; is: optional>
-      receivers:
-        - NextModule
-
-#####WebGui
-
-A WebGui plugin for GambolPutty. At the moment this is just a stub.
-
-Configuration example:
-
-    - module: WebGui
-      port: 6060                 # <default: 5100; type: integer; is: optional>
-      document_root: other_root  # <default: 'webgui_docroot'; type: string; is: optional>
+    - Tarpit:
+        delay:          # <default: 10; type: integer; is: optional>
+        receivers:
+          - NextModule

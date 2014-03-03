@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import pprint
 import Utils
 import multiprocessing
 import ConfigurationValidator
@@ -36,7 +37,6 @@ class Node:
 
     def addChild(self, node):
         self.children.append(node)
-
 
 def hasLoop(node, stack=[]):
     if not stack:
@@ -109,36 +109,11 @@ class GambolPutty:
         gp_conf = {}
         for idx, configuration in enumerate(self.configuration):
             if 'GambolPutty' in configuration:
-                gp_conf = configuration
+                gp_conf = self.configuration.pop(idx)
                 break
         self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
         self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
         self.default_mp_queue_buffer_size = configuration['default_queue_buffer_size'] if 'default_queue_buffer_size' in gp_conf else 100
-
-    def runModules(self):
-        """
-        Start the configured modules
-        """
-        # All modules are completely configured, call modules run method if it exists.
-        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            if len(module_info['instances']) > 1:
-                self.logger.info("%sUsing module %s, pool size: %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, len(module_info['instances']), Utils.AnsiColors.ENDC))
-            else:
-                self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
-            for instance in module_info['instances']:
-                name = module_info['id'] if 'id' in module_info else module_name
-                try:
-                    if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
-                        # The default 'start' method of threading.Thread will call the 'run' method of the module.
-                        instance.start()
-                    elif getattr(instance, "run", None):
-                        # Call 'run' method directly.
-                        instance.run()
-                except:
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
-        import tornado.ioloop
-        tornado.ioloop.IOLoop.instance().start()
 
     def initModule(self, module_name):
         """ Initalize a module.
@@ -153,47 +128,61 @@ class GambolPutty:
             instance = module_class(self, StatisticCollector.StatisticCollector())
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not init module %s. Exception: %s, Error: %s.%s" % (
-            Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.warning("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
             sys.exit(255)
         return instance
 
     def initModulesFromConfig(self):
         """ Initalize all modules from the current config.
-        
+
             The pool size defines how many threads for this module will be started.
         """
         # Init modules as defined in config
         for idx, module_info in enumerate(self.configuration):
-            # Only consider module configurations.
-            if 'module' not in module_info:
-                continue
-            pool_size = module_info['pool_size'] if "pool_size" in module_info else self.default_pool_size
+            module_class_name = module_info.keys()[0]
+            module_config = module_info[module_class_name]
+            # Set module name. Use id if it was set in configuration.
+            module_id = module_class_name if 'id' not in module_config else module_config['id']
+            counter = 1
+            while module_id in self.modules:
+                tmp_mod_name = module_id.split("_",1)[0]
+                module_id = "%s_%s" % (tmp_mod_name, counter)
+                counter += 1
+            pool_size = module_config['pool_size'] if "pool_size" in module_config else self.default_pool_size
             module_instances = []
-            module_name = False
             for _ in range(pool_size):
                 # Build first instance.
-                module_instance = self.initModule(module_info['module'])
-                # Set module name. Use id if it was set in configuration.
-                module_name = module_info['module'] if 'id' not in module_info else module_info['id']
+                module_instance = self.initModule(module_class_name)
                 # Append to internal list.
                 module_instances.append(module_instance)
                 # If instance is not configured to run in parallel, only create one instance, no matter what the pool_size configuration says.
                 if not module_instance.can_run_parallel:
                     break
-            if module_name:
-                self.modules[module_name] = {'idx': idx,
-                                             'instances': module_instances,
-                                             'type': module_instance.module_type,
-                                             'queue_size': module_info[ 'queue_size'] if 'queue_size' in module_info else self.default_queue_size,
-                                             'configuration': module_info,
-                                             'receivers': module_info['receivers'] if 'receivers' in module_info else None}
+            self.modules[module_id] = {  'idx': idx,
+                                         'instances': module_instances,
+                                         'type': module_instance.module_type,
+                                         'configuration': module_config}
+
+            # Set receiver to next module in config if no receivers were set.
+            if 'receivers' not in module_config:
+                try:
+                    next_module_info = self.configuration[idx+1]
+                    receiver_class_name = next_module_info.keys()[0]
+                    receiver_id = receiver_class_name if 'id' not in next_module_info[receiver_class_name] else next_module_info[receiver_class_name]['id']
+                    counter = 1
+                    while receiver_id in self.modules:
+                        tmp_mod_name = receiver_id.split("_",1)[0]
+                        receiver_id = "%s_%s" % (tmp_mod_name, counter)
+                        counter += 1
+                    module_config['receivers'] = [receiver_id]
+                except IndexError:
+                    module_config['receivers'] = [None]
 
     def configureModules(self):
         # Call configuration of module
         configurationValidator = ConfigurationValidator.ConfigurationValidator()
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            configuration = module_info['configuration'] if 'configuration' in module_info else {}
+            #configuration = module_info['configuration'] if 'configuration' in module_info else {}
             passed_config_test = False
             for module_instance in module_info['instances']:
                 try:
@@ -221,47 +210,42 @@ class GambolPutty:
         module_loop_buffer = []
         for module_name, module_info in self.modules.iteritems():
             # Iterate over all instances
-            for instance in module_info['instances']:
-                if "receivers" not in module_info or module_info['receivers'] is None:
+            instance = module_info['instances'][0]
+            for receiver_data in instance.getConfigurationValue('receivers'):
+                if not receiver_data:
+                    break
+                if isinstance(receiver_data, dict):
+                    receiver_name, _ = receiver_data.iteritems().next()
+                else:
+                    receiver_name = receiver_data
+                self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
+                if receiver_name not in self.modules:
+                    self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
                     continue
-                for receiver_data in module_info["receivers"]:
-                    receiver_filter_config = {}
-                    if isinstance(receiver_data, dict):
-                        receiver_name, receiver_filter_config = receiver_data.iteritems().next()
-                    else:
-                        receiver_name = receiver_data
-                    self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
-                    if receiver_name not in self.modules:
-                        self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
-                        continue
-                    for receiver_instance in self.modules[receiver_name]['instances']:
-                        # If the receiver is a thread or a process, produce the needed queue.
-                        if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
-                            if receiver_name not in queues:
-                                queues[receiver_name] = self.produceQueue(receiver_instance, self.modules[receiver_name]['queue_size'])
-                            try:
-                                if not receiver_instance.getInputQueue():
-                                    receiver_instance.setInputQueue(queues[receiver_name])
-                            except AttributeError:
-                                self.logger.error("%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
-                                            # Set filter if configured.
-                        if 'filter' in receiver_filter_config:
-                            receiver_filter = Utils.compileStringToConditionalObject("matched = %s" % receiver_filter_config['filter'], 'event.get("%s", False)')
-                            instance.setFilter(receiver_name, receiver_filter)
-                        # Build a node structure used for the loop test.
+                for receiver_instance in self.modules[receiver_name]['instances']:
+                    # If the receiver is a thread or a process, produce the needed queue.
+                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
+                        if receiver_name not in queues:
+                            queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size')) # self.modules[receiver_name]['queue_size']
                         try:
-                            node = (node for node in module_loop_buffer if node.module == instance).next()
-                        except:
-                            node = Node(instance)
-                            module_loop_buffer.append(node)
-                        try:
-                            receiver_node = (node for node in module_loop_buffer if \
-                                             node.module == receiver_instance).next()
-                        except:
-                            receiver_node = Node(receiver_instance)
-                            module_loop_buffer.append(receiver_node)
-                        node.addChild(receiver_node)
-                    # Add a single instance as receiver to module. If the receiver is a thread or multiprocess, they share the same queue.
+                            if not receiver_instance.getInputQueue():
+                                receiver_instance.setInputQueue(queues[receiver_name])
+                        except AttributeError:
+                            self.logger.error("%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
+                    # Build a node structure used for the loop test.
+                    try:
+                        node = (node for node in module_loop_buffer if node.module == instance).next()
+                    except:
+                        node = Node(instance)
+                        module_loop_buffer.append(node)
+                    try:
+                        receiver_node = (node for node in module_loop_buffer if node.module == receiver_instance).next()
+                    except:
+                        receiver_node = Node(receiver_instance)
+                        module_loop_buffer.append(receiver_node)
+                    node.addChild(receiver_node)
+                for instance in module_info['instances']:
+                    # Add the receiver to senders. If the receiver is a thread or multiprocess, they share the same queue.
                     if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
                         instance.addReceiver(receiver_name, queues[receiver_name])
                     else:
@@ -271,8 +255,7 @@ class GambolPutty:
         for node in module_loop_buffer:
             for loop in hasLoop(node, stack=[]):
                 self.logger.error(
-                    "%sChaining of modules produced a loop. Check configuration. Module: %s.%s" % (
-                    Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
+                    "%sChaining of modules produced a loop. Check configuration. Module: %s.%s" % ( Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
                 self.shutDown()
 
     def getModuleInfoById(self, module_id, silent=True):
@@ -280,8 +263,33 @@ class GambolPutty:
             return self.modules[module_id]
         except KeyError:
             if not silent:
-                self.logger.error("%sGet module by id %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+                self.logger.error("%sGet module by id %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_id, Utils.AnsiColors.ENDC))
             return None
+
+    def runModules(self):
+        """
+        Start the configured modules
+        """
+        # All modules are completely configured, call modules run method if it exists.
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            if len(module_info['instances']) > 1:
+                self.logger.info("%sUsing module %s, pool size: %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, len(module_info['instances']), Utils.AnsiColors.ENDC))
+            else:
+                self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
+            for instance in module_info['instances']:
+                name = module_info['id'] if 'id' in module_info else module_name
+                try:
+                    if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
+                        # The default 'start' method of threading.Thread will call the 'run' method of the module.
+                        instance.start()
+                    elif getattr(instance, "run", None):
+                        # Call 'run' method directly.
+                        instance.run()
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
+        import tornado.ioloop
+        tornado.ioloop.IOLoop.instance().start()
 
     def run(self):
         # Catch Keyboard interrupt here. Catching the signal seems
@@ -356,3 +364,6 @@ if "__main__" == __name__:
     gp.configureModules()
     gp.initEventStream()
     gp.run()
+
+
+

@@ -24,18 +24,17 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     Configuration example:
 
-    - module: FileSink
-      path:                                 # <type: string; is: required>
-      name_pattern:                         # <type: string; is: required>
-      format:                               # <type: string; is: required>
-      store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-      batch_size:                           # <default: 500; type: integer; is: optional>
-      backlog_size:                         # <default: 5000; type: integer; is: optional>
+    - FileSink:
+        path:                                 # <type: string; is: required>
+        name_pattern:                         # <type: string; is: required>
+        format:                               # <type: string; is: required>
+        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
+        batch_size:                           # <default: 500; type: integer; is: optional>
+        backlog_size:                         # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
-
     can_run_parallel = False
 
     def configure(self, configuration):
@@ -87,19 +86,6 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.fileloggers[key] = [logger, time.time()]
         return logger
 
-    def destroyEvent(self, event=False, event_list=False, do_it=False):
-        """Override the default behaviour of destroying an event when no receivers are set.
-        This module aggregates a configurable amount of events to use a bulk write.
-        So events must only be destroyed when bulk write was successful"""
-        if not do_it:
-            return
-        for callback in self.callbacks['on_event_delete']:
-            if event_list:
-                for event in event_list:
-                    callback(event)
-            else:
-                callback(event)
-
     def run(self):
         self.startTimedFunction(self.clearStaleLoggers)
         self.startTimedFunction(self.timed_store_func)
@@ -132,7 +118,6 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error('%sCould no log event %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
-        self.destroyEvent(event_list=events, do_it=True)
         self.events_container = []
         self.is_storing = False
 

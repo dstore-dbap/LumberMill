@@ -1,23 +1,30 @@
 # -*- coding: utf-8 -*-
-from hashlib import md5
+import pprint
 import sys
 import datetime
 import time
 import elasticsearch
-import Queue
 import BaseMultiProcessModule
 import Utils
 import Decorators
+try:
+    from __pypy__.builders import UnicodeBuilder
+except ImportError:
+    UnicodeBuilder = None
 
-json = False
-for module_name in ['yajl', 'simplejson', 'json']:
-    try:
-        json = __import__(module_name)
-        break
-    except ImportError:
-        pass
-if not json:
-    raise ImportError
+# For pypy the default json module is the fastest.
+if Utils.is_pypy:
+    import json
+else:
+    json = False
+    for module_name in ['ujson', 'yajl', 'simplejson', 'json']:
+        try:
+            json = __import__(module_name)
+            break
+        except ImportError:
+            pass
+    if not json:
+        raise ImportError
 
 @Decorators.ModuleDocstringParser
 class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModule):
@@ -46,20 +53,20 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
 
     Configuration example:
 
-    - module: ElasticSearchMultiProcessSink
-        nodes: ["localhost:9200"]                 # <type: list; is: required>
-        connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
-        use_ssl: True                             # <default: False; type: boolean; is: optional>
-        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+    - ElasticSearchMultiProcessSink:
+        nodes:                                    # <type: list; is: required>
+        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth:                                # <default: None; type: None||string; is: optional>
+        use_ssl:                                  # <default: False; type: boolean; is: optional>
+        index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
         ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-        store_interval_in_secs: 1                 # <default: 5; type: integer; is: optional>
-        batch_size: 500                           # <default: 500; type: integer; is: optional>
-        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+        batch_size:                               # <default: 500; type: integer; is: optional>
+        backlog_size:                             # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -93,7 +100,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         return timedStoreData
 
     def run(self):
-        self.timed_store_func()
+        self.startTimedFunction(self.timed_store_func)
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def connect(self):
@@ -110,19 +117,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             es = False
         return es
-
-    def sendEvent(self, event):
-        """Override the default behaviour of destroying an event when no receivers are set.
-        This module aggregates a configurable amount of events to use the bulk update feature
-        of elasticsearch. So events must only be destroyed when bulk update was successful"""
-        receivers = self.getFilteredReceivers(event)
-        if not receivers:
-            return
-        for idx, receiver in enumerate(receivers):
-            if isinstance(receiver, Queue.Queue):
-                receiver.put(event if idx is 0 else event.copy())
-            else:
-                receiver.receiveEvent(event if idx is 0 else event.copy())
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions.
@@ -141,25 +135,29 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         """
         Format data for elasticsearch bulk update
         """
-        json_data = ""
+        if UnicodeBuilder:
+            json_data = UnicodeBuilder()
+        else:
+            json_data = []
         for event in events:
             try:
                 event_type = event['event_type']
             except KeyError:
                 event_type = 'Unknown'
-            try:
-                doc_id = event[self.getConfigurationValue("doc_id", event)]
-            except KeyError:
-                doc_id = self.getConfigurationValue("doc_id", event)
+            doc_id = self.getConfigurationValue("doc_id", event)#event["gambolputty"]["event_id"]
             if not doc_id:
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
                 continue
             doc_id = json.dumps(doc_id.strip())
             if self.ttl:
                 event['_ttl'] = self.ttl
-            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}\n' % (index_name, event_type, doc_id)
+            header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            json_data.append("\n".join((header, json.dumps(event), "\n")))
+        if UnicodeBuilder:
+            json_data = json_data.build()
+        else:
             try:
-                json_data += "%s%s\n" % (es_index,json.dumps(event))
+                json_data = "".join(json_data)
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
@@ -173,11 +171,9 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             index_name = self.getConfigurationValue("index_name")
         else:
             index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
-
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
-            self.destroyEvent(event_list=events)
             self.events_container = []
         except elasticsearch.exceptions.ConnectionError:
             try:
@@ -189,7 +185,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sServer cummunication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             self.logger.debug("Payload: %s" % json_data)
-            time.sleep(.2)
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 tries = 0
                 self.es = False

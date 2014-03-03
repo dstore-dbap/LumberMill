@@ -22,10 +22,10 @@ class ClusterConfiguration(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: ClusterConfiguration
-      cluster:                                # <default: 'Cluster'; type: string; is: optional>
-      ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
-      interval: 10                            # <default: 60; type: integer; is: optional>
+    - ClusterConfiguration:
+        cluster:                                # <default: 'Cluster'; type: string; is: optional>
+        ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
+        interval: 10                            # <default: 60; type: integer; is: optional>
     """
 
     module_type = "stand_alone"

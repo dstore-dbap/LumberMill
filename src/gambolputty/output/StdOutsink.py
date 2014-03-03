@@ -10,9 +10,9 @@ class StdOutSink(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: StdOutSink
-      pretty_print: True          # <default: True; type: boolean; is: optional>
-      fields: '%(@timestamp)s'    # <default: ''; type: string; is: optional>
+    - StdOutSink:
+        pretty_print:           # <default: True; type: boolean; is: optional>
+        fields:                 # <default: ''; type: string; is: optional>
     """
 
     module_type = "output"
@@ -24,7 +24,7 @@ class StdOutSink(BaseModule.BaseModule):
         else:
             output = event
         if self.getConfigurationValue('pretty_print'):
-            pprint.pprint(output)
+            pprint.pprint(output, indent=4)
         else:
             print "%s" % output
         yield event

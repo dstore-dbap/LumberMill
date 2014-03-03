@@ -16,13 +16,13 @@ class Permutate(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: Permutate
-      source_field: facets                                                # <type: string; is: required>
-      target_fields: ['field1', 'field2']                                 # <type: list; is: required>
-      context_data_field: context_data                                    # <default: ""; type:string; is: optional>
-      context_target_mapping: {'field1': ['ctx_field1', 'ctx_field2']}    # <default: {}; type: dict; is: optional if context_data_field == "" else required>
-      receivers:
-        - NextModule
+    - Permutate:
+        source_field:                   # <type: string; is: required>
+        target_fields:                  # <type: list; is: required>
+        context_data_field:             # <default: ""; type:string; is: optional>
+        context_target_mapping:         # <default: {}; type: dict; is: optional if context_data_field == "" else required>
+        receivers:
+          - NextModule
     """
 
     module_type = "modifier"

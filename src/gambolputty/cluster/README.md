@@ -16,16 +16,14 @@ pack: Set this node to be either leader or member.
 name: Name of the cluster. Used for auto-discovery in same network.
 shared_secret: pre shared key to en/decrypt cluster messages.
 
-Configuration example:
-
-    - module: Cluster
-      interface:                            # <default: '0.0.0.0'; type: string; is: optional>
-      port:                                 # <default: 5252; type: integer; is: optional>
-      broadcast:                            # <type: string; is: required>
-      interval:                             # <default: 10; type: integer; is: optional>
-      pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
-      name:                                 # <type: string; is: required>
-      secret:                               # <type: string; is: required>
+    - Cluster:
+        interface:                            # <default: '0.0.0.0'; type: string; is: optional>
+        port:                                 # <default: 5252; type: integer; is: optional>
+        broadcast:                            # <type: string; is: required>
+        interval:                             # <default: 10; type: integer; is: optional>
+        pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
+        name:                                 # <type: string; is: required>
+        secret:                               # <type: string; is: required>
 
 Cluster submodules
 ==========
@@ -44,7 +42,7 @@ interval: Time in seconds between checks if master config did change.
 
 Configuration example:
 
-    - module: ClusterConfiguration
-      cluster:                                # <default: 'Cluster'; type: string; is: optional>
-      ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
-      interval: 10                            # <default: 60; type: integer; is: optional>
+    - ClusterConfiguration:
+        cluster:                                # <default: 'Cluster'; type: string; is: optional>
+        ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
+        interval: 10                            # <default: 60; type: integer; is: optional>

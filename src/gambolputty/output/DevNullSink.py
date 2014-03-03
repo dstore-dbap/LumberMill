@@ -9,7 +9,7 @@ class DevNullSink(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: DevNullSink
+    - DevNullSink
     """
 
     module_type = "output"

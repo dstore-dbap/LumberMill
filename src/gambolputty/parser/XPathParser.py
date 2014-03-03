@@ -17,13 +17,13 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: XPathParser
-      source_field:                          # <type: string; is: required>
-      target_field:                          # <default: "gambolputty_xpath"; type: string; is: optional>
-      query:                                 # <type: string; is: required>
-      redis_store:                           # <default: None; type: None||string; is: optional>
-      redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
-      redis_ttl:                             # <default: 60; type: integer; is: optional>
+    - XPathParser:
+        source_field:                          # <type: string; is: required>
+        target_field:                          # <default: "gambolputty_xpath"; type: string; is: optional>
+        query:                                 # <type: string; is: required>
+        redis_store:                           # <default: None; type: None||string; is: optional>
+        redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
+        redis_ttl:                             # <default: 60; type: integer; is: optional>
     """
 
     module_type = "parser"

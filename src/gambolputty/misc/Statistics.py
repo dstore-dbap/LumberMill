@@ -11,11 +11,11 @@ class Statistics(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: Statistics
-      interval: 10                       # <default: 10; type: integer; is: optional>
-      event_type_statistics: True        # <default: True; type: boolean; is: optional>
-      receive_rate_statistics: True      # <default: True; type: boolean; is: optional>
-      waiting_event_statistics: True     # <default: True; type: boolean; is: optional>
+    - Statistics:
+        interval:                      # <default: 10; type: integer; is: optional>
+        event_type_statistics:         # <default: True; type: boolean; is: optional>
+        receive_rate_statistics:       # <default: True; type: boolean; is: optional>
+        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
     """
 
     module_type = "misc"

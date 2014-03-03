@@ -7,6 +7,7 @@ import re
 import ast
 import multiprocessing
 import collections
+import Utils
 
 def Singleton(class_):
     instances = {}
@@ -84,9 +85,7 @@ def ModuleDocstringParser(cls):
                         prop_value = ast.literal_eval(prop_value)
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        instance.logger.error(
-                            "Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue))
-                        print "Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue)
+                        instance.logger.error("Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue))
                     # Support for multiple datatypes using the pattern: "type: string||list;"
                 if prop_name == "type":
                     prop_value = prop_value.split("||")
@@ -96,7 +95,6 @@ def ModuleDocstringParser(cls):
                 except:
                     instance.configuration_metadata[config_option_info['name'].strip()] = {prop_name: prop_value}
         # Set self_hostname
-
         return instance
 
     return wrapper

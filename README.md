@@ -13,49 +13,50 @@ The different modules can be combined in any order.
 
 #### Event inputs
 
+* RedisChannel, read events from redis channels.
+* RedisList, read events from redis lists.
+* Spam, what it says on the can - spams GambolPutty for testing.
 * StdInHandler, read stream from standard in.
 * TcpServerThreaded, read stream from a tcp socket.
 * TcpServerTornado, read stream from a tcp socket, faster on Linux.
-* RedisChannel, read events from redis channels.
-* RedisList, read events from redis lists.
-* Zmq, read events from a zeromq.
 * UnixSocket, read stream from a named socket on unix like systems.
-* Spam, what it says on the can - spams GambolPutty for testing.
+* Zmq, read events from a zeromq.
 
 #### Event parsers
 
-* RegexParser, parse a string using regular expressions and named capturing groups.
 * CSVParser, parse a char separated string.
 * JsonParser, parse a json formatted string.
+* LineParser, split lines at a seperator and emit each line as new event.
 * MsgPackParser, parse a msgpack encoded string.
+* RegexParser, parse a string using regular expressions and named capturing groups.
+* SyslogPrivalParser, parse the syslog prival value (RFC5424).
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
-* SyslogPrivalParser, parse the syslog prival value (RFC5424).
-* LineParser, split lines at a seperator and emit each line as new event.
 
 #### Field modifiers
 
 * AddDateTime, adds a timestamp field.
 * AddGeoInfo, adds geo info fields.
-* ModifyFields, some methods to change extracted fields, e.g. insert, delete, replace, castToInteger etc.
 * HttpRequest, execute an arbritrary http request and store result.
+* ModifyFields, some methods to change extracted fields, e.g. insert, delete, replace, castToInteger etc.
 * Permutate, takes a list in the event data emits events for all possible permutations of that list.
 
 #### Outputs
 
 * DevNullSink, discards all data that it receives.
-* StdOutSink, prints all received data to standard out.
 * ElasticSearchSink, stores data entries in an elasticsearch index.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
-* SyslogSink, send events to syslog.
 * FileSink, store events in a file.
-* WebHdfsSink, store events in hdfs via webhdfs.
 * RedisChannelSink, publish incoming events to redis channel.
+* StdOutSink, prints all received data to standard out.
+* SyslogSink, send events to syslog.
+* WebHdfsSink, store events in hdfs via webhdfs.
 
 #### Misc modules
 
-* RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
+* ExecPython, execute custom python code.
 * Facet, collect all encountered variations of en event value over a configurable period of time.
+* RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
 * Statistics, simple statistic module.
 * TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
@@ -65,8 +66,8 @@ The different modules can be combined in any order.
 * ClusterConfiguration, syncs leader configuration to pack members.
 
 #### Webserver modules
-* WebserverTornado, base webserver module. Handles all incoming requests.
 * WebGui, a web interface to GambolPutty.
+* WebserverTornado, base webserver module. Handles all incoming requests.
 
 GambolPutty makes use of the following projects:
 
@@ -89,18 +90,19 @@ GambolPutty makes use of the following projects:
 The configuration is stored in a yaml formatted file.
 Each module configuration follows the same pattern:
 
-    - module: SomeModuleName
-      alias: AliasModuleName                    # <default: ""; type: string; is: optional>
-      redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-      redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
-      redis-ttl: 600                          # <default: 60; type: integer; is: optional>
-      receivers:
-       - ModuleName
-       - ModuleAlias:
-           filter: event_type == 'httpd_access_log'
+    - SomeModuleName:
+        id: AliasModuleName                     # <default: ""; type: string; is: optional>
+        filter: event['cache_status'] == "-"
+        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
+        redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
+        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
+        receivers:
+         - ModuleName
+         - ModuleAlias:
+             filter: event['event_type'] == 'httpd_access_log'
 
 * module: specifies the module name and maps to the class name of the module.
-* alias: use to set an alias name if you run more than just one instance of a module.
+* id: use to set an alias name if you run more than just one instance of a module.
 * configuration['work-on-copy']: create a copy of the default event dictionary and pass this on to following modules
 * receivers: ModuleName or ModuleAlias of the receiving modules. If a filter is provided, only matching events will be send to receiver.
 
@@ -155,7 +157,7 @@ Configure the linux syslog-ng service to send data to a tcp address (/etc/syslog
 Configure GambolPutty to listen on localhost 5151(./conf/gambolputty.conf):
 
 	...
-	- module: TcpServerThreaded
-      interface: localhost
-      port: 5151
+	- TcpServerThreaded:
+        interface: localhost
+        port: 5151
 	...

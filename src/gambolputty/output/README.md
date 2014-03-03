@@ -27,25 +27,23 @@ backlog_size: maximum count of events waiting for transmission. Events above cou
 
 Configuration example:
 
-    - module: ElasticSearchSink
-        nodes: ["localhost:9200"]                 # <type: list; is: required>
-        connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
-        use_ssl: True                             # <default: False; type: boolean; is: optional>
-        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+    - ElasticSearchSink:
+        nodes: [                                  # <type: list; is: required>
+        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth:                                # <default: None; type: None||string; is: optional>
+        use_ssl:                                  # <default: False; type: boolean; is: optional>
+        index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id:                                   # <default:  type: string; is: optional>
         ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-        store_interval_in_secs: 1                 # <default: 5; type: integer; is: optional>
-        batch_size: 500                           # <default: 500; type: integer; is: optional>
-        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+        batch_size:                               # <default: 500; type: integer; is: optional>
+        backlog_size:                             # <default: 5000; type: integer; is: optional>
 
 
 #####ElasticSearchMultiProcessSink
-
-Same configuration as above but with multiple processes.
 
 !!IMPORTANT!!: In contrast to the normal ElasticSearchSink module, this module uses multiple processes to store
 the events in the elasticsearch backend. This module is experimental and may cause strange side effects.
@@ -53,14 +51,54 @@ The performance gain is considerable though:
  - when run under CPython it is around 20% - 30%
  - when run under pypy it is around 40% - 60%
 
+Store the data dictionary in an elasticsearch index.
+
+The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
+Requests will the be loadbalanced via round robin.
+
+nodes: configures the elasticsearch nodes.
+connection_type: one of: 'thrift', 'http'
+http_auth: 'user:password'
+use_ssl: one of: True, False
+index_prefix: es index prefix to use, will be appended with '%Y.%m.%d'.
+index_name: sets a fixed name for the es index.
+doc_id: sets the es document id for the committed event data.
+ttl: When set, documents will be automatically deleted after ttl expired.
+     Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+     This feature needs to be enabled for the index.
+     @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
+consistency: one of: 'one', 'quorum', 'all'
+replication: one of: 'sync', 'async'.
+store_interval_in_secs: sending data to es in x seconds intervals.
+batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration example:
+
+    - ElasticSearchMultiProcessSink:
+        nodes:                                    # <type: list; is: required>
+        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth:                                # <default: None; type: None||string; is: optional>
+        use_ssl:                                  # <default: False; type: boolean; is: optional>
+        index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
+        ttl:                                      # <default: None; type: None||string; is: optional>
+        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+        batch_size:                               # <default: 500; type: integer; is: optional>
+        backlog_size:                             # <default: 5000; type: integer; is: optional>
+
 #####StdOutSink
 
 Print the data dictionary to stdout.
 
 Configuration example:
 
-    - module: StdOutSink
-      pretty_print: True      # <default: True; type: boolean; is: optional>
+    - StdOutSink:
+        pretty_print:           # <default: True; type: boolean; is: optional>
+        fields:                 # <default: ''; type: string; is: optional>
 
 #####SyslogSink
 
@@ -73,11 +111,11 @@ format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s
 
 Configuration example:
 
-    - module: SyslogSink
-      address:              # <default: 'localhost:514'; type: string; is: required>
-      proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
-      facility:             # <default: 'user'; type: string; is: optional>
-      format:               # <type: string; is: required>
+    - SyslogSink:
+        address:              # <default: 'localhost:514'; type: string; is: required>
+        proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
+        facility:             # <default: 'user'; type: string; is: optional>
+        format:               # <type: string; is: required>
 
 #####FileSink
 
@@ -92,13 +130,13 @@ backlog_size: maximum count of events waiting for transmission. Events above cou
 
 Configuration example:
 
-    - module: FileSink
-      path:                                 # <type: string; is: required>
-      name_pattern:                         # <type: string; is: required>
-      format:                               # <type: string; is: required>
-      store_interval_in_secs:               # <default: 1; type: integer; is: optional>
-      batch_size:                   # <default: 500; type: integer; is: optional>
-      backlog_size:                         # <default: 5000; type: integer; is: optional>
+    - FileSink:
+        path:                                 # <type: string; is: required>
+        name_pattern:                         # <type: string; is: required>
+        format:                               # <type: string; is: required>
+        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
+        batch_size:                           # <default: 500; type: integer; is: optional>
+        backlog_size:
 
 #####WebHdfsSink
 
@@ -116,16 +154,16 @@ compress: Compress output as gzip file. For this to be effective, the batch size
 
 Configuration example:
 
-    - module: WebHdfsSink
-      server:                               # <default: 'localhost:14000'; type: string; is: optional>
-      user:                                 # <type: string; is: required>
-      path:                                 # <type: string; is: required>
-      name_pattern:                         # <type: string; is: required>
-      format:                               # <type: string; is: required>
-      store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-      batch_size:                           # <default: 1000; type: integer; is: optional>
-      backlog_size:                         # <default: 5000; type: integer; is: optional>
-      compress:                             # <default: True; type: boolean; is: optional>
+    - WebHdfsSink:
+        server:                               # <default: 'localhost:14000'; type: string; is: optional>
+        user:                                 # <type: string; is: required>
+        path:                                 # <type: string; is: required>
+        name_pattern:                         # <type: string; is: required>
+        format:                               # <type: string; is: required>
+        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
+        batch_size:                           # <default: 1000; type: integer; is: optional>
+        backlog_size:                         # <default: 5000; type: integer; is: optional>
+        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 #####RedisChannelSink
 
@@ -135,14 +173,14 @@ format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(countr
 
 Configuration example:
 
-    - module: RedisChannelSink
-      channel: my_channel         # <type: string; is: required>
-      server: redis.server        # <default: 'localhost'; type: string; is: optional>
-      port: 6379                  # <default: 6379; type: integer; is: optional>
-      db: 0                       # <default: 0; type: integer; is: optional>
-      password: None              # <default: None; type: None||string; is: optional>
-      format:                     # <default: None; type: string; is: optional>
-      fields:                     # <default: None; type: None||list; is: optional>
+    - RedisChannelSink:
+        channel:                    # <type: string; is: required>
+        server:                     # <default: 'localhost'; type: string; is: optional>
+        port:                       # <default: 6379; type: integer; is: optional>
+        db:                         # <default: 0; type: integer; is: optional>
+        password:                   # <default: None; type: None||string; is: optional>
+        format:                     # <default: None; type: string; is: optional>
+        fields:                     # <default: None; type: None||list; is: optional>
 
 #####DevNullSink
 
@@ -150,4 +188,4 @@ Just discard messages send to this module.BaseThreadedModule
 
 Configuration example:
 
-    - module: DevNullSink
+    - DevNullSink

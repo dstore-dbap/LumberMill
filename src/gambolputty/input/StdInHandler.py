@@ -12,15 +12,16 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: StdInHandler
-      multiline: True                  # <default: False; type: boolean; is: optional>
-      stream_end_signal: #########     # <default: False; type: boolean||string; is: optional>
-      receivers:
-        - NextModule
+    - StdInHandler:
+        multiline:                     # <default: False; type: boolean; is: optional>
+        stream_end_signal:             # <default: False; type: boolean||string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"
     """Set module type"""
+    can_run_parallel = False
 
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

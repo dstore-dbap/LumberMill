@@ -19,18 +19,17 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: Zmq
-      servers:                    # <default: ['localhost:5570']; type: list; is: optional>
-      pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-      mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
-      topic:                      # <default: ''; type: string; is: optional>
-      multipart:                  # <default: False; type: boolean; is: optional>
-      seperator:                  # <default: None; type: None||string; is: optional>
+    - Zmq:
+        servers:                    # <default: ['localhost:5570']; type: list; is: optional>
+        pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
+        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
+        topic:                      # <default: ''; type: string; is: optional>
+        multipart:                  # <default: False; type: boolean; is: optional>
+        seperator:                  # <default: None; type: None||string; is: optional>
     """
 
     module_type = "input"
     """Set module type"""
-
     can_run_parallel = False
 
     def configure(self, configuration):

@@ -13,10 +13,10 @@ class Tarpit(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: Tarpit
-      delay: 10  # <default: 10; type: integer; is: optional>
-      receivers:
-        - NextModule
+    - Tarpit:
+        delay:          # <default: 10; type: integer; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "misc"

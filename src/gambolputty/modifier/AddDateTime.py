@@ -12,11 +12,11 @@ class AddDateTime(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: AddDateTime
-      target_field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
-      format: '%Y-%M-%dT%H:%M:%S'  # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
-      receivers:
-        - NextModule
+    - AddDateTime:
+        target_field:        # <default: '@timestamp'; type: string; is: optional>
+        format:              # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "modifier"

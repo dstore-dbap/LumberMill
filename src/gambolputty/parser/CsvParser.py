@@ -15,15 +15,15 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: CsvParser
-      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-      escapechar: \                           # <default: '\'; type: string; is: optional>
-      skipinitialspace: False                 # <default: False; type: boolean; is: optional>
-      quotechar: '"'                          # <default: '"'; type: string; is: optional>
-      delimiter: ';'                          # <default: '|'; type: char; is: optional>
-      fieldnames: ["gumby", "brain", "specialist"]        # <default: False; type: [list]; is: optional>
-      receivers:
-        - NextHandler
+    - CsvParser:
+        source_field:                           # <default: 'data'; type: string; is: optional>
+        escapechar:                             # <default: '\'; type: string; is: optional>
+        skipinitialspace:                       # <default: False; type: boolean; is: optional>
+        quotechar:                              # <default: '"'; type: string; is: optional>
+        delimiter:                              # <default: '|'; type: char; is: optional>
+        fieldnames:                             # <default: False; type: [list]; is: optional>
+        receivers:
+          - NextHandler
     """
 
     module_type = "parser"

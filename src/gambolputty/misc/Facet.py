@@ -22,15 +22,15 @@ class Facet(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: Facet
-      source_field:                           # <type:string; is: required>
-      group_by:                               # <type:string; is: required>
-      add_event_fields:                       # <default: []; type: list; is: optional>
-      interval:                               # <default: 5; type: float||integer; is: optional>
-      redis_store:                            # <default: None; type: None||string; is: optional>
-      redis_ttl:                              # <default: 60; type: integer; is: optional>
-      receivers:
-        - NextModule
+    - Facet:
+        source_field:                           # <type:string; is: required>
+        group_by:                               # <type:string; is: required>
+        add_event_fields:                       # <default: []; type: list; is: optional>
+        interval:                               # <default: 5; type: float||integer; is: optional>
+        redis_store:                            # <default: None; type: None||string; is: optional>
+        redis_ttl:                              # <default: 60; type: integer; is: optional>
+        receivers:
+          - NextModule
     """
     facet_data = {}
     """Holds the facet data for all instances"""

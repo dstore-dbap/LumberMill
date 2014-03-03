@@ -14,19 +14,18 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     Configuration example:
 
-    - module: RedisChannelSink
-      channel: my_channel         # <type: string; is: required>
-      server: redis.server        # <default: 'localhost'; type: string; is: optional>
-      port: 6379                  # <default: 6379; type: integer; is: optional>
-      db: 0                       # <default: 0; type: integer; is: optional>
-      password: None              # <default: None; type: None||string; is: optional>
-      format:                     # <default: None; type: string; is: optional>
-      fields:                     # <default: None; type: None||list; is: optional>
+    - RedisChannelSink:
+        channel:                    # <type: string; is: required>
+        server:                     # <default: 'localhost'; type: string; is: optional>
+        port:                       # <default: 6379; type: integer; is: optional>
+        db:                         # <default: 0; type: integer; is: optional>
+        password:                   # <default: None; type: None||string; is: optional>
+        format:                     # <default: None; type: string; is: optional>
+        fields:                     # <default: None; type: None||list; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
-
     can_run_parallel = True
 
     def configure(self, configuration):

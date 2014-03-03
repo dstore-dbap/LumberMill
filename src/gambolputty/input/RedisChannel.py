@@ -15,17 +15,16 @@ class RedisChannel(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: RedisChannel
-      channel: my_channel         # <type: string; is: required>
-      server: redis.server        # <default: 'localhost'; type: string; is: optional>
-      port: 6379                  # <default: 6379; type: integer; is: optional>
-      db: 0                       # <default: 0; type: integer; is: optional>
-      password: None              # <default: None; type: None||string; is: optional>
+    - RedisChannel:
+        channel:                    # <type: string; is: required>
+        server:                     # <default: 'localhost'; type: string; is: optional>
+        port:                       # <default: 6379; type: integer; is: optional>
+        db:                         # <default: 0; type: integer; is: optional>
+        password:                   # <default: None; type: None||string; is: optional>
     """
 
     module_type = "input"
     """Set module type"""
-
     can_run_parallel = False
 
     def configure(self, configuration):

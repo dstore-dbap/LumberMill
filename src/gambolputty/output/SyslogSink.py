@@ -20,11 +20,11 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: SyslogSink
-      address:              # <default: 'localhost:514'; type: string; is: required>
-      proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
-      facility:             # <default: 'user'; type: string; is: optional>
-      format:               # <type: string; is: required>
+    - SyslogSink:
+        address:              # <default: 'localhost:514'; type: string; is: required>
+        proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
+        facility:             # <default: 'user'; type: string; is: optional>
+        format:               # <type: string; is: required>
     """
 
     module_type = "output"

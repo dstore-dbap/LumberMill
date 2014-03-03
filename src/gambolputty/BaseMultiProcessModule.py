@@ -16,9 +16,10 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     Configuration example:
 
     - module: SomeModuleName
-      id:                                       # <default: ""; type: string; is: optional>
-      pool_size: 4                              # <default: None; type: None||integer; is: optional>
-      queue_size: 20                            # <default: None; type: None||integer; is: optional>
+      id:                               # <default: ""; type: string; is: optional>
+      filter:                           # <default: None; type: None||string; is: optional>
+      pool_size: 4                      # <default: None; type: None||integer; is: optional>
+      queue_size: 20                    # <default: None; type: None||integer; is: optional>
       ...
       receivers:
        - ModuleName
@@ -33,7 +34,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
         self.input_queue = False
         self.output_queues = []
         self.daemon = True
-        self.alive = True
+        self.alive = False
 
     def setInputQueue(self, queue):
         self.input_queue = queue
@@ -42,7 +43,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
         return self.input_queue
 
     def getEventsFromInputQueue(self, block=True, timeout=None):
-        events = False
+        events = []
         try:
             events = self.input_queue.get(block, timeout)
         except Queue.Empty:
@@ -71,6 +72,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
             if self.module_type not in ['stand_alone', 'input']:
                 self.logger.error("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
+        self.alive = True
         while self.alive:
             events = self.getEventsFromInputQueue()
             for event in events:
@@ -79,10 +81,10 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def shutDown(self, silent=False):
         # Call parent shutDown method
         BaseModule.BaseModule.shutDown(self, silent)
-        self.alive = False
         if self.input_queue:
             self.input_queue.close()
         # Kill self via signal. Otherwise a simple reload will not terminate the worker processes.
         # Why that is escapes me...
-        if self.pid:
+        if self.pid and self.alive:
             os.kill(self.pid, signal.SIGQUIT)
+        self.alive = False

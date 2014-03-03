@@ -4,20 +4,23 @@ import sys
 import datetime
 import time
 import elasticsearch
-import Queue
 import BaseModule
 import Utils
 import Decorators
 
-json = False
-for module_name in ['yajl', 'simplejson', 'json']:
-    try:
-        json = __import__(module_name)
-        break
-    except ImportError:
-        pass
-if not json:
-    raise ImportError
+# For pypy the default json module is the fastest.
+if Utils.is_pypy:
+    import json
+else:
+    json = False
+    for module_name in ['ujson', 'yajl', 'simplejson', 'json']:
+        try:
+            json = __import__(module_name)
+            break
+        except ImportError:
+            pass
+    if not json:
+        raise ImportError
 
 @Decorators.ModuleDocstringParser
 class ElasticSearchSink(BaseModule.BaseModule):
@@ -46,20 +49,20 @@ class ElasticSearchSink(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: ElasticSearchSink
-        nodes: ["localhost:9200"]                 # <type: list; is: required>
-        connection_type: http                     # <default: "thrift"; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth: 'user:password'                # <default: None; type: None||string; is: optional>
-        use_ssl: True                             # <default: False; type: boolean; is: optional>
-        index_prefix: agora_access-               # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-        index_name: "Fixed index name"            # <default: ""; type: string; is: required if index_prefix is False else optional>
-        doc_id: 'data'                            # <default: "data"; type: string; is: optional>
+    - ElasticSearchSink:
+        nodes: [                                  # <type: list; is: required>
+        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth:                                # <default: None; type: None||string; is: optional>
+        use_ssl:                                  # <default: False; type: boolean; is: optional>
+        index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
+        index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
+        doc_id:                                   # <default:  type: string; is: optional>
         ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency: 'one'                        # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication: 'sync'                       # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
-        store_interval_in_secs: 1                 # <default: 5; type: integer; is: optional>
-        batch_size: 500                           # <default: 500; type: integer; is: optional>
-        backlog_size: 5000                        # <default: 5000; type: integer; is: optional>
+        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+        batch_size:                               # <default: 500; type: integer; is: optional>
+        backlog_size:                             # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -73,6 +76,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
+        self.ttl = self.getConfigurationValue("ttl")
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
@@ -109,19 +113,6 @@ class ElasticSearchSink(BaseModule.BaseModule):
             self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             es = False
         return es
-
-    def sendEvent(self, event):
-        """Override the default behaviour of destroying an event when no receivers are set.
-        This module aggregates a configurable amount of events to use the bulk update feature
-        of elasticsearch. So events must only be destroyed when bulk update was successful"""
-        receivers = self.getFilteredReceivers(event)
-        if not receivers:
-            return
-        for idx, receiver in enumerate(receivers):
-            if isinstance(receiver, Queue.Queue):
-                receiver.put(event if idx is 0 else event.copy())
-            else:
-                receiver.receiveEvent(event if idx is 0 else event.copy())
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions.

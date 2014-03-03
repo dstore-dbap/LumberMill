@@ -17,16 +17,17 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: Spam
-      event: {'Lobster': 'Thermidor', 'Truffle': 'Pate'}  # <default: {}; type: dict; is: optional>
-      sleep: 0                                            # <default: 0; type: int||float; is: optional>
-      events_count: 1000                                  # <default: 0; type: int; is: optional>
-      receivers:
-        - NextModule
+    - Spam:
+        event:                    # <default: {}; type: dict; is: optional>
+        sleep:                    # <default: 0; type: int||float; is: optional>
+        events_count:             # <default: 0; type: int; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"
     """Set module type"""
+    can_run_parallel = True
 
     def run(self):
         counter = 0

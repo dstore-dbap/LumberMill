@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import ast
+import random
 import time
 import os
 import sys
-import re
 import subprocess
 import logging
 import __builtin__
@@ -61,11 +61,14 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name=''):
-    default_dict = { "event_type": "Unknown",
+    default_dict = KeyDotNotationDict({ "event_type": "Unknown",
                      "received_from": False,
                      "data": "",
-                     "gambolputty": { "source_module": caller_class_name }
-                    }
+                     "gambolputty": {
+                        'event_id': "%032x" % random.getrandbits(128),
+                        "source_module": caller_class_name
+                     }
+                    })
     default_dict.update(dict)
     return default_dict
 
@@ -75,7 +78,11 @@ def compileStringToConditionalObject(condition_as_string, mapping):
 
     Example:
 
+    lambda event:
+
     condition_as_string = "matched = VirtualHostName == 'www.gambolutty.com'", mapping = "event['%s']"
+
+    condition_as_string = "lambda event: VirtualHostName == 'www.gambolutty.com'", mapping = "event['%s']"
 
      will be parsed and compiled to:
      matched = event['VirtualHostName'] == "www.gambolutty.com"
@@ -101,12 +108,47 @@ class AstTransformer(ast.NodeTransformer):
     def visit_Name(self, node):
         # ignore builtins and some other vars
         ignore_nodes = dir(__builtin__)
-        ignore_nodes.extend(["matched", "dependency"])
+        ignore_nodes.extend(["matched", "dependency", "event"])
         if node.id in ignore_nodes:
             return node
-        #pprint(ast.dump(ast.parse(self.mapping % node.id)))
+        #pprint.pprint(self.mapping % node.id)
+        #pprint.pprint(ast.dump(ast.parse(self.mapping % node.id)))
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
+
+class Buffer:
+    def __init__(self, size, callback, interval=1):
+        self.flush_size = size
+        self.flush_interval = interval
+        self.flush_callback = callback
+        self.flush_timed_func = self.getTimedFlushMethod()
+        self.flush_timed_func()
+        self.buffer = []
+        self.is_sending = False
+        self.append = self.put
+
+    def getTimedFlushMethod(self):
+        @Decorators.setInterval(self.flush_interval)
+        def timedFlush():
+            if self.is_sending or len(self.buffer) == 0:
+                return
+            self.flush()
+        return timedFlush
+
+    def put(self, item):
+        self.buffer.append(item)
+        if len(self.buffer) == self.flush_size:
+            self.flush()
+
+    def flush(self):
+        try:
+            self.flush_callback(self.buffer)
+            self.buffer = []
+        finally:
+            pass
+
+    def bufsize(self):
+        return len(self.buffer)
 
 class BufferedQueue():
     def __init__(self, queue, buffersize=100, ):
@@ -144,6 +186,29 @@ class BufferedQueue():
 
     def __getattr__(self, name):
         return getattr(self.queue, name)
+
+class KeyDotNotationDict(dict):
+    def __init__(self, *args):
+        dict.__init__(self, *args)
+
+    def __getitem__(self, key):
+        try:
+            return super(KeyDotNotationDict, self).__getitem__(key)
+        except KeyError:
+            tmp_data = super(KeyDotNotationDict, self)
+            for current_key in key.split('.'):
+                tmp_data = tmp_data.__getitem__(current_key)
+            return tmp_data
+
+    def __setitem__(self, key, value, dict=None):
+        dict = dict if dict else super(KeyDotNotationDict, self)
+        if "." not in key:
+            dict.__setitem__(key, value)
+            return
+        current_key, remaining_keys = key.split('.', 1)
+        dict = dict.__getitem__(current_key)
+        self.__setitem__(remaining_keys, value, dict)
+
 
 class AnsiColors:
     HEADER = '\033[95m'

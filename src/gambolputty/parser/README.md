@@ -7,13 +7,14 @@ Parse a string by named regular expressions.
 
 Configuration example:
 
-    - module: RegexParser
-      source_field: field1                    # <default: 'data'; type: string; is: optional>
-      target_field: event_type                # <default: 'event_type'; type: string; is: optional>
-      mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
-      break_on_match: True                    # <default: True; type: boolean; is: optional>
-      field_extraction_patterns:              # <type: [string,list]; is: required>
-        httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+    - RegexParser:
+        source_field:                           # <default: 'data'; type: string; is: optional>
+        mark_unmatched_as:                      # <default: 'unknown'; type: string; is: optional>
+        break_on_match:                         # <default: True; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: dict; is: required>
+          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+        receivers:
+          - NextModule
 
 #####LineParser
 
@@ -25,22 +26,34 @@ source_fields:  Input fields for decode.
 
 Configuration example:
 
-    - module: LineParser
-      source_fields:                        # <default: 'data'; type: string||list; is: optional>
-      seperator:                            # <default: '\n'; type: string; is: optional>
-      target_field:                         # <default: 'data'; type:string; is: optional>
-      keep_original:                        # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - LineParser:
+        source_fields:                        # <default: 'data'; type: string||list; is: optional>
+        seperator:                            # <default: '\n'; type: string; is: optional>
+        target_field:                         # <default: 'data'; type:string; is: optional>
+        keep_original:                        # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
 
 #####UrlParser
 
-Parse and extract url parameters.
+Urlencode or decode an event field and extract url parameters.
+
+mode: Either encode or decode data.
+source_field: Event field to en/decode.
+target_field: Event field to update with en/decode result. If not set source will be replaced.
+parse_querystring: Parse url for query parameters and extract them.
+querystring_target_field: Event field to update with url parameters.
+querystring_prefix: Prefix string to prepend to url parameter keys.
 
 Configuration example:
 
-    - module: UrlParser
-      source_field: uri       # <type: string; is: required>
+    - UrlParser:
+        mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_field:             # <type: string; is: required>
+        target_field:             # <default: None; type: None||string; is: optional>
+        parse_querystring:        # <default: False; type: boolean; is: optional>
+        querystring_target_field: # <default: None; type: None||string; is: optional>
+        querystring_prefix:       # <default: None; type: string; is: optional>
 
 #####XPathParser
 
@@ -52,12 +65,13 @@ If that fails, it will execute the xpath query and store the result in redis.
 
 Configuration example:
 
-    - module: XPathParser
-      source_field: 'xml_data'                                # <type: string; is: required>
-      query:  '//Item[@%(server_name)s]/@NodeDescription'     # <type: string; is: required>
-      redis_client: RedisClientName           # <default: ""; type: string; is: optional>
-      redis_key: HttpRequest%(server_name)s   # <default: ""; type: string; is: optional if redis_client is False else required>
-      redis_ttl: 600                          # <default: 60; type: integer; is: optional>
+    - XPathParser:
+        source_field:                          # <type: string; is: required>
+        target_field:                          # <default: "gambolputty_xpath"; type: string; is: optional>
+        query:                                 # <type: string; is: required>
+        redis_store:                           # <default: None; type: None||string; is: optional>
+        redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
+        redis_ttl:                             # <default: 60; type: integer; is: optional>
 
 #####CsvParser
 
@@ -68,15 +82,15 @@ the corresponding csv fields.
 
 Configuration example:
 
-    - module: CsvParser
-      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-      escapechar: \                           # <default: '\'; type: string; is: optional>
-      skipinitialspace: False                 # <default: False; type: boolean; is: optional>
-      quotechar: '"'                          # <default: '"'; type: string; is: optional>
-      delimiter: ';'                          # <default: '|'; type: char; is: optional>
-      fieldnames: ["gumby", "brain", "specialist"]        # <default: False; type: [list]; is: optional>
-      receivers:
-        - NextHandler
+    - CsvParser:
+        source_field:                           # <default: 'data'; type: string; is: optional>
+        escapechar:                             # <default: '\'; type: string; is: optional>
+        skipinitialspace:                       # <default: False; type: boolean; is: optional>
+        quotechar:                              # <default: '"'; type: string; is: optional>
+        delimiter:                              # <default: '|'; type: char; is: optional>
+        fieldnames:                             # <default: False; type: [list]; is: optional>
+        receivers:
+          - NextHandler
 
 #####JsonParser
 
@@ -87,11 +101,13 @@ At the moment only flat json files can be processed correctly.
 
 Configuration example:
 
-    - module: JsonParser
-      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-      keep_original: True                     # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - JsonParser:
+        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_fields:                          # <default: 'data'; type: string||list; is: optional>
+        target_field:                           # <default: None; type: None||string; is: optional>
+        keep_original:                          # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
 
 #####MsgPackParser
 
@@ -100,11 +116,13 @@ the corresponding json fields.
 
 Configuration example:
 
-    - module: MsgPackParser
-      source_field: 'data'                    # <default: 'data'; type: string; is: optional>
-      keep_original: True                     # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - MsgPackParser:
+        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_fields:                          # <default: 'data'; type: string||list; is: optional>
+        target_field:                           # <default: None; type: None||string; is: optional>
+        keep_original:                          # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
 
 #####SyslogPrivalParser
 
@@ -154,10 +172,10 @@ The source field must contain the prival with the pattern: "<\d+>"
 
 Configuration example:
 
-    - module: SyslogPrivalParser
-      source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
-      map_values: False                           # <default: True; type: boolean; is: optional>
-      facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
-      severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
-      receivers:
-        - NextHandler
+    - SyslogPrivalParser:
+        source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
+        map_values: False                           # <default: True; type: boolean; is: optional>
+        facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
+        severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
+        receivers:
+          - NextHandler

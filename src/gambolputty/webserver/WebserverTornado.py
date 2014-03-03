@@ -19,9 +19,9 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: WebserverTornado
-      port: 6060                 # <default: 5100; type: integer; is: optional>
-      document_root: other_root  # <default: 'docroot'; type: string; is: optional>
+    - WebserverTornado:
+        port: 6060                 # <default: 5100; type: integer; is: optional>
+        document_root: other_root  # <default: 'docroot'; type: string; is: optional>
     """
     module_type = "stand_alone"
     """Set module type"""

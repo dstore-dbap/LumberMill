@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import collections
 import logging
-import gzip
 from cStringIO import StringIO
 import pywebhdfs
 from pywebhdfs.webhdfs import PyWebHdfsClient
@@ -11,7 +10,6 @@ import Decorators
 import Utils
 import time
 import sys
-
 
 @Decorators.ModuleDocstringParser
 class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
@@ -23,28 +21,27 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     path: Path to logfiles. String my contain any of pythons strtime directives.
     name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
     format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
-    store_interval_in_secs: Sending data to es in x seconds intervals.
-    batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
+    store_interval_in_secs: Sending data to webhdfs in x seconds intervals.
+    batch_size: Sending data to webhdfs if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
-    compress: Compress output as gzip file. For this to be effective, the batch size should not be too small.
+    compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
     Configuration example:
 
-    - module: WebHdfsSink
-      server:                               # <default: 'localhost:14000'; type: string; is: optional>
-      user:                                 # <type: string; is: required>
-      path:                                 # <type: string; is: required>
-      name_pattern:                         # <type: string; is: required>
-      format:                               # <type: string; is: required>
-      store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-      batch_size:                           # <default: 1000; type: integer; is: optional>
-      backlog_size:                         # <default: 5000; type: integer; is: optional>
-      compress:                             # <default: True; type: boolean; is: optional>
+    - WebHdfsSink:
+        server:                               # <default: 'localhost:14000'; type: string; is: optional>
+        user:                                 # <type: string; is: required>
+        path:                                 # <type: string; is: required>
+        name_pattern:                         # <type: string; is: required>
+        format:                               # <type: string; is: required>
+        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
+        batch_size:                           # <default: 1000; type: integer; is: optional>
+        backlog_size:                         # <default: 5000; type: integer; is: optional>
+        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
-
     can_run_parallel = True
 
     def configure(self, configuration):
@@ -60,6 +57,19 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.path = self.getConfigurationValue('path')
         self.name_pattern = self.getConfigurationValue('path')
+        self.compress = self.getConfigurationValue('compress')
+        if self.compress == 'gzip':
+            try:
+                import gzip
+            except ImportError:
+                self.logger.error('%Gzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
+        if self.compress == 'snappy':
+            try:
+                import snappy
+            except ImportError:
+                self.logger.error('%Snappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
         self.is_storing = False
         self.lock = multiprocessing.Lock()
         self.timed_store_func = self.getTimedStoreFunc()
@@ -108,25 +118,15 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def createFile(self, path):
         try:
-            self.hdfs.create_file(path, '')
+            data = ''
+            if self.compress == 'snappy':
+                data = self.getSnappyHeader()
+            self.hdfs.create_file(path, data)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error('%sCould not create file %s. Exception: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
             return False
         return True
-
-    def destroyEvent(self, event=False, event_list=False, do_it=False):
-        """Override the default behaviour of destroying an event when no receivers are set.
-        This module aggregates a configurable amount of events to use a bulk write.
-        So events must only be destroyed when bulk write was successful"""
-        if not do_it:
-            return
-        for callback in self.callbacks['on_event_delete']:
-            if event_list:
-                for event in event_list:
-                    callback(event)
-            else:
-                callback(event)
 
     def run(self):
         self.hdfs = self.getHdfsClient()
@@ -165,11 +165,14 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             line = self.getConfigurationValue('format', event)
             write_data[filename] += line
         write_tries = 0
-        retry_sleep_time = .2
+        retry_sleep_time = .4
         for filename, lines in write_data.iteritems():
-            if self.compress:
+            if self.compress == 'gzip':
                 filename += ".gz"
-                lines = self.compress(lines)
+                lines = self.compressGzip(lines)
+            elif self.compress == 'snappy':
+                filename += ".gz"
+                lines = self.compressSnappy(lines)
             while write_tries < 10:
                 try:
                     self.ensureFileExists('%s/%s' % (path, filename))
@@ -180,18 +183,17 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
                     self.logger.error('%sCould no log event %s. The format key %s was not present in event.%s' % (Utils.AnsiColors.FAIL, event, evalue, Utils.AnsiColors.ENDC))
                 except pywebhdfs.errors.PyWebHdfsException:
                     write_tries += 1
-                    etype, evalue, etb = sys.exc_info()
                     # Retry max_retry times. This can solve problems like leases beeing hold by another process.
                     if write_tries < 10:
                         time.sleep(retry_sleep_time * write_tries)
                         continue
                     # Issue error after max retries.
+                    etype, evalue, etb = sys.exc_info()
                     self.logger.error('%sMax write retries reached. Could no log event %s. Exception: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
-        self.destroyEvent(event_list=events, do_it=True)
         self.events_container = []
         self.is_storing = False
 
-    def compress(self, data):
+    def compressGzip(self, data):
         buffer = StringIO()
         compressor = gzip.GzipFile(mode='wb', fileobj=buffer)
         try:
@@ -200,6 +202,17 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             compressor.close()
         return buffer.getvalue()
 
+    def compressSnappy(data):
+        buffer = StringIO()
+        compressed = snappy.compress(data)
+        buffer << [compressed.size, compressed].pack("Na#{compressed.size}")
+        buffer.string
+
+    def getSnappyHeader(self):
+        MAGIC = u"\x82SNAPPY\x0"
+        DEFAULT_VERSION = 1
+        MINIMUM_COMPATIBLE_VERSION = 1
+        [MAGIC, DEFAULT_VERSION, MINIMUM_COMPATIBLE_VERSION].pack("a8NN")
 
     def shutDown(self, silent=False):
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)

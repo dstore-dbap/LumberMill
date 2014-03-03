@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import socket
 import sys
 import Utils
@@ -33,13 +34,13 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - module: AddGeoInfo
-      geoip_dat_path:           # <type: string; is: required>
-      geo_info_fields:          # <type: list; is: required>
-      source_fields:            # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
-      target:                   # <default: None; type: None||string; is: optional>
-      receivers:
-        - NextModule
+    - AddGeoInfo:
+        geoip_dat_path:           # <type: string; is: required>
+        geo_info_fields:          # <default: None; type: list; is: optional>
+        source_fields:            # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+        target:                   # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "modifier"
@@ -60,15 +61,25 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         self.geo_info_fields = self.getConfigurationValue('geo_info_fields')
         self.target = self.getConfigurationValue('target')
 
+    def addReceiver(self, receiver_name, receiver):
+        print receiver_name
+        self.receivers[receiver_name] = receiver
+
     def handleEvent(self, event):
-        hostname_or_ip = False
-        for lookup_field in self.getConfigurationValue('source_fields'):
-            if lookup_field not in event:
+        for lookup_field_name in self.getConfigurationValue('source_fields'):
+            try:
+                lookup_field_name_value = event[lookup_field_name]
+            except KeyError:
                 continue
-            hostname_or_ip = event[lookup_field]
-            if not hostname_or_ip or hostname_or_ip == "-":
+            if not lookup_field_name_value or lookup_field_name_value == "-":
                 continue
-            geo_info_fields = self.getGeoIpInfo(hostname_or_ip)
+            if isinstance(lookup_field_name_value, str):
+                geo_info_fields = self.getGeoIpInfo(lookup_field_name_value)
+            elif isinstance(lookup_field_name_value, list):
+                for field_value in lookup_field_name_value:
+                    geo_info_fields = self.getGeoIpInfo(field_value)
+                    if geo_info_fields:
+                        break
             if self.target:
                 event[self.target] = geo_info_fields
             else:
@@ -93,6 +104,8 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                 all_geo_info_fields = self.gi.record_by_name(hostname_or_ip)
             except:
                 pass
+        if not self.geo_info_fields:
+            return all_geo_info_fields
         configured_geo_info_fields = {}
         for field_name in self.geo_info_fields:
             try:

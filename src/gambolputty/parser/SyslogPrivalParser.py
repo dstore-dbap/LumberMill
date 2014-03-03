@@ -52,13 +52,13 @@ class SyslogPrivalParser(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: SyslogPrivalParser
-      source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
-      map_values: False                           # <default: True; type: boolean; is: optional>
-      facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
-      severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
-      receivers:
-        - NextHandler
+    - SyslogPrivalParser:
+        source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
+        map_values: False                           # <default: True; type: boolean; is: optional>
+        facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
+        severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
+        receivers:
+          - NextHandler
     """
 
     module_type = "parser"
@@ -106,10 +106,11 @@ class SyslogPrivalParser(BaseModule.BaseModule):
         self.severity_mappings = dict(self.rfc_5424_severities.items() + self.getConfigurationValue('severity_mappings').items())
 
     def handleEvent(self, event):
-        if self.source_field not in event or not event[self.source_field]:
+        try:
+            prival = int(event[self.source_field])
+        except:
             yield event
             return
-        prival = event[self.source_field]
         # Calculate facility and priority from PRIVAL (@see: http://tools.ietf.org/html/rfc5424#section-6.2.1)
         event['syslog_facility'] = prival >> 3
         event['syslog_severity'] = prival & 7

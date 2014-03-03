@@ -10,9 +10,9 @@ document_root: Location of documents and templates.
 
 Configuration example:
 
-    - module: WebserverTornado
-      port: 6060                 # <default: 5100; type: integer; is: optional>
-      document_root: other_root  # <default: 'docroot'; type: string; is: optional>
+    - WebserverTornado:
+        port: 6060                 # <default: 5100; type: integer; is: optional>
+        document_root: other_root  # <default: 'docroot'; type: string; is: optional>
 
 WebserverTornado submodules
 ==========
@@ -24,6 +24,6 @@ Module dependencies:    WebserverTornado
 
 Configuration example:
 
-    - module: WebGui
-      tornado_webserver: webserver          # <default: 'WebserverTornado'; type: string; is: optional>
-      document_root: other_root             # <default: 'docroot'; type: string; is: optional>
+    - WebGui:
+        tornado_webserver: webserver          # <default: 'WebserverTornado'; type: string; is: optional>
+        document_root: other_root             # <default: 'docroot'; type: string; is: optional>

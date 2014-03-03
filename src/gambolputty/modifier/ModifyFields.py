@@ -4,6 +4,7 @@ import sys
 import re
 import hashlib
 import BaseModule
+import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
@@ -14,111 +15,131 @@ class ModifyFields(BaseModule.BaseModule):
     Configuration examples:
 
     # Keep all fields listed in source_fields, discard all others.
-    - module: ModifyFields
-      action: keep                                # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: keep                                # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
 
     # Discard all fields listed in source_fields.
-    - module: ModifyFields
-      action: delete                              # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: delete                              # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
 
     # Concat all fields listed in source_fields.
-    - module: ModifyFields
-      action: concat                              # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      target_field: field5                        # <type: string; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: concat                              # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: required>
+        receivers:
+          - NextModule
 
     # Insert a new field with "target_field" name an "value" as new value.
-    - module: ModifyFields
-      action: insert                              # <type: string; is: required>
-      target_field: "New field"                   # <type: string; is: required>
-      value: "%(field1)s - %(field2)s are new."  # <type: string; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: insert                              # <type: string; is: required>
+        target_field:                               # <type: string; is: required>
+        value:                                      # <type: string; is: required>
+        receivers:
+          - NextModule
 
     # Replace field values matching string "old" in data dictionary with "new".
-    - module: ModifyFields
-      action: string_replace                      # <type: string; is: required>
-      source_field: field1                        # <type: string; is: required>
-      old:                                        # <type: string; is: required>
-      new:                                        # <type: string; is: required>
-      max:                                        # <default: -1; type: integer; is: optional>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: string_replace                      # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        old:                                        # <type: string; is: required>
+        new:                                        # <type: string; is: required>
+        max:                                        # <default: -1; type: integer; is: optional>
+        receivers:
+          - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
-    - module: ModifyFields
-      action: replace                             # <type: string; is: required>
-      source_field: field1                        # <type: string; is: required>
-      regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-      with: 'Johann Gambolputty'                  # <type: string; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: replace                             # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+        with:                                       # <type: string; is: required>
+        receivers:
+          - NextModule
 
     # Map a field value.
-    - module: ModifyFields
-      action: map                                 # <type: string; is: required>
-      source_field: http_status                   # <type: string; is: required>
-      map: {100: 'Continue', 200: 'OK', ... }     # <type: dictionary; is: required>
-      target_field: http_status                   # <default: "%(source_field)s_mapped"; type: string; is: optional>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: map                                 # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        map:                                        # <type: dictionary; is: required>
+        target_field:                               # <default: "%(source_field)s_mapped"; type: string; is: optional>
+        receivers:
+          - NextModule
+
+    # Split source field to target fields based on key value pairs.
+    - ModifyFields:
+        action: key_value                           # <type: string; is: required>
+        line_separator:                             # <type: string; is: required>
+        kv_separator:                               # <type: string; is: required>
+        source_field:                               # <type: list; is: required>
+        target_field:                               # <default: None; type: None||string; is: optional>
+        prefix:                                     # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
 
     # Merge source fields to target field as list.
-    - module: ModifyFields
-      action: merge                               # <type: string; is: required>
-      source_fields:                              # <type: list; is: required>
-      target_field:                               # <type: string; is: reuired>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: merge                               # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: reuired>
+        receivers:
+          - NextModule
 
+    # Merge source fields to target field as string.
+    - ModifyFields:
+        action: join                                # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: required>
+        separator:                                  # <default: ","; type: string; is: optional>
+        receivers:
+          - NextModule
 
     # Cast field values to integer.
-    - module: ModifyFields
-      action: castToInteger                       # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: cast_to_int                         # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
 
     # Cast field values to float.
     - module: ModifyFields
-      action: castToFloat                         # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: cast_to_float                       # <type: string; is: required>
+      source_fields:                              # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
     - module: ModifyFields
-      action: castToString                        # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
+      action: cast_to_str                         # <type: string; is: required>
+      source_fields:                              # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to boolean.
-    - module: ModifyFields
-      action: castToBoolean                       # <type: string; is: required>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: cast_to_bool                        # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
 
     # Create a hash from a field value.
     # If target_fields is provided, it should have the same length as source_fields.
     # If target_fields is not provided, source_fields will be replaced with the hashed value.
     # Hash algorithm can be any of the in hashlib supported algorithms.
-    - module: ModifyFields
-      action: hash                                # <type: string; is: required>
-      algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
-      source_fields: [field1, field2, ... ]       # <type: list; is: required>
-      target_fields: [f1, f2, ... ]               # <default: []; type: list; is: optional>
-      receivers:
-        - NextModule
+    - ModifyFields:
+        action: hash                                # <type: string; is: required>
+        algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
+        salt:                                       # <default: None; type: None||string; is: optional;>
+        source_fields:                              # <type: list; is: required>
+        target_fields:                              # <default: []; type: list; is: optional>
+        receivers:
+          - NextModule
 """
 
     module_type = "modifier"
@@ -128,13 +149,13 @@ class ModifyFields(BaseModule.BaseModule):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
-        self.typecast_switch = { 'int': self.castToInteger,
-                                 'integer': self.castToInteger,
-                                 'float': self.castToFloat,
-                                 'str': self.castToString,
-                                 'string': self.castToString,
-                                 'bool': self.castToBoolean,
-                                 'boolean': self.castToBoolean,
+        self.typecast_switch = { 'int': self.cast_to_int,
+                                 'integer': self.cast_to_int,
+                                 'float': self.cast_to_float,
+                                 'str': self.cast_to_str,
+                                 'string': self.cast_to_str,
+                                 'bool': self.cast_to_bool,
+                                 'boolean': self.cast_to_bool,
                                 }
         self.action = configuration['action']
         # Precompile regex for replacement if defined
@@ -150,13 +171,40 @@ class ModifyFields(BaseModule.BaseModule):
                     regex_options = eval(i.next())
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("RegEx error for options %s. Exception: %s, Error: %s" % (regex_options, etype, evalue))
+                    self.logger.error("%sRegEx error for options %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, regex_options, etype, evalue, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
             try:
                 self.regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
+                self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
+        self.source_field = self.getConfigurationValue('source_field') if "source_field" in self.configuration_data else []
+        self.source_fields = self.getConfigurationValue('source_fields') if "source_fields" in self.configuration_data else []
+        self.target_field = self.getConfigurationValue('target_field') if "target_field" in self.configuration_data else []
+        self.target_fields = self.getConfigurationValue('target_fields') if "target_fields" in self.configuration_data else []
+        # Call action specific configure method.
+        if "configure_%s_action" % self.action in dir(self):
+            getattr(self, "configure_%s_action" % self.action)()
+
+    def configure_hash_action(self):
+        # Import murmur hashlib if configured.
+        self.salt = self.getConfigurationValue('salt') if self.getConfigurationValue('salt') else ""
+        self.algorithm = self.getConfigurationValue('algorithm')
+        if self.algorithm == "murmur":
+            try:
+                import mmh3
+                self.hash_func = mmh3.hash
+            except ImportError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
+        else:
+            try:
+                self.hash_func = getattr(hashlib, self.algorithm)
+            except ImportError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
 
     def handleEvent(self, event):
@@ -164,7 +212,7 @@ class ModifyFields(BaseModule.BaseModule):
             event = getattr(self, "%s" % self.action)(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
+            self.logger.error("%sModifyFields action called that does not exist: %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.action, etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
         yield event
 
@@ -175,7 +223,7 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        fields_to_del = set(event).difference(self.getConfigurationValue('source_fields', event))
+        fields_to_del = set(event).difference(self.getConfigurationValue('source_fields'))
         for field in fields_to_del:
             # Do not delete internal event information.
             if field == 'gambolputty':
@@ -202,7 +250,7 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.getConfigurationValue('source_fields'):
             event.pop(field, None)
         return event
 
@@ -213,7 +261,7 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        event[self.getConfigurationValue('target_field', event)] = self.getConfigurationValue('value', event)
+        event[self.getConfigurationValue('target_field')] = self.getConfigurationValue('value', event)
         return event
 
     def concat(self, event):
@@ -225,12 +273,12 @@ class ModifyFields(BaseModule.BaseModule):
         @return: event: dictionary
         """
         concat_str = ""
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.getConfigurationValue('source_fields'):
             try:
                 concat_str = "%s%s" % (concat_str,event[field])
             except KeyError:
                 pass
-        event[self.getConfigurationValue('target_field', event)] = concat_str
+        event[self.getConfigurationValue('target_field')] = concat_str
         return event
 
     def replace(self, event):
@@ -240,9 +288,8 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        field = self.getConfigurationValue('source_field', event)
         try:
-            event[field] = self.regex.sub(self.getConfigurationValue('with', event), event[field])
+            event[self.source_field] = self.regex.sub(self.getConfigurationValue('with', event), event[self.source_field])
         except KeyError:
             pass
         return event
@@ -254,9 +301,8 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        field = self.getConfigurationValue('source_field', event)
         try:
-            event[field] = event[field].replace(self.getConfigurationValue('old', event), self.getConfigurationValue('new', event), self.getConfigurationValue('max'))
+            event[self.source_field] = event[self.source_field].replace(self.getConfigurationValue('old', event), self.getConfigurationValue('new', event), self.getConfigurationValue('max'))
         except KeyError:
             pass
         return event
@@ -271,25 +317,98 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        field = self.getConfigurationValue('source_field', event)
-        target_field_name = self.getConfigurationValue('target_field', event) if 'target_field' in self.configuration_data else "%s_mapped" % field
+        target_field_name = self.target_field if self.target_field else "%s_mapped" % self.source_field
         try:
-            event[target_field_name] = self.getConfigurationValue('map', event)[event[field]]
+            event[target_field_name] = self.getConfigurationValue('map', event)[event[self.source_field]]
         except KeyError:
             pass
         return event
 
+    def key_value(self, event):
+        """
+        Split source field to target fields based on key value pairs.
+
+        - module: ModifyFields
+          action: key_value                           # <type: string; is: required>
+          kv_separator:                               # <type: string; is: required>
+          line_separator:                             # <default: None; type: None||string; is: required>
+          source_field:                               # <type: list; is: required>
+          target_field:                               # <default: None; type: None||string; is: optional>
+          prefix:                                     # <default: None; type: None||string; is: optional>
+          receivers:
+            - NextModule
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        try:
+            if self.getConfigurationValue('line_separator'):
+                kv_dict = dict(kv.split(self.getConfigurationValue('kv_separator')) for kv in event[self.source_field].split(self.getConfigurationValue('line_separator')))
+            else:
+                kv_dict = event[self.source_field].split(self.getConfigurationValue('kv_separator'))
+        except:
+            return event
+        if self.getConfigurationValue('prefix'):
+            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.getConfigurationValue('prefix'), str(key)), value), kv_dict.items()))
+        if self.target_field:
+            event[self.target_field] = kv_dict
+        else:
+            event.update(kv_dict)
+        return event
+
+    def split(self, event):
+        """
+        Split source field to array at separator.
+
+        - module: ModifyFields
+          action: split                               # <type: string; is: required>
+          separator:                                  # <type: string; is: required>
+          source_field:                               # <type: list; is: required>
+          target_field:                               # <default: None; type: None||string; is: optional>
+          receivers:
+            - NextModule
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        try:
+            values = event[self.source_field].split(self.getConfigurationValue('separator'))
+        except:
+            return event
+        if self.target_field:
+            event[self.target_field] = values
+        else:
+            event[self.source_field] = values
+        return event
+
     def merge(self, event):
         """
-        Merge source fields to target field.
+        Merge source fields to target field as list.
 
         @param event: dictionary
         @return: event: dictionary
         """
         merged_fields = []
-        for source_field in self.getConfigurationValue('source_fields'):
-            merged_fields.append(source_field)
-        event.update({self.getConfigurationValue('target_field'): merged_fields})
+        for field in self.source_fields:
+            try:
+                merged_fields.append(event[field])
+            except:
+                pass
+        event[self.target_field] = merged_fields
+        return event
+
+    def join(self, event):
+        """
+        Join source fields to target field as string.
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        #event.update({self.getConfigurationValue('target_field'): separator.join(fields)})
+        try:
+            event[self.target_field] = self.getConfigurationValue('separator').join(event[self.source_field])
+        except:
+            pass
         return event
 
     def cast(self, event):
@@ -305,14 +424,14 @@ class ModifyFields(BaseModule.BaseModule):
         except:
             pass
 
-    def castToInteger(self, event):
+    def cast_to_int(self, event):
         """
        ['source_fields'] values in data dictionary will be cast to integer.
 
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.source_fields:
             try:
                 event[field] = int(event[field])
             except ValueError:
@@ -321,14 +440,14 @@ class ModifyFields(BaseModule.BaseModule):
                 pass
         return event
 
-    def castToFloat(self, event):
+    def cast_to_float(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to float.
 
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.source_fields:
             try:
                 event[field] = float(event[field])
             except ValueError:
@@ -337,14 +456,14 @@ class ModifyFields(BaseModule.BaseModule):
                 pass
         return event
 
-    def castToString(self, event):
+    def cast_to_str(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to string.
 
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.source_fields:
             try:
                 event[field] = str(event[field])
             except ValueError:
@@ -353,14 +472,14 @@ class ModifyFields(BaseModule.BaseModule):
                    pass
         return event
 
-    def castToBoolean(self, event):
+    def cast_to_bool(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to boolean.
 
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields', event):
+        for field in self.source_fields:
             try:
                 event[field] = bool(event[field])
             except ValueError:
@@ -382,10 +501,12 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for idx, field in enumerate(self.getConfigurationValue('source_fields', event)):
-            target_fieldname = field if not self.getConfigurationValue('target_fields', event) else self.getConfigurationValue('target_fields', event)[idx]
+        for idx, field in enumerate(self.source_fields):
+            target_fieldname = field if not self.target_fields else self.target_fields[idx]
             try:
-                event[target_fieldname] = getattr(hashlib, self.getConfigurationValue('algorithm', event))(event[field]).hexdigest()
+                event[target_fieldname] = self.hash_func("%s%s" % (self.salt, event[field]))
             except:
                 pass
+                #etype, evalue, etb = sys.exc_info()
+                #self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
         return event

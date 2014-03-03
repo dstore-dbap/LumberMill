@@ -124,15 +124,15 @@ class TcpServerThreaded(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: TcpServerThreaded
-      interface: localhost             # <default: 'localhost'; type: string; is: optional>
-      port: 5151                       # <default: 5151; type: integer; is: optional>
-      timeout: 5                       # <default: None; type: None||integer; is: optional>
-      tls: False                       # <default: False; type: boolean; is: optional>
-      key: /path/to/cert.key           # <default: False; type: boolean||string; is: required if tls is True else optional>
-      cert: /path/to/cert.crt          # <default: False; type: boolean||string; is: required if tls is True else optional>
-      receivers:
-        - NextModule
+    - TcpServerThreaded:
+        interface:                       # <default: 'localhost'; type: string; is: optional>
+        port:                            # <default: 5151; type: integer; is: optional>
+        timeout:                         # <default: None; type: None||integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"

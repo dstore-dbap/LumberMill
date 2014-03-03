@@ -13,13 +13,13 @@ class MsgPackParser(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: MsgPackParser
-      mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-      source_fields:                          # <default: 'data'; type: string||list; is: optional>
-      target_field:                           # <default: None; type: None||string; is: optional>
-      keep_original:                          # <default: False; type: boolean; is: optional>
-      receivers:
-        - NextHandler
+    - MsgPackParser:
+        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        source_fields:                          # <default: 'data'; type: string||list; is: optional>
+        target_field:                           # <default: None; type: None||string; is: optional>
+        keep_original:                          # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextHandler
     """
 
     module_type = "parser"

@@ -18,14 +18,14 @@ class RegexParser(BaseModule.BaseModule):
 
     Configuration example:
 
-    - module: RegexParser
-      source_field: field1                    # <default: 'data'; type: string; is: optional>
-      mark_unmatched_as: unknown              # <default: 'unknown'; type: string; is: optional>
-      break_on_match: True                    # <default: True; type: boolean; is: optional>
-      field_extraction_patterns:              # <type: dict; is: required>
-        httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
-      receivers:
-        - NextModule
+    - RegexParser:
+        source_field:                           # <default: 'data'; type: string; is: optional>
+        mark_unmatched_as:                      # <default: 'unknown'; type: string; is: optional>
+        break_on_match:                         # <default: True; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: dict; is: required>
+          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+        receivers:
+          - NextModule
     """
 
     module_type = "parser"
@@ -36,6 +36,7 @@ class RegexParser(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
+        self.source_field = self.getConfigurationValue('source_field')
         self.target_field = "event_type"
         self.mark_unmatched_as = self.getConfigurationValue('mark_unmatched_as')
         self.break_on_match = self.getConfigurationValue('break_on_match')
@@ -111,17 +112,16 @@ class RegexParser(BaseModule.BaseModule):
         This method expects a syslog datagram.
         It might contain more then one event. We split at the newline char.
         """
-        fieldname = self.getConfigurationValue('source_field', event)
-        if fieldname not in event:
+        try:
+            string_to_match = event[self.source_field]
+            yield self.parseEvent(event, string_to_match)
+        except KeyError:
             yield event
-            return
-        yield self.parseEvent(event, fieldname)
 
-    def parseEvent(self, event, fieldname):
+    def parseEvent(self, event, string_to_match):
         """
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
-        string_to_match = event[fieldname]
         matches_dict = False
         for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
