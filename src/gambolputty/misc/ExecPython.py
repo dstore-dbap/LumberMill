@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pprint
 import sys
-import StringIO
 import BaseModule
 import Utils
 from Decorators import ModuleDocstringParser

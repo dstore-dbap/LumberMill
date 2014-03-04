@@ -109,19 +109,12 @@ class RegexParser(BaseModule.BaseModule):
 
     def handleEvent(self, event):
         """
-        This method expects a syslog datagram.
-        It might contain more then one event. We split at the newline char.
-        """
-        try:
-            string_to_match = event[self.source_field]
-            yield self.parseEvent(event, string_to_match)
-        except KeyError:
-            yield event
-
-    def parseEvent(self, event, string_to_match):
-        """
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
+        if self.source_field not in event:
+            yield event
+            return
+        string_to_match = event[self.source_field]
         matches_dict = False
         for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
             matches_dict = {}
@@ -143,4 +136,4 @@ class RegexParser(BaseModule.BaseModule):
                     break
         if not matches_dict:
             event.update({self.target_field: self.mark_unmatched_as})
-        return event
+        yield event

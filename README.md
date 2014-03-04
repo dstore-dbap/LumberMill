@@ -82,6 +82,7 @@ GambolPutty makes use of the following projects:
     { "event_type": "Unknown", "received_from": False, "data": "", "markers": [] }
 * the input module sends the new event to its receivers. Either by adding it to a queue or by calling the
   receivers handleEvent method.
+* if no receivers are configured, the next module in config will be the default receiver.
 * each following module will process the event via its handleEvent method and pass it on to its
   receivers.
 
@@ -92,19 +93,19 @@ Each module configuration follows the same pattern:
 
     - SomeModuleName:
         id: AliasModuleName                     # <default: ""; type: string; is: optional>
-        filter: event['cache_status'] == "-"
+        filter: if %(cache_status) == "-"
         redis-client: RedisClientName           # <default: ""; type: string; is: optional>
         redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
         redis-ttl: 600                          # <default: 60; type: integer; is: optional>
         receivers:
          - ModuleName
          - ModuleAlias:
-             filter: event['event_type'] == 'httpd_access_log'
+             filter: if %('event_type') == 'httpd_access_log'
 
 * module: specifies the module name and maps to the class name of the module.
 * id: use to set an alias name if you run more than just one instance of a module.
-* configuration['work-on-copy']: create a copy of the default event dictionary and pass this on to following modules
 * receivers: ModuleName or ModuleAlias of the receiving modules. If a filter is provided, only matching events will be send to receiver.
+  If no receivers are configured, the next module in config will be the default receiver.
 
 for modules that support the storage of intermediate values in redis:
 * configuration['redis-client']: name of the redis client as set in the configuration.
@@ -114,6 +115,59 @@ for modules that support the storage of intermediate values in redis:
 For configuration details of each module refer to its docstring.
 
 ### Example usage
+
+#### Event field notation
+
+The following examples refer to this event data:
+
+	{'bytes_send': '3395',
+	 'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0" 200 3395\n',
+	 'datetime': '28/Jul/2006:10:27:10 -0300',
+	 'http_status': '200',
+	 'identd': '-',
+	 'message_type': 'httpd_access_log',
+	 'received_from': 'stdin',
+	 'remote_ip': '192.168.2.20',
+	 'url': 'GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0',
+	 'params':  { u'spanish': [u'inquisition']},
+	 'user': '-'}
+
+##### Notation in configuration fields like source_field or target_field:
+
+Just use the field name. If referring to a nested dict, use dots, like this:
+
+    - RegexParser:
+        source_field: uri.path
+
+##### Notation in strings:
+
+Use the python % formatting for strings. If referring to a nested dict, use dots, like this:
+
+    - ElasticSearchMultiProcessSink:
+        index_name: 1perftests
+        doc_id: '%(params.spanish)s'
+
+##### Notation in module filters:
+
+Wrap the field name in %(field_name). If referring to a nested dict, use dots, like this:
+
+    - StdOutSink:
+        filter: if %(params.spanish) == '192.168.2.20'
+
+#### Filter
+
+Modules can have an input filter , like this:
+
+    - StdOutSink:
+        filter: if %(params.spanish) == '192.168.2.20' and re.match('^GET', %(url))
+
+Modules can have an output filter , like this:
+
+    - RegexParser:
+        ...
+        receivers:
+          - StdOutSink:
+              filter: if %(params.spanish) == '192.168.2.20' and re.match('^GET', %(url))
 
 ##### Simple example to get you started ;)
 

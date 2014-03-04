@@ -47,10 +47,11 @@ class UrlParser(BaseModule.BaseModule):
     def decodeEvent(self, event):
         if self.source_field in event:
             decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
-            parsed_url = urlparse.urlparse('%s' % decoded_field)
+            parsed_result = urlparse.urlparse('%s' % decoded_field)
+            parsed_url = {'scheme': parsed_result.scheme, 'path': parsed_result.path, 'params': parsed_result.params, 'query': parsed_result.query}
             event[self.target_field] = parsed_url
             if self.parse_querystring:
-                query_params_dict = dict(urlparse.parse_qsl(parsed_url.query))
+                query_params_dict = urlparse.parse_qs(parsed_result.query)
                 if self.querystring_prefix:
                     query_params_dict = dict(map(lambda (key, value): ("%s%s" % (self.querystring_prefix, str(key)), value), query_params_dict.items()))
                 if self.querystring_target_field:

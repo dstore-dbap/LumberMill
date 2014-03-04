@@ -139,10 +139,14 @@ class GambolPutty:
         """
         # Init modules as defined in config
         for idx, module_info in enumerate(self.configuration):
-            module_class_name = module_info.keys()[0]
-            module_config = module_info[module_class_name]
-            # Set module name. Use id if it was set in configuration.
-            module_id = module_class_name if 'id' not in module_config else module_config['id']
+            module_config = {}
+            if isinstance(module_info, dict):
+                module_class_name = module_info.keys()[0]
+                module_config = module_info[module_class_name]
+                # Set module name. Use id if it was set in configuration.
+                module_id = module_class_name if 'id' not in module_config else module_config['id']
+            else:
+                module_id = module_class_name = module_info
             counter = 1
             while module_id in self.modules:
                 tmp_mod_name = module_id.split("_",1)[0]
@@ -167,8 +171,11 @@ class GambolPutty:
             if 'receivers' not in module_config:
                 try:
                     next_module_info = self.configuration[idx+1]
-                    receiver_class_name = next_module_info.keys()[0]
-                    receiver_id = receiver_class_name if 'id' not in next_module_info[receiver_class_name] else next_module_info[receiver_class_name]['id']
+                    if isinstance(next_module_info, dict):
+                        receiver_class_name = next_module_info.keys()[0]
+                        receiver_id = receiver_class_name if 'id' not in next_module_info[receiver_class_name] else next_module_info[receiver_class_name]['id']
+                    else:
+                        receiver_id = receiver_class_name = next_module_info
                     counter = 1
                     while receiver_id in self.modules:
                         tmp_mod_name = receiver_id.split("_",1)[0]

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import pprint
 import random
 import time
 import os
@@ -8,7 +9,6 @@ import subprocess
 import logging
 import __builtin__
 import signal
-import Utils
 import Decorators
 
 try:
@@ -97,7 +97,7 @@ def compileStringToConditionalObject(condition_as_string, mapping):
         return conditional
     except :
         etype, evalue, etb = sys.exc_info()
-        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, condition_as_string, etype, evalue, Utils.AnsiColors.ENDC))
+        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s.%s" % (AnsiColors.WARNING, condition_as_string, etype, evalue, AnsiColors.ENDC))
         return False
 
 class AstTransformer(ast.NodeTransformer):
@@ -192,23 +192,54 @@ class KeyDotNotationDict(dict):
         dict.__init__(self, *args)
 
     def __getitem__(self, key):
-        try:
+        if "." not in key:
             return super(KeyDotNotationDict, self).__getitem__(key)
-        except KeyError:
-            tmp_data = super(KeyDotNotationDict, self)
-            for current_key in key.split('.'):
-                tmp_data = tmp_data.__getitem__(current_key)
-            return tmp_data
+        tmp_data = super(KeyDotNotationDict, self)
+        for current_key in key.split('.'):
+            tmp_data = tmp_data.__getitem__(current_key)
+        return tmp_data
 
     def __setitem__(self, key, value, dict=None):
         dict = dict if dict else super(KeyDotNotationDict, self)
         if "." not in key:
-            dict.__setitem__(key, value)
-            return
+            return dict.__setitem__(key, value)
         current_key, remaining_keys = key.split('.', 1)
         dict = dict.__getitem__(current_key)
         self.__setitem__(remaining_keys, value, dict)
 
+    def __delitem__(self, key):
+        if "." not in key:
+            return super(KeyDotNotationDict, self).__delitem__(key)
+        tmp_data = super(KeyDotNotationDict, self)
+        keys = key.split('.')
+        idx_last = len(keys) - 1
+        for idx, current_key in enumerate(keys):
+            if idx != idx_last:
+                tmp_data = tmp_data.__getitem__(current_key)
+            else:
+                tmp_data.__delitem__(current_key)
+
+    def __contains__(self, key):
+        if "." not in key:
+            return super(KeyDotNotationDict, self).__contains__(key)
+        try:
+            tmp_data = super(KeyDotNotationDict, self)
+            for current_key in key.split('.'):
+                tmp_data = tmp_data.__getitem__(current_key)
+            return True
+        except KeyError:
+            return False
+
+    def get(self, key, default):
+        if "." not in key:
+            return super(KeyDotNotationDict, self).get(key, default)
+        try:
+            tmp_data = super(KeyDotNotationDict, self)
+            for current_key in key.split('.'):
+                tmp_data = tmp_data.__getitem__(current_key)
+            return tmp_data
+        except KeyError:
+            return default
 
 class AnsiColors:
     HEADER = '\033[95m'

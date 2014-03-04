@@ -83,6 +83,16 @@ class ModifyFields(BaseModule.BaseModule):
         receivers:
           - NextModule
 
+    # Split source field to target fields based on key value pairs using regex.
+    - ModifyFields:
+        action: key_value_regex                     # <type: string; is: required>
+        regex:                                      # <type: string; is: required>
+        source_field:                               # <type: list; is: required>
+        target_field:                               # <default: None; type: None||string; is: optional>
+        prefix:                                     # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
+
     # Merge source fields to target field as list.
     - ModifyFields:
         action: merge                               # <type: string; is: required>
@@ -346,6 +356,36 @@ class ModifyFields(BaseModule.BaseModule):
                 kv_dict = dict(kv.split(self.getConfigurationValue('kv_separator')) for kv in event[self.source_field].split(self.getConfigurationValue('line_separator')))
             else:
                 kv_dict = event[self.source_field].split(self.getConfigurationValue('kv_separator'))
+        except:
+            return event
+        if self.getConfigurationValue('prefix'):
+            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.getConfigurationValue('prefix'), str(key)), value), kv_dict.items()))
+        if self.target_field:
+            event[self.target_field] = kv_dict
+        else:
+            event.update(kv_dict)
+        return event
+
+    def key_value_regex(self, event):
+        """
+        Split source field to target fields based on key value pairs.
+
+        - module: ModifyFields
+          action: key_value_regex                     # <type: string; is: required>
+          regex:                                      # <type: string; is: required>
+          source_field:                               # <type: list; is: required>
+          target_field:                               # <default: None; type: None||string; is: optional>
+          prefix:                                     # <default: None; type: None||string; is: optional>
+          receivers:
+            - NextModule
+
+        # ([^=&?]+)[=]([^&=?]+)
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        try:
+            kv_dict = dict(re.findall(self.regex, event[self.source_field]))
         except:
             return event
         if self.getConfigurationValue('prefix'):

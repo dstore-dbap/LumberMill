@@ -53,7 +53,7 @@ class BaseModule():
         if configuration:
             self.configuration_data.update(configuration)
         # Test for dynamic value patterns
-        dynamic_var_regex = re.compile('%\((.*?)\)[sdf\.\d+]+')
+        dynamic_var_regex = re.compile('%\(.*?\)[sdf\.\d+]+')
         for key, value in self.configuration_data.iteritems():
             # Make sure that configuration values only get parsed once.
             if isinstance(value, dict) and 'contains_placeholder' in value:
@@ -152,14 +152,17 @@ class BaseModule():
             self.receivers[receiver_name] = receiver
 
     def setInputFilter(self, filter_string):
-        #filter = Utils.compileStringToConditionalObject("matched = %s" % filter_string, 'event.get("%s", False)')
-        filter = eval("lambda event : %s" % filter_string)
+        filter_string = re.sub('^if\s+', "", filter_string)
+        filter_string = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string)
+        print filter_string
+        filter = eval(filter_string)
         self.input_filter = filter
         # Replace default receiveEvent method with filtered one.
         self.receiveEvent = self.receiveEventFiltered
 
     def addOutputFilter(self, receiver_name, filter_string):
-        filter = Utils.compileStringToConditionalObject("matched = %s" % filter_string, 'event.get("%s", False)')
+        filter_string = re.sub('^if\s+', "", filter_string)
+        filter_string = "True " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string) + " else False"
         self.output_filters[receiver_name] = filter
         # Replace default sendEvent method with filtered one.
         self.sendEvent = self.sendEventFiltered
@@ -219,18 +222,12 @@ class BaseModule():
             self.sendEvent(event)
 
     def receiveEventFiltered(self, event):
-        matched = False
-        try:
-            matched = self.input_filter(event)
-            # exec self.input_filter
-        except:
-            pass
-        # If the filter succeeds, send event to modules handleEvent method else just send it to receivers.
-        if not matched:
-            self.sendEvent(event)
-        else:
+        matched = self.input_filter(event)
+        if matched:
             for event in self.handleEvent(event):
                 self.sendEvent(event)
+        else:
+            self.sendEvent(event)
 
     @abc.abstractmethod
     def handleEvent(self, event):
@@ -254,7 +251,6 @@ class BaseModule():
         Stop all timed functions. They are started as daemon, so when a reaload occurs, they will not finish cause the
         main thread still is running. This takes care of this issue.
         """
-        #print "Stopping func"
         if not self.timed_function_events:
             return
         # Clear provided event only.
