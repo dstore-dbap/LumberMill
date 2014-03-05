@@ -14,32 +14,33 @@
       httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
       #http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
     receivers:
+      - Statistics
       # Only messages that matched a regex will be send to this handler
       - AddDateTime:
-          filter: event_type != 'unknown'
+          filter: %(event_type) != 'unknown'
       # Print out messages that did not match
       - StdOutSink:
-          filter: event_type == 'unknown'
+          filter: %(event_type) == 'unknown'
 
 # Add a timestamp field.
 - AddDateTime:
     format: '%Y-%m-%dT%H:%M:%S.%f'
-    target_field: "@timestamp"
+    target_field: "timestamp"
 
 # Add geo info based on the lookup_fields. The first field in <source_fields> that yields a result from geoip will be used.
 - AddGeoInfo:
     geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
     source_fields: [x_forwarded_for, remote_ip]
     geo_info_fields: ['latitude', 'longitude', 'country_code']
-    receivers:
-      - ElasticSearchSink
-      - Statistics
 
 - ElasticSearchMultiProcessSink:
     pool_size: 2
     nodes: ["localhost:9200"]
-    doc_id: '%(@timestamp)s%(received_from)s'
+    doc_id: '%(timestamp)s%(received_from)s'
     store_interval_in_secs: 2
 
-- module: Statistics
-- module: StdOutSink
+- StdOutSink:
+    pretty_print: True
+
+- Statistics:
+    interval: 10
