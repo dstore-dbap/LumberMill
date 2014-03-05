@@ -4,8 +4,9 @@ GambolPutty
 Why is it that the world never remembered the name of Johann Gambolputty de von Ausfern- schplenden- schlitter- crasscrenbon- fried- digger- dingle- dangle- dongle- dungle- burstein- von- knacker- thrasher- apple- banger- horowitz- ticolensic- grander- knotty- spelltinkle- grandlich- grumblemeyer- spelterwasser- kurstlich- himbleeisen- bahnwagen- gutenabend- bitte- ein- nürnburger- bratwustle- gerspurten- mitz- weimache- luber- hundsfut- gumberaber- shönedanker- kalbsfleisch- mittler- aucher von Hautkopft of Ulm?
 
 A simple log message manager in python. To run GambolPutty you will need Python 2.5+.
+For better performance you should run GambolPutty with pypy. Tested with pypy-2.0.2 and pypy-2.2.1.
 
-To analyze i.e. log data, this tool offers a simple approach to parse the streams using regular expressions.
+To analyze i.e. log data, this tool offers a simple approach to parse the streams using different modules, the approach being quite similar to the well known logstash.
 
 The different modules can be combined in any order.
 
@@ -79,12 +80,20 @@ GambolPutty makes use of the following projects:
 ### Event flow basics
 * an input module receives an event.
 * the event data will be wrapped in a default event dictionary of the following structure:
-    { "event_type": "Unknown", "received_from": False, "data": "", "markers": [] }
+    { "event_type": "Unknown",
+      "received_from": ip address of sender,
+      "data": payload,
+      "gambolputty": {
+                    "event_id": unique event id,
+                    "source_module": caller_class_name
+      }
+    }
 * the input module sends the new event to its receivers. Either by adding it to a queue or by calling the
   receivers handleEvent method.
 * if no receivers are configured, the next module in config will be the default receiver.
 * each following module will process the event via its handleEvent method and pass it on to its
   receivers.
+* each module can have an input filter and an output filter to manage event propagation through the modules.
 
 ### Configuration basics
 
@@ -94,9 +103,6 @@ Each module configuration follows the same pattern:
     - SomeModuleName:
         id: AliasModuleName                     # <default: ""; type: string; is: optional>
         filter: if %(cache_status) == "-"
-        redis-client: RedisClientName           # <default: ""; type: string; is: optional>
-        redis-key: XPathParser%(server_name)s   # <default: ""; type: string; is: optional>
-        redis-ttl: 600                          # <default: 60; type: integer; is: optional>
         receivers:
          - ModuleName
          - ModuleAlias:
@@ -104,7 +110,7 @@ Each module configuration follows the same pattern:
 
 * module: specifies the module name and maps to the class name of the module.
 * id: use to set an alias name if you run more than just one instance of a module.
-* receivers: ModuleName or ModuleAlias of the receiving modules. If a filter is provided, only matching events will be send to receiver.
+* receivers: ModuleName or id of the receiving modules. If a filter is provided, only matching events will be send to receiver.
   If no receivers are configured, the next module in config will be the default receiver.
 
 for modules that support the storage of intermediate values in redis:
@@ -113,8 +119,6 @@ for modules that support the storage of intermediate values in redis:
 * configuration['redis-ttl']: ttl of the stored data in redis.
 
 For configuration details of each module refer to its docstring.
-
-### Example usage
 
 #### Event field notation
 
