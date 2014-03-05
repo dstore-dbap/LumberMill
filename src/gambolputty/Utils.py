@@ -191,53 +191,61 @@ class KeyDotNotationDict(dict):
     def __init__(self, *args):
         dict.__init__(self, *args)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
-            return super(KeyDotNotationDict, self).__getitem__(key)
-        tmp_data = super(KeyDotNotationDict, self)
-        for current_key in key.split('.'):
-            tmp_data = tmp_data.__getitem__(current_key)
-        return tmp_data
-
-    def __setitem__(self, key, value, dict=None):
-        dict = dict if dict else super(KeyDotNotationDict, self)
-        if "." not in key:
-            return dict.__setitem__(key, value)
+            if isinstance(dict_or_list, list):
+                key = int(key)
+            return dict_or_list.__getitem__(key)
         current_key, remaining_keys = key.split('.', 1)
-        dict = dict.__getitem__(current_key)
-        self.__setitem__(remaining_keys, value, dict)
+        dict_or_list = dict_or_list.__getitem__(current_key)
+        self.__getitem__(remaining_keys, dict_or_list)
 
-    def __delitem__(self, key):
+    def __setitem__(self, key, value, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
-            return super(KeyDotNotationDict, self).__delitem__(key)
-        tmp_data = super(KeyDotNotationDict, self)
-        keys = key.split('.')
-        idx_last = len(keys) - 1
-        for idx, current_key in enumerate(keys):
-            if idx != idx_last:
-                tmp_data = tmp_data.__getitem__(current_key)
-            else:
-                tmp_data.__delitem__(current_key)
+            if isinstance(dict_or_list, list):
+                key = int(key)
+            return dict_or_list.__setitem__(key, value)
+        current_key, remaining_keys = key.split('.', 1)
+        dict_or_list = dict_or_list.__getitem__(current_key)
+        self.__setitem__(remaining_keys, value, dict_or_list)
 
-    def __contains__(self, key):
+    def __delitem__(self, key, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
-            return super(KeyDotNotationDict, self).__contains__(key)
+            if isinstance(dict_or_list, list):
+                key = int(key)
+            return dict_or_list.__delitem__(key)
+        current_key, remaining_keys = key.split('.', 1)
+        dict_or_list = dict_or_list.__getitem__(current_key)
+        self.__delitem__(remaining_keys, dict_or_list)
+
+    def __contains__(self, key, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        if "." not in key:
+            return dict_or_list.__contains__(key)
+        current_key, remaining_keys = key.split('.', 1)
         try:
-            tmp_data = super(KeyDotNotationDict, self)
-            for current_key in key.split('.'):
-                tmp_data = tmp_data.__getitem__(current_key)
-            return True
+            dict_or_list = dict_or_list.__getitem__(current_key)
+            self.__contains__(remaining_keys, dict_or_list)
         except KeyError:
             return False
 
-    def get(self, key, default):
+    def get(self, key, default, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
-            return super(KeyDotNotationDict, self).get(key, default)
+            if not isinstance(dict_or_list, list):
+                return dict_or_list.get(key, default)
+            else:
+                try:
+                    return dict_or_list[int(key)]
+                except KeyError:
+                    return default
+        current_key, remaining_keys = key.split('.', 1)
         try:
-            tmp_data = super(KeyDotNotationDict, self)
-            for current_key in key.split('.'):
-                tmp_data = tmp_data.__getitem__(current_key)
-            return tmp_data
+            dict_or_list = dict_or_list.__getitem__(current_key)
+            return self.get(remaining_keys, default, dict_or_list)
         except KeyError:
             return default
 

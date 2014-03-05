@@ -93,6 +93,16 @@ class ModifyFields(BaseModule.BaseModule):
         receivers:
           - NextModule
 
+    # Split source field to array at separator.
+
+    - module: ModifyFields
+      action: split                                 # <type: string; is: required>
+      separator:                                    # <type: string; is: required>
+      source_field:                                 # <type: list; is: required>
+      target_field:                                 # <default: None; type: None||string; is: optional>
+      receivers:
+        - NextModule
+
     # Merge source fields to target field as list.
     - ModifyFields:
         action: merge                               # <type: string; is: required>
@@ -118,14 +128,14 @@ class ModifyFields(BaseModule.BaseModule):
           - NextModule
 
     # Cast field values to float.
-    - module: ModifyFields
+    - ModifyFields:
       action: cast_to_float                       # <type: string; is: required>
       source_fields:                              # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
-    - module: ModifyFields
+    - ModifyFields:
       action: cast_to_str                         # <type: string; is: required>
       source_fields:                              # <type: list; is: required>
       receivers:
@@ -233,7 +243,7 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        fields_to_del = set(event).difference(self.getConfigurationValue('source_fields'))
+        fields_to_del = set(event).difference(self.source_fields)
         for field in fields_to_del:
             # Do not delete internal event information.
             if field == 'gambolputty':
@@ -260,7 +270,7 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.getConfigurationValue('source_fields'):
+        for field in self.source_fields:
             event.pop(field, None)
         return event
 
@@ -271,8 +281,10 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        event[self.getConfigurationValue('target_field')] = self.getConfigurationValue('value', event)
+        event[self.target_field] = self.getConfigurationValue('value', event)
         return event
+
+
 
     def concat(self, event):
         """
@@ -283,12 +295,12 @@ class ModifyFields(BaseModule.BaseModule):
         @return: event: dictionary
         """
         concat_str = ""
-        for field in self.getConfigurationValue('source_fields'):
+        for field in self.source_fields:
             try:
                 concat_str = "%s%s" % (concat_str,event[field])
             except KeyError:
                 pass
-        event[self.getConfigurationValue('target_field')] = concat_str
+        event[self.target_field] = concat_str
         return event
 
     def replace(self, event):
@@ -327,9 +339,9 @@ class ModifyFields(BaseModule.BaseModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        target_field_name = self.target_field if self.target_field else "%s_mapped" % self.source_field
+        target_field = self.target_field if self.target_field else "%s_mapped" % self.source_field
         try:
-            event[target_field_name] = self.getConfigurationValue('map', event)[event[self.source_field]]
+            event[target_field] = self.getConfigurationValue('map', event)[event[self.source_field]]
         except KeyError:
             pass
         return event
@@ -415,10 +427,8 @@ class ModifyFields(BaseModule.BaseModule):
             values = event[self.source_field].split(self.getConfigurationValue('separator'))
         except:
             return event
-        if self.target_field:
-            event[self.target_field] = values
-        else:
-            event[self.source_field] = values
+        target_field = self.target_field if self.target_field else self.source_field
+        event[target_field] = values
         return event
 
     def merge(self, event):

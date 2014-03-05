@@ -81,7 +81,7 @@ Configuration example:
 
 #####ModifyFields
 
-Simple module to add/delete/change field values.
+Module to apply common string manipulation, e.g. split, join, trim, etc. on event fields.
 
 Configuration examples:
 
@@ -154,6 +154,26 @@ Configuration examples:
         receivers:
           - NextModule
 
+    # Split source field to target fields based on key value pairs using regex.
+    - ModifyFields:
+        action: key_value_regex                     # <type: string; is: required>
+        regex:                                      # <type: string; is: required>
+        source_field:                               # <type: list; is: required>
+        target_field:                               # <default: None; type: None||string; is: optional>
+        prefix:                                     # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
+
+    # Split source field to array at separator.
+
+    - ModifyFields
+        action: split                                 # <type: string; is: required>
+        separator:                                    # <type: string; is: required>
+        source_field:                                 # <type: string; is: required>
+        target_field:                                 # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
+
     # Merge source fields to target field as list.
     - ModifyFields:
         action: merge                               # <type: string; is: required>
@@ -179,14 +199,14 @@ Configuration examples:
           - NextModule
 
     # Cast field values to float.
-    - module: ModifyFields
+    - ModifyFields:
       action: cast_to_float                       # <type: string; is: required>
       source_fields:                              # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
-    - module: ModifyFields
+    - ModifyFields:
       action: cast_to_str                         # <type: string; is: required>
       source_fields:                              # <type: list; is: required>
       receivers:

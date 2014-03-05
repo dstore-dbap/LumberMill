@@ -129,30 +129,34 @@ The following examples refer to this event data:
 	 'received_from': 'stdin',
 	 'remote_ip': '192.168.2.20',
 	 'url': 'GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0',
+	 'fields': ['nobody', 'expects', 'the'],
 	 'params':  { u'spanish': [u'inquisition']},
 	 'user': '-'}
 
 ##### Notation in configuration fields like source_field or target_field:
 
-Just use the field name. If referring to a nested dict, use dots, like this:
+Just use the field name. If referring to a nested dict or a list, use dots:
 
     - RegexParser:
-        source_field: uri.path
+        source_field: fields.2
+
+    - RegexParser:
+        source_field: params.spanish
 
 ##### Notation in strings:
 
-Use the python % formatting for strings. If referring to a nested dict, use dots, like this:
+Use the python % formatting for strings. If referring to a nested dict or a list, use dots:
 
     - ElasticSearchMultiProcessSink:
         index_name: 1perftests
-        doc_id: '%(params.spanish)s'
+        doc_id: '%(fields.0)s-%(params.spanish)s'
 
 ##### Notation in module filters:
 
 Wrap the field name in %(field_name). If referring to a nested dict, use dots, like this:
 
     - StdOutSink:
-        filter: if %(params.spanish) == '192.168.2.20'
+        filter: if %(fields.0) == "nobody" and %(params.spanish) == '192.168.2.20'
 
 #### Filter
 
