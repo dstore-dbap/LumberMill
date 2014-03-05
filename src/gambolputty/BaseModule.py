@@ -5,6 +5,7 @@ import abc
 import logging
 import collections
 import sys
+import ConfigurationValidator
 import Utils
 
 class BaseModule():
@@ -88,6 +89,13 @@ class BaseModule():
                 continue
             receiver_name, receiver_filter_config = receiver_config.iteritems().next()
             self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
+        self.checkConfiguration()
+
+    def checkConfiguration(self):
+        configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleInstance(self)
+        if configuration_errors:
+            self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, configuration_errors, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
 
     def getConfigurationValue(self, key, mapping_dict=False):
         """
@@ -154,7 +162,6 @@ class BaseModule():
     def setInputFilter(self, filter_string):
         filter_string = re.sub('^if\s+', "", filter_string)
         filter_string = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string)
-        print filter_string
         filter = eval(filter_string)
         self.input_filter = filter
         # Replace default receiveEvent method with filtered one.

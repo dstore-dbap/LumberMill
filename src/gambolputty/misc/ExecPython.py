@@ -22,18 +22,22 @@ class ExecPython(BaseModule.BaseModule):
             import math
         event['request_time'] = math.ceil(event['request_time'] * 1000)
 
+    imports: Modules to import, e.g. re, math etc.
     code: Code to execute.
     debug: Set to True to output the string that will be executed.
 
     Configuration example:
 
     - ExecPython:
+        imports:              # <default: []; type: list; is: optional>
         source:               # <type: string; is: required>
         debug:                # <default: False; type: boolean; is: optional>
     """
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
+        for module in self.getConfigurationValue("imports"):
+            exec("import %s" % module)
         source = "def UserFunc(event):\n%s" % self.getConfigurationValue("source")
         if self.getConfigurationValue("debug"):
             print source

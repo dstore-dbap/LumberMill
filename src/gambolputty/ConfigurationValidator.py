@@ -93,6 +93,6 @@ class ConfigurationValidator():
                 if config_value not in configuration_metadata['values']:
                     error_msg = "%s: '%s' has invalid value. Is: %s, should be on of: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value, configuration_metadata['values'])
                     result.append(error_msg)
-            return result
+        return result
 
 

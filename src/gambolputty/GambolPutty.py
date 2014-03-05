@@ -187,23 +187,9 @@ class GambolPutty:
 
     def configureModules(self):
         # Call configuration of module
-        configurationValidator = ConfigurationValidator.ConfigurationValidator()
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            #configuration = module_info['configuration'] if 'configuration' in module_info else {}
-            passed_config_test = False
             for module_instance in module_info['instances']:
-                try:
-                    module_instance.configure(module_info['configuration'])
-                    if not passed_config_test:
-                        configuration_errors = configurationValidator.validateModuleInstance(module_instance)
-                    if configuration_errors:
-                        self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, module_name, configuration_errors, Utils.AnsiColors.ENDC))
-                        self.shutDown()
-                    passed_config_test = True
-                except:
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%sCould not configure module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, module_name, etype, evalue, Utils.AnsiColors.ENDC))
-                    self.shutDown()
+                module_instance.configure(module_info['configuration'])
 
     def initEventStream(self):
         """ Connect modules.

@@ -61,10 +61,6 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
         self.geo_info_fields = self.getConfigurationValue('geo_info_fields')
         self.target = self.getConfigurationValue('target')
 
-    def addReceiver(self, receiver_name, receiver):
-        print receiver_name
-        self.receivers[receiver_name] = receiver
-
     def handleEvent(self, event):
         for lookup_field_name in self.getConfigurationValue('source_fields'):
             try:

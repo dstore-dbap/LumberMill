@@ -24,7 +24,7 @@ class UrlParser(BaseModule.BaseModule):
         target_field:             # <default: None; type: None||string; is: optional>
         parse_querystring:        # <default: False; type: boolean; is: optional>
         querystring_target_field: # <default: None; type: None||string; is: optional>
-        querystring_prefix:       # <default: None; type: string; is: optional>
+        querystring_prefix:       # <default: None; type: None||string; is: optional>
     """
 
     module_type = "parser"
