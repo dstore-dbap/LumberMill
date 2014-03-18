@@ -33,6 +33,11 @@ class ExecPython(BaseModule.BaseModule):
         source:               # <type: string; is: required>
         debug:                # <default: False; type: boolean; is: optional>
     """
+
+    module_type = "misc"
+    """Set module type"""
+    can_run_parallel = True
+
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)

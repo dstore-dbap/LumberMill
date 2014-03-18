@@ -81,7 +81,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
             return
         self.running = True
         #self.server.start(0)
-        IOLoop.instance().start()
+        #IOLoop.instance().start()
 
     def shutDown(self, silent):
         if self.running:

@@ -2,35 +2,39 @@
 import pprint
 import sys
 import redis
-import BaseThreadedModule
+import BaseMultiProcessModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
+import time
 
-@ModuleDocstringParser
-class RedisList(BaseThreadedModule.BaseThreadedModule):
+
+@Decorators.ModuleDocstringParser
+class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Subscribes to a redis channels/lists and passes incoming events to receivers.
 
     Configuration example:
 
     - RedisList:
-        lists:                    # <type: list; is: required>
+        list:                     # <type: String; is: required>
         server:                   # <default: 'localhost'; type: string; is: optional>
         port:                     # <default: 6379; type: integer; is: optional>
         db:                       # <default: 0; type: integer; is: optional>
         password:                 # <default: None; type: None||string; is: optional>
-        timeout:                  # <default: 0; type: integer; is: optional>
+        format:                   # <default: None; type: None||string; is: optional>
+        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
+        batch_size:               # <default: 500; type: integer; is: optional>
     """
 
-    module_type = "input"
+    module_type = "output"
     """Set module type"""
     can_run_parallel = True
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.lists = self.getConfigurationValue('lists')
-        self.timeout = self.getConfigurationValue('timeout')
+        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        self.is_storing = False
+        self.list = self.getConfigurationValue('list')
         self.client = redis.StrictRedis(host=self.getConfigurationValue('server'),
                                           port=self.getConfigurationValue('port'),
                                           password=self.getConfigurationValue('password'),
@@ -42,13 +46,21 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
 
-    def getEventFromInputQueue(self):
+    def run(self):
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'))
+        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+
+    def storeData(self, buffered_data):
         try:
-            event = self.client.blpop(self.lists, timeout=self.timeout)
-            return event
+            self.client.rpush(self.list, *buffered_data)
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("%sCould not read data from redis list(s) %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.lists, exc_type, exc_value, Utils.AnsiColors.ENDC))
+            self.logger.error("%sCould not add event to redis list %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.list, exc_type, exc_value, Utils.AnsiColors.ENDC))
 
     def handleEvent(self, event):
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
+        if self.getConfigurationValue('format'):
+            publish_data = self.getConfigurationValue('format', event)
+        else:
+            publish_data = event
+        self.buffer.append(publish_data)
+        yield None

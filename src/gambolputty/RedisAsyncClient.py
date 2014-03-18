@@ -167,6 +167,7 @@ class AsyncRedisClient(object):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.stream          = IOStream(self.socket, self.io_loop)
         self.stream.connect(self.address, self._wait_result)
+
     def close(self):
         """Destroys this redis client, freeing any file descriptors used.
         Not needed in normal use, but may be helpful in unittests that

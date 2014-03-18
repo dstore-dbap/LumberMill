@@ -117,41 +117,69 @@ class AstTransformer(ast.NodeTransformer):
         return new_node
 
 class Buffer:
-    def __init__(self, size, callback, interval=1):
+    def __init__(self, size, callback=None, interval=1):
         self.flush_size = size
+        self.buffer = []
+        self.append = self.put
         self.flush_interval = interval
         self.flush_callback = callback
         self.flush_timed_func = self.getTimedFlushMethod()
         self.flush_timed_func()
-        self.buffer = []
-        self.is_sending = False
-        self.append = self.put
+        self.is_storing = False
 
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
         def timedFlush():
-            if self.is_sending or len(self.buffer) == 0:
+            if self.is_storing or len(self.buffer) == 0:
                 return
             self.flush()
         return timedFlush
 
     def put(self, item):
+        # Wait till a running store is finished to avoid strange race conditions when using this buffer with
+        # multiprocessing.
+        while self.is_storing:
+            time.sleep(.0001)
         self.buffer.append(item)
-        if len(self.buffer) == self.flush_size:
+        if len(self.buffer) >= self.flush_size:
             self.flush()
 
     def flush(self):
+        self.is_storing = True
         try:
             self.flush_callback(self.buffer)
             self.buffer = []
-        finally:
-            pass
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not flush buffer to %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, self.flush_callback, etype, evalue, AnsiColors.ENDC))
+        self.is_storing = False
 
     def bufsize(self):
         return len(self.buffer)
 
 class BufferedQueue():
-    def __init__(self, queue, buffersize=100, ):
+    def __init__(self, queue, buffersize=100):
+        self.queue = queue
+        self.buffersize = buffersize
+        self.buffer = Buffer(buffersize, self.sendBuffer, 1)
+
+    def put(self, payload):
+        self.buffer.append(payload)
+
+    def sendBuffer(self, buffered_data):
+        self.queue.put(buffered_data)
+
+    def get(self, block=True, timeout=None):
+        return self.queue.get(block, timeout)
+
+    def qsize(self):
+        return self.buffer.bufsize + self.queue.qsize()
+
+    def __getattr__(self, name):
+        return getattr(self.queue, name)
+
+class __BufferedQueue():
+    def __init__(self, queue, buffersize=100):
         self.queue = queue
         self.buffersize = buffersize
         self.buffer = []

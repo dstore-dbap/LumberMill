@@ -98,7 +98,7 @@ Configuration example:
 
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
-        fields:                 # <default: ''; type: string; is: optional>
+        format:                 # <default: ''; type: string; is: optional>
 
 #####SyslogSink
 

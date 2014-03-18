@@ -3,13 +3,17 @@ import sys
 import types
 import msgpack
 import BaseModule
+import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
 class MsgPackParser(BaseModule.BaseModule):
     """
-    It will parse the msgpack data and create or replace fields in the internal data dictionary with
-    the corresponding json fields.
+    Decode:
+     It will parse the msgpack data and create or replace fields in the internal data dictionary with
+     the corresponding json fields.
+    Encode:
+     Encode selected fields or all to msgpack format.
 
     Configuration example:
 
@@ -58,7 +62,7 @@ class MsgPackParser(BaseModule.BaseModule):
         yield event
 
     def encodeEvent(self, event):
-        if self.source_fields == 'all':
+        if self.source_fields == ['all']:
             encode_data = event
         else:
             encode_data = []

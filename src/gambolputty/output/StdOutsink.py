@@ -2,6 +2,8 @@
 import BaseModule
 import pprint
 from Decorators import ModuleDocstringParser
+import time
+
 
 @ModuleDocstringParser
 class StdOutSink(BaseModule.BaseModule):
@@ -12,19 +14,28 @@ class StdOutSink(BaseModule.BaseModule):
 
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
-        fields:                 # <default: ''; type: string; is: optional>
+        format:                 # <default: ''; type: string; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
 
+    def configure(self, configuration):
+        # Call parent configure method
+        BaseModule.BaseModule.configure(self, configuration)
+        self.printing = False
+
     def handleEvent(self, event):
-        if self.getConfigurationValue('fields'):
-            output = self.getConfigurationValue('fields', event)
+        while self.printing:
+            time.sleep(.0001)
+        self.printing = True
+        if self.getConfigurationValue('format'):
+            output = self.getConfigurationValue('format', event)
         else:
             output = event
         if self.getConfigurationValue('pretty_print'):
             pprint.pprint(output, indent=4)
         else:
             print "%s" % output
-        yield event
+        self.printing = False
+        yield None

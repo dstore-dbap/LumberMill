@@ -109,7 +109,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             # Connect to es node and round-robin between them.
             es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                              connection_class=self.connection_class,
-                                             sniff_on_start=True, maxsize=20,
+                                             sniff_on_start=True, sniff_timeout=1, maxsize=20,
                                              use_ssl=self.getConfigurationValue('use_ssl'),
                                              http_auth=self.getConfigurationValue('http_auth'))
         except:
@@ -122,11 +122,10 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         # Wait till a running store is finished to avoid strange race conditions.
         while self.is_storing:
             time.sleep(.001)
-        if len(self.events_container) >= self.backlog_size:
+        if len(self.events_container) < self.backlog_size:
+            self.events_container.append(event)
+        else:
             self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
-            yield event
-            return
-        self.events_container.append(event)
         if len(self.events_container) >= self.batch_size:
             self.storeData(self.events_container)
         yield event

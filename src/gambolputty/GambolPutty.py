@@ -67,13 +67,13 @@ class GambolPutty:
         if path_to_config_file:
             self.readConfiguration(path_to_config_file)
 
-    def produceQueue(self, module_instance, queue_max_size=20):
+    def produceQueue(self, module_instance, queue_max_size=20, mp_queue_buffer_size=100):
         """Returns a queue with queue_max_size"""
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
             queue = multiprocessing.Queue(queue_max_size)
-            queue = Utils.BufferedQueue(queue)
+            queue = Utils.BufferedQueue(queue, mp_queue_buffer_size)
             return queue
 
     def readConfiguration(self, path_to_config_file):
@@ -152,6 +152,7 @@ class GambolPutty:
                 tmp_mod_name = module_id.split("_",1)[0]
                 module_id = "%s_%s" % (tmp_mod_name, counter)
                 counter += 1
+            # Set some app wide defaults.
             pool_size = module_config['pool_size'] if "pool_size" in module_config else self.default_pool_size
             module_instances = []
             for _ in range(pool_size):
@@ -219,7 +220,10 @@ class GambolPutty:
                     # If the receiver is a thread or a process, produce the needed queue.
                     if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
                         if receiver_name not in queues:
-                            queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size')) # self.modules[receiver_name]['queue_size']
+                            if isinstance(receiver_instance, threading.Thread):
+                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'))
+                            else:
+                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('mp_queue_buffer_size'))
                         try:
                             if not receiver_instance.getInputQueue():
                                 receiver_instance.setInputQueue(queues[receiver_name])

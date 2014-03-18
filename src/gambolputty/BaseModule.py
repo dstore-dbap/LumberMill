@@ -169,7 +169,8 @@ class BaseModule():
 
     def addOutputFilter(self, receiver_name, filter_string):
         filter_string = re.sub('^if\s+', "", filter_string)
-        filter_string = "True " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string) + " else False"
+        filter_string = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string)
+        filter = eval(filter_string)
         self.output_filters[receiver_name] = filter
         # Replace default sendEvent method with filtered one.
         self.sendEvent = self.sendEventFiltered
@@ -182,9 +183,8 @@ class BaseModule():
             if receiver_name not in self.output_filters:
                 filterd_receivers[receiver_name] = receiver
                 continue
-            matched = False
             try:
-                exec self.output_filters[receiver_name]
+                matched = self.output_filters[receiver_name](event)
             except:
                 raise
             # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
@@ -226,13 +226,15 @@ class BaseModule():
 
     def receiveEvent(self, event):
         for event in self.handleEvent(event):
-            self.sendEvent(event)
+            if event:
+                self.sendEvent(event)
 
     def receiveEventFiltered(self, event):
         matched = self.input_filter(event)
         if matched:
             for event in self.handleEvent(event):
-                self.sendEvent(event)
+                if event:
+                    self.sendEvent(event)
         else:
             self.sendEvent(event)
 

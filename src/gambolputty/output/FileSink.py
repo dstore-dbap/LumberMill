@@ -13,7 +13,7 @@ import sys
 @Decorators.ModuleDocstringParser
 class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
-    Store events in a file.
+    Store all received events in a file.
 
     path: Path to logfiles. String my contain any of pythons strtime directives.
     name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.

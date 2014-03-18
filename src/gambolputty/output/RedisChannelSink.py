@@ -20,8 +20,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
         port:                       # <default: 6379; type: integer; is: optional>
         db:                         # <default: 0; type: integer; is: optional>
         password:                   # <default: None; type: None||string; is: optional>
-        format:                     # <default: None; type: string; is: optional>
-        fields:                     # <default: None; type: None||list; is: optional>
+        format:                     # <default: None; type: None||string; is: optional>
     """
 
     module_type = "output"
@@ -44,7 +43,6 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
         if not self.client:
             return
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
-
 
     def handleEvent(self, event):
         if self.getConfigurationValue('format'):

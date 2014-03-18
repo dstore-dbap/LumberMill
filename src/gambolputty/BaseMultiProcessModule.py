@@ -11,16 +11,16 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     """
     Base class for all gambolputty modules that will run as separate processes.
     If you happen to override one of the methods defined here, be sure to know what you
-    are doing ;) You have been warned ;)
+    are doing ;) You have been warned...
 
     Configuration example:
 
     - module: SomeModuleName
       id:                               # <default: ""; type: string; is: optional>
       filter:                           # <default: None; type: None||string; is: optional>
-      pool_size: 4                      # <default: None; type: None||integer; is: optional>
-      queue_size: 20                    # <default: None; type: None||integer; is: optional>
-      ...
+      pool_size:                        # <default: 2; type: integer; is: optional>
+      queue_size:                       # <default: 20; type: integer; is: optional>
+      mp_queue_buffer_size:             # <default: 100; type: integer; is: optional>
       receivers:
        - ModuleName
        - ModuleAlias
