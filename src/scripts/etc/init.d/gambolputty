@@ -35,14 +35,15 @@ fi
 
 # Prefer pypy if it is available.
 if [ -f /usr/bin/pypy ]; then
-    interpreter="/usr/bin/pypy"
+    interpreter="/usr/lib64/pypy-2.2.1/bin/pypy"
+    export PYTHONPATH=$PYTHONPATH:/usr/lib64/pypy-2.2.1/site-packages;
 fi
 
-exec="/opt/GambolPutty/src/GambolPutty.py"
+exec="/opt/GambolPutty/src/gambolputty/GambolPutty.py"
 prog="gambolputty"
 pidfile=/var/run/gambolputty/${prog}.pid
 lockfile=/var/lock/subsys/$prog
-conffile=/etc/gambolputty/log2elasticsearch.conf
+conffile=/etc/gambolputty/default.conf
 
 start() {
     [ -f $interpreter ] || $(echo "Interpreter $interpreter does not exist." && exit 6)
@@ -60,7 +61,7 @@ start() {
 stop() {
     echo -n $"Stopping $prog: "
     # stop it here, often "killproc $prog"
-    killproc -p $pidfile $prog
+    kill -INT $(cat $pidfile)
     retval=$?
     echo
     [ $retval -eq 0 ] && rm -f $lockfile
