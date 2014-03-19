@@ -34,8 +34,9 @@ The different modules can be combined in any order.
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
 
-#### Field modifiers
+#### Event modifiers
 
+* MergeEvent, merge multiple events to one single event.
 * AddDateTime, adds a timestamp field.
 * AddGeoInfo, adds geo info fields.
 * HttpRequest, execute an arbritrary http request and store result.
