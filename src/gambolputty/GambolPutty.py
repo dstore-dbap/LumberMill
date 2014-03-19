@@ -60,7 +60,7 @@ class GambolPutty:
     """
 
     def __init__(self, path_to_config_file=False):
-        self.alive = True
+        self.alive = False
         self.main_process_pid = os.getpid()
         self.modules = {}
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -289,6 +289,7 @@ class GambolPutty:
         tornado.ioloop.IOLoop.instance().start()
 
     def run(self):
+        self.alive = True
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
@@ -308,8 +309,11 @@ class GambolPutty:
         self.runModules()
 
     def shutDown(self, signum=False, frame=False):
+        # No need to shut down modules if we are not really running, e.g. when running a configtest.
+        if not self.alive:
+            return
         # If a module started a subprocess, this will get called for all subprocesses started.
-        # Still we know the pid of the main process. So only log if we are in the finaly shutdown stage.
+        # Still we know the pid of the main process. So only log if we are in the final shutdown stage.
         silent = self.main_process_pid != os.getpid()
         if not silent:
             self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
@@ -334,15 +338,17 @@ class GambolPutty:
                     instance.shutDown(silent)
 
 def usage():
-    print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf>'
+    print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest'
 
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])
     config_pathname = config_pathname[:config_pathname.rfind("/")] + "/../conf"
     logging.config.fileConfig('%s/logger.conf' % config_pathname)
+    logger = logging.getLogger("GambolPutty")
     path_to_config_file = ""
+    run_configtest = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help", "conf="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help", "configtest","conf="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -352,7 +358,14 @@ if "__main__" == __name__:
             sys.exit()
         elif opt in ("-c", "--conf"):
             path_to_config_file = arg
+        elif opt in ("--configtest"):
+            run_configtest = True
     if not path_to_config_file:
+        logger.error("%sPlease provide a path to a configuration.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+        usage()
+        sys.exit(2)
+    if not os.path.isfile(path_to_config_file):
+        logger.error("%sConfigfile %s could not be found.%s" % (Utils.AnsiColors.FAIL, path_to_config_file, Utils.AnsiColors.ENDC))
         usage()
         sys.exit(2)
     gp = GambolPutty(path_to_config_file)
@@ -360,6 +373,9 @@ if "__main__" == __name__:
     gp.initModulesFromConfig()
     gp.configureModules()
     gp.initEventStream()
+    if run_configtest:
+        logger.info("%sConfigurationtest for %s finished.%s" % (Utils.AnsiColors.LIGHTBLUE, path_to_config_file, Utils.AnsiColors.ENDC))
+        sys.exit(0)
     gp.run()
 
 

@@ -15,6 +15,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     Configuration example:
 
     - RedisChannelSink:
+        format:                     # <default: None; type: None||string; is: optional>
         channel:                    # <type: string; is: required>
         server:                     # <default: 'localhost'; type: string; is: optional>
         port:                       # <default: 6379; type: integer; is: optional>
@@ -30,6 +31,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def configure(self, configuration):
          # Call parent configure method
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        self.format = self.getConfigurationValue('format')
         try:
             self.client = redis.Redis(host=self.getConfigurationValue('server'),
                                       port=self.getConfigurationValue('port'),
@@ -45,7 +47,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
-        if self.getConfigurationValue('format'):
+        if self.format:
             publish_event = self.getConfigurationValue('format', event)
         else:
             publish_event = event
@@ -54,4 +56,4 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not publish event to redis channel %s at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
-        yield event
+        yield None

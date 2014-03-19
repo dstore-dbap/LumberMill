@@ -25,16 +25,20 @@ class ConnectionHandler(object):
     def __init__(self, stream, address, gp_module):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
-        self.seperator = self.gp_module.getConfigurationValue('seperator')
+        self.simple_separator = self.gp_module.getConfigurationValue('simple_separator')
+        self.regex_separator = self.gp_module.getConfigurationValue('regex_separator')
         self.chunksize = self.gp_module.getConfigurationValue('chunksize')
+        self.mode = self.gp_module.getConfigurationValue('mode')
         self.is_open = True
         self.stream = stream
         self.address = address
         (self.host, self.port) = self.address
         self.stream.set_close_callback(self._on_close)
         if not self.stream.closed():
-            if self.gp_module.getConfigurationValue('mode') == 'line':
-                self.stream.read_until(self.seperator, self._on_read_line)
+            if self.mode == 'line' and self.regex_separator:
+                self.stream.read_until_regex(self.regex_separator, self._on_read_line)
+            elif self.mode == 'line':
+                self.stream.read_until(self.simple_separator, self._on_read_line)
             else:
                 self.stream.read_bytes(self.chunksize, self._on_read_chunk)
 
@@ -42,11 +46,14 @@ class ConnectionHandler(object):
         data = data.strip()
         if data == "":
             return
-        event = Utils.getDefaultEventDict({"received_from": self.host, "data": data}, caller_class_name="TcpServerTornado")
+        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
         self.gp_module.sendEvent(event)
         try:
             if not self.stream.reading():
-                self.stream.read_until(self.seperator, self._on_read_line)
+                if self.regex_separator:
+                    self.stream.read_until_regex(self.regex_separator, self._on_read_line)
+                else:
+                    self.stream.read_until(self.simple_separator, self._on_read_line)
         except StreamClosedError:
             pass
         except:
@@ -57,7 +64,7 @@ class ConnectionHandler(object):
         data = data.strip()
         if data == "":
             return
-        event = Utils.getDefaultEventDict({"received_from": self.host, "data": data}, caller_class_name="TcpServerTornado")
+        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
         self.gp_module.sendEvent(event)
         try:
             if not self.stream.reading():
@@ -77,7 +84,7 @@ class ConnectionHandler(object):
                     data += self.stream._read_buffer.popleft().strip()
                 except IndexError:
                     if data != "":
-                        event = Utils.getDefaultEventDict({"received_from": self.host, "data": data}, caller_class_name="TcpServerTornado")
+                        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
                         self.gp_module.sendEvent(event)
                     break
         self.stream.close()
@@ -95,7 +102,8 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     key:        Path to tls key file.
     cert:       Path to tls cert file.
     mode:       Receive mode, line or stream.
-    seperator:  If mode is line, set seperator between lines.
+    simple_separator:  If mode is line, set separator between lines.
+    regex_separator:   If mode is line, set separator between lines. Here regex can be used.
     chunksize:  If mode is stream, set chunksize in bytes to read from stream.
     max_buffer_size: Max kilobytes to in receiving buffer.
 
@@ -109,7 +117,8 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
         cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-        seperator:                       # <default: '\n'; type: string; is: optional>
+        simple_separator:                # <default: '\n'; type: string; is: optional>
+        regex_separator:                 # <default: None; type: None||string; is: optional>
         chunksize:                       # <default: 16384; type: integer; is: optional>
         max_buffer_size:                 # <default: 1024; type: integer; is: optional>
         receivers:
@@ -158,7 +167,9 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     def shutDown(self, silent):
         # Call parent shutDown method
         BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
-        if self.server:
+        try:
             self.server.stop()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
             time.sleep(.2)
+        except AttributeError:
+            pass

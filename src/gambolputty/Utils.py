@@ -60,13 +60,13 @@ def reload():
                       [sys.executable] + sys.argv)
             sys.exit(0)
 
-def getDefaultEventDict(dict={}, caller_class_name=''):
+def getDefaultEventDict(dict={}, caller_class_name='', received_from=False):
     default_dict = KeyDotNotationDict({ "event_type": "Unknown",
-                     "received_from": False,
                      "data": "",
                      "gambolputty": {
                         'event_id': "%032x" % random.getrandbits(128),
-                        "source_module": caller_class_name
+                        "source_module": caller_class_name,
+                        "received_from": received_from,
                      }
                     })
     default_dict.update(dict)
@@ -117,21 +117,22 @@ class AstTransformer(ast.NodeTransformer):
         return new_node
 
 class Buffer:
-    def __init__(self, size, callback=None, interval=1):
+    def __init__(self, size, callback=None, interval=1, maxsize=5000):
         self.flush_size = size
         self.buffer = []
+        self.maxsize = maxsize
         self.append = self.put
         self.flush_interval = interval
         self.flush_callback = callback
         self.flush_timed_func = self.getTimedFlushMethod()
-        self.flush_timed_func()
+        if self.flush_interval:
+            self.flush_timed_func()
         self.is_storing = False
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
         def timedFlush():
-            if self.is_storing or len(self.buffer) == 0:
-                return
             self.flush()
         return timedFlush
 
@@ -140,11 +141,18 @@ class Buffer:
         # multiprocessing.
         while self.is_storing:
             time.sleep(.0001)
-        self.buffer.append(item)
+        if len(self.buffer) < self.maxsize:
+            self.buffer.append(item)
+        else:
+            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Dropping item.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
         if len(self.buffer) >= self.flush_size:
             self.flush()
 
     def flush(self):
+        if len(self.buffer) == 0:
+            return
+        if self.is_storing:
+            time.sleep(.0001)
         self.is_storing = True
         try:
             self.flush_callback(self.buffer)
@@ -227,7 +235,7 @@ class KeyDotNotationDict(dict):
             return dict_or_list.__getitem__(key)
         current_key, remaining_keys = key.split('.', 1)
         dict_or_list = dict_or_list.__getitem__(current_key)
-        self.__getitem__(remaining_keys, dict_or_list)
+        return self.__getitem__(remaining_keys, dict_or_list)
 
     def __setitem__(self, key, value, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
@@ -237,7 +245,7 @@ class KeyDotNotationDict(dict):
             return dict_or_list.__setitem__(key, value)
         current_key, remaining_keys = key.split('.', 1)
         dict_or_list = dict_or_list.__getitem__(current_key)
-        self.__setitem__(remaining_keys, value, dict_or_list)
+        return self.__setitem__(remaining_keys, value, dict_or_list)
 
     def __delitem__(self, key, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
@@ -247,7 +255,7 @@ class KeyDotNotationDict(dict):
             return dict_or_list.__delitem__(key)
         current_key, remaining_keys = key.split('.', 1)
         dict_or_list = dict_or_list.__getitem__(current_key)
-        self.__delitem__(remaining_keys, dict_or_list)
+        return self.__delitem__(remaining_keys, dict_or_list)
 
     def __contains__(self, key, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
@@ -256,7 +264,7 @@ class KeyDotNotationDict(dict):
         current_key, remaining_keys = key.split('.', 1)
         try:
             dict_or_list = dict_or_list.__getitem__(current_key)
-            self.__contains__(remaining_keys, dict_or_list)
+            return self.__contains__(remaining_keys, dict_or_list)
         except KeyError:
             return False
 

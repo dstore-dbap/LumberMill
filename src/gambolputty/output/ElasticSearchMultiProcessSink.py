@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import datetime
 import time
@@ -34,6 +33,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
+    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
     nodes: configures the elasticsearch nodes.
     connection_type: one of: 'thrift', 'http'
     http_auth: 'user:password'
@@ -54,6 +54,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     Configuration example:
 
     - ElasticSearchMultiProcessSink:
+        format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
@@ -76,8 +77,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         # Call parent configure method
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
         self.events_container = []
-        self.batch_size = self.getConfigurationValue('batch_size')
-        self.backlog_size = self.getConfigurationValue('backlog_size')
+        self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
@@ -88,19 +88,9 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         if not self.es:
             self.gp.shutDown()
             return
-        self.is_storing = False
-        self.timed_store_func = self.getTimedStoreFunc()
-
-    def getTimedStoreFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
-        def timedStoreData():
-            if self.is_storing:
-                return
-            self.storeData(self.events_container)
-        return timedStoreData
 
     def run(self):
-        self.startTimedFunction(self.timed_store_func)
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def connect(self):
@@ -119,16 +109,12 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         return es
 
     def handleEvent(self, event):
-        # Wait till a running store is finished to avoid strange race conditions.
-        while self.is_storing:
-            time.sleep(.001)
-        if len(self.events_container) < self.backlog_size:
-            self.events_container.append(event)
+        if self.format:
+            publish_data = self.getConfigurationValue('format', event)
         else:
-            self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
-        if len(self.events_container) >= self.batch_size:
-            self.storeData(self.events_container)
-        yield event
+            publish_data = event
+        self.buffer.append(publish_data)
+        yield None
 
     def dataToElasticSearchJson(self, index_name, events):
         """
@@ -165,7 +151,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     def storeData(self, events):
         if len(events) == 0 or not self.es:
             return
-        self.is_storing = True
         if self.getConfigurationValue("index_name"):
             index_name = self.getConfigurationValue("index_name")
         else:
@@ -198,5 +183,3 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                     self.gp.shutDown()
                 else:
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
-        finally:
-            self.is_storing = False

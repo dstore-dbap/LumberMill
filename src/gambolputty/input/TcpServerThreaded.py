@@ -170,5 +170,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
         server_thread.start()
 
     def shutDown(self, silent):
-        if self.server:
+        try:
             self.server.alive = False
+        except AttributeError:
+            pass

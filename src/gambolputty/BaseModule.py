@@ -113,8 +113,8 @@ class BaseModule():
                 # Try to return a default value for requested setting.
                 try:
                     if mapping_dict:
-                        # Wrap dict to support nested dicts in string formatting via dot notation.
-                        return self.configuration_metadata[key]['default'] % mapping_dict
+                        return self.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict)
+                        #return self.configuration_metadata[key]['default'] % mapping_dict
                     return self.configuration_metadata[key]['default']
                 except KeyError:
                     self.logger.warning("%sCould not find configuration setting for required setting: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
@@ -122,7 +122,6 @@ class BaseModule():
                     #return False
         if not isinstance(config_setting, dict):
             self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
-            #self.gp.shutDown()
             return False
         if config_setting['contains_placeholder'] == False or mapping_dict == False:
             return config_setting.get('value')
@@ -160,17 +159,27 @@ class BaseModule():
             self.receivers[receiver_name] = receiver
 
     def setInputFilter(self, filter_string):
-        filter_string = re.sub('^if\s+', "", filter_string)
-        filter_string = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string)
-        filter = eval(filter_string)
+        filter_string_tmp = re.sub('^if\s+', "", filter_string)
+        filter_string_tmp = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string_tmp)
+        try:
+            filter = eval(filter_string_tmp)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sFailed to compile filter: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, filter_string, etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
         self.input_filter = filter
         # Replace default receiveEvent method with filtered one.
         self.receiveEvent = self.receiveEventFiltered
 
     def addOutputFilter(self, receiver_name, filter_string):
-        filter_string = re.sub('^if\s+', "", filter_string)
-        filter_string = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string)
-        filter = eval(filter_string)
+        filter_string_tmp = re.sub('^if\s+', "", filter_string)
+        filter_string_tmp = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string_tmp)
+        try:
+            filter = eval(filter_string_tmp)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sFailed to compile filter: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, filter_string, etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
         self.output_filters[receiver_name] = filter
         # Replace default sendEvent method with filtered one.
         self.sendEvent = self.sendEventFiltered

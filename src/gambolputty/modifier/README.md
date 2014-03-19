@@ -67,6 +67,37 @@ Configuration example:
         receivers:
           - NextModule
 
+#####MergeEvent
+
+Merge multiple event into a single one.
+
+In most cases, inputs will split in incoming stream at some kind of delimiter to produce events.
+Sometimes, the delimiter also occurs in the event data and splitting here is not desired.
+To mitigate this problem, this module can merge events based on some configurable rules.
+
+Each incoming event will be buffered in a queue identified by <buffer_key>.
+If a new event arrives and <pattern> matches for this event, the buffer will be flushed and the event appended to the now
+empty buffer.
+After <flush_interval_in_secs> the buffer will also be flushed.
+Flushing the buffer will concatenate all contained event data to form one single new event.
+
+buffer_key: key to distinguish between different input streams
+
+buffer_key: A key to correctly group events.
+buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
+flush_interval_in_secs: If interval is reached, buffer will be flushed.
+pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+
+Configuration example:
+
+    - MergeEvent:
+        buffer_key:                 # <default: "%(gambolputty.received_from)s"; type: string; is: optional>
+        buffer_size:                # <default: 50; type: integer; is: optional>
+        flush_interval_in_secs:     # <default: None; type: None||integer; is: required if pattern is None else optional>
+        pattern:                    # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+        receivers:
+          - NextModule
+
 #####Permutate
 
 Configuration example:

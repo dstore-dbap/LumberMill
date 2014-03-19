@@ -13,6 +13,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send events to syslog.
 
+    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
     address: Either a server:port pattern or a filepath to a unix socket, e.g. /dev/log.
     proto: Protocol to use.
     facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names
@@ -21,6 +22,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     Configuration example:
 
     - SyslogSink:
+        format:               # <default: None; type: None||string; is: optional>
         address:              # <default: 'localhost:514'; type: string; is: required>
         proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
         facility:             # <default: 'user'; type: string; is: optional>
@@ -35,6 +37,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.syslogger = logging.getLogger(self.__class__.__name__)
         self.syslogger.propagate = False
+        self.format = self.getConfigurationValue('format')
         if os.path.exists(self.getConfigurationValue('address')):
             address = self.getConfigurationValue('address')
         else:
@@ -50,10 +53,10 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sThe configured facility %s is unknown.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('facility'), Utils.AnsiColors.ENDC))
         self.syslog_handler = logging.handlers.SysLogHandler(address, facility=facility, socktype=socket_type)
         self.syslogger.addHandler(self.syslog_handler)
-        self.has_custom_format = self.getConfigurationValue('format')
+        self.format = self.getConfigurationValue('format')
 
     def handleEvent(self, event):
-        if self.has_custom_format:
+        if self.format:
             self.syslogger.info(self.getConfigurationValue('format', event))
         else:
             self.syslogger.info(event)
