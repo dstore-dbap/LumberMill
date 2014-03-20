@@ -75,7 +75,6 @@ class Statistics(BaseModule.BaseModule):
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_stat": queue.qsize(), "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-
     def run(self):
         # Get all configured queues for waiting event stats.
         for module_name, module_info in self.gp.modules.iteritems():
@@ -85,10 +84,6 @@ class Statistics(BaseModule.BaseModule):
             self.module_queues[module_name] = instance.getInputQueue()
         timed_func = self.getRunTimedFunctionsFunc()
         self.startTimedFunction(timed_func)
-
-    def destroyEvent(self, event=False, event_list=False):
-        """Statistic module will not destroy any events."""
-        pass
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('eps')
