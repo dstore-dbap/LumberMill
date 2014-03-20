@@ -147,8 +147,8 @@ user: Username for webhdfs.
 path: Path to logfiles. String my contain any of pythons strtime directives.
 name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
 format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
-store_interval_in_secs: Sending data to es in x seconds intervals.
-batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
+store_interval_in_secs: Send data to hdfs in x seconds intervals.
+batch_size: Send data to hdfs if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
 compress: Compress output as gzip file. For this to be effective, the batch size should not be too small.
 
@@ -169,6 +169,11 @@ Configuration example:
 
 Publish incoming events to redis channel.
 
+channel: Name of redis channel to send data to.
+server: Redis server to connect to.
+port: Port redis server is listening on.
+db: Redis db.
+password: Redis password.
 format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
 
 Configuration example:
@@ -179,8 +184,55 @@ Configuration example:
         port:                       # <default: 6379; type: integer; is: optional>
         db:                         # <default: 0; type: integer; is: optional>
         password:                   # <default: None; type: None||string; is: optional>
-        format:                     # <default: None; type: string; is: optional>
-        fields:                     # <default: None; type: None||list; is: optional>
+        format:                     # <default: None; type: None||string; is: optional>
+
+#####RedisListSink:
+
+Send events to a redis lists.
+
+list: Name of redis list to send data to.
+server: Redis server to connect to.
+port: Port redis server is listening on.
+db: Redis db.
+password: Redis password.
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
+store_interval_in_secs: Send data to redis in x seconds intervals.
+batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration example:
+
+    - RedisListSink:
+        list:                     # <type: String; is: required>
+        server:                   # <default: 'localhost'; type: string; is: optional>
+        port:                     # <default: 6379; type: integer; is: optional>
+        db:                       # <default: 0; type: integer; is: optional>
+        password:                 # <default: None; type: None||string; is: optional>
+        format:                   # <default: None; type: None||string; is: optional>
+        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
+        batch_size:               # <default: 500; type: integer; is: optional>
+        backlog_size:             # <default: 5000; type: integer; is: optional>
+
+#####GraphiteSink
+
+Send metrics to graphite server.
+
+server: Graphite server to connect to.
+port: Port carbon-cache is listening on.
+formats: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
+store_interval_in_secs: Send data to graphite in x seconds intervals.
+batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
+
+Configuration example:
+
+    - GraphiteSink:
+        server:                   # <default: 'localhost'; type: string; is: optional>
+        port:                     # <default: 2003; type: integer; is: optional>
+        formats:                  # <type: list; is: required>
+        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
+        batch_size:               # <default: 1; type: integer; is: optional>
+        backlog_size:             # <default: 5000; type: integer; is: optional>
 
 #####DevNullSink
 

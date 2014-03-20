@@ -21,8 +21,8 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     path: Path to logfiles. String my contain any of pythons strtime directives.
     name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
     format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
-    store_interval_in_secs: Sending data to webhdfs in x seconds intervals.
-    batch_size: Sending data to webhdfs if event count is above, even if store_interval_in_secs is not reached.
+    store_interval_in_secs: Send data to webhdfs in x seconds intervals.
+    batch_size: Send data to webhdfs if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
     compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
@@ -171,7 +171,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 filename += ".gz"
                 lines = self.compressGzip(lines)
             elif self.compress == 'snappy':
-                filename += ".gz"
+                filename += ".snappy"
                 lines = self.compressSnappy(lines)
             while write_tries < 10:
                 try:
@@ -203,16 +203,8 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         return buffer.getvalue()
 
     def compressSnappy(data):
-        buffer = StringIO()
         compressed = snappy.compress(data)
-        buffer << [compressed.size, compressed].pack("Na#{compressed.size}")
-        buffer.string
-
-    def getSnappyHeader(self):
-        MAGIC = u"\x82SNAPPY\x0"
-        DEFAULT_VERSION = 1
-        MINIMUM_COMPATIBLE_VERSION = 1
-        [MAGIC, DEFAULT_VERSION, MINIMUM_COMPATIBLE_VERSION].pack("a8NN")
+        return compressed
 
     def shutDown(self, silent=False):
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)

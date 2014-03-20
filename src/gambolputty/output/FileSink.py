@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-import logging
-import logging.handlers
 import os
-import BaseThreadedModule
+from cStringIO import StringIO
+import collections
 import BaseMultiProcessModule
 import Decorators
 import Utils
+import pprint
 import time
 import sys
-
 
 @Decorators.ModuleDocstringParser
 class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
@@ -16,11 +15,12 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     Store all received events in a file.
 
     path: Path to logfiles. String my contain any of pythons strtime directives.
-    name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
+    name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields, e.g. %Y-%m-%d.
     format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
     store_interval_in_secs: sending data to es in x seconds intervals.
     batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+    compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
     Configuration example:
 
@@ -31,6 +31,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
         store_interval_in_secs:               # <default: 10; type: integer; is: optional>
         batch_size:                           # <default: 500; type: integer; is: optional>
         backlog_size:                         # <default: 5000; type: integer; is: optional>
+        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
     """
 
     module_type = "output"
@@ -40,94 +41,84 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def configure(self, configuration):
          # Call parent configure method
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
-        self.events_container = []
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
-        self.fileloggers = {}
         self.path = self.getConfigurationValue('path')
         self.name_pattern = self.getConfigurationValue('path')
-        self.is_storing = False
-        self.timed_store_func = self.getTimedStoreFunc()
+        self.compress = self.getConfigurationValue('compress')
+        if self.compress == 'gzip':
+            try:
+                # Import module into namespace of object. Otherwise it will not be accessible when process was forked.
+                self.gzip_module = __import__('gzip')
+            except ImportError:
+                self.logger.error('%Gzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
+        if self.compress == 'snappy':
+            try:
+                self.snappy_module = __import__('snappy')
+            except ImportError:
+                self.logger.error('%Snappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.gp.shutDown()
 
-    def getTimedStoreFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
-        def timedStoreEvents():
-            if self.is_storing:
-                return
-            self.storeEvents(self.events_container)
-        return timedStoreEvents
-
-    @Decorators.setInterval(60)
-    def clearStaleLoggers(self):
-        now = time.time()
-        for key in self.fileloggers.keys():
-            logger_last_used = self.fileloggers[key][1]
-            #print "%s - %s = %s" % (now, logger_last_used, (now - logger_last_used))
-            if now - logger_last_used < 300:
-                continue
-            self.logger.info('Dropping logger')
-            for handler in self.fileloggers[key][0].handlers:
-                handler.stream.close()
-                handler.stream = None
-            del self.fileloggers[key]
-
-    def getLogger(self, key):
-        try:
-            logger, last_used = self.fileloggers[key]
-            self.fileloggers[key][1] = time.time()
-        except KeyError:
-            path = time.strftime(self.path)
-            if not os.path.exists(path):
-                os.mkdir(path)
-            handler = logging.handlers.WatchedFileHandler('%s/%s' % (path, key))
-            logger = logging.getLogger(key)
-            logger.addHandler(handler)
-            logger.propagate = False
-            self.fileloggers[key] = [logger, time.time()]
-        return logger
+    def ensurePathExists(self, path):
+        dirpath = os.path.dirname(path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
 
     def run(self):
-        self.startTimedFunction(self.clearStaleLoggers)
-        self.startTimedFunction(self.timed_store_func)
+        # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback.
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
          # Call parent run method
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
-        # Wait till a running store is finished to avoid strange race conditions.
-        while self.is_storing:
-            time.sleep(.001)
-        if len(self.events_container) >= self.backlog_size:
-            self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
-            yield event
-            return
-        self.events_container.append(event)
-        if len(self.events_container) >= self.batch_size:
-            self.storeEvents(self.events_container)
-        yield event
+        self.buffer.append(event)
+        yield None
 
-    def storeEvents(self, events):
-        if len(events) == 0:
-            return
-        self.is_storing = True
+    def storeData(self, events):
+        write_data = collections.defaultdict(str)
+        path = time.strftime(self.path)
         for event in events:
+            filename = time.strftime(self.getConfigurationValue('name_pattern'))
+            filename = filename % event
+            line = self.getConfigurationValue('format', event)
+            write_data["%s/%s" % (path, filename)] += line + "\n"
+        for path, lines in write_data.iteritems():
             try:
-                key = time.strftime(self.getConfigurationValue('name_pattern'))
-                key = key % event
-                logger = self.getLogger(key)
-                logger.info(self.getConfigurationValue('format', event))
+                self.ensurePathExists(path)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('%sCould no log event %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
-        self.events_container = []
-        self.is_storing = False
+                self.logger.error('%sCould no create path %s. Events could not be written. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
+                return
+            mode = "a+"
+            if self.compress == 'gzip':
+                path += ".gz"
+                mode += "b"
+                lines = self.compressGzip(lines)
+            elif self.compress == 'snappy':
+                path += ".snappy"
+                lines = self.compressSnappy(lines)
+                mode += "b"
+            try:
+                fh = open(path, mode)
+                fh.write(lines)
+                fh.close()
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error('%sCould no write event data to %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
 
-    def shutDown(self, silent=False):
-        if hasattr(self, 'fileloggers'):
-            for key in self.fileloggers.keys():
-                for handler in self.fileloggers[key][0].handlers:
-                    try:
-                        handler.stream.close()
-                    except:
-                        pass
-                del self.fileloggers[key]
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)
+    def _shutDown(self, silent=False):
+        self.buffer.flush()
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+
+    def compressGzip(self, data):
+        buffer = StringIO()
+        compressor = self.gzip_module.GzipFile(mode='wb', fileobj=buffer)
+        try:
+            compressor.write(data)
+        finally:
+            compressor.close()
+        return buffer.getvalue()
+
+    def compressSnappy(self, data):
+        return self.snappy_module.compress(data)

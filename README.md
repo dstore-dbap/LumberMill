@@ -53,6 +53,7 @@ The different modules can be combined in any order.
 * StdOutSink, prints all received data to standard out.
 * SyslogSink, send events to syslog.
 * WebHdfsSink, store events in hdfs via webhdfs.
+* GraphiteSink, send metrics to graphite server.
 
 #### Misc modules
 

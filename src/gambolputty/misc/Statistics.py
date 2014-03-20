@@ -16,6 +16,7 @@ class Statistics(BaseModule.BaseModule):
         event_type_statistics:         # <default: True; type: boolean; is: optional>
         receive_rate_statistics:       # <default: True; type: boolean; is: optional>
         waiting_event_statistics:      # <default: False; type: boolean; is: optional>
+        emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
 
     module_type = "misc"
@@ -25,10 +26,12 @@ class Statistics(BaseModule.BaseModule):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.stats_collector.setCounter('ts_last_stats', time.time())
+        self.emit_as_event = self.getConfigurationValue('emit_as_event')
+        self.interval = self.getConfigurationValue('interval')
         self.module_queues = {}
 
     def getRunTimedFunctionsFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('interval'))
+        @Decorators.setInterval(self.interval)
         def runTimedFunctionsFunc():
             self.printIntervalStatistics()
         return runTimedFunctionsFunc
@@ -47,7 +50,10 @@ class Statistics(BaseModule.BaseModule):
         for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
             if not event_type.startswith('event_type_'):
                 continue
-            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_type.replace('event_type_', ''), Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
+            event_name = event_type.replace('event_type_', '')
+            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
+            if self.emit_as_event:
+                self.sendEvent(Utils.getDefaultEventDict({"event_name": event_name, "interval": self.interval, "count": count }, caller_class_name="Statistics", event_type="statistic"))
             self.stats_collector.resetCounter(event_type)
 
     def receiveRateStatistics(self):
@@ -57,6 +63,8 @@ class Statistics(BaseModule.BaseModule):
             eps = 0
         self.stats_collector.resetCounter('eps')
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
+        if self.emit_as_event:
+            self.sendEvent(Utils.getDefaultEventDict({"event_rate": eps, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
@@ -64,6 +72,9 @@ class Statistics(BaseModule.BaseModule):
         self.logger.info(">> Queue stats")
         for module_name, queue in sorted(self.module_queues.iteritems()):
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
+            if self.emit_as_event:
+                self.sendEvent(Utils.getDefaultEventDict({"queue_stat": queue.qsize(), "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+
 
     def run(self):
         # Get all configured queues for waiting event stats.

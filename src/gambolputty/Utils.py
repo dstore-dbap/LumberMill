@@ -60,10 +60,11 @@ def reload():
                       [sys.executable] + sys.argv)
             sys.exit(0)
 
-def getDefaultEventDict(dict={}, caller_class_name='', received_from=False):
-    default_dict = KeyDotNotationDict({ "event_type": "Unknown",
+def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
+    default_dict = KeyDotNotationDict({ "event_type": event_type,
                      "data": "",
                      "gambolputty": {
+                        'event_type': event_type,
                         'event_id': "%032x" % random.getrandbits(128),
                         "source_module": caller_class_name,
                         "received_from": received_from,

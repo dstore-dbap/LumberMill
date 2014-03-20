@@ -71,7 +71,7 @@ Configuration example:
 
 Merge multiple event into a single one.
 
-In most cases, inputs will split in incoming stream at some kind of delimiter to produce events.
+In most cases, inputs will split an incoming stream at some kind of delimiter to produce events.
 Sometimes, the delimiter also occurs in the event data and splitting here is not desired.
 To mitigate this problem, this module can merge events based on some configurable rules.
 

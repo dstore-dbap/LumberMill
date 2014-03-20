@@ -8,14 +8,21 @@ import Decorators
 @Decorators.ModuleDocstringParser
 class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
-    Subscribes to a redis channels/lists and passes incoming events to receivers.
+    Send events to a redis lists.
 
+    list: Name of redis list to send data to.
+    server: Redis server to connect to.
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
     format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
-    backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+    store_interval_in_secs: Send data to redis in x seconds intervals.
+    batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
+    backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
 
     Configuration example:
 
-    - RedisList:
+    - RedisListSink:
         list:                     # <type: String; is: required>
         server:                   # <default: 'localhost'; type: string; is: optional>
         port:                     # <default: 6379; type: integer; is: optional>
@@ -66,3 +73,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
             publish_data = event
         self.buffer.append(publish_data)
         yield None
+
+    def shutDown(self, silent=False):
+        self.buffer.flush()
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

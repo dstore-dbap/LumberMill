@@ -6,19 +6,18 @@ import Utils
 import BaseModule
 from Decorators import ModuleDocstringParser
 
-
 @ModuleDocstringParser
 class MergeEvent(BaseModule.BaseModule):
     """
     Merge multiple event into a single one.
 
-    In most cases, inputs will split in incoming stream at some kind of delimiter to produce events.
-    Sometimes, the delimiter also occurs in the event data and splitting here is not desired.
-    To mitigate this problem, this module can merge events based on some configurable rules.
+    In most cases, inputs will split an incoming stream at some kind of delimiter to produce events.
+    Sometimes, the delimiter also occurs in the event data itself and splitting here is not desired.
+    To mitigate this problem, this module can merge these fragmented events based on some configurable rules.
 
     Each incoming event will be buffered in a queue identified by <buffer_key>.
-    If a new event arrives and <pattern> matches for this event, the buffer will be flushed and the event appended to the now
-    empty buffer.
+    If a new event arrives and <pattern> does not match for this event, the event will be appended to the buffer.
+    If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior to appending the event.
     After <flush_interval_in_secs> the buffer will also be flushed.
     Flushing the buffer will concatenate all contained event data to form one single new event.
 

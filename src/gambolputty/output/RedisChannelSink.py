@@ -10,12 +10,16 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Publish incoming events to redis channel.
 
+    channel: Name of redis channel to send data to.
+    server: Redis server to connect to.
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
     format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
 
     Configuration example:
 
     - RedisChannelSink:
-        format:                     # <default: None; type: None||string; is: optional>
         channel:                    # <type: string; is: required>
         server:                     # <default: 'localhost'; type: string; is: optional>
         port:                       # <default: 6379; type: integer; is: optional>

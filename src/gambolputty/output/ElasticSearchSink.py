@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from hashlib import md5
 import sys
 import datetime
 import time
@@ -7,6 +6,11 @@ import elasticsearch
 import BaseModule
 import Utils
 import Decorators
+
+try:
+    from __pypy__.builders import UnicodeBuilder
+except ImportError:
+    UnicodeBuilder = None
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -30,6 +34,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
+    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
     nodes: configures the elasticsearch nodes.
     connection_type: one of: 'thrift', 'http'
     http_auth: 'user:password'
@@ -50,13 +55,14 @@ class ElasticSearchSink(BaseModule.BaseModule):
     Configuration example:
 
     - ElasticSearchSink:
-        nodes: [                                  # <type: list; is: required>
+        format:                                   # <default: None; type: None||string; is: optional>
+        nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
         index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
         index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
-        doc_id:                                   # <default:  type: string; is: optional>
+        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
         ttl:                                      # <default: None; type: None||string; is: optional>
         consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
         replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
@@ -77,27 +83,14 @@ class ElasticSearchSink(BaseModule.BaseModule):
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
-
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()
             return
-        self.is_storing = False
-        self.timed_store_func = self.getTimedStoreFunc()
-
-    def getTimedStoreFunc(self):
-        @Decorators.setInterval(self.getConfigurationValue('store_interval_in_secs'))
-        def timedStoreData():
-            if self.is_storing:
-                return
-            self.storeData(self.events_container)
-        return timedStoreData
-
-    def run(self):
-        self.timed_store_func()
 
     def connect(self):
         es = False
@@ -105,7 +98,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
             # Connect to es node and round-robin between them.
             es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                              connection_class=self.connection_class,
-                                             sniff_on_start=True, maxsize=20,
+                                             sniff_on_start=True, sniff_timeout=1, maxsize=20,
                                              use_ssl=self.getConfigurationValue('use_ssl'),
                                              http_auth=self.getConfigurationValue('http_auth'))
         except:
@@ -115,59 +108,53 @@ class ElasticSearchSink(BaseModule.BaseModule):
         return es
 
     def handleEvent(self, event):
-        # Wait till a running store is finished to avoid strange race conditions.
-        while self.is_storing:
-            time.sleep(.001)
-        if len(self.events_container) >= self.backlog_size:
-            self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
-            yield event
-            return
-        self.events_container.append(event)
-        if len(self.events_container) >= self.batch_size:
-            self.storeData(self.events_container)
-        yield event
+        if self.format:
+            publish_data = self.getConfigurationValue('format', event)
+        else:
+            publish_data = event
+        self.buffer.append(publish_data)
+        yield None
 
     def dataToElasticSearchJson(self, index_name, events):
         """
         Format data for elasticsearch bulk update
         """
-        json_data = ""
+        if UnicodeBuilder:
+            json_data = UnicodeBuilder()
+        else:
+            json_data = []
         for event in events:
             try:
                 event_type = event['event_type']
             except KeyError:
                 event_type = 'Unknown'
-            try:
-                doc_id = event[self.getConfigurationValue("doc_id", event)]
-            except KeyError:
-                doc_id = self.getConfigurationValue("doc_id", event)
+            doc_id = self.getConfigurationValue("doc_id", event)#event["gambolputty"]["event_id"]
             if not doc_id:
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
                 continue
             doc_id = json.dumps(doc_id.strip())
             if self.ttl:
                 event['_ttl'] = self.ttl
-            es_index = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}\n' % (index_name, event_type, doc_id)
+            header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            json_data.append("\n".join((header, json.dumps(event), "\n")))
+        if UnicodeBuilder:
+            json_data = json_data.build()
+        else:
             try:
-                json_data += "%s%s\n" % (es_index,json.dumps(event))
+                json_data = "".join(json_data)
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
         return json_data
 
     def storeData(self, events):
-        if len(events) == 0:
-            return
-        self.is_storing = True
         if self.getConfigurationValue("index_name"):
             index_name = self.getConfigurationValue("index_name")
         else:
             index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
-
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
-            self.destroyEvent(event_list=events)
             self.events_container = []
         except elasticsearch.exceptions.ConnectionError:
             try:
@@ -179,6 +166,21 @@ class ElasticSearchSink(BaseModule.BaseModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sServer cummunication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             self.logger.debug("Payload: %s" % json_data)
-            time.sleep(.1)
-        finally:
-            self.is_storing = False
+            if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
+                tries = 0
+                self.es = False
+                while tries < 5 and not self.es:
+                    time.sleep(7)
+                    self.logger.warning("%sLost connection to %s.Trying to reconnect...%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                    # Try to reconnect.
+                    self.es = self.connect()
+                    tries += 1
+                if not self.es:
+                    self.logger.error("%sReconnect failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.gp.shutDown()
+                else:
+                    self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+
+    def shutDown(self, silent=False):
+        self.buffer.flush()
+        BaseModule.BaseModule.shutDown(self, silent)

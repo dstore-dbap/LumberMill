@@ -149,8 +149,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         return json_data
 
     def storeData(self, events):
-        if len(events) == 0 or not self.es:
-            return
         if self.getConfigurationValue("index_name"):
             index_name = self.getConfigurationValue("index_name")
         else:
@@ -167,7 +165,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                 time.sleep(.5)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sServer cummunication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             self.logger.debug("Payload: %s" % json_data)
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 tries = 0
@@ -183,3 +181,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                     self.gp.shutDown()
                 else:
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+
+    def shutDown(self, silent=False):
+        self.buffer.flush()
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

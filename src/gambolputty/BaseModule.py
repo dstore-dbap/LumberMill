@@ -135,6 +135,11 @@ class BaseModule():
                 mapped_values = [v % mapping_dict for v in value]
                 return mapped_values
             except KeyError:
+                pprint.pprint(mapped_values)
+                return False
+            except ValueError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, v, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
                 return False
         elif isinstance(value, dict):
             try:
@@ -143,10 +148,18 @@ class BaseModule():
                 return dict(zip(mapped_keys, mapped_values))
             except KeyError:
                 return False
+            except ValueError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, v, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
+                return False
         elif isinstance(value, basestring):
             try:
                 return value % mapping_dict
             except KeyError:
+                return False
+            except ValueError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, value, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
                 return False
 
     def shutDown(self, silent=False):

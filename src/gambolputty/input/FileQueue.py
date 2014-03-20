@@ -7,7 +7,6 @@ import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 import time
 
-
 class BufferedFiFoWriteQueue():
     def __init__(self, queue, buffersize=100, interval=10):
         self.queue = queue
