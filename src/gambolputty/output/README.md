@@ -25,10 +25,10 @@ store_interval_in_secs: sending data to es in x seconds intervals.
 batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
 
-Configuration example:
+Configuration template:
 
     - ElasticSearchSink:
-        nodes: [                                  # <type: list; is: required>
+        nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
@@ -73,7 +73,7 @@ store_interval_in_secs: sending data to es in x seconds intervals.
 batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
 
-Configuration example:
+Configuration template:
 
     - ElasticSearchMultiProcessSink:
         nodes:                                    # <type: list; is: required>
@@ -94,11 +94,26 @@ Configuration example:
 
 Print the data dictionary to stdout.
 
-Configuration example:
+Configuration template:
 
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
         format:                 # <default: ''; type: string; is: optional>
+
+#####LoggerSink
+
+Send data to gambolputty logger.
+
+formats: Format of messages to send to logger, e.g.:
+         ['############# Statistics #############',
+          'Received events in %(interval)ds: %(total_count)d',
+          'EventType: httpd_access_log - Hits: %(field_values.httpd_access_log)d',
+          'EventType: Unknown - Hits: %(field_values.Unknown)d']
+
+    Configuration template:
+
+    - LoggerSink:
+        formats:    # <type: list; is: required>
 
 #####SyslogSink
 
@@ -109,7 +124,7 @@ proto: Protocol to use.
 facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names
 format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
 
-Configuration example:
+Configuration template:
 
     - SyslogSink:
         address:              # <default: 'localhost:514'; type: string; is: required>
@@ -128,7 +143,7 @@ store_interval_in_secs: sending data to es in x seconds intervals.
 batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
 
-Configuration example:
+Configuration template:
 
     - FileSink:
         path:                                 # <type: string; is: required>
@@ -152,7 +167,7 @@ batch_size: Send data to hdfs if event count is above, even if store_interval_in
 backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
 compress: Compress output as gzip file. For this to be effective, the batch size should not be too small.
 
-Configuration example:
+Configuration template:
 
     - WebHdfsSink:
         server:                               # <default: 'localhost:14000'; type: string; is: optional>
@@ -176,7 +191,7 @@ db: Redis db.
 password: Redis password.
 format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
 
-Configuration example:
+Configuration template:
 
     - RedisChannelSink:
         channel:                    # <type: string; is: required>
@@ -200,7 +215,7 @@ store_interval_in_secs: Send data to redis in x seconds intervals.
 batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
 
-Configuration example:
+Configuration template:
 
     - RedisListSink:
         list:                     # <type: String; is: required>
@@ -224,7 +239,25 @@ store_interval_in_secs: Send data to graphite in x seconds intervals.
 batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
 
-Configuration example:
+Here a simple example to send http_status statistics to graphite:
+
+    ...
+
+    - Statistics:
+        interval: 10
+        fields: ['http_status']
+
+    - GraphiteSink:
+        filter: if %(field_name) == "http_status"
+        server: 127.0.0.1
+        batch_size: 1
+        formats: ['gambolputty.stats.http_200_%(interval)ds %(field_counts.200)d',
+                  'gambolputty.stats.http_400_%(interval)ds %(field_counts.400)d',
+                  'gambolputty.stats.http_total_%(interval)ds %(total_count)d']
+
+    ...
+
+Configuration template:
 
     - GraphiteSink:
         server:                   # <default: 'localhost'; type: string; is: optional>
@@ -238,6 +271,6 @@ Configuration example:
 
 Just discard messages send to this module.BaseThreadedModule
 
-Configuration example:
+Configuration template:
 
     - DevNullSink

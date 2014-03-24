@@ -71,5 +71,5 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
 
     def shutDown(self, silent=False):
         # Call parent shutDown method
-        BaseModule.BaseModule.shutDown(self, silent=False)
+        BaseModule.BaseModule.shutDown(self, silent)
         self.alive = False

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import time
 import BaseThreadedModule
 import BaseModule
@@ -29,7 +30,5 @@ class Tarpit(BaseModule.BaseModule):
         @param event: dictionary
         @return data: dictionary
         """
-        #print "aaa %s" % BaseModule.BaseModule.hasPendingEvent()
-        time.sleep(self.getConfigurationValue('delay', event))
-        #print "bbb %s" % BaseModule.BaseModule.hasPendingEvent()
+        time.sleep(self.getConfigurationValue('delay'))
         yield event

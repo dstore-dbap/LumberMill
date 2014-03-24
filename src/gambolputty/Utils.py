@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
-import pprint
+import socket
 import random
 import time
 import os
@@ -16,6 +16,8 @@ try:
     is_pypy = True
 except ImportError:
     is_pypy = False
+
+event_counter = 0
 
 def reload():
     """
@@ -61,13 +63,16 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
+    #global event_counter
+    #event_counter += 1
     default_dict = KeyDotNotationDict({ "event_type": event_type,
                      "data": "",
                      "gambolputty": {
                         'event_type': event_type,
                         'event_id': "%032x" % random.getrandbits(128),
-                        "source_module": caller_class_name,
-                        "received_from": received_from,
+                        #'event_id': event_counter,
+                        'source_module': caller_class_name,
+                        'received_from': received_from,
                      }
                     })
     default_dict.update(dict)
@@ -153,7 +158,8 @@ class Buffer:
         if len(self.buffer) == 0:
             return
         if self.is_storing:
-            time.sleep(.0001)
+            #time.sleep(.0001)
+            return
         self.is_storing = True
         try:
             self.flush_callback(self.buffer)
@@ -183,43 +189,6 @@ class BufferedQueue():
 
     def qsize(self):
         return self.buffer.bufsize + self.queue.qsize()
-
-    def __getattr__(self, name):
-        return getattr(self.queue, name)
-
-class __BufferedQueue():
-    def __init__(self, queue, buffersize=100):
-        self.queue = queue
-        self.buffersize = buffersize
-        self.buffer = []
-        self.is_sending = False
-        self.flushBuffer()
-
-    @Decorators.setInterval(1)
-    def flushBuffer(self):
-        if self.is_sending or len(self.buffer) == 0:
-            return
-        self.sendBuffer()
-
-    def put(self, payload):
-        # Wait till a running store is finished to avoid strange race conditions.
-        while self.is_sending:
-            time.sleep(.001)
-        self.buffer.append(payload)
-        if len(self.buffer) == self.buffersize:
-            self.sendBuffer()
-
-    def sendBuffer(self):
-        self.is_sending = True
-        self.queue.put(self.buffer)
-        self.buffer = []
-        self.is_sending = False
-
-    def get(self, block=True, timeout=None):
-        return self.queue.get(block, timeout)
-
-    def qsize(self):
-        return len(self.buffer) + self.queue.qsize()
 
     def __getattr__(self, name):
         return getattr(self.queue, name)

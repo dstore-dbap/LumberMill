@@ -81,10 +81,12 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def shutDown(self, silent=False):
         # Call parent shutDown method
         BaseModule.BaseModule.shutDown(self, silent)
-        if self.input_queue:
+        try:
             self.input_queue.close()
+        except:
+            pass
         # Kill self via signal. Otherwise a simple reload will not terminate the worker processes.
         # Why that is escapes me...
+        self.alive = False
         if self.pid and self.alive:
             os.kill(self.pid, signal.SIGQUIT)
-        self.alive = False

@@ -20,7 +20,7 @@ source: |
 code: Code to execute.
 debug: Set to True to output the string that will be executed.
 
-Configuration example:
+Configuration template:
 
     - ExecPython:
         source:               # <type: string; is: required>
@@ -34,7 +34,7 @@ It can be used to store results of modules in a redis key/value store.
 
 cluster: dictionary of redis masters as keys and pack_followers as values.
 
-Configuration example:
+Configuration template:
 
     - RedisStore:
         server:                                  # <default: 'localhost'; type: string; is: optional>
@@ -67,7 +67,7 @@ increase performance.
 
 !!IMPORTANT!!: At the moment, this module does not work. Will be rewritten...
 
-Configuration example:
+Configuration template:
 
     - RedisEventBuffer:
         redis_store:                            # <type: string; is: required>
@@ -75,11 +75,14 @@ Configuration example:
         redis_ttl:                              # <default: 3600; type: integer; is: optional>
 
 
-#####Statistics
+#####SimpleStats
 
-Collect and log some statistic data.
+Collect and log some simple gambolputty statistic data.
 
-Configuration example:
+Use this module if you just need some simple statistics on how many events are passing through gambolputty.
+Per default, statistics will just be send to stdout.
+
+Configuration template:
 
     - Statistics:
         interval:                      # <default: 10; type: integer; is: optional>
@@ -87,6 +90,35 @@ Configuration example:
         receive_rate_statistics:       # <default: True; type: boolean; is: optional>
         waiting_event_statistics:      # <default: False; type: boolean; is: optional>
         emit_as_event:                 # <default: False; type: boolean; is: optional>
+
+#####Statistics
+
+Collect and log statistic data.
+
+This module keeps track of the number of times a field occured in an event during interval.
+So, if you want to count the http_status codes encountered during the last 10s, you would use this configuration:
+
+    - Statistics:
+        interval: 10
+        fields: [http_status]
+
+After interval seconds, an event will be emitted with the following fields (counters are just examples ;):
+    {'data': '',
+    'event_type': 'statistic',
+    'field_name': 'http_status',
+    'field_counts': {'200': 5, '301': 10, '400': 5},
+    'gambolputty': {'event_id': 'cef34d298fbe8ce4b662251e17b2acfb',
+                 'event_type': 'statistic',
+                 'received_from': False,
+                 'source_module': 'Statistics'}
+    'interval': 10,
+    'total_count': 20}
+
+Configuration template:
+
+    - Statistics:
+        interval:                      # <default: 10; type: integer; is: optional>
+        fields:                        # <default: ['gambolputty.event_type']; type: list; is: optional>
 
 #####Facet
 
@@ -101,7 +133,7 @@ The event emitted by this module will be of type: "facet" and will have "facet_f
 This module supports the storage of the facet info in an redis db. If redis-client is set,
 it will first try to retrieve the facet info from redis via the key setting.
 
-Configuration example:
+Configuration template:
 
     - Facet:
         source_field:                           # <type:string; is: required>
@@ -113,14 +145,13 @@ Configuration example:
         receivers:
           - NextModule
 
-
 #####Tarpit
 
 Send an event into a tarpit before passing it on.
 
 Useful only for testing purposes of threading problems and concurrent access to event data.
 
-Configuration example:
+Configuration template:
 
     - Tarpit:
         delay:          # <default: 10; type: integer; is: optional>

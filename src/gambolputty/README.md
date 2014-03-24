@@ -12,7 +12,7 @@ filter: Set input filter. Only matching events will be handled by the module.
 receivers: Set receivers for output of module. If not set, output will be send to next module in configuration.
 filter: Set output filter. Only matching events will be send to receiver.
 
-Configuration example:
+Configuration template:
 
     - SomeModuleName:
         id:                                       # <default: ""; type: string; is: optional>
@@ -40,7 +40,7 @@ queue_size: Set maximum number of event, waiting in queue.
 receivers: Set receivers for output of module. If not set, output will be send to next module in configuration.
 filter: Set output filter. Only matching events will be send to receiver.
 
-Configuration example:
+Configuration template:
 
     - SomeModuleName:
         id:                                       # <default: ""; type: string; is: optional>
@@ -73,7 +73,7 @@ queue_size: Set maximum number of event, waiting in queue.
 receivers: Set receivers for output of module. If not set, output will be send to next module in configuration.
 filter: Set output filter. Only matching events will be send to receiver.
 
-Configuration example:
+Configuration template:
 
     - SomeModuleName:
         id:                                       # <default: ""; type: string; is: optional>

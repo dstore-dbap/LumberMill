@@ -75,5 +75,8 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
         yield None
 
     def shutDown(self, silent=False):
-        self.buffer.flush()
+        try:
+            self.buffer.flush()
+        except:
+            pass
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

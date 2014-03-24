@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import re
 import os
 import BaseModule
+import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class RegexParser(BaseModule.BaseModule):
+class RegexParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse a string by named regular expressions.
 
@@ -33,7 +33,7 @@ class RegexParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.source_field = self.getConfigurationValue('source_field')

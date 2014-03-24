@@ -34,13 +34,17 @@ class ConnectionHandler(object):
         self.address = address
         (self.host, self.port) = self.address
         self.stream.set_close_callback(self._on_close)
-        if not self.stream.closed():
-            if self.mode == 'line' and self.regex_separator:
-                self.stream.read_until_regex(self.regex_separator, self._on_read_line)
-            elif self.mode == 'line':
-                self.stream.read_until(self.simple_separator, self._on_read_line)
+        try:
+            if not self.stream.closed():
+                if self.mode == 'line' and self.regex_separator:
+                    self.stream.read_until_regex(self.regex_separator, self._on_read_line)
+                elif self.mode == 'line':
+                    self.stream.read_until(self.simple_separator, self._on_read_line)
             else:
-                self.stream.read_bytes(self.chunksize, self._on_read_chunk)
+                    self.stream.read_bytes(self.chunksize, self._on_read_chunk)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
 
     def _on_read_line(self, data):
         data = data.strip()
@@ -58,7 +62,7 @@ class ConnectionHandler(object):
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to read from stream. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sCould not read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
 
     def _on_read_chunk(self, data):
         data = data.strip()
@@ -73,7 +77,7 @@ class ConnectionHandler(object):
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to read from stream. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sFailed to read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
 
     def _on_close(self):
         # Send remaining buffer if neccessary.
@@ -133,7 +137,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.server = False
-        self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 102400
+        self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 1024 #* 102400
 
     def run(self):
         #if not self.receivers:

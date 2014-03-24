@@ -135,7 +135,6 @@ class BaseModule():
                 mapped_values = [v % mapping_dict for v in value]
                 return mapped_values
             except KeyError:
-                pprint.pprint(mapped_values)
                 return False
             except ValueError:
                 etype, evalue, etb = sys.exc_info()
@@ -153,6 +152,8 @@ class BaseModule():
                 self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, v, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
                 return False
         elif isinstance(value, basestring):
+            if value == '%(field_values)s':
+                pprint.pprint(value % mapping_dict)
             try:
                 return value % mapping_dict
             except KeyError:

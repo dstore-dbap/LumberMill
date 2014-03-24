@@ -5,7 +5,7 @@ Parser modules
 
 Parse a string by named regular expressions.
 
-Configuration example:
+Configuration template:
 
     - RegexParser:
         source_field:                           # <default: 'data'; type: string; is: optional>
@@ -24,7 +24,7 @@ Will split the data in source fields and emit parts as new events. Original even
 
 source_fields:  Input fields for decode.
 
-Configuration example:
+Configuration template:
 
     - LineParser:
         source_fields:                        # <default: 'data'; type: string||list; is: optional>
@@ -45,7 +45,7 @@ parse_querystring: Parse url for query parameters and extract them.
 querystring_target_field: Event field to update with url parameters.
 querystring_prefix: Prefix string to prepend to url parameter keys.
 
-Configuration example:
+Configuration template:
 
     - UrlParser:
         mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -63,7 +63,7 @@ This module supports the storage of the results in an redis db. If redis-client 
 it will first try to retrieve the result from redis via the key setting.
 If that fails, it will execute the xpath query and store the result in redis.
 
-Configuration example:
+Configuration template:
 
     - XPathParser:
         source_field:                          # <type: string; is: required>
@@ -80,7 +80,7 @@ Parse a string as csv data.
 It will parse the csv and create or replace fields in the internal data dictionary with
 the corresponding csv fields.
 
-Configuration example:
+Configuration template:
 
     - CsvParser:
         source_field:                           # <default: 'data'; type: string; is: optional>
@@ -99,7 +99,7 @@ the corresponding json fields.
 
 At the moment only flat json files can be processed correctly.
 
-Configuration example:
+Configuration template:
 
     - JsonParser:
         mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -114,7 +114,7 @@ Configuration example:
 It will parse the msgpack data and create or replace fields in the internal data dictionary with
 the corresponding json fields.
 
-Configuration example:
+Configuration template:
 
     - MsgPackParser:
         mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -170,7 +170,7 @@ The source field must contain the prival with the pattern: "<\d+>"
       6       Informational: informational messages
       7       Debug: debug-level messages
 
-Configuration example:
+Configuration template:
 
     - SyslogPrivalParser:
         source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>

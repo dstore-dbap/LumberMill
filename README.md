@@ -50,6 +50,7 @@ The different modules can be combined in any order.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
 * FileSink, store events in a file.
 * RedisChannelSink, publish incoming events to redis channel.
+* LoggerSink, sends data to gambolputty internal logger for output.
 * StdOutSink, prints all received data to standard out.
 * SyslogSink, send events to syslog.
 * WebHdfsSink, store events in hdfs via webhdfs.
@@ -60,7 +61,8 @@ The different modules can be combined in any order.
 * ExecPython, execute custom python code.
 * Facet, collect all encountered variations of en event value over a configurable period of time.
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
-* Statistics, simple statistic module.
+* SimpleStats, simple statistic module just for event rates etc.
+* Statistics, more versatile. Configurable fields for collecting statistic data.
 * TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
 * Tarpit, slows event propagation down - for testing.
 
@@ -82,12 +84,12 @@ GambolPutty makes use of the following projects:
 ### Event flow basics
 * an input module receives an event.
 * the event data will be wrapped in a default event dictionary of the following structure:
-    { "event_type": "Unknown",
-      "received_from": ip address of sender,
-      "data": payload,
+    { "data": payload,
       "gambolputty": {
                     "event_id": unique event id,
-                    "source_module": caller_class_name
+                    "event_type": "Unknown",
+                    "received_from": ip address of sender,
+                    "source_module": caller_class_name,
       }
     }
 * the input module sends the new event to its receivers. Either by adding it to a queue or by calling the
@@ -96,6 +98,7 @@ GambolPutty makes use of the following projects:
 * each following module will process the event via its handleEvent method and pass it on to its
   receivers.
 * each module can have an input filter and an output filter to manage event propagation through the modules.
+* output modules can not have receivers.
 
 ### Configuration basics
 
@@ -129,10 +132,14 @@ The following examples refer to this event data:
 	{'bytes_send': '3395',
 	 'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0" 200 3395\n',
 	 'datetime': '28/Jul/2006:10:27:10 -0300',
+     'gambolputty': {
+                    'event_id': '715bd321b1016a442bf046682722c78e',
+                    'event_type': 'httpd_access_log',
+                    received_from: '127.0.0.1',
+                    source_module: 'StdInHandler',
+      }
 	 'http_status': '200',
 	 'identd': '-',
-	 'message_type': 'httpd_access_log',
-	 'received_from': 'stdin',
 	 'remote_ip': '192.168.2.20',
 	 'url': 'GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0',
 	 'fields': ['nobody', 'expects', 'the'],
@@ -155,29 +162,29 @@ Use the python % formatting for strings. If referring to a nested dict or a list
 
     - ElasticSearchMultiProcessSink:
         index_name: 1perftests
-        doc_id: '%(fields.0)s-%(params.spanish)s'
+        doc_id: '%(fields.0)s-%(params.spanish.0)s'
 
 ##### Notation in module filters:
 
-Wrap the field name in %(field_name). If referring to a nested dict, use dots, like this:
+Wrap the field name in %(field_name). If referring to a nested dict, use dots:
 
     - StdOutSink:
-        filter: if %(fields.0) == "nobody" and %(params.spanish) == '192.168.2.20'
+        filter: if %(fields.0) == "nobody" and %(params.spanish.0) == 'inquisition'
 
 #### Filter
 
-Modules can have an input filter , like this:
+Modules can have an input filter:
 
     - StdOutSink:
-        filter: if %(params.spanish) == '192.168.2.20' and re.match('^GET', %(url))
+        filter: if %(remote_ip) == '192.168.2.20' and re.match('^GET', %(url))
 
-Modules can have an output filter , like this:
+Modules can have an output filter:
 
     - RegexParser:
         ...
         receivers:
           - StdOutSink:
-              filter: if %(params.spanish) == '192.168.2.20' and re.match('^GET', %(url))
+              filter: if %(remote_ip) == '192.168.2.20' and re.match('^GET', %(url))
 
 ##### Simple example to get you started ;)
 
@@ -188,12 +195,15 @@ This should produce the following output:
 	{'bytes_send': '3395',
 	 'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395\n',
 	 'datetime': '28/Jul/2006:10:27:10 -0300',
+     'gambolputty': {
+                    'event_id': 'c9f9615a935869ccbaf401108070bfb3',
+                    'event_type': 'httpd_access_log',
+                    received_from: '127.0.0.1',
+                    source_module: 'StdInHandler',
+      }
 	 'http_status': '200',
 	 'identd': '-',
-	 'markers': ['match'],
 	 'message_type': 'httpd_access_log',
-	 'received_from': 'stdin',
-	 'remote_ip': '192.168.2.20',
 	 'url': 'GET /cgi-bin/try/ HTTP/1.0',
 	 'user': '-'}
 

@@ -183,5 +183,8 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
 
     def shutDown(self, silent=False):
-        self.buffer.flush()
+        try:
+            self.buffer.flush()
+        except:
+            pass
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

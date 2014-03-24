@@ -16,7 +16,7 @@ seperator:  If mode is line, set seperator between lines.
 chunksize:  If mode is stream, set chunksize in bytes to read from stream.
 max_buffer_size: Max kilobytes to in receiving buffer.
 
-Configuration example:
+Configuration template:
 
     - TcpServerTornado:
         interface:                       # <default: ''; type: string; is: optional>
@@ -38,7 +38,7 @@ Configuration example:
 Reads data from tcp socket and sends it to its output queues.
 This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
 
-Configuration example:
+Configuration template:
 
     - TcpServerThreaded:
         interface:                       # <default: 'localhost'; type: string; is: optional>
@@ -54,7 +54,7 @@ Configuration example:
 
 Reads data from stdin and sends it to its output queues.
 
-Configuration example:
+Configuration template:
 
     - StdInHandler:
         multiline:                     # <default: False; type: boolean; is: optional>
@@ -66,7 +66,7 @@ Configuration example:
 
 Reads data from an unix socket and sends it to its output queues.
 
-Configuration example:
+Configuration template:
 
     - UnixSocket:
         path_to_socket:         # <type: string; is: required>
@@ -77,7 +77,7 @@ Configuration example:
 
 Subscribes to a redis channels and passes incoming events to receivers.
 
-Configuration example:
+Configuration template:
 
     - RedisChannel:
         channel:                    # <type: string; is: required>
@@ -90,7 +90,7 @@ Configuration example:
 
 Subscribes to redis lists and passes incoming events to receivers.
 
-Configuration example:
+Configuration template:
 
     - RedisList:
         lists:                    # <type: list; is: required>
@@ -110,7 +110,7 @@ mode: Wether to run a server or client.
 multipart: When using the sub pattern, messages can have a topic. If send via multipart set this to true.
 seperator: When using the sub pattern, messages can have a topic. Set seperator to split message from topic.
 
-Configuration example:
+Configuration template:
 
     - Zmq:
         servers:                    # <default: ['localhost:5570']; type: list; is: optional>
@@ -130,7 +130,7 @@ event: Send custom event data.
 sleep: Time to wait between sending events.
 events_count: Only send configured number of events. 0 means no limit.
 
-Configuration example:
+Configuration template:
 
     - Spam:
         event:                    # <default: {}; type: dict; is: optional>

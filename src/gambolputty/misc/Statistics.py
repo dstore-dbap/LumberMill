@@ -1,5 +1,3 @@
-import pprint
-import time
 import Utils
 import BaseModule
 import Decorators
@@ -7,16 +5,31 @@ import Decorators
 @Decorators.ModuleDocstringParser
 class Statistics(BaseModule.BaseModule):
     """
-    Collect and log some statistic data.
+    Collect and log statistic data.
+
+    This module keeps track of the number of times a field occured in an event during interval.
+    So, if you want to count the http_status codes encountered during the last 10s, you would use this configuration:
+    - Statistics:
+        interval: 10
+        fields: [http_status]
+
+    After interval seconds, an event will be emitted with the following fields (counters are just examples ;):
+    {'data': '',
+     'event_type': 'statistic',
+     'field_name': 'http_status',
+     'field_counts': {'200': 5, '301': 10, '400': 5},
+     'gambolputty': {'event_id': 'cef34d298fbe8ce4b662251e17b2acfb',
+                     'event_type': 'statistic',
+                     'received_from': False,
+                     'source_module': 'Statistics'}
+     'interval': 10,
+     'total_count': 20}
 
     Configuration example:
 
     - Statistics:
         interval:                      # <default: 10; type: integer; is: optional>
-        event_type_statistics:         # <default: True; type: boolean; is: optional>
-        receive_rate_statistics:       # <default: True; type: boolean; is: optional>
-        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
-        emit_as_event:                 # <default: False; type: boolean; is: optional>
+        fields:                        # <default: ['gambolputty.event_type']; type: list; is: optional>
     """
 
     module_type = "misc"
@@ -25,9 +38,8 @@ class Statistics(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
-        self.stats_collector.setCounter('ts_last_stats', time.time())
-        self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
+        self.fields = self.getConfigurationValue('fields')
         self.module_queues = {}
 
     def getRunTimedFunctionsFunc(self):
@@ -37,59 +49,38 @@ class Statistics(BaseModule.BaseModule):
         return runTimedFunctionsFunc
 
     def printIntervalStatistics(self):
-        self.logger.info("############# Statistics #############")
-        if self.getConfigurationValue('receive_rate_statistics'):
-            self.receiveRateStatistics()
-        if self.getConfigurationValue('waiting_event_statistics'):
-            self.eventsInQueuesStatistics()
-        if self.getConfigurationValue('event_type_statistics'):
-            self.eventTypeStatistics()
-
-    def eventTypeStatistics(self):
-        self.logger.info(">> EventTypes Statistics")
-        for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
-            if not event_type.startswith('event_type_'):
+        last_field_name = None
+        field_counts = {}
+        total_count = 0
+        for field_name_value, field_count in sorted(self.stats_collector.getAllCounters().iteritems()):
+            if not isinstance(field_name_value, tuple):
                 continue
-            event_name = event_type.replace('event_type_', '')
-            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
-            if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"event_name": event_name, "interval": self.interval, "count": count }, caller_class_name="Statistics", event_type="statistic"))
-            self.stats_collector.resetCounter(event_type)
-
-    def receiveRateStatistics(self):
-        self.logger.info(">> Receive rate stats")
-        eps = self.stats_collector.getCounter('eps')
-        if not eps:
-            eps = 0
-        self.stats_collector.resetCounter('eps')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
-        if self.emit_as_event:
-            self.sendEvent(Utils.getDefaultEventDict({"event_rate": eps, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
-
-    def eventsInQueuesStatistics(self):
-        if len(self.module_queues) == 0:
-            return
-        self.logger.info(">> Queue stats")
-        for module_name, queue in sorted(self.module_queues.iteritems()):
-            self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
-            if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"queue_stat": queue.qsize(), "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+            field_name, field_value = field_name_value
+            if field_name not in self.fields:
+                continue
+            self.stats_collector.resetCounter(field_name_value)
+            if not last_field_name:
+                last_field_name = field_name
+            if field_name != last_field_name:
+                self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "field_name": last_field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                last_field_name = field_name
+                field_counts = {}
+                total_count = 0
+                #if self.emit_as_event:
+                #    self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, field_count, (field_count/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
+            field_counts.update({field_value: field_count})
+            total_count += field_count
+        # Send remaining.
+        if last_field_name:
+            self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "field_name": field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def run(self):
-        # Get all configured queues for waiting event stats.
-        for module_name, module_info in self.gp.modules.iteritems():
-            instance = module_info['instances'][0]
-            if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
-                continue
-            self.module_queues[module_name] = instance.getInputQueue()
         timed_func = self.getRunTimedFunctionsFunc()
         self.startTimedFunction(timed_func)
 
     def handleEvent(self, event):
-        self.stats_collector.incrementCounter('eps')
-        if self.getConfigurationValue('event_type_statistics'):
-            try:
-                self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])
-            except:
-                pass
+        for field in self.fields:
+            if field not in event:
+                continue
+            self.stats_collector.incrementCounter((field, event[field]))
         yield event

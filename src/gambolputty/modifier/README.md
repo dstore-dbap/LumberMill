@@ -5,7 +5,7 @@ Modifing modules
 
 Add a field with the current datetime.
 
-Configuration example:
+Configuration template:
 
     - AddDateTime:
         target_field:        # <default: '@timestamp'; type: string; is: optional>
@@ -37,7 +37,7 @@ geo_info_fields: fields to add. Available field names:
  - latitude
  - longitude
 
-Configuration example:
+Configuration template:
 
     - AddGeoInfo:
         geoip_dat_path:           # <type: string; is: required>
@@ -55,7 +55,7 @@ This module supports the storage of the responses in an redis db. If redis-clien
 it will first try to retrieve the respone from redis via the key setting.
 If that fails, it will execute the http request and store the result in redis.
 
-Configuration example:
+Configuration template:
 
     - HttpRequest:
         url:                                    # <type: string; is: required>
@@ -88,7 +88,7 @@ buffer_size: Maximum size of events in buffer. If size is exceeded a flush will 
 flush_interval_in_secs: If interval is reached, buffer will be flushed.
 pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
 
-Configuration example:
+Configuration template:
 
     - MergeEvent:
         buffer_key:                 # <default: "%(gambolputty.received_from)s"; type: string; is: optional>
@@ -100,7 +100,7 @@ Configuration example:
 
 #####Permutate
 
-Configuration example:
+Configuration template:
 
     - Permutate:
         source_field:                   # <type: string; is: required>
@@ -114,7 +114,7 @@ Configuration example:
 
 Module to apply common string manipulation, e.g. split, join, trim, etc. on event fields.
 
-Configuration examples:
+Configuration templates:
 
     # Keep all fields listed in source_fields, discard all others.
     - ModifyFields:

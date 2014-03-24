@@ -14,6 +14,7 @@ import logging.config
 import threading
 import Queue
 import yaml
+import BaseMultiProcessModule
 
 module_dirs = ['input',
                'parser',
@@ -309,33 +310,39 @@ class GambolPutty:
         self.runModules()
 
     def shutDown(self, signum=False, frame=False):
+        #print self.pid
         # No need to shut down modules if we are not really running, e.g. when running a configtest.
         if not self.alive:
             return
+        self.alive = False
         # If a module started a subprocess, this will get called for all subprocesses started.
         # Still we know the pid of the main process. So only log if we are in the final shutdown stage.
-        silent = self.main_process_pid != os.getpid()
-        if not silent:
+        is_forked_process = self.main_process_pid != os.getpid()
+        if not is_forked_process:
             self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
-        self.alive = False
-        self.shutDownModules(silent)
-        if not silent:
+            self.shutDownModules()
             self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         sys.exit(0)
 
-    def shutDownModules(self, silent=False):
+    def shutDownModules(self):
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
+            silent = False
             for instance in module_info['instances']:
                 if instance.module_type == "input":
                     instance.shutDown(silent)
-        # Give remaining queued events some time.
+                    silent = True
+        # Give remaining queued events some time to finish.
         time.sleep(.5)
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
+            silent = False
             for instance in module_info['instances']:
-                if instance.module_type != "input":
+                if instance.module_type != "input" and module_name != "EventBuffer":
                     instance.shutDown(silent)
+                    silent = True
+        self.modules["EventBuffer"]['instances'][0].shutDown(False)
+
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest'

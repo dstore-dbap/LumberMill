@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import Utils
 import BaseMultiProcessModule
@@ -18,7 +19,25 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
     batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
 
-    Configuration example:
+    Here a simple example to send http_status statistics to graphite:
+
+    ...
+
+    - Statistics:
+        interval: 10
+        fields: ['http_status']
+
+    - GraphiteSink:
+        filter: if %(field_name) == "http_status"
+        server: 127.0.0.1
+        batch_size: 1
+        formats: ['gambolputty.stats.http_200_%(interval)ds %(field_counts.200)d',
+                  'gambolputty.stats.http_400_%(interval)ds %(field_counts.400)d',
+                  'gambolputty.stats.http_total_%(interval)ds %(total_count)d']
+
+    ...
+
+    Configuration template:
 
     - GraphiteSink:
         server:                   # <default: 'localhost'; type: string; is: optional>
@@ -59,16 +78,18 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
+        pprint.pprint(self)
         for format in self.formats:
             mapped_data = self.mapDynamicValue(format, event)
             if mapped_data:
                 self.buffer.append("%s %s" % (mapped_data, int(time.time())))
-                break
         yield None
 
     def storeData(self, events):
         for event in events:
             try:
+                if not event.endswith("\n"):
+                    event += "\n"
                 self.connection.send(event)
             except:
                 etype, evalue, etb = sys.exc_info()
@@ -89,6 +110,8 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.connection_data, Utils.AnsiColors.ENDC))
 
     def shutDown(self, silent=False):
-        if self.connection:
+        try:
             self.connection.close()
+        except:
+            pass
         BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
