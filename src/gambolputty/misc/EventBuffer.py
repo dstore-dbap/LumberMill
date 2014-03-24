@@ -38,16 +38,23 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
         self.zmq_context = zmq.Context()
         self.server = self.zmq_context.socket(zmq.PULL)
         self.server.bind('tcp://%s' % self.connection_info)
+
+        #zmq_context = zmq.Context()
+        client = self.zmq_context.socket(zmq.PUSH)
+        client.linger = 10
+        client.connect("tcp://%s" % self.connection_info)
+        Utils.KeyDotNotationDict.client = client
+
         def notifyOnGarbageCollect(self):
             if not self["gambolputty.socket"]:
                 return
             client = None
             try:
-                zmq_context = zmq.Context()
-                client = zmq_context.socket(zmq.PUSH)
-                client.linger = 10
-                client.connect("tcp://%s" % self['gambolputty']['socket'])
-                client.send('%s' % self['gambolputty']['event_id'])
+                #zmq_context = zmq.Context()
+                #client = zmq_context.socket(zmq.PUSH)
+                #client.linger = 10
+                #client.connect("tcp://%s" % self['gambolputty']['socket'])
+                Utils.KeyDotNotationDict.client.send('%s' % self['gambolputty']['event_id'])
             except:
                 pass
             # Hmm, uncommenting this code causes hangs when shutting down gp.
@@ -93,7 +100,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
             try:
                 event_info = self.buffer.pop(deleted_event_id)
             except KeyError:
-                print deleted_event_id
+                #print "%s :: %s" % (deleted_event_id, self.isForkedProcess())
                 continue
             del event_info['data']['gambolputty']['socket']
             event_info = None
