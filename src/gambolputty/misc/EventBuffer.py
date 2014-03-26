@@ -1,122 +1,141 @@
 # -*- coding: utf-8 -*-
+import copy
 import os
-import pprint
 import gc
-import time
-import zmq
+import random
 import BaseModule
-import BaseThreadedModule
 import Utils
 import Decorators
 
-
 @Decorators.ModuleDocstringParser
-class EventBuffer(BaseThreadedModule.BaseThreadedModule):
+class EventBuffer(BaseModule.BaseModule):
     """
-    Send an event into a tarpit before passing it on.
+    Store received events in a persistent backend until the event was successfully handled.
+    Events, that did not get handled correctly, will be requeued when GambolPutty is restarted.
 
-    Useful only for testing purposes of threading problems and concurrent access to event data.
+    At the moment only RedisStore is supported as backend.
 
-    Configuration example:
+    As a technical note: This module is based on pythons garbage collection. If an event is
+    created, a copy of the event is stored in the persistence backend. If it get garbage collected,
+    the event will be deleted from the backend.
+    When used, this module forces a garbage collection every <gc_interval> seconds.
+    This approach seemed to be the fastest and simplest with a small drawback:
+    IMPORTANT: It is not absolutely guaranteed, that an event will be collected, thus the event will
+    not be deleted from the backend data. This can cause a limited amount of duplicate events being
+    send to the sinks.
+    With an elasticsearch sink, this should be no problem, as long as your document id
+    stays the same for the same event data. This is also true for the default event_id.
+
+    Configuration template:
 
     - EventBuffer:
-        interface:         # <default: '127.0.0.1'; type: string; is: optional>
-        port:              # <default: 5678; type: integer; is: optional>
-        receivers:
-          - NextModule
+        backend:            # <default: 'RedisStore'; type: string; is: optional>
+        gc_interval:        # <default: 5; type: integer; is: optional>
     """
 
-    module_type = "misc"
+    module_type = "stand_alone"
     """Set module type"""
     can_run_parallel = False
 
     def configure(self, configuration):
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.pid_on_init = os.getpid()
-        self.buffer = {}
-        self.connection_info = "%s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
-        self.zmq_context = zmq.Context()
-        self.server = self.zmq_context.socket(zmq.PULL)
-        self.server.bind('tcp://%s' % self.connection_info)
-
-        #zmq_context = zmq.Context()
-        client = self.zmq_context.socket(zmq.PUSH)
-        client.linger = 10
-        client.connect("tcp://%s" % self.connection_info)
-        Utils.KeyDotNotationDict.client = client
-
-        def notifyOnGarbageCollect(self):
-            if not self["gambolputty.socket"]:
+        # Call parent configure method
+        BaseModule.BaseModule.configure(self, configuration)
+        self.key_prefix = "gambolputty:eventbuffer"
+        self.key_buffer = {}
+        self.flush_interval = self.getConfigurationValue('gc_interval')
+        self.requeue_events_done = False
+        backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
+        if not backend_info:
+            self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
+            return
+        self.persistence_backend = backend_info['instances'][0]
+        Utils.KeyDotNotationDict.persistence_backend = self.persistence_backend
+        Utils.KeyDotNotationDict.key_prefix = self.key_prefix
+        # Monkeypatch Utils.KeyDotNotationDict to add/delete event to persistence backend.
+        def removeFromPersistenceBackendOnGarbageCollect(self):
+            Utils.KeyDotNotationDict.___del___(self)
+            # Only act if we hold an event.
+            if "event_id" not in self.get("gambolputty", {}):
                 return
-            client = None
             try:
-                #zmq_context = zmq.Context()
-                #client = zmq_context.socket(zmq.PUSH)
-                #client.linger = 10
-                #client.connect("tcp://%s" % self['gambolputty']['socket'])
-                Utils.KeyDotNotationDict.client.send('%s' % self['gambolputty']['event_id'])
+                key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['gambolputty']['event_id'])
+                Utils.KeyDotNotationDict.persistence_backend.delete(key)
             except:
                 pass
-            # Hmm, uncommenting this code causes hangs when shutting down gp.
-            #finally:
-            #    if client:
-            #        client.close()
-            #        zmq_context.term()
+        Utils.KeyDotNotationDict.___del___ = Utils.KeyDotNotationDict.__del__
+        Utils.KeyDotNotationDict.__del__ = removeFromPersistenceBackendOnGarbageCollect
 
-        Utils.KeyDotNotationDict.__del__ = notifyOnGarbageCollect
-        self.flush_interval = 5
-        self.timedFuncHandle = self.startTimedFunction(self.getTimedGarbageCollectFunc())
+        def addToPersistenceBackendOnInit(self, *args):
+            Utils.KeyDotNotationDict.___init___(self, *args)
+            # Only act if we hold an event.
+            if "event_id" not in self.get("gambolputty", {}):
+                return
+            try:
+                key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['gambolputty']['event_id'])
+                # Store a simple dict in backend, not a KeyDotNotationDict.
+                # Also, store a copy, as the dict might get buffered in persistence_backend and we do not
+                # want any changes made to new_dict to propagate to persistence_backend.
+                Utils.KeyDotNotationDict.persistence_backend.set(key, dict.copy(self), False)
+            except:
+                pass
+        Utils.KeyDotNotationDict.___init___ = Utils.KeyDotNotationDict.__init__
+        Utils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit
+
+        def returnSimpleKeyDotDictOnCopy(self):
+            """
+            When creating a copy of an event, we do not want to store/remove this in/from the persistence backend.
+            When the original event is requeued it will pass through all modules again, thus creating the
+            same copies etc.
+            A removeFromPersistenceBackendOnGarbageCollect would fail anyways, since the new key is unknown to the
+            backend. Still we can skip removing for speedups.
+            """
+            new_dict = Utils.KeyDotNotationDict()
+            new_dict.__init__ = Utils.KeyDotNotationDict.___init___
+            new_dict.__del__ = Utils.KeyDotNotationDict.__del__
+            new_dict.update(copy.deepcopy(super(Utils.KeyDotNotationDict, self)))
+            if "event_id" in new_dict.get("gambolputty", {}):
+                new_dict['gambolputty']['event_id'] = "%032x" % random.getrandbits(128)
+            return new_dict
+        Utils.KeyDotNotationDict.copy = returnSimpleKeyDotDictOnCopy
 
     def getTimedGarbageCollectFunc(self):
-        @Decorators.setInterval(self.flush_interval)
+        @Decorators.setInterval(self.flush_interval, call_on_init=True)
         def timedGarbageCollect():
-            # Stop timed function if we are running in a forked process.
-            if self.isForkedProcess():
-                self.timedFuncHandle.set()
-                return
-            if len(self.buffer) == 0:
-                return
-            self.handleDeletedEvents()
+            if not self.requeue_events_done:
+                self.requeueEvents()
+                self.requeue_events_done = True
+            gc.collect()
         return timedGarbageCollect
 
     def isForkedProcess(self):
         return self.pid_on_init != os.getpid()
 
-    def handleEvent(self, event):
-        self.buffer[event['gambolputty']['event_id']] = {'refcount': 1, 'data': event.copy()}
-        event['gambolputty']['socket'] = self.connection_info
-        yield event
+    def requeueEvents(self):
+        input_modules = {}
+        for module_name, module_info in self.gp.modules.iteritems():
+            instance = module_info['instances'][0]
+            if instance.module_type == "input":
+                input_modules[instance.__class__.__name__] = instance
+        keys = self.persistence_backend.client.keys("%s:*" % self.key_prefix)
+        if len(keys) > 0:
+            self.logger.warning("%sFound %s unfinished events. Requeing...%s" % (Utils.AnsiColors.WARNING, len(keys), Utils.AnsiColors.ENDC))
+            requeue_counter = 0
+            for key in keys:
+                event = self.persistence_backend.pop(key)
+                if not event:
+                    continue
+                if "source_module" not in event.get("gambolputty", {}):
+                    self.logger.warning("%sCould not requeue event. Source module not found in event data.%s" % (Utils.AnsiColors.WARNING, event[0], Utils.AnsiColors.ENDC))
+                    continue
+                source_module = event["gambolputty"]["source_module"]
+                if source_module not in input_modules:
+                    self.logger.error("%sCould not requeue event. Module %s not found.%s" % (Utils.AnsiColors.WARNING, event[0], Utils.AnsiColors.ENDC))
+                    continue
+                requeue_counter += 1
+                input_modules[source_module].sendEvent(Utils.KeyDotNotationDict(event))
+            self.logger.warning("%sDone. Requeued %s of %s events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
+            event = None
 
-    def handleDeletedEvents(self, force_gc=False):
-        if force_gc:
-            gc.collect()
-            time.sleep(1)
-        counter = 0
-        while True:
-            try:
-                deleted_event_id = self.server.recv(flags=zmq.NOBLOCK)
-            except:
-                break
-            try:
-                event_info = self.buffer.pop(deleted_event_id)
-            except KeyError:
-                #print "%s :: %s" % (deleted_event_id, self.isForkedProcess())
-                continue
-            del event_info['data']['gambolputty']['socket']
-            event_info = None
-            counter += 1
-        #self.logger.info("%sDeleted %s handled events.%s" % (Utils.AnsiColors.LIGHTBLUE, counter, Utils.AnsiColors.ENDC))
-        #self.logger.info("%sRemaining: %s.%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.buffer), Utils.AnsiColors.ENDC))
-
-
-    def shutDown(self, silent=False):
-        if len(self.buffer) > 0:
-            self.handleDeletedEvents(force_gc=True)
-            if not silent:
-                self.logger.info("%sRemaining unhandled events: %s. Any unhandled events will be queued on next startup.%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.buffer), Utils.AnsiColors.ENDC))
-        try:
-            self.server.close()
-            self.zmq_context.term()
-        except:
-            pass
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+    def run(self):
+        self.timedFuncHandle = Utils.TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())
