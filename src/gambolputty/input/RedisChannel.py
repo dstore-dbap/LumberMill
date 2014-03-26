@@ -13,7 +13,13 @@ class RedisChannel(BaseModule.BaseModule):
     """
     Subscribes to a redis channels and passes incoming events to receivers.
 
-    Configuration example:
+    channel: Name of redis channel to subscribe to.
+    server: Redis server to connect to.
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
+
+    Configuration template:
 
     - RedisChannel:
         channel:                    # <type: string; is: required>

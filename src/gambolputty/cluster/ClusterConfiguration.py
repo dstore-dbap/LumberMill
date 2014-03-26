@@ -96,5 +96,5 @@ class ClusterConfiguration(BaseModule.BaseModule):
         # Get currently running configuration.
         self.filtered_startup_config = self.filterIgnoredModules(self.gp.getConfiguration())
         if self.cluster_module.leader:
-            self.startTimedFunction(self.update_config_func)
+            Utils.TimedFunctionManager.startTimedFunction(self.update_config_func)
 

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import pprint
 import re
 import abc
@@ -38,8 +39,8 @@ class BaseModule():
         self.input_filter = None
         self.output_filters = {}
         self.timed_function_events = []
-        self.callbacks = collections.defaultdict(list)
         self.stats_collector = stats_collector
+        self.pid_on_init = os.getpid()
 
     def configure(self, configuration=None):
         """
@@ -128,45 +129,11 @@ class BaseModule():
         return self.mapDynamicValue(config_setting.get('value'), mapping_dict)
 
     def mapDynamicValue(self, value, mapping_dict):
-        # At the moment, just flat lists and dictionaries are supported.
-        # If need arises, recursive parsing of the lists and dictionaries will be added.
-        if isinstance(value, list):
-            try:
-                mapped_values = [v % mapping_dict for v in value]
-                return mapped_values
-            except KeyError:
-                return False
-            except ValueError:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, v, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
-                return False
-        elif isinstance(value, dict):
-            try:
-                mapped_keys = [k % mapping_dict for k in value.iterkeys()]
-                mapped_values = [v % mapping_dict for v in value.itervalues()]
-                return dict(zip(mapped_keys, mapped_values))
-            except KeyError:
-                return False
-            except ValueError:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, v, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
-                return False
-        elif isinstance(value, basestring):
-            if value == '%(field_values)s':
-                pprint.pprint(value % mapping_dict)
-            try:
-                return value % mapping_dict
-            except KeyError:
-                return False
-            except ValueError:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, value, mapping_dict, etype, evalue, Utils.AnsiColors.ENDC))
-                return False
+        return Utils.mapDynamicValue(value, mapping_dict)
 
     def shutDown(self, silent=False):
         if not silent:
             self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
-        self.stopTimedFunctions()
 
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
@@ -222,10 +189,11 @@ class BaseModule():
             event_clone = event.copy()
         copy_event = False
         for receiver in self.receivers.itervalues():
+            e = event if not copy_event else event_clone.copy()
             if hasattr(receiver, 'receiveEvent'):
-                receiver.receiveEvent(event if copy_event is False else event_clone.copy())
+                receiver.receiveEvent(e)
             else:
-                receiver.put(event if copy_event is False else event_clone.copy())
+                receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
 
     def sendEventFiltered(self, event):
@@ -236,15 +204,10 @@ class BaseModule():
             event_clone = event.copy()
         copy_event = False
         for receiver in receivers.itervalues():
-            try:
-                receiver.receiveEvent(event if copy_event is False else event_clone.copy())
-            except AttributeError:
-                try:
-                    receiver.put(event if copy_event is False else event_clone.copy())
-                except AttributeError:
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%s%s failed to receive event. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, receiver.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
-                    self.gp.shutDown()
+            if hasattr(receiver, 'receiveEvent'):
+                receiver.receiveEvent(event if not copy_event else event_clone.copy())
+            else:
+                receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
 
     def receiveEvent(self, event):
@@ -269,29 +232,3 @@ class BaseModule():
         @param event: dictionary
         """
         yield event
-
-    def startTimedFunction(self, timed_function, *args, **kwargs):
-        """
-        Start a timed function and keep track of all running functions.
-        """
-        event = timed_function(*args, **kwargs)
-        self.timed_function_events.append(event)
-        return event
-
-    def stopTimedFunctions(self, event=False):
-        """
-        Stop all timed functions. They are started as daemon, so when a reaload occurs, they will not finish cause the
-        main thread still is running. This takes care of this issue.
-        """
-        if not self.timed_function_events:
-            return
-        # Clear provided event only.
-        if event and event in self.timed_function_events:
-            event.set()
-            self.timed_function_events.remove(event)
-            return
-        # Clear all timed functions
-        for event in self.timed_function_events:
-            event.set()
-        self.timed_function_events = []
-

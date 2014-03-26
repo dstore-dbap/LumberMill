@@ -51,7 +51,7 @@ class Facet(BaseModule.BaseModule):
         else:
             self.redis_store = None
         self.evaluate_facet_data_func = self.getEvaluateFunc()
-        self.evaluate_facet_data_func(self)
+        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
 
     def _getFacetInfoRedis(self, key):
         facet_info = self.redis_store.getValue(key)

@@ -170,10 +170,10 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             return
         # Start alive requests only if we are the leader.
         if self.leader:
-            self.startTimedFunction(self.sendAliveRequests)
+            Utils.TimedFunctionManager.startTimedFunction(self.sendAliveRequests)
         # Start discovery of master server if we are a simple pack member.
         if not self.leader:
-            self.startTimedFunction(self.sendDiscoverBroadcast)
+            Utils.TimedFunctionManager.startTimedFunction(self.sendDiscoverBroadcast)
         while self.alive:
             message, host = self.socket.recvfrom(16384)
             try:
@@ -206,7 +206,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             message = self.getDefaultMessageDict(action='alive_call')
             self.sendMessageToPackMember(message, pack_member)
             self.dying_pack_followers.append(ip_address)
-            self.pending_alive_resonses.update({ip_address: self.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
+            self.pending_alive_resonses.update({ip_address: Utils.TimedFunctionManager.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
 
     def getDropDeadPackMemberTimedFunc(self):
         @Decorators.setInterval(5, max_run_count=1)
@@ -267,7 +267,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             return
         if message['reply'] == 'I am not dead!':
             # Stop timed function to remove pending host from pack members.
-            self.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
+            Utils.TimedFunctionManager.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
 
     def shutDown(self, silent=False):
         # Call parent configure method.

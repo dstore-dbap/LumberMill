@@ -76,7 +76,7 @@ class Statistics(BaseModule.BaseModule):
 
     def run(self):
         timed_func = self.getRunTimedFunctionsFunc()
-        self.startTimedFunction(timed_func)
+        Utils.TimedFunctionManager.startTimedFunction(timed_func)
 
     def handleEvent(self, event):
         for field in self.fields:

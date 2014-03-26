@@ -124,7 +124,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         simple_separator:                # <default: '\n'; type: string; is: optional>
         regex_separator:                 # <default: None; type: None||string; is: optional>
         chunksize:                       # <default: 16384; type: integer; is: optional>
-        max_buffer_size:                 # <default: 1024; type: integer; is: optional>
+        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
         receivers:
           - NextModule
     """

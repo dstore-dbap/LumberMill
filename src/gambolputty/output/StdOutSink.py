@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import BaseModule
 import pprint
+import Utils
 from Decorators import ModuleDocstringParser
 import time
 
@@ -34,7 +35,7 @@ class StdOutSink(BaseModule.BaseModule):
             time.sleep(.0001)
         self.printing = True
         if self.format:
-            output = self.mapDynamicValue(self.format, event)
+            output = Utils.mapDynamicValue(self.format, event)
             # If mapping failed, no need to print anything.
             if not output:
                 self.printing = False

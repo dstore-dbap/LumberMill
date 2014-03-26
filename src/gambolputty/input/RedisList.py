@@ -11,7 +11,14 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
     """
     Subscribes to a redis channels/lists and passes incoming events to receivers.
 
-    Configuration example:
+    lists: Name of redis lists to subscribe to.
+    server: Redis server to connect to.
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
+    timeout: Timeout in seconds.
+
+    Configuration template:
 
     - RedisList:
         lists:                    # <type: list; is: required>

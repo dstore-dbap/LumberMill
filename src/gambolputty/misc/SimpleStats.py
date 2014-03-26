@@ -82,8 +82,7 @@ class SimpleStats(BaseModule.BaseModule):
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
-        timed_func = self.getRunTimedFunctionsFunc()
-        self.startTimedFunction(timed_func)
+        Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('eps')

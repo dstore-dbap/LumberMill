@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import ast
+import pprint
 import socket
+import copy
 import random
 import time
 import os
@@ -16,8 +18,6 @@ try:
     is_pypy = True
 except ImportError:
     is_pypy = False
-
-event_counter = 0
 
 def reload():
     """
@@ -63,14 +63,11 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
-    #global event_counter
-    #event_counter += 1
     default_dict = KeyDotNotationDict({ "event_type": event_type,
                      "data": "",
                      "gambolputty": {
                         'event_type': event_type,
                         'event_id': "%032x" % random.getrandbits(128),
-                        #'event_id': event_counter,
                         'source_module': caller_class_name,
                         'received_from': received_from,
                      }
@@ -122,9 +119,43 @@ class AstTransformer(ast.NodeTransformer):
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 
+def mapDynamicValue(value, mapping_dict):
+    # At the moment, just flat lists and dictionaries are supported.
+    # If need arises, recursive parsing of the lists and dictionaries will be added.
+    if isinstance(value, list):
+        try:
+            mapped_values = [v % mapping_dict for v in value]
+            return mapped_values
+        except KeyError:
+            return False
+        except ValueError:
+            etype, evalue, etb = sys.exc_info()
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            return False
+    elif isinstance(value, dict):
+        try:
+            mapped_keys = [k % mapping_dict for k in value.iterkeys()]
+            mapped_values = [v % mapping_dict for v in value.itervalues()]
+            return dict(zip(mapped_keys, mapped_values))
+        except KeyError:
+            return False
+        except ValueError:
+            etype, evalue, etb = sys.exc_info()
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            return False
+    elif isinstance(value, basestring):
+        try:
+            return value % mapping_dict
+        except KeyError:
+            return False
+        except ValueError:
+            etype, evalue, etb = sys.exc_info()
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, value, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            return False
+
 class Buffer:
-    def __init__(self, size, callback=None, interval=1, maxsize=5000):
-        self.flush_size = size
+    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):
+        self.flush_size = flush_size
         self.buffer = []
         self.maxsize = maxsize
         self.append = self.put
@@ -132,7 +163,7 @@ class Buffer:
         self.flush_callback = callback
         self.flush_timed_func = self.getTimedFlushMethod()
         if self.flush_interval:
-            self.flush_timed_func()
+            self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
         self.is_storing = False
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -141,6 +172,9 @@ class Buffer:
         def timedFlush():
             self.flush()
         return timedFlush
+
+    def append(self, item):
+        self.put(item)
 
     def put(self, item):
         # Wait till a running store is finished to avoid strange race conditions when using this buffer with
@@ -151,14 +185,13 @@ class Buffer:
             self.buffer.append(item)
         else:
             self.logger.warning("%sMaximum number of items (%s) in buffer reached. Dropping item.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
-        if len(self.buffer) >= self.flush_size:
+        if self.flush_size and len(self.buffer) >= self.flush_size:
             self.flush()
 
     def flush(self):
         if len(self.buffer) == 0:
             return
         if self.is_storing:
-            #time.sleep(.0001)
             return
         self.is_storing = True
         try:
@@ -194,8 +227,12 @@ class BufferedQueue():
         return getattr(self.queue, name)
 
 class KeyDotNotationDict(dict):
-    def __init__(self, *args):
-        dict.__init__(self, *args)
+    """
+    A dictionary that allows to access values via dot separated keys, e.g.:
+    >>> my_dict = {"key1": {"key2": "value"}}
+    >>> my_dict["key1.key2"]
+    "value"
+    """
 
     def __getitem__(self, key, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
@@ -238,6 +275,15 @@ class KeyDotNotationDict(dict):
         except KeyError:
             return False
 
+    def __del__(self):
+        pass
+
+    def copy(self):
+        new_dict = KeyDotNotationDict(copy.deepcopy(super(KeyDotNotationDict, self)))
+        if "event_id" in new_dict.get("gambolputty", {}):
+            new_dict['gambolputty']['event_id'] = "%s-%02x" % (new_dict['gambolputty']['event_id'], random.getrandbits(8))
+        return new_dict
+
     def get(self, key, default, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
@@ -254,6 +300,49 @@ class KeyDotNotationDict(dict):
             return self.get(remaining_keys, default, dict_or_list)
         except KeyError:
             return default
+
+class TimedFunctionManager:
+    """
+    The decorator setInterval provides a simple way to repeatedly execute a function in intervals.
+    This is done by starting a thread that calls the decorated method every interval seconds.
+    To make sure, all threads get stopped when exiting or reloading GambolPutty, the decorated functions
+    should be started like this e.g.:
+    ...
+    Utils.TimedFunctionManager.startTimedFunction(self.sendAliveRequests)
+    ...
+
+    The main process will call TimedFunctionManager.stopTimedFunctions() on exit or reload.
+    This makes sure all thread get terminated.
+    """
+
+    timed_function_handlers = []
+
+    @staticmethod
+    def startTimedFunction(timed_function, *args, **kwargs):
+        """
+        Start a timed function and keep track of all running functions.
+        """
+        handler = timed_function(*args, **kwargs)
+        TimedFunctionManager.timed_function_handlers.append(handler)
+        return handler
+
+    @staticmethod
+    def stopTimedFunctions(handler=False):
+        """
+        Stop all timed functions. They are started as daemon, so when a reaload occurs, they will not finish cause the
+        main thread still is running. This takes care of this issue.
+        """
+        if not TimedFunctionManager.timed_function_handlers:
+            return
+        # Clear provided handler only.
+        if handler and handler in TimedFunctionManager.timed_function_handlers:
+            handler.set()
+            TimedFunctionManager.timed_function_handlers.remove(handler)
+            return
+        # Clear all timed functions
+        for handler in TimedFunctionManager.timed_function_handlers:
+            handler.set()
+        TimedFunctionManager.timed_function_handlers = []
 
 class AnsiColors:
     HEADER = '\033[95m'

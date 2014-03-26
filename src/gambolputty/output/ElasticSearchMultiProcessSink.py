@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import datetime
 import time
@@ -76,7 +77,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     def configure(self, configuration):
         # Call parent configure method
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
-        self.events_container = []
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -129,7 +129,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                 event_type = event['event_type']
             except KeyError:
                 event_type = 'Unknown'
-            doc_id = self.getConfigurationValue("doc_id", event)#event["gambolputty"]["event_id"]
+            doc_id = self.getConfigurationValue("doc_id", event)
             if not doc_id:
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
                 continue
@@ -155,8 +155,10 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
+            #started = time.time()
+            # Bulk update of 500 events took 0.139621019363.
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
-            self.events_container = []
+            #print "Bulk update of %s events took %s." % (len(events), time.time() - started)
         except elasticsearch.exceptions.ConnectionError:
             try:
                 self.logger.warning("%sLost connection to %s. Trying to reconnect.%s" % (Utils.AnsiColors.WARNING, (self.getConfigurationValue("nodes"),index_name), Utils.AnsiColors.ENDC))

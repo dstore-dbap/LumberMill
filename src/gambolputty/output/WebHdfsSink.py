@@ -130,7 +130,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def run(self):
         self.hdfs = self.getHdfsClient()
-        self.startTimedFunction(self.timed_store_func)
+        Utils.TimedFunctionManager.startTimedFunction(self.timed_store_func)
         # Call parent run method
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
