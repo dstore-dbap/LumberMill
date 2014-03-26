@@ -16,7 +16,7 @@ class EventBuffer(BaseModule.BaseModule):
     At the moment only RedisStore is supported as backend.
 
     As a technical note: This module is based on pythons garbage collection. If an event is
-    created, a copy of the event is stored in the persistence backend. If it get garbage collected,
+    created, a copy of the event is stored in the persistence backend. If it gets garbage collected,
     the event will be deleted from the backend.
     When used, this module forces a garbage collection every <gc_interval> seconds.
     This approach seemed to be the fastest and simplest with a small drawback:

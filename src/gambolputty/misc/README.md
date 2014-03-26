@@ -32,7 +32,24 @@ A simple wrapper around the redis python module.
 
 It can be used to store results of modules in a redis key/value store.
 
-cluster: dictionary of redis masters as keys and pack_followers as values.
+    server: Redis server to connect to.
+    cluster: Dictionary of redis masters as keys and pack_followers as values, e.g.: {'172.16.0.1:6379': '172.16.0.2:6379'}
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
+    socket_timeout: Socket timeout in seconds.
+    charset: Charset to use.
+    errors:
+    decode_responses: specifies whether return values from Redis commands get decoded automatically using the client's charset value.
+    unix_socket_path: Path to unix socket file.
+
+When set, the following options cause RedisStore to use a buffer for setting values.
+Multiple values are set via the pipe command, which speeds up storage. Still this comes at a price.
+Buffered values, that have not yet been send to redis, will be lost when GambolPutty crashes.
+
+    store_interval_in_secs: Sending data to redis in x seconds intervals.
+    batch_size: Sending data to redis if count is above, even if store_interval_in_secs is not reached.
+    backlog_size: Maximum count of values waiting for transmission. Values above count will be dropped.
 
 Configuration template:
 
@@ -46,34 +63,34 @@ Configuration template:
         charset:                                 # <default: 'utf-8'; type: string; is: optional>
         errors:                                  # <default: 'strict'; type: string; is: optional>
         decode_responses:                        # <default: False; type: boolean; is: optional>
-        unix_socket_path:                        # <default: ''; type: string; is: optional>
+        unix_socket_path:                        # <default: None; type: None||string; is: optional>
+        batch_size:                              # <default: None; type: None||integer; is: optional>
+        store_interval_in_secs:                  # <default: None; type: None||integer; is: optional>
+        backlog_size:                            # <default: 5000; type: integer; is: optional>
 
+#####EventBuffer
 
-#####RedisEventBuffer
+Store received events in a persistent backend until the event was successfully handled.
+Events, that did not get handled correctly, will be requeued when GambolPutty is restarted.
 
-Keeps track of all events passing through GambolPutty.
+At the moment only RedisStore is supported as backend.
 
-This module stores all events that enter GambolPutty in a redis backend and deletes them, as soon as they
-get destroyed by the BaseModule.destroyEvent method. Events that did not get destroyed will be resent when
-GamboPutty is restarted. This should make sure that nearly every event gets to its destination, even when
-something goes absolutely wrong.
-
-As storage backend a redis client is needed.
-
-Please note, that this will significantly slow down the event processing. You have to decide if speed or
-event delivery is of higher importance to you. Even without this module, GambolPutty tries to make sure
-all events reach their destination. This module is thread based, so playing around with its pool size might
-increase performance.
-
-!!IMPORTANT!!: At the moment, this module does not work. Will be rewritten...
+As a technical note: This module is based on pythons garbage collection. If an event is
+created, a copy of the event is stored in the persistence backend. If it gets garbage collected,
+the event will be deleted from the backend.
+When used, this module forces a garbage collection every <gc_interval> seconds.
+This approach seemed to be the fastest and simplest with a small drawback:
+IMPORTANT: It is not absolutely guaranteed, that an event will be collected, thus the event will
+not be deleted from the backend data. This can cause a limited amount of duplicate events being
+send to the sinks.
+With an elasticsearch sink, this should be no problem, as long as your document id
+stays the same for the same event data. This is also true for the default event_id.
 
 Configuration template:
 
-    - RedisEventBuffer:
-        redis_store:                            # <type: string; is: required>
-        queue_size:                             # <default: 5; type: integer; is: optional>
-        redis_ttl:                              # <default: 3600; type: integer; is: optional>
-
+    - EventBuffer:
+        backend:            # <default: 'RedisStore'; type: string; is: optional>
+        gc_interval:        # <default: 5; type: integer; is: optional>
 
 #####SimpleStats
 

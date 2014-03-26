@@ -13,7 +13,6 @@ The different modules can be combined in any order.
 ##### Working modules:
 
 #### Event inputs
-
 * RedisChannel, read events from redis channels.
 * RedisList, read events from redis lists.
 * Spam, what it says on the can - spams GambolPutty for testing.
@@ -24,7 +23,6 @@ The different modules can be combined in any order.
 * Zmq, read events from a zeromq.
 
 #### Event parsers
-
 * CSVParser, parse a char separated string.
 * JsonParser, parse a json formatted string.
 * LineParser, split lines at a seperator and emit each line as new event.
@@ -35,7 +33,6 @@ The different modules can be combined in any order.
 * XPathParser, parse an XML document via an xpath expression.
 
 #### Event modifiers
-
 * MergeEvent, merge multiple events to one single event.
 * AddDateTime, adds a timestamp field.
 * AddGeoInfo, adds geo info fields.
@@ -44,7 +41,6 @@ The different modules can be combined in any order.
 * Permutate, takes a list in the event data emits events for all possible permutations of that list.
 
 #### Outputs
-
 * DevNullSink, discards all data that it receives.
 * ElasticSearchSink, stores data entries in an elasticsearch index.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
@@ -57,13 +53,12 @@ The different modules can be combined in any order.
 * GraphiteSink, send metrics to graphite server.
 
 #### Misc modules
-
 * ExecPython, execute custom python code.
 * Facet, collect all encountered variations of en event value over a configurable period of time.
 * RedisClient, use redis to store and retrieve values, e.g. to store the result of the XPathParser modul.
 * SimpleStats, simple statistic module just for event rates etc.
 * Statistics, more versatile. Configurable fields for collecting statistic data.
-* TrackEvents, keep track of events being processed and requeue them after e.g. a crash.
+* EventBuffer, store received events in a persistent backend until the event was successfully handled.
 * Tarpit, slows event propagation down - for testing.
 
 #### Cluster modules
