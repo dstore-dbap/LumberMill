@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import re
 import hashlib
@@ -207,6 +206,9 @@ class ModifyFields(BaseModule.BaseModule):
         if "configure_%s_action" % self.action in dir(self):
             getattr(self, "configure_%s_action" % self.action)()
 
+    def configure_anonymize_action(self):
+        self.configure_hash_action()
+
     def configure_hash_action(self):
         # Import murmur hashlib if configured.
         self.salt = self.getConfigurationValue('salt') if self.getConfigurationValue('salt') else ""
@@ -221,11 +223,16 @@ class ModifyFields(BaseModule.BaseModule):
                 self.gp.shutDown()
         else:
             try:
-                self.hash_func = getattr(hashlib, self.algorithm)
+                self.hashlib_func = getattr(hashlib, self.algorithm)
             except ImportError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
+                return
+            self.hash_func = self.hashlibFunc
+
+    def hashlibFunc(self, string):
+        return self.hashlib_func(string).hexdigest()
 
     def handleEvent(self, event):
         try:
@@ -556,7 +563,8 @@ class ModifyFields(BaseModule.BaseModule):
             try:
                 event[target_fieldname] = self.hash_func("%s%s" % (self.salt, event[field]))
             except:
-                pass
-                #etype, evalue, etb = sys.exc_info()
-                #self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                #pass
+                etype, evalue, etb = sys.exc_info()
+                print "%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC)
+                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
         return event

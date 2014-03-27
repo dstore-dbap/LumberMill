@@ -138,6 +138,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.server = False
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 1024 #* 102400
+        self.start_ioloop = False
 
     def run(self):
         #if not self.receivers:
@@ -159,14 +160,12 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
             return
         autoreload.add_reload_hook(self.shutDown)
-        return
-        ioloop = IOLoop.instance()
-        ioloop.make_current()
-        try:
-            ioloop.start()
-        except ValueError:
-            # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
-            pass
+        if self.start_ioloop:
+            try:
+                IOLoop.instance().start()
+            except ValueError:
+                # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
+                pass
 
     def shutDown(self, silent):
         # Call parent shutDown method

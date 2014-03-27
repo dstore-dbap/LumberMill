@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
-import pprint
-import socket
+import datetime
 import copy
 import random
 import time
@@ -64,14 +63,14 @@ def reload():
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
     default_dict = KeyDotNotationDict({ "event_type": event_type,
-                     "data": "",
-                     "gambolputty": {
-                        'event_type': event_type,
-                        'event_id': "%032x" % random.getrandbits(128),
-                        'source_module': caller_class_name,
-                        'received_from': received_from,
-                     }
-                    })
+                                        "data": "",
+                                         "gambolputty": {
+                                            'event_type': event_type,
+                                            'event_id': "%032x" % random.getrandbits(128),
+                                            'source_module': caller_class_name,
+                                            'received_from': received_from,
+                                         }
+                                    })
     default_dict.update(dict)
     return default_dict
 
@@ -119,12 +118,15 @@ class AstTransformer(ast.NodeTransformer):
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 
-def mapDynamicValue(value, mapping_dict):
+def mapDynamicValue(value, mapping_dict, use_strftime=False):
     # At the moment, just flat lists and dictionaries are supported.
     # If need arises, recursive parsing of the lists and dictionaries will be added.
     if isinstance(value, list):
         try:
-            mapped_values = [v % mapping_dict for v in value]
+            if use_strftime:
+                mapped_values = [datetime.datetime.utcnow().strftime(v) % mapping_dict for v in value]
+            else:
+                mapped_values = [v % mapping_dict for v in value]
             return mapped_values
         except KeyError:
             return False
@@ -134,8 +136,12 @@ def mapDynamicValue(value, mapping_dict):
             return False
     elif isinstance(value, dict):
         try:
-            mapped_keys = [k % mapping_dict for k in value.iterkeys()]
-            mapped_values = [v % mapping_dict for v in value.itervalues()]
+            if use_strftime:
+                mapped_keys = [datetime.datetime.utcnow().strftime(k) % mapping_dict for k in value.iterkeys()]
+                mapped_values = [datetime.datetime.utcnow().strftime(v) % mapping_dict for v in value.itervalues()]
+            else:
+                mapped_keys = [k % mapping_dict for k in value.iterkeys()]
+                mapped_values = [v % mapping_dict for v in value.itervalues()]
             return dict(zip(mapped_keys, mapped_values))
         except KeyError:
             return False
@@ -145,7 +151,10 @@ def mapDynamicValue(value, mapping_dict):
             return False
     elif isinstance(value, basestring):
         try:
-            return value % mapping_dict
+            if use_strftime:
+                return datetime.datetime.utcnow().strftime(value) % mapping_dict
+            else:
+                return value % mapping_dict
         except KeyError:
             return False
         except ValueError:

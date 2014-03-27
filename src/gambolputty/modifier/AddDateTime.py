@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
+import Utils
 import BaseModule
 from Decorators import ModuleDocstringParser
-import pprint
+
 
 
 @ModuleDocstringParser
@@ -22,6 +23,11 @@ class AddDateTime(BaseModule.BaseModule):
     module_type = "modifier"
     """Set module type"""
 
+    def configure(self, configuration):
+        # Call parent configure method
+        BaseModule.BaseModule.configure(self, configuration)
+        self.format = self.getConfigurationValue('format')
+
     def handleEvent(self, event):
-        event[self.getConfigurationValue('target_field', event)] = datetime.datetime.utcnow().strftime(self.getConfigurationValue('format', event))
+        event[self.getConfigurationValue('target_field', event)] = Utils.mapDynamicValue(datetime.datetime.utcnow().strftime(self.format), event)
         yield event
