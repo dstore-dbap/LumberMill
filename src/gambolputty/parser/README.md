@@ -124,6 +124,30 @@ Configuration template:
         receivers:
           - NextHandler
 
+#####UserAgentParser
+Parse http user agent string
+
+A string like:
+
+    "Mozilla/5.0 (Linux; U; Android 2.3.5; en-in; HTC_DesireS_S510e Build/GRJ90) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1"
+
+will produce this dictionary:
+
+    {'dist': {'version': '2.3.5', 'name': 'Android'},
+     'os': {'name': 'Linux'},
+     'browser': {'version': '4.0', 'name': 'Safari'}}
+
+source_fields:  Input field to parse.
+target_field: field to update with parsed info fields.
+
+    Configuration template:
+
+    - LineParser:
+        source_fields:               # <type: string||list; is: required>
+        target_field:                # <default: 'user_agent_info'; type:string; is: optional>
+        receivers:
+          - NextHandler
+
 #####SyslogPrivalParser
 
 It will parse the source field in the event dictionary for the default severity
