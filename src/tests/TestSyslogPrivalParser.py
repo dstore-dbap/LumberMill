@@ -15,7 +15,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         errors = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(errors)
-        data = Utils.getDefaultEventDict({'syslog_prival': '<13>', 'data': 'This is an ex parrot!'})
+        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == 5 )
@@ -28,7 +28,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         errors = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(errors)
-        data = Utils.getDefaultEventDict({'syslog_prival': '<13>', 'data': 'This is an ex parrot!'})
+        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == "Notice" )
@@ -43,7 +43,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         errors = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(errors)
-        data = Utils.getDefaultEventDict({'syslog_prival': '<13>', 'data': 'This is an ex parrot!'})
+        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == "DeadParrotException" )

@@ -13,7 +13,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testAddGeoInfoForFirstField(self):
         self.test_object.configure({'source_fields': ['f1'],
-                                    'geoip_dat_path': '../exampleData/GeoIP.dat',
+                                    'geoip_dat_path': '../../exampleData/GeoIP.dat',
                                     'target': 'geoip',
                                     'geo_info_fields': ['country_code']})
         result = self.conf_validator.validateModuleInstance(self.test_object)
@@ -24,7 +24,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
         
     def testAddGeoInfo(self):
         self.test_object.configure({'source_fields': ['f1','f2'],
-                                    'geoip_dat_path': '../exampleData/GeoIP.dat',
+                                    'geoip_dat_path': '../../exampleData/GeoIP.dat',
                                     'target': 'geoip',
                                     'geo_info_fields': ['country_code']})
         result = self.conf_validator.validateModuleInstance(self.test_object)
@@ -34,7 +34,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertEqual(event['geoip']['country_code'], 'US')
 
     def testAddGeoInfoFromDefaultField(self):
-        self.test_object.configure({'geoip_dat_path': '../exampleData/GeoIP.dat',
+        self.test_object.configure({'geoip_dat_path': '../../exampleData/GeoIP.dat',
                                     'geo_info_fields': ['country_code']})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)

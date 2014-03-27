@@ -3,6 +3,7 @@ import unittest2
 import mock
 import ConfigurationValidator
 import logging
+import logging.config
 import Queue
 import Utils
 
@@ -53,6 +54,7 @@ class MockReceiver():
 class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
+        logging.config.fileConfig('../conf/logger.conf')
         self.conf_validator = ConfigurationValidator.ConfigurationValidator()
         self.receiver = MockReceiver()
         test_object.logger.addHandler(logging.StreamHandler())
@@ -142,4 +144,4 @@ class ModuleBaseTestCase(unittest2.TestCase):
     """
 
     def tearDown(self):
-        self.test_object.shutDown()
+        self.test_object.shutDown(silent=True)

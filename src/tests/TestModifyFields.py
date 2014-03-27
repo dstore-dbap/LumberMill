@@ -89,7 +89,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testCastToInteger(self):
         self.default_dict['castable'] = '3'
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
-        self.test_object.configure({'action': 'castToInteger',
+        self.test_object.configure({'action': 'cast_to_int',
                                     'source_fields': ['castable','non-castable', 'not-existing']})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == 3)
@@ -98,7 +98,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testCastToFloat(self):
         self.default_dict['castable'] = '3.0'
         self.default_dict['non-castable'] = 'Three shall be the number thou shalt count, and the number of the counting shall be three.'
-        self.test_object.configure({'action': 'castToFloat',
+        self.test_object.configure({'action': 'cast_to_float',
                                     'source_fields': ['castable','non-castable', 'not-existing']})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == 3.0)
@@ -106,14 +106,14 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testCastToString(self):
         self.default_dict['castable'] = 3.1415
-        self.test_object.configure({'action': 'castToString',
+        self.test_object.configure({'action': 'cast_to_str',
                                     'source_fields': ['castable', 'not-existing']})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == "3.1415")
 
     def testCastToBoolean(self):
         self.default_dict['castable'] = 'True'
-        self.test_object.configure({'action': 'castToBoolean',
+        self.test_object.configure({'action': 'cast_to_bool',
                                     'source_fields': ['castable', 'not-existing']})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('castable' in event and event['castable'] == True)
@@ -121,17 +121,16 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testReplaceFieldValueWithMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me']})
-        expected = Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = Utils.getDefaultEventDict({'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        self.test_object.handleEvent(Utils.getDefaultEventDict({'hash_me': 'Nobody inspects the spammish repetition'}))
-        for event in self.receiver.getEvent():
+        expected = Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testSha1Hash(self):
@@ -143,11 +142,12 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
-    def testAnonymize(self):
+    def testAnonymizeMd5(self):
         self.test_object.configure({'action': 'anonymize',
-                                    'source_fields': ['anon_me']})
-        expected = Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
+                                    'source_fields': ['anon_me'],
+                                    'algorithm': 'md5'})
+        expected = Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'gambolputty': {'event_id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
 

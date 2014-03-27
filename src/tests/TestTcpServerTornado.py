@@ -1,4 +1,3 @@
-import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import Utils
@@ -18,6 +17,7 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
+        self.test_object.start_ioloop = True
         self.test_object.start()
         # Give server process time to startup.
         time.sleep(.1)
@@ -30,27 +30,29 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
             connection_succeeded = True
         except:
             etype, evalue, etb = sys.exc_info()
-            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ( 'localhost',
-                                                                            self.test_object.getConfigurationValue("port"), etype, evalue)
+            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ( 'localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val = Utils.getDefaultEventDict({'gambolputty': {'source_module': 'TcpServerTornado'}, 'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val = Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val.pop('gambolputty')
         event = False
         time.sleep(.1)
         for event in self.receiver.getEvent():
+            event.pop('gambolputty')
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event != False)
 
     def testTlsTcpConnection(self):
         self.test_object.configure({'tls': True,
-                                    'key': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.key',
-                                    'cert': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.crt',
+                                    'key': '../../exampleData/gambolputty_ca.key',
+                                    'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
+        self.test_object.start_ioloop = True
         self.test_object.start()
         # Give server process time to startup.
-        time.sleep(.1)
+        time.sleep(1)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
@@ -65,14 +67,16 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
                                                                             self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val =  Utils.getDefaultEventDict({'gambolputty': {'source_module': 'TcpServerTornado'}, 'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val =  Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val.pop('gambolputty')
         event = False
         time.sleep(.1)
         for event in self.receiver.getEvent():
+            event.pop('gambolputty')
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event != False)
 
     def tearDown(self):
-        self.test_object.shutDown()
+        self.test_object.shutDown(silent=True)
         # Give server process some time to shut down.
         time.sleep(1)

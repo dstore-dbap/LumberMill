@@ -1,4 +1,3 @@
-import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import Utils
@@ -33,16 +32,18 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
         time.sleep(.1)
-        expected_ret_val = Utils.getDefaultEventDict({'gambolputty': {'source_module': 'TcpServerThreaded'}, 'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val = Utils.getDefaultEventDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val.pop('gambolputty')
         event = False
         for event in self.receiver.getEvent():
+            event.pop('gambolputty')
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event != False)
 
     def testTlsTcpConnection(self):
         self.test_object.configure({'tls': True,
-                                    'key': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.key',
-                                    'cert': '/Volumes/bputtmann/public_html/GambolPutty/src/exampleData/gambolputty_ca.crt',
+                                    'key': '../../exampleData/gambolputty_ca.key',
+                                    'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
@@ -64,12 +65,14 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.gp.shutDown()
         # Give server some time to shut socket down.
         time.sleep(.1)
-        expected_ret_val =  Utils.getDefaultEventDict({'gambolputty': {'source_module': 'TcpServerThreaded'}, 'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val = Utils.getDefaultEventDict({'received_from': '127.0.0.1', 'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val.pop('gambolputty')
         event = False
         for event in self.receiver.getEvent():
+            event.pop('gambolputty')
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event != False)
 
     def tearDown(self):
-        self.test_object.shutDown()
+        self.test_object.shutDown(silent=True)
         time.sleep(1)

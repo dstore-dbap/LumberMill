@@ -5,7 +5,6 @@ import mock
 import socket
 import ModuleBaseTestCase
 import UnixSocket
-import Utils
 
 class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -13,10 +12,14 @@ class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
         super(TestUnixSocket, self).setUp(UnixSocket.UnixSocket(gp=mock.Mock()))
 
     def testUnixSocket(self):
+        try:
+            os.remove('/tmp/test.sock')
+        except OSError:
+            pass
         self.assertFalse(os.path.exists('/tmp/test.sock'))
         self.test_object.configure({'path_to_socket': '/tmp/test.sock'})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        errors = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(errors)
         self.test_object.start()
         time.sleep(.1)
         self.assertTrue(os.path.exists('/tmp/test.sock'))
