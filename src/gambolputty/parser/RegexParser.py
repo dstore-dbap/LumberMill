@@ -8,7 +8,7 @@ import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class RegexParser(BaseThreadedModule.BaseThreadedModule):
+class RegexParser(BaseModule.BaseModule):
     """
     Parse a string by named regular expressions.
 
@@ -33,7 +33,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.source_field = self.getConfigurationValue('source_field')

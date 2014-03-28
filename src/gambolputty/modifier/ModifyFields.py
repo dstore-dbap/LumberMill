@@ -563,8 +563,5 @@ class ModifyFields(BaseModule.BaseModule):
             try:
                 event[target_fieldname] = self.hash_func("%s%s" % (self.salt, event[field]))
             except:
-                #pass
-                etype, evalue, etb = sys.exc_info()
-                print "%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC)
-                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                pass
         return event

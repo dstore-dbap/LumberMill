@@ -36,7 +36,7 @@ class ExecPython(BaseModule.BaseModule):
 
     module_type = "misc"
     """Set module type"""
-    can_run_parallel = True
+    can_run_parallel = False
 
     def configure(self, configuration):
         # Call parent configure method
