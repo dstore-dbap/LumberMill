@@ -213,10 +213,10 @@ Configuration templates:
         receivers:
           - NextModule
 
-    # Merge source fields to target field as string.
+    # Merge source field to target field as string.
     - ModifyFields:
         action: join                                # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
+        source_field:                               # <type: string; is: required>
         target_field:                               # <type: string; is: required>
         separator:                                  # <default: ","; type: string; is: optional>
         receivers:

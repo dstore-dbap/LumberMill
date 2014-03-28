@@ -110,10 +110,10 @@ class ModifyFields(BaseModule.BaseModule):
         receivers:
           - NextModule
 
-    # Merge source fields to target field as string.
+    # Merge source field to target field as string.
     - ModifyFields:
         action: join                                # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
+        source_field:                               # <type: string; is: required>
         target_field:                               # <type: string; is: required>
         separator:                                  # <default: ","; type: string; is: optional>
         receivers:
@@ -456,7 +456,7 @@ class ModifyFields(BaseModule.BaseModule):
 
     def join(self, event):
         """
-        Join source fields to target field as string.
+        Join source field to target field as string.
 
         @param event: dictionary
         @return: event: dictionary
