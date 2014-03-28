@@ -250,7 +250,10 @@ class KeyDotNotationDict(dict):
                 key = int(key)
             return dict_or_list.__getitem__(key)
         current_key, remaining_keys = key.split('.', 1)
-        dict_or_list = dict_or_list.__getitem__(current_key)
+        try:
+            dict_or_list = dict_or_list.__getitem__(current_key)
+        except TypeError:
+            dict_or_list = dict_or_list.__getitem__(int(current_key))
         return self.__getitem__(remaining_keys, dict_or_list)
 
     def __setitem__(self, key, value, dict_or_list=None):
