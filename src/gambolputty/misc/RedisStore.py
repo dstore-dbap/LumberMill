@@ -133,9 +133,6 @@ class RedisStore(BaseModule.BaseModule):
     def getLock(self, name, timeout=None, sleep=0.1):
         return self.client.lock(name, timeout, sleep)
 
-    def setValue(self, key, value, ttl=0, pickle=True):
-        self.set(key, value, ttl=0, pickle=True)
-
     def set(self, key, value, ttl=0, pickle=True):
         if pickle is True:
             try:
@@ -170,9 +167,6 @@ class RedisStore(BaseModule.BaseModule):
             else:
                 pipe.set(value['key'], value['value'])
         pipe.execute()
-
-    def getValue(self, key, unpickle=True):
-        self.get(key, unpickle=True)
 
     def get(self, key, unpickle=True):
         value = self.client.get(key)

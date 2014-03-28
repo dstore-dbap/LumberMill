@@ -17,7 +17,7 @@ class Facet(BaseModule.BaseModule):
     The event emitted by this module will be of type: "facet" and will have "facet_field",
     "facet_count", "facets" and "other_event_fields" fields set.
 
-    This module supports the storage of the facet info in an redis db. If redis-client is set,
+    This module supports the storage of the facet info in an redis db. If redis_store is set,
     it will first try to retrieve the facet info from redis via the key setting.
 
     Configuration example:
@@ -54,7 +54,7 @@ class Facet(BaseModule.BaseModule):
         self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
 
     def _getFacetInfoRedis(self, key):
-        facet_info = self.redis_store.getValue(key)
+        facet_info = self.redis_store.get(key)
         if not facet_info:
             facet_info = {'other_event_fields': {}, 'facets': []}
         return facet_info
@@ -73,7 +73,7 @@ class Facet(BaseModule.BaseModule):
 
     def _setFacetInfoRedis(self, key, facet_info):
         try:
-            self.redis_store.setValue(key, facet_info, self.getConfigurationValue('redis_ttl'))
+            self.redis_store.set(key, facet_info, self.getConfigurationValue('redis_ttl'))
             if key not in Facet.redis_keys:
                 Facet.redis_keys.append(key)
         except:
@@ -100,12 +100,12 @@ class Facet(BaseModule.BaseModule):
 
     def getEvaluateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
-        def evaluateFacets(self):
+        def evaluateFacets():
             if self.redis_store:
                 for key in Facet.redis_keys:
                     self.sendFacetEventToReceivers(self._getFacetInfoRedis(key))
                     # Clear redis items
-                    self.redis_store.redis_client.delete(key)
+                    self.redis_store.client.delete(key)
                 Facet.redis_keys = []
                 return
             # Just internal facet data.
@@ -136,7 +136,6 @@ class Facet(BaseModule.BaseModule):
         key = self.getConfigurationValue('group_by', event)
         if not key:
             self.logger.warning("%sCould not store facet data in redis. group_by value %s could not be generated.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
-            pprint.pprint(event)
             yield event
             return
         key = "FacetValues:%s" % key
