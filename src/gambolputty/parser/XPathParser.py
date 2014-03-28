@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 from lxml import etree
 import sys
 import BaseThreadedModule
@@ -31,6 +30,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        self.redis_ttl = self.getConfigurationValue('redis_ttl')
         # Get redis client module.
         if self.getConfigurationValue('redis_store'):
             mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
@@ -39,7 +39,13 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
             self.redis_store = None
 
     def castToList(self, value):
-        return [etree.tostring(x) for x in value]
+        list = []
+        for x in value:
+            try:
+                list.append(etree.tostring(x))
+            except TypeError:
+                list.append(str(x))
+        return list
 
     def handleEvent(self, event):
         """
@@ -54,7 +60,8 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
             return
         result = None
         if self.redis_store:
-            result = self.redis_store.getValue(self.getConfigurationValue('redis_key', event))
+            redis_key = self.getConfigurationValue('redis_key', event)
+            result = self.redis_store.get(redis_key)
         if result == None:
             xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
@@ -64,7 +71,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
                 if(type(result) == list):
                     result = self.castToList(result)
                 if self.redis_store:
-                    self.redis_store.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                    self.redis_store.set(redis_key, result, self.redis_ttl)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("%sCould not parse xml doc %s Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, xml_string, etype, evalue, Utils.AnsiColors.ENDC))
