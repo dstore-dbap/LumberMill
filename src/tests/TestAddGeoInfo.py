@@ -2,7 +2,6 @@ import extendSysPath
 import ModuleBaseTestCase
 import unittest
 import mock
-import Queue
 import AddGeoInfo
 import Utils
 

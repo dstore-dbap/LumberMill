@@ -62,7 +62,6 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_ttl': 5})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        return
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})):
-            redis_entry = self.test_object.redis_client.getValue('Johann')
+            redis_entry = rc.get('Johann')
             self.assertEquals(event['Johann Gambolputty'], redis_entry)

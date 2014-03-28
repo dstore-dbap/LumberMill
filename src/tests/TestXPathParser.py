@@ -75,9 +75,9 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="%(category)s"]/title/text()',
                                     'redis_store': 'RedisStore',
                                     'redis_key': '%(category)s',
-                                    'redis_ttl': 5})
+                                    'redis_ttl': 60})
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
-            redis_entry = self.test_object.redis_client.getValue('COOKING')
+            redis_entry = rc.get('COOKING')
             self.assertEquals(event['book_title'], redis_entry)

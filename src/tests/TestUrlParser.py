@@ -1,4 +1,3 @@
-import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import unittest
