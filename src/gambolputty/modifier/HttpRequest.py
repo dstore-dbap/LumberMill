@@ -10,8 +10,8 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     """
     Issue an arbitrary http request and store the response in a configured field.
 
-    This module supports the storage of the responses in an redis db. If redis-client is set,
-    it will first try to retrieve the respone from redis via the key setting.
+    This module supports the storage of the responses in an redis db. If redis_store is set,
+    it will first try to retrieve the response from redis via the key setting.
     If that fails, it will execute the http request and store the result in redis.
 
     Configuration example:
@@ -40,14 +40,6 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
             self.redis_store = None
 
     def handleEvent(self, event):
-        if 'TreeNodeID' not in event:
-            yield event
-            return
-        try:
-            is_int = int(event['TreeNodeID'])
-        except:
-            yield event
-            return
         request_url = self.getConfigurationValue('url', event)
         target_field_name = self.getConfigurationValue('target_field', event)
         if not request_url or not target_field_name:
@@ -55,12 +47,13 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
             return
         result = None
         if self.redis_store:
-            result = self.redis_store.getValue(self.getConfigurationValue('redis_key', event))
+            redis_key = self.getConfigurationValue('redis_key', event)
+            result = self.redis_store.get(redis_key)
         if result == None:
             try:
                 result = self.execRequest(request_url).read()
                 if result and self.redis_store:
-                    self.redis_store.setValue(self.getConfigurationValue('redis_key', event), result, self.getConfigurationValue('redis_ttl'))
+                    self.redis_store.set(redis_key, result, self.getConfigurationValue('redis_ttl'))
             except:
                 yield event
                 return
