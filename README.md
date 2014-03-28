@@ -31,6 +31,7 @@ The different modules can be combined in any order.
 * SyslogPrivalParser, parse the syslog prival value (RFC5424).
 * UrlParser, parse the query string from an url.
 * XPathParser, parse an XML document via an xpath expression.
+* UserAgentParser, parse a http user agent string.
 
 #### Event modifiers
 * MergeEvent, merge multiple events to one single event.
@@ -130,9 +131,9 @@ The following examples refer to this event data:
      'gambolputty': {
                     'event_id': '715bd321b1016a442bf046682722c78e',
                     'event_type': 'httpd_access_log',
-                    received_from: '127.0.0.1',
-                    source_module: 'StdInHandler',
-      }
+                    "received_from": '127.0.0.1',
+                    "source_module": 'StdInHandler',
+      },
 	 'http_status': '200',
 	 'identd': '-',
 	 'remote_ip': '192.168.2.20',
@@ -193,9 +194,9 @@ This should produce the following output:
      'gambolputty': {
                     'event_id': 'c9f9615a935869ccbaf401108070bfb3',
                     'event_type': 'httpd_access_log',
-                    received_from: '127.0.0.1',
-                    source_module: 'StdInHandler',
-      }
+                    "received_from": '127.0.0.1',
+                    "source_module": 'StdInHandler',
+      },
 	 'http_status': '200',
 	 'identd': '-',
 	 'message_type': 'httpd_access_log',
