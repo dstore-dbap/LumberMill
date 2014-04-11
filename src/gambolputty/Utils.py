@@ -163,7 +163,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return False
 
 class Buffer:
-    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):
+    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=500):
         self.flush_size = flush_size
         self.buffer = []
         self.maxsize = maxsize
@@ -204,8 +204,8 @@ class Buffer:
             return
         self.is_storing = True
         try:
-            self.flush_callback(self.buffer)
-            self.buffer = []
+            if self.flush_callback(self.buffer):
+                self.buffer = []
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not flush buffer to %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, self.flush_callback, etype, evalue, AnsiColors.ENDC))
@@ -224,7 +224,12 @@ class BufferedQueue():
         self.buffer.append(payload)
 
     def sendBuffer(self, buffered_data):
-        self.queue.put(buffered_data)
+        try:
+            self.queue.put(buffered_data)
+            return True
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
 
     def get(self, block=True, timeout=None):
         return self.queue.get(block, timeout)

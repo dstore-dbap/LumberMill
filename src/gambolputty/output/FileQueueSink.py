@@ -15,8 +15,13 @@ class BufferedFiFoWriteQueue():
         self.buffer.append(payload)
 
     def sendBuffer(self, buffered_data):
-        payload_ser = msgpack.packb(buffered_data)
-        self.queue.push(payload_ser)
+        try:
+            payload_ser = msgpack.packb(buffered_data)
+            self.queue.push(payload_ser)
+            return True
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.flush_callback, etype, evalue, Utils.AnsiColors.ENDC))
 
     def pop(self):
         payload_ser = self.queue.pop()

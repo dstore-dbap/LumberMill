@@ -91,6 +91,7 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 if not event.endswith("\n"):
                     event += "\n"
                 self.connection.send(event)
+                return True
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))

@@ -61,6 +61,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def storeData(self, buffered_data):
         try:
             self.client.rpush(self.list, *buffered_data)
+            return True
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not add event to redis list %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.list, exc_type, exc_value, Utils.AnsiColors.ENDC))

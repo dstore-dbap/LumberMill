@@ -94,17 +94,28 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
 
     def connect(self):
         es = False
-        try:
-            # Connect to es node and round-robin between them.
-            es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
-                                             connection_class=self.connection_class,
-                                             sniff_on_start=True, sniff_timeout=1, maxsize=20,
-                                             use_ssl=self.getConfigurationValue('use_ssl'),
-                                             http_auth=self.getConfigurationValue('http_auth'))
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sNo index servers configured or none could be reached.Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
-            es = False
+        tries = 0
+        while tries < 5 and not es:
+            try:
+                # Connect to es node and round-robin between them.
+                self.logger.info("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
+                                                 connection_class=self.connection_class,
+                                                 sniff_on_start=True, sniff_timeout=1, maxsize=20,
+                                                 use_ssl=self.getConfigurationValue('use_ssl'),
+                                                 http_auth=self.getConfigurationValue('http_auth'))
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("%sConnection to %s failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("nodes"),  etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("%sWaiting %s seconds before retring to connect.%s" % (Utils.AnsiColors.WARNING, (4 + tries), Utils.AnsiColors.ENDC))
+                time.sleep(4 + tries)
+                tries += 1
+                continue
+        if not es:
+            self.logger.error("%sConnection to %s failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
+        else:
+            self.logger.info("%sConnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
         return es
 
     def handleEvent(self, event):
@@ -157,6 +168,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            return True
             #print "Bulk update of %s events took %s." % (len(events), time.time() - started)
         except elasticsearch.exceptions.ConnectionError:
             try:
@@ -169,19 +181,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
             self.logger.debug("Payload: %s" % json_data)
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
-                tries = 0
-                self.es = False
-                while tries < 5 and not self.es:
-                    time.sleep(7)
-                    self.logger.warning("%sLost connection to %s.Trying to reconnect...%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
-                    # Try to reconnect.
-                    self.es = self.connect()
-                    tries += 1
-                if not self.es:
-                    self.logger.error("%sReconnect failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
-                    self.gp.shutDown()
-                else:
-                    self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                self.es = self.connect()
 
     def shutDown(self, silent=False):
         try:

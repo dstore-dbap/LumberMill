@@ -103,6 +103,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 fh = open(path, mode)
                 fh.write(lines)
                 fh.close()
+                return True
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error('%sCould no write event data to %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))

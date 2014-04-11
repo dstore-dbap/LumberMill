@@ -166,7 +166,13 @@ class RedisStore(BaseModule.BaseModule):
                 pipe.setex(value['key'], value['ttl'], value['value'])
             else:
                 pipe.set(value['key'], value['value'])
-        pipe.execute()
+        try:
+            pipe.execute()
+            return True
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+
 
     def get(self, key, unpickle=True):
         value = self.client.get(key)

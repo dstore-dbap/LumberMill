@@ -67,6 +67,7 @@ class MergeEvent(BaseModule.BaseModule):
     def sendMergedEvent(self, events):
         if len(events) == 1:
             self.sendEvent(events[0])
+            return True
         else:
             merged_event_data = ""
             for event in events:
@@ -75,3 +76,4 @@ class MergeEvent(BaseModule.BaseModule):
             received_from = event["gambolputty"].get("received_from", None)
             merged_event = Utils.getDefaultEventDict({"data": merged_event_data}, caller_class_name=caller_class_name, received_from=received_from)
             self.sendEvent(merged_event)
+            return True
