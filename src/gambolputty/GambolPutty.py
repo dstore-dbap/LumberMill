@@ -301,7 +301,12 @@ class GambolPutty:
             time.sleep(.5)
 
     def restart(self, signum=False, frame=False):
-        self.logger.info("%sRestarting GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        # If a module started a subprocess, the whole gambolputty parent process gets forked.
+        # As a result, the forked gambolputty process will also catch SIGINT||SIGALARM.
+        # Still we know the pid of the original main process.
+        is_forked_process = self.main_process_pid != os.getpid()
+        if not is_forked_process:
+            self.logger.info("%sRestarting GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         self.shutDownModules()
         self.configure()
         self.initModulesFromConfig()
@@ -310,39 +315,59 @@ class GambolPutty:
         self.runModules()
 
     def shutDown(self, signum=False, frame=False):
-        #print self.pid
-        # No need to shut down modules if we are not really running, e.g. when running a configtest.
-        self.alive = False
-        # Stop all timed functions.
-        Utils.TimedFunctionManager.stopTimedFunctions()
         # If a module started a subprocess, the whole gambolputty parent process gets forked.
         # As a result, the forked gambolputty process will also catch SIGINT||SIGALARM.
-        # Still we know the pid of the original main process.
-        is_forked_process = self.main_process_pid != os.getpid()
-        if not is_forked_process:
-            self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        # Still we know the pid of the original main process and ignore SIGINT||SIGALARM in forked processes.
+        if self.main_process_pid != os.getpid():
+            return
+        # Directly exit on a second SIGINT||SIGALARM.
+        if not self.alive:
+            sys.exit(0)
+        self.alive = False
+        self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         self.shutDownModules()
-        if not is_forked_process:
-            self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+        Utils.TimedFunctionManager.stopTimedFunctions()
+        self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         sys.exit(0)
 
     def shutDownModules(self):
+        import tornado.ioloop
+        tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
-            silent = self.main_process_pid != os.getpid()
+            silent=False
             for instance in module_info['instances']:
                 if instance.module_type == "input":
                     instance.shutDown(silent)
-                    silent = True
-        # Give remaining queued events some time to finish.
-        time.sleep(.5)
+                    silent=True
+        # Get all configured queues to check for pending events.
+        module_queues = {}
+        for module_name, module_info in self.modules.iteritems():
+            instance = module_info['instances'][0]
+            if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
+                continue
+            module_queues[module_name] = instance.getInputQueue()
+        if len(module_queues) > 0:
+            wait_loops = 0
+            while wait_loops < 5:
+                wait_loops += 1
+                events_in_queues = 0
+                for module_name, queue in module_queues.iteritems():
+                    events_in_queues += queue.qsize()
+                if events_in_queues > 0:
+                    # Give remaining queued events some time to finish.
+                    if self.main_process_pid == os.getpid():
+                        self.logger.info("%s%s event(s) still in flight. Waiting %s secs. Press ctrl+c again to exit directly.%s" % (Utils.AnsiColors.LIGHTBLUE, events_in_queues, (.5 * wait_loops),Utils.AnsiColors.ENDC))
+                    time.sleep(.5 * wait_loops)
+                    continue
+                break
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
-            silent = self.main_process_pid != os.getpid()
+            silent=False
             for instance in module_info['instances']:
                 if instance.module_type != "input":
                     instance.shutDown(silent)
-                    silent = True
+                    silent=True
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest'

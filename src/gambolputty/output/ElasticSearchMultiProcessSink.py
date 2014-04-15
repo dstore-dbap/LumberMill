@@ -98,10 +98,13 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         while tries < 5 and not es:
             try:
                 # Connect to es node and round-robin between them.
-                self.logger.info("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                self.logger.debug("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
-                                                 sniff_on_start=True, sniff_timeout=1, maxsize=20,
+                                                 sniff_on_start=True,
+                                                 sniff_on_connection_fail=True,
+                                                 sniff_timeout=10,
+                                                 maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
                                                  http_auth=self.getConfigurationValue('http_auth'))
             except:
@@ -115,7 +118,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             self.logger.error("%sConnection to %s failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
             self.gp.shutDown()
         else:
-            self.logger.info("%sConnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.logger.debug("%sConnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
         return es
 
     def handleEvent(self, event):
@@ -126,7 +129,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         self.buffer.append(publish_data)
         yield None
 
-    def dataToElasticSearchJson(self, index_name, events):
+    def __dataToElasticSearchJson(self, index_name, events):
         """
         Format data for elasticsearch bulk update
         """
@@ -156,6 +159,29 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+        return json_data
+
+    def dataToElasticSearchJson(self, index_name, events):
+        """
+        Format data for elasticsearch bulk update
+        """
+        json_data = []
+        for event in events:
+            event_type = event['event_type'] if 'event_type' in event else 'Unknown'
+            doc_id = self.getConfigurationValue("doc_id", event)
+            if not doc_id:
+                self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
+                continue
+            doc_id = json.dumps(doc_id.strip())
+            if self.ttl:
+                event['_ttl'] = self.ttl
+            header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            json_data.append("\n".join((header, json.dumps(event), "\n")))
+        try:
+            json_data = "".join(json_data)
+        except UnicodeDecodeError:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
         return json_data
 
     def storeData(self, events):

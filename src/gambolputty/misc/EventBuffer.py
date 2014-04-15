@@ -6,6 +6,7 @@ import random
 import BaseModule
 import Utils
 import Decorators
+import sys
 
 @Decorators.ModuleDocstringParser
 class EventBuffer(BaseModule.BaseModule):
@@ -31,6 +32,7 @@ class EventBuffer(BaseModule.BaseModule):
     - EventBuffer:
         backend:            # <default: 'RedisStore'; type: string; is: optional>
         gc_interval:        # <default: 5; type: integer; is: optional>
+        key_prefix:         # <default: "gambolputty:eventbuffer"; type: string; is: optional>
     """
 
     module_type = "stand_alone"
@@ -40,7 +42,7 @@ class EventBuffer(BaseModule.BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
-        self.key_prefix = "gambolputty:eventbuffer"
+        self.key_prefix = self.getConfigurationValue('key_prefix')
         self.key_buffer = {}
         self.flush_interval = self.getConfigurationValue('gc_interval')
         self.requeue_events_done = False
@@ -78,6 +80,8 @@ class EventBuffer(BaseModule.BaseModule):
                 # want any changes made to new_dict to propagate to persistence_backend.
                 Utils.KeyDotNotationDict.persistence_backend.set(key, dict.copy(self), False)
             except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sCould not store event in persistance backend. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
                 pass
         Utils.KeyDotNotationDict.___init___ = Utils.KeyDotNotationDict.__init__
         Utils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit

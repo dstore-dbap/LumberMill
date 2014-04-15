@@ -45,6 +45,10 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
             event = self.input_queue.get(block, timeout)
         except Queue.Empty:
             raise
+        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )

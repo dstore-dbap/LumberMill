@@ -4,6 +4,7 @@ import sys
 import multiprocessing
 import Queue
 import signal
+import time
 import Utils
 import BaseModule
 
@@ -48,11 +49,9 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
             events = self.input_queue.get(block, timeout)
         except Queue.Empty:
             raise
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
             # Keyboard interrupt is catched in GambolPuttys main run method.
             # This will take care to shutdown all running modules.
-            pass
-        except ValueError:
             pass
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()

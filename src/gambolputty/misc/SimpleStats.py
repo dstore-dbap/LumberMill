@@ -16,7 +16,7 @@ class SimpleStats(BaseModule.BaseModule):
         interval:                      # <default: 10; type: integer; is: optional>
         event_type_statistics:         # <default: True; type: boolean; is: optional>
         receive_rate_statistics:       # <default: True; type: boolean; is: optional>
-        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
+        waiting_event_statistics:      # <default: True; type: boolean; is: optional>
         emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
 

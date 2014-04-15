@@ -2,6 +2,7 @@
 import ast
 import datetime
 import copy
+import pprint
 import random
 import time
 import os
@@ -163,7 +164,8 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return False
 
 class Buffer:
-    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=500):
+    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.flush_size = flush_size
         self.buffer = []
         self.maxsize = maxsize
@@ -174,7 +176,6 @@ class Buffer:
         if self.flush_interval:
             self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
         self.is_storing = False
-        self.logger = logging.getLogger(self.__class__.__name__)
 
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
@@ -189,7 +190,7 @@ class Buffer:
         # Wait till a running store is finished to avoid strange race conditions when using this buffer with
         # multiprocessing.
         while self.is_storing:
-            time.sleep(.0001)
+            time.sleep(.00001)
         if len(self.buffer) < self.maxsize:
             self.buffer.append(item)
         else:
@@ -198,27 +199,36 @@ class Buffer:
             self.flush()
 
     def flush(self):
-        if len(self.buffer) == 0:
-            return
-        if self.is_storing:
+        if len(self.buffer) == 0 or self.is_storing:
             return
         self.is_storing = True
+        if self.flush_callback(self.buffer):
+            self.buffer = []
+        self.is_storing = False
+        """
         try:
             if self.flush_callback(self.buffer):
                 self.buffer = []
+        except (KeyboardInterrupt, SystemExit):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not flush buffer to %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, self.flush_callback, etype, evalue, AnsiColors.ENDC))
-        self.is_storing = False
+        finally:
+             self.is_storing = False
+        """
 
     def bufsize(self):
         return len(self.buffer)
 
 class BufferedQueue():
-    def __init__(self, queue, buffersize=100):
+    def __init__(self, queue, buffersize=500):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.queue = queue
         self.buffersize = buffersize
-        self.buffer = Buffer(buffersize, self.sendBuffer, 1)
+        self.buffer = Buffer(buffersize, self.sendBuffer, 5)
 
     def put(self, payload):
         self.buffer.append(payload)
@@ -227,15 +237,19 @@ class BufferedQueue():
         try:
             self.queue.put(buffered_data)
             return True
+        except (KeyboardInterrupt, SystemExit):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, etype, evalue, AnsiColors.ENDC))
 
     def get(self, block=True, timeout=None):
         return self.queue.get(block, timeout)
 
     def qsize(self):
-        return self.buffer.bufsize + self.queue.qsize()
+        return self.buffer.bufsize() + self.queue.qsize()
 
     def __getattr__(self, name):
         return getattr(self.queue, name)
