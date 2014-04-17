@@ -16,7 +16,7 @@ class SimpleStats(BaseModule.BaseModule):
         interval:                      # <default: 10; type: integer; is: optional>
         event_type_statistics:         # <default: True; type: boolean; is: optional>
         receive_rate_statistics:       # <default: True; type: boolean; is: optional>
-        waiting_event_statistics:      # <default: True; type: boolean; is: optional>
+        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
         emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
 
@@ -53,18 +53,18 @@ class SimpleStats(BaseModule.BaseModule):
             event_name = event_type.replace('event_type_', '')
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
             self.stats_collector.resetCounter(event_type)
 
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
-        eps = self.stats_collector.getCounter('eps')
-        if not eps:
-            eps = 0
-        self.stats_collector.resetCounter('eps')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, eps, (eps/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
+        events_received = self.stats_collector.getCounter('events_received')
+        if not events_received:
+            events_received = 0
+        self.stats_collector.resetCounter('events_received')
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
         if self.emit_as_event:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": eps, "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
@@ -85,7 +85,7 @@ class SimpleStats(BaseModule.BaseModule):
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
 
     def handleEvent(self, event):
-        self.stats_collector.incrementCounter('eps')
+        self.stats_collector.incrementCounter('events_received')
         if self.getConfigurationValue('event_type_statistics'):
             try:
                 self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])

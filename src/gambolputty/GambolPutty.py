@@ -3,7 +3,6 @@
 import pprint
 import Utils
 import multiprocessing
-import ConfigurationValidator
 import StatisticCollector as StatisticCollector
 import sys
 import os
@@ -14,7 +13,6 @@ import logging.config
 import threading
 import Queue
 import yaml
-import BaseMultiProcessModule
 
 module_dirs = ['input',
                'parser',
@@ -73,8 +71,8 @@ class GambolPutty:
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
-            queue = multiprocessing.Queue(queue_max_size)
-            queue = Utils.BufferedQueue(queue, mp_queue_buffer_size)
+            queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size))
+            queue = Utils.BufferedQueue(queue)
             return queue
 
     def readConfiguration(self, path_to_config_file):

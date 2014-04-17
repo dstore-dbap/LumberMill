@@ -62,7 +62,7 @@ class Statistics(BaseModule.BaseModule):
             if not last_field_name:
                 last_field_name = field_name
             if field_name != last_field_name:
-                self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "field_name": last_field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "count_per_sec": (field_counts/self.interval), "field_name": last_field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
                 last_field_name = field_name
                 field_counts = {}
                 total_count = 0
@@ -72,7 +72,7 @@ class Statistics(BaseModule.BaseModule):
             total_count += field_count
         # Send remaining.
         if last_field_name:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "field_name": field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "count_per_sec": (field_counts/self.interval), "field_name": field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def run(self):
         timed_func = self.getRunTimedFunctionsFunc()

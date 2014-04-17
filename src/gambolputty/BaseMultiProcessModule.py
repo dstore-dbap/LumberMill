@@ -4,7 +4,7 @@ import sys
 import multiprocessing
 import Queue
 import signal
-import time
+import cPickle as pickle
 import Utils
 import BaseModule
 

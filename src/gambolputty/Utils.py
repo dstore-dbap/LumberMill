@@ -2,7 +2,8 @@
 import ast
 import datetime
 import copy
-import pprint
+import msgpack
+import zmq
 import random
 import time
 import os
@@ -384,3 +385,47 @@ class AnsiColors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
+class ZeroMqMpQueue:
+    """
+    Use ZeroMQ for IPC.
+    This is nearly 3 times faster than the default multiprocessing.Queue.
+
+    send_pyobj and recv_pyobj is not used since it performance is slower than using msgpack for serialization.
+    (A test for a simple dict using send_pyobj et.al performed around 12000 eps, while msgpack and casting to
+    KeyDotNotationDict after unpacking resulted in around 17000 eps)
+    """
+
+    def __init__(self, queue_max_size=20):
+        zmq_context = zmq.Context()
+        self.queue_max_size = queue_max_size
+        self.sender = zmq_context.socket(zmq.PUSH)
+        try:
+            self.sender.setsockopt(zmq.SNDHWM, queue_max_size)
+        except AttributeError:
+            self.sender.setsockopt(zmq.HWM, queue_max_size)
+        self.selected_port = self.sender.bind_to_random_port("tcp://127.0.0.1", min_port=5200, max_port=5300, max_tries=100)
+        self.receiver = None
+
+    def put(self, data):
+        self.sender.send(msgpack.packb(data))
+
+    def get(self, block, timeout):
+        if not self.receiver:
+            zmq_context = zmq.Context()
+            self.receiver = zmq_context.socket(zmq.PULL)
+            try:
+                self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
+            except:
+                self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
+            self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
+        events = msgpack.unpackb(self.receiver.recv())
+        # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
+        for idx,event in enumerate(events):
+            events[idx] = KeyDotNotationDict(event)
+        return events
+
+    def qsize(self):
+        return 0
+
+

@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import Utils
-import BaseMultiProcessModule
+import BaseModule
 from Decorators import ModuleDocstringParser
 import socket
 import time
 
 @ModuleDocstringParser
-class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class GraphiteSink(BaseModule.BaseModule):
     """
     Send metrics to graphite server.
 
@@ -45,7 +44,7 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
         formats:                  # <type: list; is: required>
         store_interval_in_secs:   # <default: 5; type: integer; is: optional>
         batch_size:               # <default: 1; type: integer; is: optional>
-        backlog_size:             # <default: 5000; type: integer; is: optional>
+        backlog_size:             # <default: 50; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -53,7 +52,7 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.formats = self.getConfigurationValue('formats')
         self.connection_data = (self.getConfigurationValue('server'), self.getConfigurationValue('port'))
         self.connection = None
@@ -75,10 +74,9 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
         if not self.connection:
             self.gp.shutDown()
             return
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        #BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
-        pprint.pprint(self)
         for format in self.formats:
             mapped_data = self.mapDynamicValue(format, event)
             if mapped_data:
@@ -115,4 +113,4 @@ class GraphiteSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.connection.close()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        #BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

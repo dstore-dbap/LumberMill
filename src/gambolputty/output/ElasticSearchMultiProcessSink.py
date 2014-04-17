@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import datetime
 import time
@@ -128,38 +129,6 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             publish_data = event
         self.buffer.append(publish_data)
         yield None
-
-    def __dataToElasticSearchJson(self, index_name, events):
-        """
-        Format data for elasticsearch bulk update
-        """
-        if UnicodeBuilder:
-            json_data = UnicodeBuilder()
-        else:
-            json_data = []
-        for event in events:
-            try:
-                event_type = event['event_type']
-            except KeyError:
-                event_type = 'Unknown'
-            doc_id = self.getConfigurationValue("doc_id", event)
-            if not doc_id:
-                self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
-                continue
-            doc_id = json.dumps(doc_id.strip())
-            if self.ttl:
-                event['_ttl'] = self.ttl
-            header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
-            json_data.append("\n".join((header, json.dumps(event), "\n")))
-        if UnicodeBuilder:
-            json_data = json_data.build()
-        else:
-            try:
-                json_data = "".join(json_data)
-            except UnicodeDecodeError:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
-        return json_data
 
     def dataToElasticSearchJson(self, index_name, events):
         """
