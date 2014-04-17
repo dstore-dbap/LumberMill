@@ -5,6 +5,8 @@ Why is it that the world never remembered the name of Johann Gambolputty de von 
 
 A simple log message manager in python. To run GambolPutty you will need Python 2.5+.
 For better performance you should run GambolPutty with pypy. Tested with pypy-2.0.2 and pypy-2.2.1.
+For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance
+with multiprocessing.Queue.
 
 To analyze i.e. log data, this tool offers a simple approach to parse the streams using different modules, the approach being quite similar to the well known logstash.
 
