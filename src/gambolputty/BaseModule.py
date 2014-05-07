@@ -98,7 +98,7 @@ class BaseModule():
             self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, configuration_errors, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
 
-    def getConfigurationValue(self, key, mapping_dict=False):
+    def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and
         takes care of replacing dynamic variables of the pattern e.g. %(field_name)s with the corresponding
@@ -113,9 +113,8 @@ class BaseModule():
         except KeyError:
                 # Try to return a default value for requested setting.
                 try:
-                    if mapping_dict:
-                        return self.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict)
-                        #return self.configuration_metadata[key]['default'] % mapping_dict
+                    if mapping_dict or use_strftime:
+                        return Utils.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict, use_strftime)
                     return self.configuration_metadata[key]['default']
                 except KeyError:
                     self.logger.warning("%sCould not find configuration setting for required setting: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
@@ -126,9 +125,9 @@ class BaseModule():
             return False
         if config_setting['contains_placeholder'] == False or mapping_dict == False:
             return config_setting.get('value')
-        return self.mapDynamicValue(config_setting.get('value'), mapping_dict)
+        return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
-    def mapDynamicValue(self, value, mapping_dict):
+    def __mapDynamicValue(self, value, mapping_dict):
         return Utils.mapDynamicValue(value, mapping_dict)
 
     def shutDown(self, silent=False):
