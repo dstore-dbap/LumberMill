@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import datetime
 import time
@@ -34,23 +33,25 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
-    nodes: configures the elasticsearch nodes.
-    connection_type: one of: 'thrift', 'http'
-    http_auth: 'user:password'
-    use_ssl: one of: True, False
-    index_prefix: es index prefix to use, will be appended with '%Y.%m.%d'.
-    index_name: sets a fixed name for the es index.
-    doc_id: sets the es document id for the committed event data.
-    ttl: When set, documents will be automatically deleted after ttl expired.
-         Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
-         This feature needs to be enabled for the index.
-         @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
-    consistency: one of: 'one', 'quorum', 'all'
-    replication: one of: 'sync', 'async'.
-    store_interval_in_secs: sending data to es in x seconds intervals.
-    batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
-    backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+    format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.
+                If not set the whole event dict is send.
+    nodes:      Configures the elasticsearch nodes.
+    connection_type:    One of: 'thrift', 'http'
+    http_auth:  'user:password'
+    use_ssl:    One of: True, False
+    index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
+    doc_id:     Sets the es document id for the committed event data.
+    routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
+                Timepatterns like %Y.%m.%d are allowed here.
+    ttl:        When set, documents will be automatically deleted after ttl expired.
+                Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+                This feature needs to be enabled for the index.
+                @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
+    consistency:    One of: 'one', 'quorum', 'all'
+    replication:    One of: 'sync', 'async'.
+    store_interval_in_secs:     Send data to es in x seconds intervals.
+    batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
+    backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
 
     Configuration example:
 
@@ -60,15 +61,15 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
-        index_prefix:                             # <default: 'gambolputty-'; type: string; is: required if index_name is False else optional>
-        index_name:                               # <default: ""; type: string; is: required if index_prefix is False else optional>
+        index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
         doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
+        routing:                                  # <default: None; type: None||string; is: optional>
         ttl:                                      # <default: None; type: None||string; is: optional>
         consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
         replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
-        backlog_size:                             # <default: 5000; type: integer; is: optional>
+        backlog_size:                             # <default: 1000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -81,6 +82,9 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
+        self.index_name_pattern = self.getConfigurationValue("index_name")
+        self.routing_pattern = self.getConfigurationValue("routing")
+        self.doc_id_pattern = self.getConfigurationValue("doc_id")
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
@@ -137,14 +141,18 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         json_data = []
         for event in events:
             event_type = event['event_type'] if 'event_type' in event else 'Unknown'
-            doc_id = self.getConfigurationValue("doc_id", event)
+            doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
+            routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
                 continue
             doc_id = json.dumps(doc_id.strip())
             if self.ttl:
                 event['_ttl'] = self.ttl
-            header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            if not self.routing_pattern:
+                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            else:
+                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
             json_data.append("\n".join((header, json.dumps(event), "\n")))
         try:
             json_data = "".join(json_data)
@@ -154,10 +162,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         return json_data
 
     def storeData(self, events):
-        if self.getConfigurationValue("index_name"):
-            index_name = self.getConfigurationValue("index_name")
-        else:
-            index_name = "%s%s" % (self.getConfigurationValue("index_prefix"), datetime.date.today().strftime('%Y.%m.%d'))
+        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True)
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             #started = time.time()
