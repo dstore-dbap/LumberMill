@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
 import Utils
 import multiprocessing
-import StatisticCollector as StatisticCollector
+import StatisticCollector
 import sys
 import os
 import signal
@@ -68,6 +67,9 @@ class GambolPutty:
 
     def produceQueue(self, module_instance, queue_max_size=20, mp_queue_buffer_size=100):
         """Returns a queue with queue_max_size"""
+        queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size))
+        queue = Utils.BufferedQueue(queue)
+        return queue
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
@@ -110,7 +112,7 @@ class GambolPutty:
             if 'GambolPutty' in configuration:
                 gp_conf = self.configuration.pop(idx)
                 break
-        self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
+        self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else 1
         self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
         self.default_mp_queue_buffer_size = configuration['default_queue_buffer_size'] if 'default_queue_buffer_size' in gp_conf else 100
 
@@ -124,7 +126,7 @@ class GambolPutty:
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
-            instance = module_class(self, StatisticCollector.StatisticCollector())
+            instance = module_class(self, StatisticCollector.StatisticCollector()) #MultiProcess
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
@@ -203,8 +205,8 @@ class GambolPutty:
         module_loop_buffer = []
         for module_name, module_info in self.modules.iteritems():
             # Iterate over all instances
-            instance = module_info['instances'][0]
-            for receiver_data in instance.getConfigurationValue('receivers'):
+            sender_instance = module_info['instances'][0]
+            for receiver_data in sender_instance.getConfigurationValue('receivers'):
                 if not receiver_data:
                     break
                 if isinstance(receiver_data, dict):
@@ -216,13 +218,11 @@ class GambolPutty:
                     self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
                     continue
                 for receiver_instance in self.modules[receiver_name]['instances']:
-                    # If the receiver is a thread or a process, produce the needed queue.
-                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
+                    # If the sending module can not be run in parallel, we need to add a queue to connect it to all receivers in all processes.
+                    # If the receiver is threaded we also need to use a queue for communication.
+                    if not sender_instance.can_run_parallel or isinstance(receiver_instance, threading.Thread):
                         if receiver_name not in queues:
-                            if isinstance(receiver_instance, threading.Thread):
-                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'))
-                            else:
-                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('mp_queue_buffer_size'))
+                            queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('queue_buffer_size'))
                         try:
                             if not receiver_instance.getInputQueue():
                                 receiver_instance.setInputQueue(queues[receiver_name])
@@ -230,9 +230,9 @@ class GambolPutty:
                             self.logger.error("%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
                     # Build a node structure used for the loop test.
                     try:
-                        node = (node for node in module_loop_buffer if node.module == instance).next()
+                        node = (node for node in module_loop_buffer if node.module == sender_instance).next()
                     except:
-                        node = Node(instance)
+                        node = Node(sender_instance)
                         module_loop_buffer.append(node)
                     try:
                         receiver_node = (node for node in module_loop_buffer if node.module == receiver_instance).next()
@@ -240,12 +240,12 @@ class GambolPutty:
                         receiver_node = Node(receiver_instance)
                         module_loop_buffer.append(receiver_node)
                     node.addChild(receiver_node)
-                for instance in module_info['instances']:
+                for sender_instance in module_info['instances']:
                     # Add the receiver to senders. If the receiver is a thread or multiprocess, they share the same queue.
-                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
-                        instance.addReceiver(receiver_name, queues[receiver_name])
+                    if not sender_instance.can_run_parallel or isinstance(receiver_instance, threading.Thread):
+                        sender_instance.addReceiver(receiver_name, queues[receiver_name])
                     else:
-                        instance.addReceiver(receiver_name, receiver_instance)
+                        sender_instance.addReceiver(receiver_name, receiver_instance)
         # Check if the configuration produces a loop.
         # This code can definitely be made more efficient...  
         for node in module_loop_buffer:
@@ -267,20 +267,22 @@ class GambolPutty:
         Start the configured modules
         """
         # All modules are completely configured, call modules run method if it exists.
+        is_forked_process = self.main_process_pid != os.getpid()
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            if len(module_info['instances']) > 1:
-                self.logger.info("%sUsing module %s, pool size: %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, len(module_info['instances']), Utils.AnsiColors.ENDC))
-            else:
+            if not is_forked_process:
                 self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
             for instance in module_info['instances']:
                 name = module_info['id'] if 'id' in module_info else module_name
                 try:
-                    if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
-                        # The default 'start' method of threading.Thread will call the 'run' method of the module.
-                        instance.start()
-                    elif getattr(instance, "run", None):
-                        # Call 'run' method directly.
+                    if instance.getInputQueue() or isinstance(instance, threading.Thread):
                         instance.run()
+                    #
+                    #    # The default 'start' method of threading.Thread will call the 'run' method of the module.
+                    #    if not is_forked_process or is_forked_process and instance.can_run_parallel:
+                    #        print "Calling run for %s" % (module_name)
+                    #        instance.start()
+                    #elif getattr(instance, "run", None):
+                        # Call 'run' method directly.
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
@@ -406,6 +408,11 @@ if "__main__" == __name__:
     if run_configtest:
         logger.info("%sConfigurationtest for %s finished.%s" % (Utils.AnsiColors.LIGHTBLUE, path_to_config_file, Utils.AnsiColors.ENDC))
         sys.exit(0)
+    for process in range(0):
+        print "Starting process %d" % process
+        parallel_process = multiprocessing.Process(target=gp.run)
+        parallel_process.daemon = True
+        parallel_process.start()
     gp.run()
 
 

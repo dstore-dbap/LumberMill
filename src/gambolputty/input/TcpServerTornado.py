@@ -150,9 +150,9 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
                 ssl_options = { 'certfile': self.getConfigurationValue("cert"),
                                 'keyfile': self.getConfigurationValue("key")}
             self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
-            self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
             for fd, server_socket in self.server._sockets.iteritems():
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),

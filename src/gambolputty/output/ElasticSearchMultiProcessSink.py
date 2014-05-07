@@ -4,6 +4,7 @@ import sys
 import datetime
 import time
 import elasticsearch
+import BaseModule
 import BaseMultiProcessModule
 import Utils
 import Decorators
@@ -27,7 +28,7 @@ else:
         raise ImportError
 
 @Decorators.ModuleDocstringParser
-class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class ElasticSearchMultiProcessSink(BaseModule.BaseModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -76,11 +77,13 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        #BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
@@ -89,7 +92,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             self.gp.shutDown()
             return
 
-    def run(self):
+    def __run(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
@@ -183,4 +186,4 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             self.buffer.flush()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        #BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

@@ -1,6 +1,7 @@
 import Utils
 import BaseModule
 import Decorators
+import os
 
 @Decorators.ModuleDocstringParser
 class SimpleStats(BaseModule.BaseModule):
@@ -14,8 +15,8 @@ class SimpleStats(BaseModule.BaseModule):
 
     - SimpleStats:
         interval:                      # <default: 10; type: integer; is: optional>
-        event_type_statistics:         # <default: True; type: boolean; is: optional>
         receive_rate_statistics:       # <default: True; type: boolean; is: optional>
+        event_type_statistics:         # <default: True; type: boolean; is: optional>
         waiting_event_statistics:      # <default: False; type: boolean; is: optional>
         emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
@@ -23,11 +24,15 @@ class SimpleStats(BaseModule.BaseModule):
     module_type = "misc"
     """Set module type"""
 
+    can_run_parallel = False
+
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
+        self.event_type_statistics = self.getConfigurationValue('event_type_statistics')
+        self.receive_rate_statistics = self.getConfigurationValue('receive_rate_statistics')
         self.module_queues = {}
 
     def getRunTimedFunctionsFunc(self):
@@ -47,9 +52,11 @@ class SimpleStats(BaseModule.BaseModule):
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
+        #for event_type, count in sorted(self.stats_collector.getAllCounters().iteritems()):
+        for event_type in sorted(self.stats_collector.getAllCounters().keys()):
             if not event_type.startswith('event_type_'):
                 continue
+            count = self.stats_collector.getCounter(event_type)
             event_name = event_type.replace('event_type_', '')
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             if self.emit_as_event:
@@ -62,7 +69,7 @@ class SimpleStats(BaseModule.BaseModule):
         if not events_received:
             events_received = 0
         self.stats_collector.resetCounter('events_received')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
+        self.logger.info("%s::Received events in %ss: %s%s (%s/eps)%s" % (os.getpid(), self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
         if self.emit_as_event:
             self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
@@ -82,11 +89,14 @@ class SimpleStats(BaseModule.BaseModule):
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
-        Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
+        if self.isExecutedInMainProcess():
+            Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
+        BaseModule.BaseModule.run(self)
 
     def handleEvent(self, event):
-        self.stats_collector.incrementCounter('events_received')
-        if self.getConfigurationValue('event_type_statistics'):
+        if self.receive_rate_statistics:
+            self.stats_collector.incrementCounter('events_received')
+        if self.event_type_statistics:
             try:
                 self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])
             except:

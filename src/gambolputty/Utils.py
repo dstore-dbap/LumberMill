@@ -4,6 +4,7 @@ import datetime
 import copy
 import msgpack
 import zmq
+from zmq.eventloop import ioloop, zmqstream
 import random
 import time
 import os
@@ -406,24 +407,27 @@ class ZeroMqMpQueue:
             self.sender.setsockopt(zmq.HWM, queue_max_size)
         self.selected_port = self.sender.bind_to_random_port("tcp://127.0.0.1", min_port=5200, max_port=5300, max_tries=100)
         self.receiver = None
+        zmq.eventloop.ioloop.install()
 
     def put(self, data):
         self.sender.send(msgpack.packb(data))
 
-    def get(self, block, timeout):
-        if not self.receiver:
-            zmq_context = zmq.Context()
-            self.receiver = zmq_context.socket(zmq.PULL)
-            try:
-                self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
-            except:
-                self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
-            self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
-        events = msgpack.unpackb(self.receiver.recv())
-        # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
-        for idx,event in enumerate(events):
-            events[idx] = KeyDotNotationDict(event)
-        return events
+    def onReceive(self, callback):
+        self.callback = callback
+        zmq_context = zmq.Context()
+        self.receiver = zmq_context.socket(zmq.PULL)
+        try:
+            self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
+        except:
+            self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
+        self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
+        self.receiver = zmqstream.ZMQStream(self.receiver)
+        self.receiver.on_recv(callback)
+
+    def unpackData(self, data):
+        data = msgpack.unpackb(data)
+        print "%s" % data
+        self.callback(data)
 
     def qsize(self):
         return 0
