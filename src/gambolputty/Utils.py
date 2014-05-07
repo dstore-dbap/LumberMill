@@ -64,7 +64,7 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
-    default_dict = KeyDotNotationDict({ "event_type": event_type,
+    default_dict = { "event_type": event_type,
                                         "data": "",
                                          "gambolputty": {
                                             'event_type': event_type,
@@ -72,8 +72,9 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
                                             'source_module': caller_class_name,
                                             'received_from': received_from,
                                          }
-                                    })
+                                    }
     default_dict.update(dict)
+    default_dict = KeyDotNotationDict(default_dict)
     return default_dict
 
 def compileStringToConditionalObject(condition_as_string, mapping):
