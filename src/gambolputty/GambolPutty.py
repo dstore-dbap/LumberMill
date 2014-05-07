@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
 import Utils
 import multiprocessing
 import StatisticCollector as StatisticCollector
@@ -71,8 +70,10 @@ class GambolPutty:
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
-            queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size))
-            queue = Utils.BufferedQueue(queue)
+            if Utils.zmq_avaiable:
+                queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size))
+            else:
+                queue = Utils.BufferedQueue(multiprocessing.Queue(queue_max_size))
             return queue
 
     def readConfiguration(self, path_to_config_file):
