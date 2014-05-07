@@ -3,7 +3,6 @@ import ast
 import datetime
 import copy
 import msgpack
-import zmq
 import random
 import time
 import os
@@ -13,6 +12,12 @@ import logging
 import __builtin__
 import signal
 import Decorators
+
+try:
+    import zmq
+    zmq_avaiable = True
+except ImportError:
+    zmq_avaiable = False
 
 try:
     import __pypy__
@@ -121,7 +126,7 @@ class AstTransformer(ast.NodeTransformer):
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 
-def mapDynamicValue(value, mapping_dict, use_strftime=False):
+def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
     # At the moment, just flat lists and dictionaries are supported.
     # If need arises, recursive parsing of the lists and dictionaries will be added.
     if isinstance(value, list):
@@ -133,7 +138,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return mapped_values
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -148,7 +153,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return dict(zip(mapped_keys, mapped_values))
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -160,7 +165,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
                 return value % mapping_dict
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, value, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -189,15 +194,14 @@ class Buffer:
         self.put(item)
 
     def put(self, item):
-        # Wait till a running store is finished to avoid strange race conditions when using this buffer with
-        # multiprocessing.
+        # Wait till a running store is finished to avoid strange race conditions when using this buffer with multiprocessing.
         while self.is_storing:
             time.sleep(.00001)
-        if len(self.buffer) < self.maxsize:
-            self.buffer.append(item)
-        else:
-            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Dropping item.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
-        if self.flush_size and len(self.buffer) >= self.flush_size:
+        while len(self.buffer) > self.maxsize:
+            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Waiting for flush.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
+            time.sleep(1)
+        self.buffer.append(item)
+        if self.flush_size and len(self.buffer) == self.flush_size:
             self.flush()
 
     def flush(self):
@@ -390,7 +394,7 @@ class AnsiColors:
 class ZeroMqMpQueue:
     """
     Use ZeroMQ for IPC.
-    This is nearly 3 times faster than the default multiprocessing.Queue.
+    This is faster than the default multiprocessing.Queue.
 
     send_pyobj and recv_pyobj is not used since it performance is slower than using msgpack for serialization.
     (A test for a simple dict using send_pyobj et.al performed around 12000 eps, while msgpack and casting to
