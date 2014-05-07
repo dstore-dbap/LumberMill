@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-import datetime
 import time
 import elasticsearch
 import BaseMultiProcessModule
