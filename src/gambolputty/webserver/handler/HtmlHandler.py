@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import tornado.web
 import tornado.escape
 import socket

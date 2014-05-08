@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
-import logging
 import signal
 import BaseModule
 import Decorators

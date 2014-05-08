@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import re
 import abc
 import logging
-import collections
 import sys
 import ConfigurationValidator
 import Utils

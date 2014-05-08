@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import sys
 import multiprocessing
 import Queue
 import signal
-import cPickle as pickle
 import Utils
 import BaseModule
 
