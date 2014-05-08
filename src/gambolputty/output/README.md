@@ -134,24 +134,24 @@ Configuration template:
 
 #####FileSink
 
-Store events in a file.
+Store all received events in a file.
 
-path: Path to logfiles. String my contain any of pythons strtime directives.
-name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
+file_name: Absolut filename. String my contain pythons strtime directives and event fields, e.g. "/var/log/mylog-%Y-%m-%d.log"
 format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
 store_interval_in_secs: sending data to es in x seconds intervals.
 batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
-Configuration template:
+Configuration example:
 
     - FileSink:
-        path:                                 # <type: string; is: required>
-        name_pattern:                         # <type: string; is: required>
-        format:                               # <type: string; is: required>
+        file_name:                            # <type: string; is: required>
+        format:                               # <default: '%(data)s'; type: string; is: optional>
         store_interval_in_secs:               # <default: 10; type: integer; is: optional>
         batch_size:                           # <default: 500; type: integer; is: optional>
-        backlog_size:
+        backlog_size:                         # <default: 5000; type: integer; is: optional>
+        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 #####WebHdfsSink
 

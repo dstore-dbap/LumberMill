@@ -424,7 +424,14 @@ class ZeroMqMpQueue:
             except:
                 self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
             self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
-        events = msgpack.unpackb(self.receiver.recv())
+        events = ""
+        try:
+            events = self.receiver.recv()
+        except zmq.error.ZMQError as e:
+            # Ignore iterrupt error caused by SIGINT
+            if e.strerror == "Interrupted system call":
+                return events
+        events = msgpack.unpackb(events)
         # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
         for idx,event in enumerate(events):
             events[idx] = KeyDotNotationDict(event)

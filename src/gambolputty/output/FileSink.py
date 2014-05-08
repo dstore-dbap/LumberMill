@@ -14,8 +14,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Store all received events in a file.
 
-    path: Path to logfiles. String my contain any of pythons strtime directives.
-    name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields, e.g. %Y-%m-%d.
+    file_name: Absolut filename. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
     format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
     store_interval_in_secs: sending data to es in x seconds intervals.
     batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
@@ -25,9 +24,8 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     Configuration example:
 
     - FileSink:
-        path:                                 # <type: string; is: required>
-        name_pattern:                         # <type: string; is: required>
-        format:                               # <type: string; is: required>
+        file_name:                            # <type: string; is: required>
+        format:                               # <default: '%(data)s'; type: string; is: optional>
         store_interval_in_secs:               # <default: 10; type: integer; is: optional>
         batch_size:                           # <default: 500; type: integer; is: optional>
         backlog_size:                         # <default: 5000; type: integer; is: optional>
@@ -43,8 +41,8 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
         BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
-        self.path = self.getConfigurationValue('path')
-        self.name_pattern = self.getConfigurationValue('path')
+        self.file_name = self.getConfigurationValue('file_name')
+        self.format = self.getConfigurationValue('format')
         self.compress = self.getConfigurationValue('compress')
         if self.compress == 'gzip':
             try:
@@ -66,9 +64,9 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
             os.makedirs(dirpath)
 
     def run(self):
-        # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback.
+        # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback
+        # when running in multiple processes.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-         # Call parent run method
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
@@ -77,12 +75,10 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def storeData(self, events):
         write_data = collections.defaultdict(str)
-        path = time.strftime(self.path)
         for event in events:
-            filename = time.strftime(self.getConfigurationValue('name_pattern'))
-            filename = filename % event
-            line = self.getConfigurationValue('format', event)
-            write_data["%s/%s" % (path, filename)] += line + "\n"
+            path = Utils.mapDynamicValue(self.file_name, mapping_dict=event, use_strftime=True)
+            line = Utils.mapDynamicValue(self.format, mapping_dict=event)
+            write_data["%s" % path] += line + "\n"
         for path, lines in write_data.iteritems():
             try:
                 self.ensurePathExists(path)
