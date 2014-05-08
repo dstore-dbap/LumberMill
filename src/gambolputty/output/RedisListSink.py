@@ -69,7 +69,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def handleEvent(self, event):
         if self.format:
-            publish_data = self.getConfigurationValue('format', event)
+            publish_data = Utils.mapDynamicValue(self.format, event)
         else:
             publish_data = event
         self.buffer.append(publish_data)

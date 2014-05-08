@@ -57,7 +57,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.format:
-            self.syslogger.info(self.getConfigurationValue('format', event))
+            self.syslogger.info(Utils.mapDynamicValue(self.format, event))
         else:
             self.syslogger.info(event)
         yield event

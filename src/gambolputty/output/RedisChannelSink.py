@@ -15,7 +15,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     port: Port redis server is listening on.
     db: Redis db.
     password: Redis password.
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
+    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set, the whole event dict is send.
 
     Configuration example:
 
@@ -52,7 +52,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def handleEvent(self, event):
         if self.format:
-            publish_event = self.getConfigurationValue('format', event)
+            publish_event = Utils.mapDynamicValue(self.format, event)
         else:
             publish_event = event
         try:

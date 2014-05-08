@@ -56,7 +56,8 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.path = self.getConfigurationValue('path')
-        self.name_pattern = self.getConfigurationValue('path')
+        self.name_pattern = self.getConfigurationValue('name_pattern')
+        self.format = self.getConfigurationValue('format')
         self.compress = self.getConfigurationValue('compress')
         if self.compress == 'gzip':
             try:
@@ -161,7 +162,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         for event in events:
             filename = time.strftime(self.getConfigurationValue('name_pattern'))
             filename = filename % event
-            line = self.getConfigurationValue('format', event)
+            line = Utils.mapDynamicValue(self.format, event)
             write_data[filename] += line
         write_tries = 0
         retry_sleep_time = .4

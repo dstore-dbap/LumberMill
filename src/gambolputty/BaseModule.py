@@ -121,7 +121,7 @@ class BaseModule():
         if not isinstance(config_setting, dict):
             self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
             return False
-        if config_setting['contains_placeholder'] == False or mapping_dict == False:
+        if config_setting['contains_placeholder'] == False or not mapping_dict:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
