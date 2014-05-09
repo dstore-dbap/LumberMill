@@ -12,6 +12,7 @@ import logging
 import __builtin__
 import signal
 import Decorators
+import socket
 
 try:
     import zmq
@@ -24,6 +25,8 @@ try:
     is_pypy = True
 except ImportError:
     is_pypy = False
+
+my_hostname = socket.gethostname()
 
 def reload():
     """
@@ -76,6 +79,7 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
                                             'event_id': "%032x" % random.getrandbits(128),
                                             'source_module': caller_class_name,
                                             'received_from': received_from,
+                                            'received_by': my_hostname
                                          }
                                     }
     default_dict.update(dict)

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import socket
 import sys
 import zmq
@@ -13,7 +14,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
 
     servers: Servers to poll. Pattern: hostname:port.
     pattern: Either pull or subscribe.
-    mode: Wether to run a server or client.
+    mode: Whether to run a server or client.
     multipart: When using the sub pattern, messages can have a topic. If send via multipart set this to true.
     seperator: When using the sub pattern, messages can have a topic. Set seperator to split message from topic.
 
@@ -45,7 +46,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
         else:
             self.receiver = self.zmq_context.socket(zmq.SUB)
             self.receiver.setsockopt(zmq.SUBSCRIBE, str(self.topic))
-        mode = self.getConfigurationValue('mode')
+        self.mode = self.getConfigurationValue('mode')
         for server in self.getConfigurationValue('servers'):
             server_name, server_port = server.split(":")
             try:
@@ -53,7 +54,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             except socket.gaierror:
                 server_addr = server_name
             try:
-                if mode == 'connect':
+                if self.mode == 'connect':
                     self.receiver.connect('tcp://%s:%s' % (server_addr, server_port))
                 else:
                     self.receiver.bind('tcp://%s:%s' % (server_addr, server_port))
@@ -76,7 +77,10 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sCould not read data from zeromq. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC))
 
     def handleEvent(self, event):
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event}, caller_class_name=self.__class__.__name__)
+        dict = {"data": event}
+        if self.mode == "pull":
+            dict["received_from"] = event[0]
+        yield Utils.getDefaultEventDict(dict, caller_class_name=self.__class__.__name__)
 
     def shutDown(self, silent=False):
         # Call parent shutDown method.
