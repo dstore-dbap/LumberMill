@@ -90,7 +90,7 @@ class GambolPutty:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (
             Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
-            sys.exit(255)
+            self.shutDown()
 
     def getConfiguration(self):
         return self.configuration
@@ -130,7 +130,7 @@ class GambolPutty:
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
-            sys.exit(255)
+            self.shutDown()
         return instance
 
     def initModulesFromConfig(self):
@@ -141,11 +141,16 @@ class GambolPutty:
         # Init modules as defined in config
         for idx, module_info in enumerate(self.configuration):
             module_config = {}
+            module_id = None
             if isinstance(module_info, dict):
                 module_class_name = module_info.keys()[0]
                 module_config = module_info[module_class_name]
                 # Set module name. Use id if it was set in configuration.
-                module_id = module_class_name if 'id' not in module_config else module_config['id']
+                try:
+                    module_id = module_class_name if 'id' not in module_config else module_config['id']
+                except TypeError:
+                    self.logger.error("%sError in configuration file for module %s. Please check configuration.%s" % (Utils.AnsiColors.WARNING, module_class_name, Utils.AnsiColors.ENDC))
+                    self.shutDown()
             else:
                 module_id = module_class_name = module_info
             counter = 1

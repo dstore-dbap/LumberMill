@@ -2,7 +2,6 @@
 import ast
 import datetime
 import copy
-import msgpack
 import random
 import time
 import os
@@ -16,6 +15,7 @@ import socket
 
 try:
     import zmq
+    import msgpack
     zmq_avaiable = True
 except ImportError:
     zmq_avaiable = False

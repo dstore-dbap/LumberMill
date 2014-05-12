@@ -130,15 +130,16 @@ class EventBuffer(BaseModule.BaseModule):
                 if not event:
                     continue
                 if "source_module" not in event.get("gambolputty", {}):
-                    self.logger.warning("%sCould not requeue event. Source module not found in event data.%s" % (Utils.AnsiColors.WARNING, event[0], Utils.AnsiColors.ENDC))
+                    self.logger.warning("%sCould not requeue event. Source module info not found in event data.%s" % (Utils.AnsiColors.WARNING, Utils.AnsiColors.ENDC))
                     continue
                 source_module = event["gambolputty"]["source_module"]
                 if source_module not in input_modules:
-                    self.logger.error("%sCould not requeue event. Module %s not found.%s" % (Utils.AnsiColors.WARNING, event[0], Utils.AnsiColors.ENDC))
+                    self.logger.error("%sCould not requeue event. Module %s not found.%s" % (Utils.AnsiColors.WARNING, source_module, Utils.AnsiColors.ENDC))
                     continue
                 requeue_counter += 1
                 input_modules[source_module].sendEvent(Utils.KeyDotNotationDict(event))
             self.logger.warning("%sDone. Requeued %s of %s events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
+            self.logger.warning("%sNote: If more than one gp instance is running, requeued events count may differ from total events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
             event = None
 
     def run(self):
