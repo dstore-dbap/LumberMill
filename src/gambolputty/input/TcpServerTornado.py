@@ -8,7 +8,7 @@ from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
 from tornado import autoreload
 import Utils
-import BaseThreadedModule
+import BaseModule
 from Decorators import ModuleDocstringParser
 
 class TornadoTcpServer(TCPServer):
@@ -94,7 +94,7 @@ class ConnectionHandler(object):
         self.stream.close()
 
 @ModuleDocstringParser
-class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
+class TcpServerTornado(BaseModule.BaseModule):
     r"""
     Reads data from tcp socket and sends it to its output queues.
     Should be the best choice perfomancewise if you are on Linux.
@@ -135,9 +135,10 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        #BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.server = False
-        self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 102400
+        self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240
         self.start_ioloop = False
 
     def run(self):
@@ -167,9 +168,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
                 # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
                 pass
 
-    def shutDown(self, silent):
-        # Call parent shutDown method
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+    def shutDown(self, silent=False):
         try:
             self.server.stop()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'

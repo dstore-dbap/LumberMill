@@ -124,10 +124,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
         else:
             json_data = []
         for event in events:
-            try:
-                event_type = event['event_type']
-            except KeyError:
-                event_type = 'Unknown'
+            event_type = event['gambolputty']['event_type'] if 'event_type' in event['gambolputty'] else 'Unknown'
             doc_id = self.getConfigurationValue("doc_id", event)#event["gambolputty"]["event_id"]
             if not doc_id:
                 self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))

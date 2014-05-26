@@ -139,7 +139,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         """
         json_data = []
         for event in events:
-            event_type = event['event_type'] if 'event_type' in event else 'Unknown'
+            event_type = event['gambolputty']['event_type'] if 'event_type' in event['gambolputty'] else 'Unknown'
             doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
             routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:

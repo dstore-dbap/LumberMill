@@ -89,11 +89,12 @@ class Facet(BaseModule.BaseModule):
         self._setFacetInfoInternal(key, facet_info)
 
     def sendFacetEventToReceivers(self, facet_data):
-        event = Utils.getDefaultEventDict({'event_type': 'facet',
-                                          'facet_field': self.getConfigurationValue('source_field'),
+        event = Utils.getDefaultEventDict({'facet_field': self.getConfigurationValue('source_field'),
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets'],
-                                          'other_event_fields': facet_data['other_event_fields']}, caller_class_name=self.__class__.__name__)
+                                          'other_event_fields': facet_data['other_event_fields']},
+                                          caller_class_name=self.__class__.__name__,
+                                          event_type='facet')
         self.sendEvent(event)
 
     def getEvaluateFunc(self):

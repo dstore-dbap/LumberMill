@@ -60,6 +60,7 @@ class EventBuffer(BaseModule.BaseModule):
             # Only act if we hold an event.
             if "event_id" not in self.get("gambolputty", {}):
                 return
+            #print "Removing from backend"
             try:
                 key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['gambolputty']['event_id'])
                 Utils.KeyDotNotationDict.persistence_backend.delete(key)
@@ -73,6 +74,7 @@ class EventBuffer(BaseModule.BaseModule):
             # Only act if we hold an event.
             if "event_id" not in self.get("gambolputty", {}):
                 return
+            #print "Adding to backend"
             try:
                 key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['gambolputty']['event_id'])
                 # Store a simple dict in backend, not a KeyDotNotationDict.
@@ -139,7 +141,7 @@ class EventBuffer(BaseModule.BaseModule):
                 requeue_counter += 1
                 input_modules[source_module].sendEvent(Utils.KeyDotNotationDict(event))
             self.logger.warning("%sDone. Requeued %s of %s events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
-            self.logger.warning("%sNote: If more than one gp instance is running, requeued events count may differ from total events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
+            self.logger.warning("%sNote: If more than one gp instance is running, requeued events count may differ from total events.%s" % (Utils.AnsiColors.WARNING, Utils.AnsiColors.ENDC))
             event = None
 
     def run(self):

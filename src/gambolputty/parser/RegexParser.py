@@ -3,27 +3,36 @@ import sys
 import re
 import os
 import BaseModule
-import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
+from operator import itemgetter
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class RegexParser(BaseModule.BaseModule):
     """
     Parse a string by named regular expressions.
 
     If regex matches, fields in the data dictionary will be set as defined in the named regular expression.
-    Additionally the field "event_type" will be set containing the name of the regex.
+    Additionally the field "gambolputty.event_type" will be set containing the name of the regex.
     In the example below this would be "httpd_access_log".
+
+    It is also possible to define multiple regexes with the same name. This allows for different log patterns
+    for the same log type, e.g. apache access logs and nginx access logs.
+
+    source_field: Field to apply the regex to.
+    mark_unmatched_as: Set <gambolputty.event_type> to this value if regex did not match.
+    break_on_match: Stop applying regex patterns after first match.
+    hot_rules_first: Apply regex patterns based on their hit count.
 
     Configuration example:
 
     - RegexParser:
         source_field:                           # <default: 'data'; type: string; is: optional>
-        mark_unmatched_as:                      # <default: 'unknown'; type: string; is: optional>
+        mark_unmatched_as:                      # <default: 'Unknown'; type: string; is: optional>
         break_on_match:                         # <default: True; type: boolean; is: optional>
-        field_extraction_patterns:              # <type: dict; is: required>
-          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+        hot_rules_first:                        # <default: False; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: list; is: required>
+          - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
         receivers:
           - NextModule
     """
@@ -36,15 +45,18 @@ class RegexParser(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
+        self.timed_func_handler = None
         self.source_field = self.getConfigurationValue('source_field')
-        self.target_field = "event_type"
         self.mark_unmatched_as = self.getConfigurationValue('mark_unmatched_as')
         self.break_on_match = self.getConfigurationValue('break_on_match')
+        self.hot_rules_first = self.getConfigurationValue('hot_rules_first')
         self.event_types = []
-        self.fieldextraction_regexpressions = {}
+        self.fieldextraction_regexpressions = []
         self.logstash_patterns = {}
         self.readLogstashPatterns()
-        for event_type, regex_pattern in configuration['field_extraction_patterns'].items():
+        for regex_config in configuration['field_extraction_patterns']:
+            event_type = regex_config.keys()[0]
+            regex_pattern = regex_config[event_type]
             regex_options = 0
             regex_match_type = 'search'
             if isinstance(regex_pattern, list):
@@ -78,7 +90,19 @@ class RegexParser(BaseModule.BaseModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sRegEx error for %s pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event_type, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
-            self.fieldextraction_regexpressions[event_type] = {'pattern': regex, 'match_type': regex_match_type}
+            self.fieldextraction_regexpressions.append({'event_type': event_type, 'pattern': regex, 'match_type': regex_match_type, 'hitcounter': 0})
+        if self.hot_rules_first:
+            resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
+            self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
+
+    def getResortFieldextractionRegexpressionsFunc(self):
+        @Decorators.setInterval(10)
+        def resortFieldextractionRegexpressions():
+            """Resort the regular expression list, according to hitcount. Might speed up matching"""
+            self.fieldextraction_regexpressions = sorted(self.fieldextraction_regexpressions, key=itemgetter('hitcounter'), reverse=True)
+            for regex_data in self.fieldextraction_regexpressions:
+                regex_data['hitcounter'] = 0
+        return resortFieldextractionRegexpressions
 
     def readLogstashPatterns(self):
         path = "%s/../patterns" % os.path.dirname(os.path.realpath(__file__))
@@ -116,7 +140,8 @@ class RegexParser(BaseModule.BaseModule):
             return
         string_to_match = event[self.source_field]
         matches_dict = False
-        for event_type, regex_data in self.fieldextraction_regexpressions.iteritems():
+        for regex_data in self.fieldextraction_regexpressions:
+            event_type = regex_data['event_type']
             matches_dict = {}
             if regex_data['match_type'] == 'search':
                 matches = regex_data['pattern'].search(string_to_match)
@@ -131,9 +156,11 @@ class RegexParser(BaseModule.BaseModule):
                             matches_dict[key] = [value]
             if matches_dict:
                 event.update(matches_dict)
-                event.update({self.target_field: event_type})
+                event['gambolputty']['event_type'] = event_type
+                if self.hot_rules_first:
+                    regex_data['hitcounter'] += 1
                 if(self.break_on_match):
                     break
         if not matches_dict:
-            event.update({self.target_field: self.mark_unmatched_as})
+            event['gambolputty']['event_type'] = self.mark_unmatched_as
         yield event

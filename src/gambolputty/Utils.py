@@ -72,16 +72,15 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
-    default_dict = { "event_type": event_type,
-                                        "data": "",
-                                         "gambolputty": {
-                                            'event_type': event_type,
-                                            'event_id': "%032x" % random.getrandbits(128),
-                                            'source_module': caller_class_name,
-                                            'received_from': received_from,
-                                            'received_by': my_hostname
-                                         }
-                                    }
+    default_dict = { "data": "",
+                     "gambolputty": {
+                        'event_type': event_type,
+                        'event_id': "%032x" % random.getrandbits(128),
+                        'source_module': caller_class_name,
+                        'received_from': received_from,
+                        'received_by': my_hostname
+                     }
+                }
     default_dict.update(dict)
     default_dict = KeyDotNotationDict(default_dict)
     return default_dict
@@ -406,6 +405,7 @@ class ZeroMqMpQueue:
     """
 
     def __init__(self, queue_max_size=20):
+        self.queue_size = 0
         zmq_context = zmq.Context()
         self.queue_max_size = queue_max_size
         self.sender = zmq_context.socket(zmq.PUSH)
@@ -442,6 +442,6 @@ class ZeroMqMpQueue:
         return events
 
     def qsize(self):
-        return 0
+        return self.queue_size
 
 

@@ -275,7 +275,7 @@ class GambolPutty:
         """
         # All modules are completely configured, call modules run method if it exists.
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            if len(module_info['instances']) > 1:
+            if len(module_info['instances']) > 1 and module_info['instances'][0].can_run_parallel:
                 self.logger.info("%sUsing module %s, pool size: %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, len(module_info['instances']), Utils.AnsiColors.ENDC))
             else:
                 self.logger.info("%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_name, Utils.AnsiColors.ENDC))
@@ -291,6 +291,8 @@ class GambolPutty:
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
+                if not instance.can_run_parallel:
+                    break
         import tornado.ioloop
         tornado.ioloop.IOLoop.instance().start()
 

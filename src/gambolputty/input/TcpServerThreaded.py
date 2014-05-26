@@ -125,7 +125,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
     Configuration example:
 
     - TcpServerThreaded:
-        interface:                       # <default: 'localhost'; type: string; is: optional>
+        interface:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
         tls:                             # <default: False; type: boolean; is: optional>

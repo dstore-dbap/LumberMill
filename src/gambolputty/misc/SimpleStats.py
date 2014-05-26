@@ -88,7 +88,7 @@ class SimpleStats(BaseModule.BaseModule):
         self.stats_collector.incrementCounter('events_received')
         if self.getConfigurationValue('event_type_statistics'):
             try:
-                self.stats_collector.incrementCounter('event_type_%s' % event['event_type'])
+                self.stats_collector.incrementCounter('event_type_%s' % event['gambolputty']['event_type'])
             except:
                 pass
         yield event
