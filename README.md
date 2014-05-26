@@ -49,6 +49,8 @@ The different modules can be combined in any order.
 * ElasticSearchMultiProcessSink, same as above but multiprocessed.
 * FileSink, store events in a file.
 * RedisChannelSink, publish incoming events to redis channel.
+* RedisListSink, publish incoming events to redis list.
+* ZmqSink, sends incoming event to zeromq.
 * LoggerSink, sends data to gambolputty internal logger for output.
 * StdOutSink, prints all received data to standard out.
 * SyslogSink, send events to syslog.

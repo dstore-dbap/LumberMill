@@ -228,6 +228,33 @@ Configuration template:
         batch_size:               # <default: 500; type: integer; is: optional>
         backlog_size:             # <default: 5000; type: integer; is: optional>
 
+#####ZmqSink
+
+Sends events to zeromq.
+
+server: Server to connect to. Pattern: hostname:port.
+pattern: Either push or pub.
+mode: Whether to run a server or client. If running as server, pool size is restricted to a single process.
+topic: The channels topic.
+hwm: Highwatermark for sending socket.
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send msgpacked.
+store_interval_in_secs: Send data to redis in x seconds intervals.
+batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration example:
+
+    - ZmqSink:
+        server:                     # <default: 'localhost:5570'; type: string; is: optional>
+        pattern:                    # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
+        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
+        topic:                      # <default: None; type: None||string; is: optional>
+        hwm:                        # <default: None; type: None||integer; is: optional>
+        format:                     # <default: None; type: None||string; is: optional>
+        store_interval_in_secs:     # <default: 5; type: integer; is: optional>
+        batch_size:                 # <default: 500; type: integer; is: optional>
+        backlog_size:               # <default: 5000; type: integer; is: optional>
+
 #####GraphiteSink
 
 Send metrics to graphite server.
