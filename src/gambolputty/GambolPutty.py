@@ -66,15 +66,15 @@ class GambolPutty:
         if path_to_config_file:
             self.readConfiguration(path_to_config_file)
 
-    def produceQueue(self, module_instance, queue_max_size=20, mp_queue_buffer_size=100):
+    def produceQueue(self, module_instance, queue_max_size=20, queue_buffer_size=100):
         """Returns a queue with queue_max_size"""
         if isinstance(module_instance, threading.Thread):
             return Queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
             if Utils.zmq_avaiable:
-                queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size))
+                queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size), queue_buffer_size)
             else:
-                queue = Utils.BufferedQueue(multiprocessing.Queue(queue_max_size))
+                queue = Utils.BufferedQueue(multiprocessing.Queue(queue_max_size), queue_buffer_size)
             return queue
 
     def readConfiguration(self, path_to_config_file):
@@ -113,8 +113,6 @@ class GambolPutty:
                 gp_conf = self.configuration.pop(idx)
                 break
         self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
-        self.default_queue_size = configuration['default_queue_size'] if 'default_queue_size' in gp_conf else 20
-        self.default_mp_queue_buffer_size = configuration['default_queue_buffer_size'] if 'default_queue_buffer_size' in gp_conf else 100
 
     def initModule(self, module_name):
         """ Initalize a module.
@@ -148,8 +146,9 @@ class GambolPutty:
                 # Set module name. Use id if it was set in configuration.
                 try:
                     module_id = module_class_name if 'id' not in module_config else module_config['id']
-                except TypeError:
-                    self.logger.error("%sError in configuration file for module %s. Please check configuration.%s" % (Utils.AnsiColors.WARNING, module_class_name, Utils.AnsiColors.ENDC))
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%sError in configuration file for module %s. Exception: %s, Error: %s. Please check configuration.%s" % (Utils.AnsiColors.FAIL, module_class_name, etype, evalue, Utils.AnsiColors.ENDC))
                     self.shutDown()
             else:
                 module_id = module_class_name = module_info
@@ -180,7 +179,7 @@ class GambolPutty:
                     next_module_info = self.configuration[idx+1]
                     if isinstance(next_module_info, dict):
                         receiver_class_name = next_module_info.keys()[0]
-                        receiver_id = receiver_class_name if 'id' not in next_module_info[receiver_class_name] else next_module_info[receiver_class_name]['id']
+                        receiver_id = receiver_class_name if (not next_module_info[receiver_class_name] or 'id' not in next_module_info[receiver_class_name]) else next_module_info[receiver_class_name]['id']
                     else:
                         receiver_id = receiver_class_name = next_module_info
                     counter = 1
@@ -191,6 +190,11 @@ class GambolPutty:
                     module_config['receivers'] = [receiver_id]
                 except IndexError:
                     module_config['receivers'] = [None]
+                except:
+                    # Something is wrong with the configuration. Tell user.
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("%sError in configuration for module %s. Exception: %s, Error: %s. Please check configuration.%s" % ( Utils.AnsiColors.FAIL, module_config, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.shutDown()
 
     def configureModules(self):
         # Call configuration of module
@@ -229,7 +233,7 @@ class GambolPutty:
                             if isinstance(receiver_instance, threading.Thread):
                                 queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'))
                             else:
-                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('mp_queue_buffer_size'))
+                                queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('queue_buffer_size'))
                         try:
                             if not receiver_instance.getInputQueue():
                                 receiver_instance.setInputQueue(queues[receiver_name])

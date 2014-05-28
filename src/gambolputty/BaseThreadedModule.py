@@ -9,7 +9,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     """
     Base class for all gambolputty modules that will run as separate threads.
     If you happen to override one of the methods defined here, be sure to know what you
-    are doing ;) You have been warned ;)
+    are doing ;) You have been warned...
 
     Configuration example:
 

@@ -135,7 +135,6 @@ class TcpServerTornado(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        #BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         BaseModule.BaseModule.configure(self, configuration)
         self.server = False
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240

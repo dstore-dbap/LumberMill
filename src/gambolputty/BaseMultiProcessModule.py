@@ -13,14 +13,21 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned...
 
+    id: Id of the module. If multiple instances of the same modules are used, id can be used to reference the correct receiver.
+    filter: Filter expression to apply to incoming events. If filter succeeds, module will handle the event, else
+            the event will be passed to next module unchanged.
+    pool_size: How many processes should be spawned.
+    queue_size: How many events may be wating in queue.
+    queue_buffer_size: How many events will be buffered before sending them to queue.
+
     Configuration example:
 
     - module: SomeModuleName
       id:                               # <default: ""; type: string; is: optional>
       filter:                           # <default: None; type: None||string; is: optional>
       pool_size:                        # <default: 2; type: integer; is: optional>
-      queue_size:                       # <default: 20; type: integer; is: optional>
-      mp_queue_buffer_size:             # <default: 100; type: integer; is: optional>
+      queue_size:                       # <default: 50; type: integer; is: optional>
+      queue_buffer_size:                # <default: 250; type: integer; is: optional>
       receivers:
        - ModuleName
        - ModuleAlias
@@ -42,21 +49,6 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
     def getInputQueue(self):
         return self.input_queue
 
-    def getEventsFromInputQueue(self, block=True, timeout=None):
-        events = []
-        try:
-            events = self.input_queue.get(block, timeout)
-        except Queue.Empty:
-            raise
-        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
-            # Keyboard interrupt is catched in GambolPuttys main run method.
-            # This will take care to shutdown all running modules.
-            pass
-        except:
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC) )
-        return events
-
     def run(self):
         if not self.receivers:
             # Only issue warning for those modules that are expected to have receivers.
@@ -72,8 +64,9 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
             return
         self.alive = True
         while self.alive:
-            events = self.getEventsFromInputQueue()
-            for event in events:
+            for event in self.input_queue.get():
+                if not event:
+                    continue
                 self.receiveEvent(event)
 
     def shutDown(self, silent=False):

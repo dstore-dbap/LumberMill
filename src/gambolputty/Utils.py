@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import Queue
 import ast
 import datetime
 import copy
@@ -244,6 +245,7 @@ class BufferedQueue():
 
     def sendBuffer(self, buffered_data):
         try:
+            buffered_data = msgpack.packb(buffered_data)
             self.queue.put(buffered_data)
             return True
         except (KeyboardInterrupt, SystemExit):
@@ -255,7 +257,21 @@ class BufferedQueue():
             self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, etype, evalue, AnsiColors.ENDC))
 
     def get(self, block=True, timeout=None):
-        return self.queue.get(block, timeout)
+        try:
+            buffered_data = self.queue.get(block, timeout)
+            #for data in buffered_data:
+            #    yield data
+            buffered_data = msgpack.unpackb(buffered_data)
+            # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
+            for data in buffered_data:
+                yield KeyDotNotationDict(data)
+        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
+        except:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
 
     def qsize(self):
         return self.buffer.bufsize() + self.queue.qsize()
@@ -417,7 +433,7 @@ class ZeroMqMpQueue:
         self.receiver = None
 
     def put(self, data):
-        self.sender.send(msgpack.packb(data))
+        self.sender.send(data)
 
     def get(self, block, timeout):
         if not self.receiver:
@@ -431,15 +447,11 @@ class ZeroMqMpQueue:
         events = ""
         try:
             events = self.receiver.recv()
+            return events
         except zmq.error.ZMQError as e:
             # Ignore iterrupt error caused by SIGINT
             if e.strerror == "Interrupted system call":
                 return events
-        events = msgpack.unpackb(events)
-        # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
-        for idx,event in enumerate(events):
-            events[idx] = KeyDotNotationDict(event)
-        return events
 
     def qsize(self):
         return self.queue_size
