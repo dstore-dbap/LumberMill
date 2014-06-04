@@ -93,7 +93,6 @@ class ModifyFields(BaseModule.BaseModule):
           - NextModule
 
     # Split source field to array at separator.
-
     - module: ModifyFields
       action: split                                 # <type: string; is: required>
       separator:                                    # <type: string; is: required>

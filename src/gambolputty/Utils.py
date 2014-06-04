@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
+import Queue
 import ast
 import datetime
 import copy
-import msgpack
-import zmq
-from zmq.eventloop import ioloop, zmqstream
 import random
 import time
 import os
@@ -14,12 +12,22 @@ import logging
 import __builtin__
 import signal
 import Decorators
+import socket
+
+try:
+    import zmq
+    import msgpack
+    zmq_avaiable = True
+except ImportError:
+    zmq_avaiable = False
 
 try:
     import __pypy__
     is_pypy = True
 except ImportError:
     is_pypy = False
+
+my_hostname = socket.gethostname()
 
 def reload():
     """
@@ -65,16 +73,17 @@ def reload():
             sys.exit(0)
 
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
-    default_dict = KeyDotNotationDict({ "event_type": event_type,
-                                        "data": "",
-                                         "gambolputty": {
-                                            'event_type': event_type,
-                                            'event_id': "%032x" % random.getrandbits(128),
-                                            'source_module': caller_class_name,
-                                            'received_from': received_from,
-                                         }
-                                    })
+    default_dict = { "data": "",
+                     "gambolputty": {
+                        'event_type': event_type,
+                        'event_id': "%032x" % random.getrandbits(128),
+                        'source_module': caller_class_name,
+                        'received_from': received_from,
+                        'received_by': my_hostname
+                     }
+                }
     default_dict.update(dict)
+    default_dict = KeyDotNotationDict(default_dict)
     return default_dict
 
 def compileStringToConditionalObject(condition_as_string, mapping):
@@ -121,7 +130,7 @@ class AstTransformer(ast.NodeTransformer):
         new_node = ast.parse(self.mapping % node.id).body[0].value
         return new_node
 
-def mapDynamicValue(value, mapping_dict, use_strftime=False):
+def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
     # At the moment, just flat lists and dictionaries are supported.
     # If need arises, recursive parsing of the lists and dictionaries will be added.
     if isinstance(value, list):
@@ -133,7 +142,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return mapped_values
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -148,7 +157,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
             return dict(zip(mapped_keys, mapped_values))
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -160,7 +169,7 @@ def mapDynamicValue(value, mapping_dict, use_strftime=False):
                 return value % mapping_dict
         except KeyError:
             return False
-        except ValueError:
+        except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, value, mapping_dict, etype, evalue, AnsiColors.ENDC))
             return False
@@ -189,15 +198,14 @@ class Buffer:
         self.put(item)
 
     def put(self, item):
-        # Wait till a running store is finished to avoid strange race conditions when using this buffer with
-        # multiprocessing.
+        # Wait till a running store is finished to avoid strange race conditions when using this buffer with multiprocessing.
         while self.is_storing:
             time.sleep(.00001)
-        if len(self.buffer) < self.maxsize:
-            self.buffer.append(item)
-        else:
-            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Dropping item.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
-        if self.flush_size and len(self.buffer) >= self.flush_size:
+        while len(self.buffer) > self.maxsize:
+            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Waiting for flush.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
+            time.sleep(1)
+        self.buffer.append(item)
+        if self.flush_size and len(self.buffer) == self.flush_size:
             self.flush()
 
     def flush(self):
@@ -237,6 +245,7 @@ class BufferedQueue():
 
     def sendBuffer(self, buffered_data):
         try:
+            buffered_data = msgpack.packb(buffered_data)
             self.queue.put(buffered_data)
             return True
         except (KeyboardInterrupt, SystemExit):
@@ -248,7 +257,21 @@ class BufferedQueue():
             self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, etype, evalue, AnsiColors.ENDC))
 
     def get(self, block=True, timeout=None):
-        return self.queue.get(block, timeout)
+        try:
+            buffered_data = self.queue.get(block, timeout)
+            #for data in buffered_data:
+            #    yield data
+            buffered_data = msgpack.unpackb(buffered_data)
+            # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
+            for data in buffered_data:
+                yield KeyDotNotationDict(data)
+        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
+        except:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
 
     def qsize(self):
         return self.buffer.bufsize() + self.queue.qsize()
@@ -390,7 +413,7 @@ class AnsiColors:
 class ZeroMqMpQueue:
     """
     Use ZeroMQ for IPC.
-    This is nearly 3 times faster than the default multiprocessing.Queue.
+    This is faster than the default multiprocessing.Queue.
 
     send_pyobj and recv_pyobj is not used since it performance is slower than using msgpack for serialization.
     (A test for a simple dict using send_pyobj et.al performed around 12000 eps, while msgpack and casting to
@@ -398,6 +421,7 @@ class ZeroMqMpQueue:
     """
 
     def __init__(self, queue_max_size=20):
+        self.queue_size = 0
         zmq_context = zmq.Context()
         self.queue_max_size = queue_max_size
         self.sender = zmq_context.socket(zmq.PUSH)
@@ -407,29 +431,29 @@ class ZeroMqMpQueue:
             self.sender.setsockopt(zmq.HWM, queue_max_size)
         self.selected_port = self.sender.bind_to_random_port("tcp://127.0.0.1", min_port=5200, max_port=5300, max_tries=100)
         self.receiver = None
-        zmq.eventloop.ioloop.install()
 
     def put(self, data):
-        self.sender.send(msgpack.packb(data))
+        self.sender.send(data)
 
-    def onReceive(self, callback):
-        self.callback = callback
-        zmq_context = zmq.Context()
-        self.receiver = zmq_context.socket(zmq.PULL)
+    def get(self, block, timeout):
+        if not self.receiver:
+            zmq_context = zmq.Context()
+            self.receiver = zmq_context.socket(zmq.PULL)
+            try:
+                self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
+            except:
+                self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
+            self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
+        events = ""
         try:
-            self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
-        except:
-            self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
-        self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
-        self.receiver = zmqstream.ZMQStream(self.receiver)
-        self.receiver.on_recv(callback)
-
-    def unpackData(self, data):
-        data = msgpack.unpackb(data)
-        print "%s" % data
-        self.callback(data)
+            events = self.receiver.recv()
+            return events
+        except zmq.error.ZMQError as e:
+            # Ignore iterrupt error caused by SIGINT
+            if e.strerror == "Interrupted system call":
+                return events
 
     def qsize(self):
-        return 0
+        return self.queue_size
 
 

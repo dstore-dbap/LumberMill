@@ -21,6 +21,8 @@ class MergeEvent(BaseModule.BaseModule):
     After <flush_interval_in_secs> the buffer will also be flushed.
     Flushing the buffer will concatenate all contained event data to form one single new event.
 
+    buffer_key: key to distinguish between different input streams
+
     buffer_key: A key to correctly group events.
     buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
     flush_interval_in_secs: If interval is reached, buffer will be flushed.

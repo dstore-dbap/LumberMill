@@ -5,14 +5,27 @@ Parser modules
 
 Parse a string by named regular expressions.
 
-Configuration template:
+If regex matches, fields in the data dictionary will be set as defined in the named regular expression.
+Additionally the field "gambolputty.event_type" will be set containing the name of the regex.
+In the example below this would be "httpd_access_log".
+
+It is also possible to define multiple regexes with the same name. This allows for different log patterns
+for the same log type, e.g. apache access logs and nginx access logs.
+
+source_field: Field to apply the regex to.
+mark_unmatched_as: Set <gambolputty.event_type> to this value if regex did not match.
+break_on_match: Stop applying regex patterns after first match.
+hot_rules_first: Apply regex patterns based on their hit count.
+
+Configuration example:
 
     - RegexParser:
         source_field:                           # <default: 'data'; type: string; is: optional>
-        mark_unmatched_as:                      # <default: 'unknown'; type: string; is: optional>
+        mark_unmatched_as:                      # <default: 'Unknown'; type: string; is: optional>
         break_on_match:                         # <default: True; type: boolean; is: optional>
-        field_extraction_patterns:              # <type: dict; is: required>
-          httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+        hot_rules_first:                        # <default: False; type: boolean; is: optional>
+        field_extraction_patterns:              # <type: list; is: required>
+          - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
         receivers:
           - NextModule
 

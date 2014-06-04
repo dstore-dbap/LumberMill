@@ -5,7 +5,6 @@ import Utils
 from Decorators import ModuleDocstringParser
 import time
 
-
 @ModuleDocstringParser
 class StdOutSink(BaseModule.BaseModule):
     """

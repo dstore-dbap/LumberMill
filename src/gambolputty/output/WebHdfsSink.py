@@ -56,7 +56,8 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.path = self.getConfigurationValue('path')
-        self.name_pattern = self.getConfigurationValue('path')
+        self.name_pattern = self.getConfigurationValue('name_pattern')
+        self.format = self.getConfigurationValue('format')
         self.compress = self.getConfigurationValue('compress')
         if self.compress == 'gzip':
             try:
@@ -137,13 +138,12 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions while manipulating self.events_container.
         while self.is_storing:
-            time.sleep(.001)
-        if len(self.events_container) >= self.backlog_size:
-            self.logger.warning("%sMaximum number of events (%s) in backlog reached. Dropping event.%s" % (Utils.AnsiColors.WARNING, self.backlog_size, Utils.AnsiColors.ENDC))
-            yield event
-            return
+            time.sleep(.0001)
+        while len(self.events_container) > self.backlog_size:
+            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Waiting for flush.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
+            time.sleep(1)
         self.events_container.append(event)
-        if len(self.events_container) >= self.batch_size:
+        if len(self.events_container) == self.batch_size:
             self.storeEvents(self.events_container)
         yield event
 
@@ -162,7 +162,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         for event in events:
             filename = time.strftime(self.getConfigurationValue('name_pattern'))
             filename = filename % event
-            line = self.getConfigurationValue('format', event)
+            line = Utils.mapDynamicValue(self.format, event)
             write_data[filename] += line
         write_tries = 0
         retry_sleep_time = .4

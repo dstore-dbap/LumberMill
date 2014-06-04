@@ -51,7 +51,7 @@ class MsgPackParser(BaseModule.BaseModule):
                 decoded_data = msgpack.unpackb(event[source_field])
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sCould not parse msgpack event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("%sCould not parse msgpack event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event[source_field], etype, evalue, Utils.AnsiColors.ENDC))
                 continue
             if self.drop_original:
                 event.pop(source_field, None)

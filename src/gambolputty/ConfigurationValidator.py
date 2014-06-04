@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import types
 import Utils
 
@@ -18,7 +17,7 @@ class ConfigurationValidator():
     - type: sets the variable type
     - is: sets whether the parameter needs to be provided or not.
       Here a simple conditional syntax is supported, e.g.
-      is: optional if other_key_name is Fa
+      is: required if tls is True else optional
     """
 
     typenames_to_type = {'None': types.NoneType,

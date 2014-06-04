@@ -11,21 +11,19 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     """
     Read events from a zeromq.
 
-    servers: Servers to poll. Pattern: hostname:port.
-    pattern: Either pull or subscribe.
-    mode: Wether to run a server or client.
-    multipart: When using the sub pattern, messages can have a topic. If send via multipart set this to true.
-    seperator: When using the sub pattern, messages can have a topic. Set seperator to split message from topic.
+    server: Server to poll. Pattern: hostname:port.
+    pattern: Either pull or sub.
+    mode: Whether to run a server or client.
+    hwm: Highwatermark for receiving socket.
 
     Configuration example:
 
     - Zmq:
-        servers:                    # <default: ['localhost:5570']; type: list; is: optional>
+        server:                     # <default: 'localhost:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
         mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
         topic:                      # <default: ''; type: string; is: optional>
-        multipart:                  # <default: False; type: boolean; is: optional>
-        seperator:                  # <default: None; type: None||string; is: optional>
+        hwm:                        # <default: None; type: None||integer; is: optional>
     """
 
     module_type = "input"
@@ -35,55 +33,61 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
          # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.receiver = None
+        self.client = None
         self.topic = self.getConfigurationValue('topic')
-        self.multipart = self.getConfigurationValue('multipart')
-        self.seperator = self.getConfigurationValue('seperator')
         self.zmq_context = zmq.Context()
         if self.getConfigurationValue('pattern') == 'pull':
-            self.receiver = self.zmq_context.socket(zmq.PULL)
+            self.client = self.zmq_context.socket(zmq.PULL)
         else:
-            self.receiver = self.zmq_context.socket(zmq.SUB)
-            self.receiver.setsockopt(zmq.SUBSCRIBE, str(self.topic))
-        mode = self.getConfigurationValue('mode')
-        for server in self.getConfigurationValue('servers'):
-            server_name, server_port = server.split(":")
+            self.client = self.zmq_context.socket(zmq.SUB)
+            self.client.setsockopt(zmq.SUBSCRIBE, str(self.topic))
+        if self.getConfigurationValue('hwm'):
             try:
-                server_addr = socket.gethostbyname(server_name)
-            except socket.gaierror:
-                server_addr = server_name
-            try:
-                if mode == 'connect':
-                    self.receiver.connect('tcp://%s:%s' % (server_addr, server_port))
-                else:
-                    self.receiver.bind('tcp://%s:%s' % (server_addr, server_port))
+                self.client.setsockopt(zmq.RCVHWM, self.getConfigurationValue('hwm'))
             except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, server, etype, evalue, Utils.AnsiColors.ENDC))
-                #self.gp.shutDown()
+                self.client.setsockopt(zmq.HWM, self.getConfigurationValue('hwm'))
+        server_name, server_port = self.getConfigurationValue('server').split(":")
+        try:
+            server_addr = socket.gethostbyname(server_name)
+        except socket.gaierror:
+            server_addr = server_name
+        try:
+            if self.getConfigurationValue('mode') == 'connect':
+                self.client.connect('tcp://%s:%s' % (server_addr, server_port))
+            else:
+                self.client.bind('tcp://%s:%s' % (server_addr, server_port))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
 
     def getEventFromInputQueue(self):
         try:
-            if self.multipart:
-                topic, event = self.receiver.recv_multipart()
-            else:
-                event = self.receiver.recv()
-            if self.seperator:
-                topic, event = event.split(self.seperator)
+            event = self.client.recv()
+            if self.topic:
+                topic, event = event.split(' ', 1)
             return event
+        except zmq.error.ContextTerminated:
+            pass
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
+            if exc_value in ['Interrupted system call', 'Socket operation on non-socket']:
+                return
+            if type(exc_value) != 'Socket operation on non-socket':
+                print "############%s###############" % exc_value
             self.logger.error("%sCould not read data from zeromq. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC))
 
     def handleEvent(self, event):
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event}, caller_class_name=self.__class__.__name__)
+        event = {"data": event}
+        if self.topic:
+            event['zmq_topic'] = self.topic
+        yield Utils.getDefaultEventDict(event, caller_class_name=self.__class__.__name__)
 
     def shutDown(self, silent=False):
-        # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
-        return
         try:
-            self.receiver.close()
+            self.client.close()
             self.zmq_context.term()
         except AttributeError:
             pass
+        # Call parent shutDown method.
+        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)

@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import re
 import abc
 import logging
 import sys
 import ConfigurationValidator
 import Utils
-import msgpack
 
 class BaseModule():
     """
@@ -20,8 +18,6 @@ class BaseModule():
     - module: SomeModuleName
       id:                               # <default: ""; type: string; is: optional>
       filter:                           # <default: None; type: None||string; is: optional>
-      queue_size:                       # <default: 20; type: integer; is: optional>
-      queue_buffer_size:                # <default: 50; type: integer; is: optional>
       ...
       receivers:
        - ModuleName
@@ -31,13 +27,11 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    can_run_parallel = True
+    can_run_parallel = False
 
     def __init__(self, gp, stats_collector=False):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
-        self.input_queue = False
-        self.output_queues = []
         self.receivers = {}
         self.configuration_data = {}
         self.input_filter = None
@@ -45,7 +39,6 @@ class BaseModule():
         self.timed_function_events = []
         self.stats_collector = stats_collector
         self.pid_on_init = os.getpid()
-        self.alive = True
 
     def configure(self, configuration=None):
         """
@@ -103,7 +96,7 @@ class BaseModule():
             self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, configuration_errors, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
 
-    def getConfigurationValue(self, key, mapping_dict=False):
+    def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and
         takes care of replacing dynamic variables of the pattern e.g. %(field_name)s with the corresponding
@@ -118,9 +111,8 @@ class BaseModule():
         except KeyError:
                 # Try to return a default value for requested setting.
                 try:
-                    if mapping_dict:
-                        return self.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict)
-                        #return self.configuration_metadata[key]['default'] % mapping_dict
+                    if mapping_dict or use_strftime:
+                        return Utils.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict, use_strftime)
                     return self.configuration_metadata[key]['default']
                 except KeyError:
                     self.logger.warning("%sCould not find configuration setting for required setting: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
@@ -129,38 +121,16 @@ class BaseModule():
         if not isinstance(config_setting, dict):
             self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
             return False
-        if config_setting['contains_placeholder'] == False or mapping_dict == False:
+        if config_setting['contains_placeholder'] == False or not mapping_dict:
             return config_setting.get('value')
-        return self.mapDynamicValue(config_setting.get('value'), mapping_dict)
+        return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
-    def mapDynamicValue(self, value, mapping_dict):
+    def __mapDynamicValue(self, value, mapping_dict):
         return Utils.mapDynamicValue(value, mapping_dict)
 
     def shutDown(self, silent=False):
         if not silent:
             self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
-        self.alive = False
-        if self.input_queue:
-            try:
-                self.input_queue.close()
-            except:
-                pass
-
-    def setInputQueue(self, queue):
-        self.input_queue = queue
-
-    def getInputQueue(self):
-        return self.input_queue
-
-    def receivePackedEvents(self, packed_events):
-        packed_events = packed_events[0]
-        events = msgpack.unpackb(packed_events)[0]
-        for event in events:
-            self.receiveEvent(event)
-
-    def run(self):
-        if self.input_queue:
-            self.input_queue.onReceive(self.receivePackedEvents)
 
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
@@ -250,9 +220,6 @@ class BaseModule():
                     self.sendEvent(event)
         else:
             self.sendEvent(event)
-
-    def isExecutedInMainProcess(self):
-        return self.pid_on_init == os.getpid()
 
     @abc.abstractmethod
     def handleEvent(self, event):
