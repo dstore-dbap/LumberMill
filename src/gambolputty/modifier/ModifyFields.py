@@ -98,6 +98,7 @@ class ModifyFields(BaseModule.BaseModule):
       separator:                                    # <type: string; is: required>
       source_field:                                 # <type: list; is: required>
       target_field:                                 # <default: None; type: None||string; is: optional>
+      field_keys:                                   # <default: None; type: None||list; is: optional>
       receivers:
         - NextModule
 
@@ -229,6 +230,10 @@ class ModifyFields(BaseModule.BaseModule):
                 self.gp.shutDown()
                 return
             self.hash_func = self.hashlibFunc
+
+    def configure_split_action(self):
+        self.separator = self.getConfigurationValue('separator')
+        self.field_keys = self.getConfigurationValue('field_keys')
 
     def hashlibFunc(self, string):
         return self.hashlib_func(string).hexdigest()
@@ -423,6 +428,7 @@ class ModifyFields(BaseModule.BaseModule):
           separator:                                  # <type: string; is: required>
           source_field:                               # <type: list; is: required>
           target_field:                               # <default: None; type: None||string; is: optional>
+          field_keys:                                 # <default: None; type: None||list; is: optional>
           receivers:
             - NextModule
 
@@ -430,11 +436,14 @@ class ModifyFields(BaseModule.BaseModule):
         @return: event: dictionary
         """
         try:
-            values = event[self.source_field].split(self.getConfigurationValue('separator'))
+            values = event[self.source_field].split(self.separator)
         except:
             return event
-        target_field = self.target_field if self.target_field else self.source_field
-        event[target_field] = values
+        if self.field_keys:
+            event.update(dict(zip(self.field_keys, values)))
+        else:
+            target_field = self.target_field if self.target_field else self.source_field
+            event[target_field] = values
         return event
 
     def merge(self, event):

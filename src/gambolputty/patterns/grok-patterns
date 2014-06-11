@@ -52,7 +52,7 @@ UNIXPATH (?>/(?>[\w_%!$@:.,-]+|\\.)*)+
 TTY (?:/dev/(pts|tty([pq])?)(\w+)?/?(?:[0-9]+))
 WINPATH (?>[A-Za-z]+:|\\)(?:\\[^\\?*]*)+
 URIPROTO [A-Za-z]+(\+[A-Za-z+]+)?
-URIHOST %{IPORHOST}(?::%{POSINT:port})?
+URIHOST %{IPORHOST}(?::%{POSINT})?
 # uripath comes loosely from RFC1738, but mostly from what Firefox
 # doesn't turn into %XX
 URIPATH (?:/[A-Za-z0-9$.+!*'(){},~:;=@#%_\-]*)+
@@ -108,5 +108,5 @@ COMBINEDAPACHELOG %{COMMONAPACHELOG} %{QS:referrer} %{QS:agent}
 LOGLEVEL ([A-a]lert|ALERT|[T|t]race|TRACE|[D|d]ebug|DEBUG|[N|n]otice|NOTICE|[I|i]nfo|INFO|[W|w]arn?(?:ing)?|WARN?(?:ING)?|[E|e]rr?(?:or)?|ERR?(?:OR)?|[C|c]rit?(?:ical)?|CRIT?(?:ICAL)?|[F|f]atal|FATAL|[S|s]evere|SEVERE|EMERG(?:ENCY)?|[Ee]merg(?:ency)?)
 
 # HTTP
-HTTPMETHOD GET|HEAD|TRACE|OPTIONS
+HTTPMETHOD CONNECT|DELETE|GET|HEAD|OPTIONS|POST|PUT|TRACE
 HTTPVERSION HTTP/%{POSINT}\.\b(?:[0-9][0-9]*)\b

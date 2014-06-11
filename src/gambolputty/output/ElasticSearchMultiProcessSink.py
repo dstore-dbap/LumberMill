@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import elasticsearch
@@ -152,12 +153,12 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
             else:
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
-            json_data.append("\n".join((header, json.dumps(event), "\n")))
-        try:
-            json_data = "".join(json_data)
-        except UnicodeDecodeError:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+            try:
+                json_data.append("\n".join((header, json.dumps(event), "\n")))
+            except UnicodeDecodeError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+        json_data = "".join(json_data)
         return json_data
 
     def storeData(self, events):

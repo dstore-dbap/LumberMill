@@ -3,6 +3,7 @@ import sys
 import re
 import os
 import BaseModule
+import types
 import Utils
 import Decorators
 from operator import itemgetter
@@ -139,6 +140,9 @@ class RegexParser(BaseModule.BaseModule):
             yield event
             return
         string_to_match = event[self.source_field]
+        if type(string_to_match) not in [types.StringType, types.UnicodeType] :
+            yield event
+            return
         matches_dict = False
         for regex_data in self.fieldextraction_regexpressions:
             event_type = regex_data['event_type']

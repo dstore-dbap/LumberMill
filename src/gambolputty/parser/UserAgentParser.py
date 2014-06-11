@@ -25,7 +25,7 @@ class UserAgentParser(BaseModule.BaseModule):
 
     Configuration template:
 
-    - LineParser:
+    - UserAgentParser:
         source_fields:               # <type: string||list; is: required>
         target_field:                # <default: 'user_agent_info'; type:string; is: optional>
         receivers:

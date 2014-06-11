@@ -35,7 +35,7 @@ class LoggerSink(BaseModule.BaseModule):
             time.sleep(.0001)
         self.printing = True
         for format in self.formats:
-            output = self.mapDynamicValue(format, event)
+            output = Utils.mapDynamicValue(format, event)
             if not output:
                 continue
             self.logger.info("%s%s%s" % (Utils.AnsiColors.LIGHTBLUE, output, Utils.AnsiColors.ENDC))

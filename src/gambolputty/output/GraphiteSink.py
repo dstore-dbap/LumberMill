@@ -78,7 +78,7 @@ class GraphiteSink(BaseModule.BaseModule):
 
     def handleEvent(self, event):
         for format in self.formats:
-            mapped_data = self.mapDynamicValue(format, event)
+            mapped_data = Utils.mapDynamicValue(format, event)
             if mapped_data:
                 self.buffer.append("%s %s" % (mapped_data, int(time.time())))
         yield None

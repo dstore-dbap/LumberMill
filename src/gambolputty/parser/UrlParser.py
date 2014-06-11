@@ -36,6 +36,8 @@ class UrlParser(BaseModule.BaseModule):
         self.source_field = self.getConfigurationValue('source_field')
         if not self.getConfigurationValue('target_field'):
             self.target_field = self.source_field
+        else:
+            self.target_field = self.getConfigurationValue('target_field')
         self.parse_querystring = self.getConfigurationValue('parse_querystring')
         self.querystring_target_field = self.getConfigurationValue('querystring_target_field')
         self.querystring_prefix = self.getConfigurationValue('querystring_prefix')
@@ -46,7 +48,10 @@ class UrlParser(BaseModule.BaseModule):
 
     def decodeEvent(self, event):
         if self.source_field in event:
-            decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
+            #try:
+            #    decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
+            #except UnicodeDecodeError:
+            decoded_field = urllib.unquote(unicode(event[self.source_field]))
             parsed_result = urlparse.urlparse('%s' % decoded_field)
             parsed_url = {'scheme': parsed_result.scheme, 'path': parsed_result.path, 'params': parsed_result.params, 'query': parsed_result.query}
             event[self.target_field] = parsed_url
