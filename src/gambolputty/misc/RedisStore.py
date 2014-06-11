@@ -13,24 +13,24 @@ class RedisStore(BaseModule.BaseModule):
 
     It can be used to store results of modules in a redis key/value store.
 
-        server: Redis server to connect to.
-        cluster: Dictionary of redis masters as keys and pack_followers as values, e.g.: {'172.16.0.1:6379': '172.16.0.2:6379'}
-        port: Port redis server is listening on.
-        db: Redis db.
-        password: Redis password.
-        socket_timeout: Socket timeout in seconds.
-        charset: Charset to use.
-        errors:
-        decode_responses: specifies whether return values from Redis commands get decoded automatically using the client's charset value.
-        unix_socket_path: Path to unix socket file.
+    server: Redis server to connect to.
+    cluster: Dictionary of redis masters as keys and pack_followers as values, e.g.: {'172.16.0.1:6379': '172.16.0.2:6379'}
+    port: Port redis server is listening on.
+    db: Redis db.
+    password: Redis password.
+    socket_timeout: Socket timeout in seconds.
+    charset: Charset to use.
+    errors:
+    decode_responses: specifies whether return values from Redis commands get decoded automatically using the client's charset value.
+    unix_socket_path: Path to unix socket file.
 
     When set, the following options cause RedisStore to use a buffer for setting values.
     Multiple values are set via the pipe command, which speeds up storage. Still this comes at a price.
     Buffered values, that have not yet been send to redis, will be lost when GambolPutty crashes.
 
-        store_interval_in_secs: Sending data to redis in x seconds intervals.
-        batch_size: Sending data to redis if count is above, even if store_interval_in_secs is not reached.
-        backlog_size: Maximum count of values waiting for transmission. Values above count will be dropped.
+    store_interval_in_secs: Sending data to redis in x seconds intervals.
+    batch_size: Sending data to redis if count is above, even if store_interval_in_secs is not reached.
+    backlog_size: Maximum count of values waiting for transmission. Values above count will be dropped.
 
     Configuration template:
 

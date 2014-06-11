@@ -175,3 +175,27 @@ Configuration template:
         delay:          # <default: 10; type: integer; is: optional>
         receivers:
           - NextModule
+
+#####Throttle
+
+Throttle event count over a given time period.
+
+key: Identifies events as being the "same". Dynamic notations can be used here.
+timeframe: Time window in seconds from first encountered event to last.
+min_count: Minimal count of same events to allow event to be passed on.
+max_mount: Maximum count of same events before same events will be blocked.
+backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
+         synchronize events across multiple instances.
+backend_key_prefix: Prefix for the backend key.
+
+Configuration example:
+
+    - Throttle:
+        key:                # <type:string; is: required>
+        timeframe:          # <default: 600; type: integer; is: optional>
+        min_count:          # <default: 1; type: integer; is: optional>
+        max_count:          # <default: 1; type: integer; is: optional>
+        backend:            # <default: None; type: None||string; is: optional>
+        backend_key_prefix: # <default: "gambolputty:throttle"; type: string; is: optional>
+        receivers:
+          - NextModule

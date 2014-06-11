@@ -65,6 +65,7 @@ The different modules can be combined in any order.
 * Statistics, more versatile. Configurable fields for collecting statistic data.
 * EventBuffer, store received events in a persistent backend until the event was successfully handled.
 * Tarpit, slows event propagation down - for testing.
+* Throttle, throttle event count over a given time period.
 
 #### Cluster modules
 * Cluster, base cluster module. Handles pack leader and pack member discovery.
