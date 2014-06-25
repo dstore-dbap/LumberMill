@@ -164,6 +164,8 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     def storeData(self, events):
         index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True)
         json_data = self.dataToElasticSearchJson(index_name, events)
+        if index_name == "SchulmediathekStreaming-2014.06":
+            pprint.pprint(json_data)
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.

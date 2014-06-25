@@ -27,19 +27,27 @@ class ModifyFields(BaseModule.BaseModule):
         receivers:
           - NextModule
 
-    # Concat all fields listed in source_fields.
-    - ModifyFields:
-        action: concat                              # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        target_field:                               # <type: string; is: required>
-        receivers:
-          - NextModule
-
     # Insert a new field with "target_field" name an "value" as new value.
     - ModifyFields:
         action: insert                              # <type: string; is: required>
         target_field:                               # <type: string; is: required>
         value:                                      # <type: string; is: required>
+        receivers:
+          - NextModule
+
+    # Rename a field.
+    - ModifyFields:
+        action: rename                              # <type: string; is: required>
+        source_fields:                              # <type: list||string; is: required>
+        target_fields:                              # <type: list||string; is: required>
+        receivers:
+          - NextModule
+
+    # Concat all fields listed in source_fields.
+    - ModifyFields:
+        action: concat                              # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: required>
         receivers:
           - NextModule
 
@@ -76,7 +84,7 @@ class ModifyFields(BaseModule.BaseModule):
         action: key_value                           # <type: string; is: required>
         line_separator:                             # <type: string; is: required>
         kv_separator:                               # <type: string; is: required>
-        source_field:                               # <type: list; is: required>
+        source_field:                               # <type: string; is: required>
         target_field:                               # <default: None; type: None||string; is: optional>
         prefix:                                     # <default: None; type: None||string; is: optional>
         receivers:
@@ -86,7 +94,7 @@ class ModifyFields(BaseModule.BaseModule):
     - ModifyFields:
         action: key_value_regex                     # <type: string; is: required>
         regex:                                      # <type: string; is: required>
-        source_field:                               # <type: list; is: required>
+        source_field:                               # <type: string; is: required>
         target_field:                               # <default: None; type: None||string; is: optional>
         prefix:                                     # <default: None; type: None||string; is: optional>
         receivers:
@@ -96,7 +104,7 @@ class ModifyFields(BaseModule.BaseModule):
     - module: ModifyFields
       action: split                                 # <type: string; is: required>
       separator:                                    # <type: string; is: required>
-      source_field:                                 # <type: list; is: required>
+      source_field:                                 # <type: string; is: required>
       target_field:                                 # <default: None; type: None||string; is: optional>
       field_keys:                                   # <default: None; type: None||list; is: optional>
       receivers:
@@ -128,15 +136,15 @@ class ModifyFields(BaseModule.BaseModule):
 
     # Cast field values to float.
     - ModifyFields:
-      action: cast_to_float                       # <type: string; is: required>
-      source_fields:                              # <type: list; is: required>
+      action: cast_to_float                         # <type: string; is: required>
+      source_fields:                                # <type: list; is: required>
       receivers:
         - NextModule
 
     # Cast field values to string.
     - ModifyFields:
-      action: cast_to_str                         # <type: string; is: required>
-      source_fields:                              # <type: list; is: required>
+      action: cast_to_str                           # <type: string; is: required>
+      source_fields:                                # <type: list; is: required>
       receivers:
         - NextModule
 
@@ -205,6 +213,17 @@ class ModifyFields(BaseModule.BaseModule):
         # Call action specific configure method.
         if "configure_%s_action" % self.action in dir(self):
             getattr(self, "configure_%s_action" % self.action)()
+
+    def configure_rename_action(self):
+        self.from_fields = self.getConfigurationValue('source_fields')
+        self.to_fields = self.getConfigurationValue('target_fields')
+        if isinstance(self.from_fields, str):
+            self.from_fields = [self.from_fields]
+        if isinstance(self.to_fields, str):
+            self.to_fields = [self.to_fields]
+        if len(self.from_fields) != len(self.to_fields):
+            self.logger.error("%sError in replace plugin config. Count of source fields not equal count of target fields.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
 
     def configure_anonymize_action(self):
         self.configure_hash_action()
@@ -295,6 +314,19 @@ class ModifyFields(BaseModule.BaseModule):
         event[self.target_field] = self.getConfigurationValue('value', event)
         return event
 
+    def rename(self, event):
+        """
+        Rename fields. If the taget field exists it will be overwritten.
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        for idx, from_field in enumerate(self.from_fields):
+            try:
+                event[self.target_fields[idx]] = event.pop(from_field)
+            except KeyError:
+                continue
+        return event
 
 
     def concat(self, event):
