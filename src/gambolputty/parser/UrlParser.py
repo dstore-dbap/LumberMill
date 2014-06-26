@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import BaseModule
+import pprint
 import urllib
 import urlparse
 from Decorators import ModuleDocstringParser
@@ -36,6 +37,8 @@ class UrlParser(BaseModule.BaseModule):
         self.source_field = self.getConfigurationValue('source_field')
         if not self.getConfigurationValue('target_field'):
             self.target_field = self.source_field
+        else:
+            self.target_field = self.getConfigurationValue('target_field')
         self.parse_querystring = self.getConfigurationValue('parse_querystring')
         self.querystring_target_field = self.getConfigurationValue('querystring_target_field')
         self.querystring_prefix = self.getConfigurationValue('querystring_prefix')

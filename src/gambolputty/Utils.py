@@ -76,7 +76,7 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
     default_dict = { "data": "",
                      "gambolputty": {
                         'event_type': event_type,
-                        'event_id': "%032x" % random.getrandbits(128),
+                        'event_id': "%032x%s" % (random.getrandbits(128), os.getpid()),
                         'source_module': caller_class_name,
                         'received_from': received_from,
                         'received_by': my_hostname

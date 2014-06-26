@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
 import Utils
 import multiprocessing
-import StatisticCollector as StatisticCollector
 import sys
 import os
 import signal
@@ -13,6 +11,8 @@ import logging.config
 import threading
 import Queue
 import yaml
+import tornado.ioloop
+from collections import defaultdict
 
 module_dirs = ['input',
                'parser',
@@ -63,6 +63,7 @@ class GambolPutty():
         self.main_process_pid = os.getpid()
         self.is_master = True
         self.modules = {}
+        self.message_callbacks = defaultdict(lambda: [])
         self.logger = logging.getLogger(self.__class__.__name__)
         if path_to_config_file:
             self.readConfiguration(path_to_config_file)
@@ -125,7 +126,7 @@ class GambolPutty():
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
-            instance = module_class(self, StatisticCollector.StatisticCollector())
+            instance = module_class(self)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
@@ -302,23 +303,20 @@ class GambolPutty():
 
     def runChildren(self, family_count=0):
         self.children = []
-        print "runChildren method called in %s" % os.getpid()
         if family_count == 0 or family_count > multiprocessing.cpu_count():
-            family_count = multiprocessing.cpu_count() - 1
+            # CPU count - 2 because we also have the main process and we want to leave at least one cpu for other tasks.
+            family_count = multiprocessing.cpu_count() - 2
         for i in range(family_count):
             pid = os.fork()
             if pid == 0:
-                #print "Childprocess %s" % os.getpid()
                 self.is_master = False
                 self.run()
                 break
-            #print "forked pid %s" % pid
             self.children.append(pid)
         self.run()
 
     def run(self):
         self.alive = True
-        print "Run method called in %s" % os.getpid()
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
@@ -326,17 +324,13 @@ class GambolPutty():
         signal.signal(signal.SIGALRM, self.restart)
         self.runModules()
         if self.is_master:
-            self.logger.info("%sGambolPutty started with %s processes.%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.children)+1, Utils.AnsiColors.ENDC))
-        import tornado.ioloop
+            self.logger.info("%sGambolPutty started with %s processes(%s).%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.children)+1, os.getpid(),Utils.AnsiColors.ENDC))
         tornado.ioloop.IOLoop.instance().start()
-        #while self.alive:
-        #    time.sleep(.5)
 
     def restart(self, signum=False, frame=False):
         # If a module started a subprocess, the whole gambolputty parent process gets forked.
         # As a result, the forked gambolputty process will also catch SIGINT||SIGALARM.
         # Still we know the pid of the original main process.
-        is_forked_process = self.main_process_pid != os.getpid()
         if self.is_master:
             self.logger.info("%sRestarting GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
         self.shutDownModules()
@@ -360,10 +354,28 @@ class GambolPutty():
         Utils.TimedFunctionManager.stopTimedFunctions()
         if self.is_master:
             self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
-        sys.exit(0)
+        # Using multiprocessing.Manager (e.g. in Stats module) and os.fork together will cause the following error
+        # when calling sys.exit():
+        #
+        # Error in sys.exitfunc:
+        # Traceback (most recent call last):
+        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/atexit.py", line 24, in _run_exitfuncs
+        #    func(*targs, **kargs)
+        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/util.py", line 319, in _exit_function
+        #    p.join()
+        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/process.py", line 143, in join
+        #    assert self._parent_pid == os.getpid(), 'can only join a child process'
+        # AssertionError: can only join a child process
+        #
+        #
+        # To make sure all subprocess share the same manager, it needs to be instantiated BEFORE the fork call.
+        # The problem is that the multiprocessing.Manager starts its own process to handle the shared data.
+        # When shutting down after the fork, the process.join seems to have lost the access to this process.
+        # Aside of this error, everything works asexpected.
+        # So instead of calling sys.exit we send a SIGTERM signal, which works just fine.
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def shutDownModules(self):
-        import tornado.ioloop
         tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():

@@ -32,60 +32,58 @@ class SimpleStats(BaseModule.BaseModule):
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
         self.stats_collector = StatisticCollector.StatisticCollector()
-        self.mp_stats_collector = StatisticCollector.MultiProcessStatisticCollector()
+        for counter_name in ['events_received', 'event_type_Unknown', 'event_type_httpd_access_log']:
+            StatisticCollector.MultiProcessStatisticCollector().initCounter(counter_name)
         self.module_queues = {}
 
     def getRunTimedFunctionsFunc(self):
         @Decorators.setInterval(self.interval)
         def runTimedFunctionsFunc():
-            self.accumulateReceiveRateStats()
             self.accumulateEventTypeStats()
+            self.accumulateReceiveRateStats()
             if self.gp.is_master:
                 self.printIntervalStatistics()
         return runTimedFunctionsFunc
 
     def accumulateEventTypeStats(self):
         for event_type, count in self.stats_collector.getAllCounters().iteritems():
-            if count == 0:
-                continue
-            self.mp_stats_collector.incrementCounter(event_type, count)
+            StatisticCollector.MultiProcessStatisticCollector().incrementCounter(event_type, count)
             self.stats_collector.resetCounter(event_type)
 
     def accumulateReceiveRateStats(self):
-        if self.stats_collector.getCounter('events_received') == 0:
-            return
-        self.mp_stats_collector.incrementCounter('events_received', self.stats_collector.getCounter('events_received'))
+        StatisticCollector.MultiProcessStatisticCollector().incrementCounter('events_received', self.stats_collector.getCounter('events_received'))
         self.stats_collector.resetCounter('events_received')
 
     def printIntervalStatistics(self):
         self.logger.info("############# Statistics (PID: %s) #############" % os.getpid())
         if self.getConfigurationValue('receive_rate_statistics'):
             self.receiveRateStatistics()
+        if self.getConfigurationValue('waiting_event_statistics'):
+            self.eventsInQueuesStatistics()
         if self.getConfigurationValue('event_type_statistics'):
             self.eventTypeStatistics()
-        #if self.getConfigurationValue('waiting_event_statistics'):
-        #    self.eventsInQueuesStatistics()
-
-    def receiveRateStatistics(self):
-        self.logger.info(">> Receive rate stats")
-        events_received = self.mp_stats_collector.getCounter('events_received')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
-        if self.emit_as_event:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
-        self.mp_stats_collector.resetCounter('events_received')
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        all_counters = self.mp_stats_collector.getAllCounters()
-        for event_type  in sorted(all_counters.keys()):
-            count = all_counters[event_type]
+        for event_type, count in sorted(StatisticCollector.MultiProcessStatisticCollector().getAllCounters().iteritems()):
+            count = count.value
             if not event_type.startswith('event_type_'):
                 continue
             event_name = event_type.replace('event_type_', '')
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
-            self.mp_stats_collector.resetCounter(event_type)
+            StatisticCollector.MultiProcessStatisticCollector().resetCounter(event_type)
+
+    def receiveRateStatistics(self):
+        self.logger.info(">> Receive rate stats")
+        events_received = StatisticCollector.MultiProcessStatisticCollector().getCounter('events_received')
+        if not events_received:
+            events_received = 0
+        StatisticCollector.MultiProcessStatisticCollector().resetCounter('events_received')
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
+        if self.emit_as_event:
+            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:

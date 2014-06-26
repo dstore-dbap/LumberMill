@@ -7,6 +7,7 @@ import socket
 from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
+from tornado.netutil import bind_sockets
 from tornado import autoreload
 import Utils
 import BaseModule
@@ -146,10 +147,11 @@ class TcpServerMp(BaseModule.BaseModule):
             if self.getConfigurationValue("tls"):
                 ssl_options = { 'certfile': self.getConfigurationValue("cert"),
                                 'keyfile': self.getConfigurationValue("key")}
-            self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
-            self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
-            for fd, server_socket in self.server._sockets.iteritems():
-                server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            #self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
+            #self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
+            self.sockets = bind_sockets(self.getConfigurationValue("port"), self.getConfigurationValue("interface"), backlog=128)
+            #for server_socket in self.sockets:
+            #    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
@@ -157,12 +159,20 @@ class TcpServerMp(BaseModule.BaseModule):
             self.gp.shutDown()
             return
         autoreload.add_reload_hook(self.shutDown)
-        if self.start_ioloop:
-            try:
-                IOLoop.instance().start()
-            except ValueError:
-                # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
-                pass
+        #if self.start_ioloop:
+        #    try:
+        #        IOLoop.instance().start()
+        #    except ValueError:
+        #        # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
+        #        pass
+
+    def run(self):
+        ssl_options = None
+        if self.getConfigurationValue("tls"):
+            ssl_options = { 'certfile': self.getConfigurationValue("cert"),
+                            'keyfile': self.getConfigurationValue("key")}
+        self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
+        self.server.add_sockets(self.sockets)
 
     def shutDown(self, silent=False):
         try:

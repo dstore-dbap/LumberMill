@@ -29,7 +29,7 @@ class BaseModule():
 
     can_run_parallel = False
 
-    def __init__(self, gp, stats_collector=False):
+    def __init__(self, gp):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp = gp
         self.receivers = {}
@@ -37,7 +37,7 @@ class BaseModule():
         self.input_filter = None
         self.output_filters = {}
         self.timed_function_events = []
-        self.stats_collector = stats_collector
+        #self.stats_collector = stats_collector
         self.pid_on_init = os.getpid()
 
     def configure(self, configuration=None):
@@ -186,9 +186,8 @@ class BaseModule():
             event_clone = event.copy()
         copy_event = False
         for receiver in self.receivers.itervalues():
-            e = event if not copy_event else event_clone.copy()
             if hasattr(receiver, 'receiveEvent'):
-                receiver.receiveEvent(e)
+                receiver.receiveEvent(event if not copy_event else event_clone.copy())
             else:
                 receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True

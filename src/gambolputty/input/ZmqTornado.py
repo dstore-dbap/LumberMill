@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import socket
 import sys
 import zmq

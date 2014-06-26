@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import Utils
+import StatisticCollector as StatisticCollector
 import BaseModule
 import Decorators
 
@@ -40,6 +42,7 @@ class Statistics(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         self.interval = self.getConfigurationValue('interval')
         self.fields = self.getConfigurationValue('fields')
+        self.stats_collector = StatisticCollector.StatisticCollector()
         self.module_queues = {}
 
     def getRunTimedFunctionsFunc(self):
