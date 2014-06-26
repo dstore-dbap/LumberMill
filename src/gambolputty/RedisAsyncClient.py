@@ -18,11 +18,10 @@
 
 import logging
 import socket
-
 from collections import deque
 from tornado.ioloop import IOLoop
 from tornado.iostream import IOStream
-from tornado.util import bytes_type
+
 
 def encode(request):
     """Encode request (command, *args) to redis bulk bytes.

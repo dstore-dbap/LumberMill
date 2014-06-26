@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import Queue
 import ast
 import datetime
 import copy

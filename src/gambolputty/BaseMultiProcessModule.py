@@ -33,8 +33,8 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process):
 
     can_run_parallel = True
 
-    def __init__(self, gp, stats_collector=False):
-        BaseModule.BaseModule.__init__(self, gp, stats_collector)
+    def __init__(self, gp):
+        BaseModule.BaseModule.__init__(self, gp)
         multiprocessing.Process.__init__(self)
         self.input_queue = False
         self.output_queues = []

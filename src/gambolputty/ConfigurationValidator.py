@@ -2,6 +2,7 @@
 import types
 import Utils
 
+# noinspection PyClassHasNoInit
 class ConfigurationValidator():
     """
     Validate a module instance based on the configuration meta data retrieved from the docstring via the ModuleDocstringParser.

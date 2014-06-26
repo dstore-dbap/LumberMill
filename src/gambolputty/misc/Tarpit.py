@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-import pprint
 import time
-import BaseThreadedModule
 import BaseModule
 from Decorators import ModuleDocstringParser
 

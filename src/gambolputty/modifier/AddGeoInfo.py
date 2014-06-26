@@ -3,7 +3,6 @@ import socket
 import sys
 import Utils
 import pygeoip
-import BaseThreadedModule
 import BaseModule
 import Decorators
 

@@ -103,7 +103,7 @@ class GraphiteSink(BaseModule.BaseModule):
                     self.connection = self.connect()
                     tries += 1
                 if not self.connection:
-                    self.logger.error("%sReconnect failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error("%sReconnect failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
                     self.gp.shutDown()
                 else:
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.connection_data, Utils.AnsiColors.ENDC))

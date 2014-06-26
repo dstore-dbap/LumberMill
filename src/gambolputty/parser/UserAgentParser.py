@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import httpagentparser
 import types
 import BaseModule

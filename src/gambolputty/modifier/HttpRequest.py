@@ -49,7 +49,7 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
         if self.redis_store:
             redis_key = self.getConfigurationValue('redis_key', event)
             result = self.redis_store.get(redis_key)
-        if result == None:
+        if result is None:
             try:
                 result = self.execRequest(request_url).read()
                 if result and self.redis_store:

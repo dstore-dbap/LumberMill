@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+import pprint
 import Utils
 import multiprocessing
 import sys
@@ -58,8 +59,9 @@ class GambolPutty():
     and connects them via queues as configured.
     """
 
-    def __init__(self, path_to_config_file=False):
+    def __init__(self, path_to_config_file):
         self.alive = False
+        self.child_processes = []
         self.main_process_pid = os.getpid()
         self.is_master = True
         self.modules = {}
@@ -108,13 +110,19 @@ class GambolPutty():
         else:
             self.configuration = configuration
 
-    def configure(self):
-        gp_conf = {}
+    def configureGlobal(self):
+        self.default_pool_size  = multiprocessing.cpu_count() - 1
+        # CPU count - 1 as we want to leave at least one cpu for other tasks.
+        self.workers = multiprocessing.cpu_count() - 1
         for idx, configuration in enumerate(self.configuration):
-            if 'GambolPutty' in configuration:
-                gp_conf = self.configuration.pop(idx)
+            if 'Global' in configuration:
+                configuration = configuration['Global']
+                if 'default_pool_size' in configuration:
+                    self.default_pool_size = configuration['default_pool_size']
+                if 'workers' in configuration:
+                    self.workers = configuration['workers']
+                self.configuration.pop(idx)
                 break
-        self.default_pool_size = configuration['default_pool_size'] if 'default_pool_size' in gp_conf else multiprocessing.cpu_count() - 1
 
     def initModule(self, module_name):
         """ Initalize a module.
@@ -123,6 +131,7 @@ class GambolPutty():
         :type module_name: string
         """
         self.logger.debug("Initializing module %s." % (module_name))
+        instance = None
         try:
             module = __import__(module_name)
             module_class = getattr(module, module_name)
@@ -162,6 +171,7 @@ class GambolPutty():
             # Set some app wide defaults.
             pool_size = module_config['pool_size'] if "pool_size" in module_config else self.default_pool_size
             module_instances = []
+            module_instance = None
             for _ in range(pool_size):
                 # Build first instance.
                 module_instance = self.initModule(module_class_name)
@@ -228,6 +238,7 @@ class GambolPutty():
                 if receiver_name not in self.modules:
                     self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
                     continue
+                receiver_instance = None
                 for receiver_instance in self.modules[receiver_name]['instances']:
                     # If the receiver is a thread or a process, produce the needed queue.
                     if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
@@ -240,7 +251,7 @@ class GambolPutty():
                             if not receiver_instance.getInputQueue():
                                 receiver_instance.setInputQueue(queues[receiver_name])
                         except AttributeError:
-                            self.logger.error("%s%s can not be set as receiver. It seems to be incompatible." % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
+                            self.logger.error("%s%s can not be set as receiver. It seems to be incompatible.%s" % (Utils.AnsiColors.WARNING, receiver_name, Utils.AnsiColors.ENDC))
                     # Build a node structure used for the loop test.
                     try:
                         node = (node for node in module_loop_buffer if node.module == instance).next()
@@ -301,18 +312,14 @@ class GambolPutty():
                 if not instance.can_run_parallel:
                     break
 
-    def runChildren(self, family_count=0):
-        self.children = []
-        if family_count == 0 or family_count > multiprocessing.cpu_count():
-            # CPU count - 2 because we also have the main process and we want to leave at least one cpu for other tasks.
-            family_count = multiprocessing.cpu_count() - 2
-        for i in range(family_count):
+    def runChildren(self):
+        for i in range(1,self.workers):
             pid = os.fork()
             if pid == 0:
                 self.is_master = False
                 self.run()
                 break
-            self.children.append(pid)
+            self.child_processes.append(pid)
         self.run()
 
     def run(self):
@@ -324,7 +331,7 @@ class GambolPutty():
         signal.signal(signal.SIGALRM, self.restart)
         self.runModules()
         if self.is_master:
-            self.logger.info("%sGambolPutty started with %s processes(%s).%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.children)+1, os.getpid(),Utils.AnsiColors.ENDC))
+            self.logger.info("%sGambolPutty started with %s processes(%s).%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.child_processes)+1, os.getpid(),Utils.AnsiColors.ENDC))
         tornado.ioloop.IOLoop.instance().start()
 
     def restart(self, signum=False, frame=False):
@@ -372,8 +379,8 @@ class GambolPutty():
         # The problem is that the multiprocessing.Manager starts its own process to handle the shared data.
         # When shutting down after the fork, the process.join seems to have lost the access to this process.
         # Aside of this error, everything works asexpected.
-        # So instead of calling sys.exit we send a SIGTERM signal, which works just fine.
-        os.kill(os.getpid(), signal.SIGTERM)
+        # So instead of calling sys.exit we send a SIGQUIT signal, which works just fine.
+        os.kill(os.getpid(), signal.SIGQUIT)
 
     def shutDownModules(self):
         tornado.ioloop.IOLoop.instance().stop()
@@ -445,7 +452,7 @@ if "__main__" == __name__:
         usage()
         sys.exit(2)
     gp = GambolPutty(path_to_config_file)
-    gp.configure()
+    gp.configureGlobal()
     gp.initModulesFromConfig()
     gp.configureModules()
     gp.initEventStream()

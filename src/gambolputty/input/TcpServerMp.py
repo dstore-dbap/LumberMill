@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
-import os
 import logging
 import time
-import socket
-from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
 from tornado.netutil import bind_sockets

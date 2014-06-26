@@ -93,7 +93,7 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
         self.socket.settimeout(timeout)
         self.use_tls = tls
         self.timeout = timeout
-        if tls == True:
+        if tls:
             self.socket = ssl.wrap_socket(self.socket,
                                           server_side=True,
                                           keyfile=key,

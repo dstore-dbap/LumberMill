@@ -76,7 +76,7 @@ class Facet(BaseModule.BaseModule):
                 Facet.redis_keys.append(key)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not store facet data in redis.%s" % (Utils.AnsiColors.WARNING, key, etype, evalue, Utils.AnsiColors.WARNING))
+            self.logger.warning("%sCould not store facet data in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.WARNING))
             pass
 
     def _setFacetInfoInternal(self, key, facet_info):

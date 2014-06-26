@@ -51,7 +51,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def run(self):
         if not self.client:
             return
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
     def handleEvent(self, event):
@@ -66,7 +66,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.logger.error("%sCould not publish event to redis channel %s at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
         yield None
 
-    def handleEvent(self, event):
+    def __handleEvent(self, event):
         if self.format:
             publish_data = Utils.mapDynamicValue(self.format, event)
         else:

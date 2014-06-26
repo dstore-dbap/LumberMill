@@ -7,7 +7,7 @@ import re
 import ast
 import multiprocessing
 import collections
-import Utils
+
 
 def Singleton(class_):
     instances = {}

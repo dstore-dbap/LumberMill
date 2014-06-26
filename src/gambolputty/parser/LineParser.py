@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import types
 import BaseModule
 from Decorators import ModuleDocstringParser

@@ -63,13 +63,13 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             try:
                 import gzip
             except ImportError:
-                self.logger.error('%Gzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('%sGzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
         if self.compress == 'snappy':
             try:
                 import snappy
             except ImportError:
-                self.logger.error('%Snappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('%sSnappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
         self.is_storing = False
         self.lock = multiprocessing.Lock()
@@ -202,7 +202,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             compressor.close()
         return buffer.getvalue()
 
-    def compressSnappy(data):
+    def compressSnappy(self, data):
         compressed = snappy.compress(data)
         return compressed
 

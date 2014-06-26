@@ -24,6 +24,7 @@ else:
     if not json:
         raise ImportError
 
+
 class PackMember:
 
     def __init__(self, host, message):
@@ -47,6 +48,7 @@ class PackMember:
 
     def getMessage(self):
         return self.message
+
 
 @Decorators.ModuleDocstringParser
 class Cluster(BaseThreadedModule.BaseThreadedModule):
@@ -147,7 +149,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         self.logger.debug("%sSending message %s to %s.%s" % (Utils.AnsiColors.OKBLUE, message, pack_member, Utils.AnsiColors.ENDC))
         ip_address = pack_member.getIp()
         if ip_address not in self.pack_followers.keys():
-            self.logger.warning('%sCan not send message to unknown pack member %s.%s' % (Utils.AnsiColors.WARNING, pack_member,Utils.AnsiColors.ENDC))
+            self.logger.warning('%sCan not send message to unknown pack member %s.%s' % (Utils.AnsiColors.WARNING, pack_member, Utils.AnsiColors.ENDC))
             return
         self.sendMessage(message, pack_member.getHost())
 
@@ -165,7 +167,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
-                                                                                       self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+                                                                                            self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
             return
         # Start alive requests only if we are the leader.

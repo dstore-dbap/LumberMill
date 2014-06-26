@@ -21,7 +21,7 @@ class BufferedFiFoWriteQueue():
             return True
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.flush_callback, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
 
     def pop(self):
         payload_ser = self.queue.pop()

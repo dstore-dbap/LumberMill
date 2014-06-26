@@ -4,6 +4,7 @@ import BaseThreadedModule
 import time
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
 class Spam(BaseThreadedModule.BaseThreadedModule):
     """

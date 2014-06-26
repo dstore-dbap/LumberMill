@@ -3,7 +3,6 @@ import sys
 import os
 import socket
 from tornado import netutil
-from tornado.ioloop import IOLoop
 from tornado.tcpserver import TCPServer
 
 import Utils

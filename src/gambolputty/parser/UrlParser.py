@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import BaseModule
-import pprint
 import urllib
 import urlparse
 from Decorators import ModuleDocstringParser

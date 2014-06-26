@@ -62,7 +62,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         if self.redis_store:
             redis_key = self.getConfigurationValue('redis_key', event)
             result = self.redis_store.get(redis_key)
-        if result == None:
+        if result is None:
             xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
                 xml_root = etree.fromstring(xml_string)

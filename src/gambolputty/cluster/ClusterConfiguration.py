@@ -4,6 +4,7 @@ import BaseModule
 import Decorators
 import Utils
 
+
 @Decorators.ModuleDocstringParser
 class ClusterConfiguration(BaseModule.BaseModule):
     """
