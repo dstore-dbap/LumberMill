@@ -182,9 +182,9 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 self.es = self.connect()
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.buffer.flush()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)

@@ -75,9 +75,9 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.buffer.append(publish_data)
         yield None
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.buffer.flush()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)

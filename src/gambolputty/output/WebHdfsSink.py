@@ -205,6 +205,3 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def compressSnappy(self, data):
         compressed = snappy.compress(data)
         return compressed
-
-    def shutDown(self, silent=False):
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent=False)

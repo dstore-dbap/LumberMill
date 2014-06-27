@@ -37,8 +37,7 @@ class BaseModule():
         self.input_filter = None
         self.output_filters = {}
         self.timed_function_events = []
-        #self.stats_collector = stats_collector
-        self.pid_on_init = os.getpid()
+        self.pid = os.getpid()
 
     def configure(self, configuration=None):
         """
@@ -124,13 +123,6 @@ class BaseModule():
         if config_setting['contains_placeholder'] == False or not mapping_dict:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
-
-    def __mapDynamicValue(self, value, mapping_dict):
-        return Utils.mapDynamicValue(value, mapping_dict)
-
-    def shutDown(self, silent=False):
-        if not silent:
-            self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
 
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
@@ -228,3 +220,7 @@ class BaseModule():
         @param event: dictionary
         """
         yield event
+
+    def shutDown(self):
+        pass
+        #self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))

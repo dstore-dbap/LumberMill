@@ -114,9 +114,6 @@ class EventBuffer(BaseModule.BaseModule):
             gc.collect()
         return timedGarbageCollect
 
-    def isForkedProcess(self):
-        return self.pid_on_init != os.getpid()
-
     def requeueEvents(self):
         input_modules = {}
         for module_name, module_info in self.gp.modules.iteritems():

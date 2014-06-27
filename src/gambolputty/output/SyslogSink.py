@@ -61,6 +61,6 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
             self.syslogger.info(event)
         yield event
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         self.syslog_handler.close()
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent=False)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

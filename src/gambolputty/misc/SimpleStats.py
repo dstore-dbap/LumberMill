@@ -76,9 +76,8 @@ class SimpleStats(BaseModule.BaseModule):
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        all_counters = self.mp_stats_collector.getAllCounters()
-        for event_type  in sorted(all_counters.keys()):
-            count = all_counters[event_type]
+        for event_type  in sorted(self.mp_stats_collector.getAllCounters().keys()):
+            count = self.mp_stats_collector.getCounters(event_type)
             if not event_type.startswith('event_type_'):
                 continue
             event_name = event_type.replace('event_type_', '')

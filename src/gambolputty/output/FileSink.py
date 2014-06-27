@@ -102,9 +102,9 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error('%sCould no write event data to %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
 
-    def _shutDown(self, silent=False):
+    def shutDown(self):
         self.buffer.flush()
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)
 
     def compressGzip(self, data):
         buffer = StringIO()

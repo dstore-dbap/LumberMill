@@ -106,11 +106,11 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.buffer.append(publish_data)
         yield None
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.client.close()
             self.zmq_context.term()
         except AttributeError:
             pass
         # Call parent shutDown method.
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
+        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)

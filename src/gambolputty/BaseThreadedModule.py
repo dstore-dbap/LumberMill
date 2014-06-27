@@ -73,7 +73,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
                 continue
             self.receiveEvent(event)
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         # Call parent shutDown method
-        BaseModule.BaseModule.shutDown(self, silent)
+        BaseModule.BaseModule.shutDown(self)
         self.alive = False

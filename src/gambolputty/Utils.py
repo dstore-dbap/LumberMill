@@ -272,6 +272,7 @@ class BufferedQueue():
             exc_type, exc_value, exc_tb = sys.exc_info()
             self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
 
+
     def qsize(self):
         return self.buffer.bufsize() + self.queue.qsize()
 

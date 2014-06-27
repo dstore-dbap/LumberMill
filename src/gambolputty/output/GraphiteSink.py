@@ -108,9 +108,8 @@ class GraphiteSink(BaseModule.BaseModule):
                 else:
                     self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.connection_data, Utils.AnsiColors.ENDC))
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.connection.close()
         except:
             pass
-        #BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)

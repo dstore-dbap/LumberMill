@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
 import Utils
+import BaseThreadedModule
+import BaseMultiProcessModule
 import multiprocessing
 import sys
 import os
@@ -9,7 +10,6 @@ import signal
 import time
 import getopt
 import logging.config
-import threading
 import Queue
 import yaml
 import tornado.ioloop
@@ -72,10 +72,10 @@ class GambolPutty():
 
     def produceQueue(self, module_instance, queue_max_size=20, queue_buffer_size=100):
         """Returns a queue with queue_max_size"""
-        if isinstance(module_instance, threading.Thread):
+        if isinstance(module_instance, BaseThreadedModule.BaseThreadedModule):
             return Queue.Queue(queue_max_size)
-        if isinstance(module_instance, multiprocessing.Process):
-            if Utils.zmq_avaiable:
+        if isinstance(module_instance, BaseMultiProcessModule.BaseMultiProcessModule):
+            if False and Utils.zmq_avaiable:
                 queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size), queue_buffer_size)
             else:
                 queue = Utils.BufferedQueue(multiprocessing.Queue(queue_max_size), queue_buffer_size)
@@ -177,8 +177,9 @@ class GambolPutty():
                 module_instance = self.initModule(module_class_name)
                 # Append to internal list.
                 module_instances.append(module_instance)
+                # Only threaded modules may provide a pool_size parameter.
                 # If instance is not configured to run in parallel, only create one instance, no matter what the pool_size configuration says.
-                if not module_instance.can_run_parallel:
+                if not module_instance.can_run_parallel or not isinstance(module_instances, BaseThreadedModule.BaseThreadedModule):
                     break
             self.modules[module_id] = {  'idx': idx,
                                          'instances': module_instances,
@@ -241,9 +242,9 @@ class GambolPutty():
                 receiver_instance = None
                 for receiver_instance in self.modules[receiver_name]['instances']:
                     # If the receiver is a thread or a process, produce the needed queue.
-                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
+                    if isinstance(receiver_instance, BaseThreadedModule.BaseThreadedModule) or isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule):
                         if receiver_name not in queues:
-                            if isinstance(receiver_instance, threading.Thread):
+                            if isinstance(receiver_instance, BaseThreadedModule.BaseThreadedModule):
                                 queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'))
                             else:
                                 queues[receiver_name] = self.produceQueue(receiver_instance, receiver_instance.getConfigurationValue('queue_size'), receiver_instance.getConfigurationValue('queue_buffer_size'))
@@ -266,7 +267,7 @@ class GambolPutty():
                     node.addChild(receiver_node)
                 for instance in module_info['instances']:
                     # Add the receiver to senders. If the receiver is a thread or multiprocess, they share the same queue.
-                    if isinstance(receiver_instance, threading.Thread) or isinstance(receiver_instance, multiprocessing.Process):
+                    if isinstance(receiver_instance, BaseThreadedModule.BaseThreadedModule) or isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule):
                         instance.addReceiver(receiver_name, queues[receiver_name])
                     else:
                         instance.addReceiver(receiver_name, receiver_instance)
@@ -301,7 +302,7 @@ class GambolPutty():
             for instance in module_info['instances']:
                 name = module_info['id'] if 'id' in module_info else module_name
                 try:
-                    if isinstance(instance, threading.Thread) or isinstance(instance, multiprocessing.Process):
+                    if isinstance(instance, BaseThreadedModule.BaseThreadedModule) or isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule):
                         # The default 'start' method of threading.Thread will call the 'run' method of the module.
                         instance.start()
                     elif getattr(instance, "run", None):
@@ -309,8 +310,6 @@ class GambolPutty():
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.warning("%sError calling run/start method of %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, name, etype, evalue, Utils.AnsiColors.ENDC))
-                if not instance.can_run_parallel:
-                    break
 
     def runChildren(self):
         for i in range(1,self.workers):
@@ -383,14 +382,13 @@ class GambolPutty():
         os.kill(os.getpid(), signal.SIGQUIT)
 
     def shutDownModules(self):
+        #print "ShutDown called in %s" % os.getpid()
         tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
         for module_name, module_info in self.modules.iteritems():
-            silent=False
             for instance in module_info['instances']:
                 if instance.module_type == "input":
-                    instance.shutDown(silent)
-                    silent=True
+                    instance.shutDown()
         # Get all configured queues to check for pending events.
         module_queues = {}
         for module_name, module_info in self.modules.iteritems():
@@ -414,11 +412,9 @@ class GambolPutty():
                 break
         # Shutdown all other modules.
         for module_name, module_info in self.modules.iteritems():
-            silent = not self.is_master
             for instance in module_info['instances']:
                 if instance.module_type != "input":
-                    instance.shutDown(silent)
-                    silent=True
+                    instance.shutDown()
 
 def usage():
     print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest'

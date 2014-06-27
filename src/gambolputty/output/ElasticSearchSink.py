@@ -2,6 +2,7 @@
 import sys
 import time
 import elasticsearch
+import BaseThreadedModule
 import BaseModule
 import Utils
 import Decorators
@@ -25,7 +26,7 @@ else:
         raise ImportError
 
 @Decorators.ModuleDocstringParser
-class ElasticSearchSink(BaseModule.BaseModule):
+class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -76,7 +77,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -95,6 +96,7 @@ class ElasticSearchSink(BaseModule.BaseModule):
 
     def run(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        BaseThreadedModule.BaseThreadedModule.run(self)
 
     def connect(self):
         es = False
@@ -187,4 +189,3 @@ class ElasticSearchSink(BaseModule.BaseModule):
             self.buffer.flush()
         except:
             pass
-        #BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self, silent)
