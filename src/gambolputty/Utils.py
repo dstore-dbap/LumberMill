@@ -8,10 +8,15 @@ import os
 import sys
 import subprocess
 import logging
-import __builtin__
 import signal
 import Decorators
 import socket
+
+# Conditional imports for python2/3
+try:
+    import __builtin__ as builtins
+except ImportError:
+    import builtins
 
 try:
     import zmq
@@ -25,6 +30,17 @@ try:
     is_pypy = True
 except ImportError:
     is_pypy = False
+
+# Borrowed from Ned Batchelder
+if sys.hexversion > 0x03000000:
+    def exec_function(source, filename, global_map):
+        exec(compile(source, filename, "exec"), global_map)
+else:
+    eval(compile("""\
+def exec_function(source, filename, global_map):
+    exec compile(source, filename, "exec") in global_map
+""",
+    "<exec_function>", "exec"))
 
 my_hostname = socket.gethostname()
 
@@ -120,7 +136,7 @@ class AstTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         # ignore builtins and some other vars
-        ignore_nodes = dir(__builtin__)
+        ignore_nodes = dir(builtins)
         ignore_nodes.extend(["matched", "dependency", "event"])
         if node.id in ignore_nodes:
             return node
@@ -268,9 +284,9 @@ class BufferedQueue():
             # Keyboard interrupt is catched in GambolPuttys main run method.
             # This will take care to shutdown all running modules.
             pass
-        except:
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
+        #except:
+        #    exc_type, exc_value, exc_tb = sys.exc_info()
+        #    self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
 
 
     def qsize(self):

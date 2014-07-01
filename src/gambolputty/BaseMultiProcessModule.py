@@ -30,21 +30,19 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
        - ModuleAlias
     """
 
-    can_run_parallel = True
-
     def __init__(self, gp):
         BaseModule.BaseModule.__init__(self, gp)
         #multiprocessing.Process.__init__(self)
-        self.input_queue = False
-        self.output_queues = []
-        self.alive = False
+        #self.input_queue = False
+        #self.output_queues = []
+        #self.alive = False
         self.worker = None
 
-    def setInputQueue(self, queue):
-        self.input_queue = queue
+    #def setInputQueue(self, queue):
+    #    self.input_queue = queue
 
-    def getInputQueue(self):
-        return self.input_queue
+    #def getInputQueue(self):
+    #    return self.input_queue
 
     def start(self):
         self.worker = multiprocessing.Process(target=self.run)
@@ -81,4 +79,4 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
         # Kill worker via signal. Otherwise a simple reload will not terminate the worker processes.
         # Why that is escapes me...
         if self.worker.pid:
-            os.kill(self.worker.pid, signal.SIGQUIT)
+            os.kill(self.worker.pid, signal.SIGINT)

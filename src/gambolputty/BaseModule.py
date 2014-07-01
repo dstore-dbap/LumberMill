@@ -27,7 +27,7 @@ class BaseModule():
     module_type = "generic"
     """ Set module type. """
 
-    can_run_parallel = False
+    can_run_parallel = True
 
     def __init__(self, gp):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -36,6 +36,9 @@ class BaseModule():
         self.configuration_data = {}
         self.input_filter = None
         self.output_filters = {}
+        self.alive = False
+        self.input_queue = None
+        self.output_queues = []
         self.timed_function_events = []
         self.pid = os.getpid()
 
@@ -124,6 +127,12 @@ class BaseModule():
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
+    def setInputQueue(self, queue):
+        self.input_queue = queue
+
+    def getInputQueue(self):
+        return self.input_queue
+
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
             self.receivers[receiver_name] = receiver
@@ -198,7 +207,16 @@ class BaseModule():
                 receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
 
-    def receiveEvent(self, event):
+    def run(self):
+        self.pid = os.getpid()
+        self.alive = True
+        while self.alive:
+            for event in self.input_queue.get():
+                if not event:
+                    continue
+                self.receiveEvent(event)
+
+    def receiveEvent(self, event=None):
         for event in self.handleEvent(event):
             if event:
                 self.sendEvent(event)
@@ -222,5 +240,6 @@ class BaseModule():
         yield event
 
     def shutDown(self):
-        pass
+        print "Shutdown called in %s" % self.pid
+        self.alive = False
         #self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))

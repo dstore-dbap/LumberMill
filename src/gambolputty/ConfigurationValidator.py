@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import types
+import sys
 import Utils
 
 # noinspection PyClassHasNoInit
@@ -21,19 +22,34 @@ class ConfigurationValidator():
       is: required if tls is True else optional
     """
 
-    typenames_to_type = {'None': types.NoneType,
-                         'Boolean': types.BooleanType,
-                         'Bool': types.BooleanType,
-                         'Integer': types.IntType,
-                         'Int': types.IntType,
-                         'Float': types.FloatType,
-                         'Str': types.StringType,
-                         'String': types.StringType,
-                         'Unicode': types.UnicodeType,
-                         'Tuple': types.TupleType,
-                         'List': types.ListType,
-                         'Dictionary': types.DictType,
-                         'Dict': types.DictType}
+    # In python3 the types constants have been eliminated.
+    if sys.hexversion > 0x03000000:
+        typenames_to_type = {'Boolean': bool,
+                             'Bool': bool,
+                             'Integer': int,
+                             'Int': int,
+                             'Float': float,
+                             'Str': str,
+                             'String': str,
+                             'Unicode': str,
+                             'Tuple': tuple,
+                             'List': list,
+                             'Dictionary': dict,
+                             'Dict': dict}
+    else:
+        typenames_to_type = {'Boolean': types.BooleanType,
+                             'Bool': types.BooleanType,
+                             'Integer': types.IntType,
+                             'Int': types.IntType,
+                             'Float': types.FloatType,
+                             'Str': types.StringType,
+                             'String': types.StringType,
+                             'Unicode': types.UnicodeType,
+                             'Tuple': types.TupleType,
+                             'List': types.ListType,
+                             'Dictionary': types.DictType,
+                             'Dict': types.DictType}
+
 
     default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl')
 
@@ -68,9 +84,10 @@ class ConfigurationValidator():
                     dependency = dependency.replace(search, replace)
                 try:
                     #print "dependency = %s" % dependency
-                    exec Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")')
-                except TypeError, e:
-                    error_msg = "%s: Could not parse dependency %s in '%s'. Error: %s" % (dependency, moduleInstance.__class__.__name__, e, configuration_key)
+                    Utils.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
+                except TypeError:
+                    etype, evalue, etb = sys.exc_info()
+                    error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
                     result.append(error_msg)
                 if dependency == 'required' and not config_value:
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)

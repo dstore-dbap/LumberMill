@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+import pprint
 import sys
 import socket
 import Utils
@@ -28,14 +30,16 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
         self.multiline = self.getConfigurationValue('multiline')
         self.stream_end_signal = self.getConfigurationValue('stream_end_signal')
 
-    def run(self, input=sys.stdin):
+    def run(self):
         if not self.receivers:
             self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
+        self.pid = os.getpid()
+        self.alive = True
         hostname = socket.gethostname()
         multiline_data = ""
         while self.alive:
-            data = input.readline()
+            data = sys.stdin.readline()
             if data.__len__() > 0:
                 if not self.multiline:
                     self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": data}, caller_class_name=self.__class__.__name__))

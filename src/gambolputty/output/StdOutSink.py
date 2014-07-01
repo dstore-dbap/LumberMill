@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import BaseModule
+import os
 import pprint
 import Utils
 from Decorators import ModuleDocstringParser
@@ -28,6 +29,19 @@ class StdOutSink(BaseModule.BaseModule):
         BaseModule.BaseModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.printing = False
+
+    def run(self):
+        self.pid = os.getpid()
+        self.alive = True
+        while self.alive:
+            try:
+                print "Waiting for event in %s" % self.pid
+                events = self.input_queue.get(timeout=5)
+            except:
+                continue
+            for event in events:
+                print "Got event in %s" % self.pid
+                self.receiveEvent(event)
 
     def handleEvent(self, event):
         while self.printing:
