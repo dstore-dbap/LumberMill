@@ -84,7 +84,7 @@ class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler
                                                        'eps': eps}))
 
     def eventTypeStatistics(self):
-        for event_type, count in sorted(self.statistic_module.stats_collector.getAllCounters().iteritems()):
+        for event_type, count in sorted(self.statistic_module.stats_collector.getAllCounters().items()):
             if not event_type.startswith('event_type_'):
                 continue
             event_type = event_type.replace('event_type_', '')
@@ -95,7 +95,7 @@ class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler
     def eventsInQueuesStatistics(self):
         if len(self.statistic_module.module_queues) == 0:
             return
-        for module_name, queue in self.statistic_module.module_queues.iteritems():
+        for module_name, queue in self.statistic_module.module_queues.items():
             self.write_message(tornado.escape.json_encode({'timestamp': time.time(),
                                                             'module_name': module_name,
                                                             'queue_size': queue.qsize()}))

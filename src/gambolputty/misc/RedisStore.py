@@ -101,7 +101,7 @@ class RedisStore(BaseModule.BaseModule):
         # Some modules like Facet depend on this.
         cluster = {'nodes': {}, 'master_of': {}}
         counter = 1
-        for master_node, slave_nodes in self.getConfigurationValue('cluster').iteritems():
+        for master_node, slave_nodes in self.getConfigurationValue('cluster').items():
             master_node_key = "node_%d" % counter
             node_name_or_ip, node_port = self._parseRedisServerAddress(master_node)
             cluster['nodes'].update({master_node_key: {'host':node_name_or_ip, 'port': node_port}})

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import BaseModule
 import pprint
 import Utils
@@ -44,6 +45,6 @@ class StdOutSink(BaseModule.BaseModule):
         if self.getConfigurationValue('pretty_print'):
             pprint.pprint(output, indent=4)
         else:
-            print "%s" % output
+            print("%s" % output)
         self.printing = False
         yield None

@@ -119,7 +119,7 @@ class EventBuffer(BaseModule.BaseModule):
 
     def requeueEvents(self):
         input_modules = {}
-        for module_name, module_info in self.gp.modules.iteritems():
+        for module_name, module_info in self.gp.modules.items():
             instance = module_info['instances'][0]
             if instance.module_type == "input":
                 input_modules[instance.__class__.__name__] = instance

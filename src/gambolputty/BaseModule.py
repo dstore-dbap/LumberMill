@@ -54,7 +54,7 @@ class BaseModule():
             self.configuration_data.update(configuration)
         # Test for dynamic value patterns
         dynamic_var_regex = re.compile('%\(.*?\)[sdf\.\d+]+')
-        for key, value in self.configuration_data.iteritems():
+        for key, value in self.configuration_data.items():
             # Make sure that configuration values only get parsed once.
             if isinstance(value, dict) and 'contains_placeholder' in value:
                 continue
@@ -67,13 +67,13 @@ class BaseModule():
                     except:
                         pass
             elif isinstance(value, dict):
-                for _key, _value in value.iteritems():
+                for _key, _value in value.items():
                     try:
                         if dynamic_var_regex.search(_key) or dynamic_var_regex.search(_value):
                             contains_placeholder = True
                     except:
                         pass
-            elif isinstance(value, basestring):
+            elif isinstance(value, Utils.typenames_to_type['String']):
                 if dynamic_var_regex.search(value):
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
@@ -86,7 +86,7 @@ class BaseModule():
         for receiver_config in self.getConfigurationValue('receivers'):
             if not isinstance(receiver_config, dict):
                 continue
-            receiver_name, receiver_filter_config = receiver_config.iteritems().next()
+            receiver_name, receiver_filter_config = receiver_config.items().next()
             self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
 
@@ -166,7 +166,7 @@ class BaseModule():
         if not self.output_filters:
             return self.receivers
         filterd_receivers = {}
-        for receiver_name, receiver in self.receivers.iteritems():
+        for receiver_name, receiver in self.receivers.items():
             if receiver_name not in self.output_filters:
                 filterd_receivers[receiver_name] = receiver
                 continue
@@ -185,7 +185,7 @@ class BaseModule():
         if len(self.receivers) > 1:
             event_clone = event.copy()
         copy_event = False
-        for receiver in self.receivers.itervalues():
+        for receiver in self.receivers.values():
             e = event if not copy_event else event_clone.copy()
             if hasattr(receiver, 'receiveEvent'):
                 receiver.receiveEvent(e)
@@ -200,7 +200,7 @@ class BaseModule():
         if len(receivers) > 1:
             event_clone = event.copy()
         copy_event = False
-        for receiver in receivers.itervalues():
+        for receiver in receivers.values():
             if hasattr(receiver, 'receiveEvent'):
                 receiver.receiveEvent(event if not copy_event else event_clone.copy())
             else:

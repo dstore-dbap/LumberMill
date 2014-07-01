@@ -202,7 +202,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     @Decorators.setInterval(10)
     def sendAliveRequests(self):
         drop_dead_pack_member_timed_func = self.getDropDeadPackMemberTimedFunc()
-        for ip_address, pack_member in self.pack_followers.iteritems():
+        for ip_address, pack_member in self.pack_followers.items():
             message = self.getDefaultMessageDict(action='alive_call')
             self.sendMessageToPackMember(message, pack_member)
             self.dying_pack_followers.append(ip_address)

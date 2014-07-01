@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import pprint
+from __future__ import print_function
 import Utils
 import multiprocessing
 import StatisticCollector as StatisticCollector
@@ -11,8 +11,13 @@ import time
 import getopt
 import logging.config
 import threading
-import Queue
 import yaml
+
+# Conditional imports for python2/3
+try:
+    import Queue as queue
+except ImportError:
+    import queue
 
 module_dirs = ['input',
                'parser',
@@ -69,7 +74,7 @@ class GambolPutty:
     def produceQueue(self, module_instance, queue_max_size=20, queue_buffer_size=100):
         """Returns a queue with queue_max_size"""
         if isinstance(module_instance, threading.Thread):
-            return Queue.Queue(queue_max_size)
+            return queue.Queue(queue_max_size)
         if isinstance(module_instance, multiprocessing.Process):
             if Utils.zmq_avaiable:
                 queue = Utils.BufferedQueue(Utils.ZeroMqMpQueue(queue_max_size), queue_buffer_size)
@@ -141,7 +146,7 @@ class GambolPutty:
             module_config = {}
             module_id = None
             if isinstance(module_info, dict):
-                module_class_name = module_info.keys()[0]
+                module_class_name = list(module_info.keys())[0]
                 module_config = module_info[module_class_name]
                 # Set module name. Use id if it was set in configuration.
                 try:
@@ -212,14 +217,14 @@ class GambolPutty:
         # All modules are initialized, connect producer and consumers via a queue.
         queues = {}
         module_loop_buffer = []
-        for module_name, module_info in self.modules.iteritems():
+        for module_name, module_info in self.modules.items():
             # Iterate over all instances
             instance = module_info['instances'][0]
             for receiver_data in instance.getConfigurationValue('receivers'):
                 if not receiver_data:
                     break
                 if isinstance(receiver_data, dict):
-                    receiver_name, _ = receiver_data.iteritems().next()
+                    receiver_name, _ = receiver_data.items().next()
                 else:
                     receiver_name = receiver_data
                 self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
@@ -345,7 +350,7 @@ class GambolPutty:
         import tornado.ioloop
         tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
-        for module_name, module_info in self.modules.iteritems():
+        for module_name, module_info in self.modules.items():
             silent=False
             for instance in module_info['instances']:
                 if instance.module_type == "input":
@@ -353,7 +358,7 @@ class GambolPutty:
                     silent=True
         # Get all configured queues to check for pending events.
         module_queues = {}
-        for module_name, module_info in self.modules.iteritems():
+        for module_name, module_info in self.modules.items():
             instance = module_info['instances'][0]
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
@@ -363,7 +368,7 @@ class GambolPutty:
             while wait_loops < 5:
                 wait_loops += 1
                 events_in_queues = 0
-                for module_name, queue in module_queues.iteritems():
+                for module_name, queue in module_queues.items():
                     events_in_queues += queue.qsize()
                 if events_in_queues > 0:
                     # Give remaining queued events some time to finish.
@@ -373,7 +378,7 @@ class GambolPutty:
                     continue
                 break
         # Shutdown all other modules.
-        for module_name, module_info in self.modules.iteritems():
+        for module_name, module_info in self.modules.items():
             silent=False
             for instance in module_info['instances']:
                 if instance.module_type != "input":
@@ -381,7 +386,7 @@ class GambolPutty:
                     silent=True
 
 def usage():
-    print 'Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest'
+    print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')
 
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])

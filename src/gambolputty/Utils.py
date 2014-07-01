@@ -8,10 +8,16 @@ import os
 import sys
 import subprocess
 import logging
-import __builtin__
 import signal
 import Decorators
 import socket
+import types
+
+# Conditional imports for python2/3
+try:
+    import __builtin__ as builtins
+except ImportError:
+    import builtins
 
 try:
     import zmq
@@ -25,6 +31,36 @@ try:
     is_pypy = True
 except ImportError:
     is_pypy = False
+
+# In python3 the types constants have been eliminated.
+if sys.hexversion > 0x03000000:
+    typenames_to_type = {'None': type(None),
+                         'Boolean': bool,
+                         'Bool': bool,
+                         'Integer': int,
+                         'Int': int,
+                         'Float': float,
+                         'Str': str,
+                         'String': str,
+                         'Unicode': str,
+                         'Tuple': tuple,
+                         'List': list,
+                         'Dictionary': dict,
+                         'Dict': dict}
+else:
+    typenames_to_type = {'None': types.NoneType,
+                         'Boolean': types.BooleanType,
+                         'Bool': types.BooleanType,
+                         'Integer': types.IntType,
+                         'Int': types.IntType,
+                         'Float': types.FloatType,
+                         'Str': types.StringType,
+                         'String': types.StringType,
+                         'Unicode': types.UnicodeType,
+                         'Tuple': types.TupleType,
+                         'List': types.ListType,
+                         'Dictionary': types.DictType,
+                         'Dict': types.DictType}
 
 my_hostname = socket.gethostname()
 
@@ -120,7 +156,7 @@ class AstTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         # ignore builtins and some other vars
-        ignore_nodes = dir(__builtin__)
+        ignore_nodes = dir(builtins)
         ignore_nodes.extend(["matched", "dependency", "event"])
         if node.id in ignore_nodes:
             return node

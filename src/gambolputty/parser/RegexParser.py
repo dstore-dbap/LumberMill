@@ -153,7 +153,7 @@ class RegexParser(BaseModule.BaseModule):
                     matches_dict = matches.groupdict()
             elif regex_data['match_type'] == 'findall':
                 for match in regex_data['pattern'].finditer(string_to_match):
-                    for key, value in match.groupdict().iteritems():
+                    for key, value in match.groupdict().items():
                         try:
                             matches_dict[key].append(value)
                         except:

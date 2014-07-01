@@ -41,7 +41,7 @@ class Debugger(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def printIntervalStatistics(self):
         self.logger.info("############# Debug #############")
-        #for mod_name, times in self.times.iteritems():
+        #for mod_name, times in self.times.items():
         for module_name, times in sorted(self.times.items(), key=operator.itemgetter(1), reverse=True):
             self.logger.info("%s: %s (mean of %s entries)"  % (module_name, times/self.counts[module_name], self.counts[module_name]))
         self.times = collections.defaultdict(int)

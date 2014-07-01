@@ -108,7 +108,7 @@ class Facet(BaseModule.BaseModule):
                 Facet.redis_keys = []
                 return
             # Just internal facet data.
-            for key, facet_data in Facet.facet_data.iteritems():
+            for key, facet_data in Facet.facet_data.items():
                 self.sendFacetEventToReceivers(facet_data)
             Facet.facet_data = {}
         return evaluateFacets

@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-import types
+import sys
 import Utils
+
+if sys.hexversion > 0x03000000:
+    import Py3Compat as PythonCompatFunctions
+else:
+    import Py2Compat as PythonCompatFunctions
 
 class ConfigurationValidator():
     """
@@ -19,20 +24,6 @@ class ConfigurationValidator():
       Here a simple conditional syntax is supported, e.g.
       is: required if tls is True else optional
     """
-
-    typenames_to_type = {'None': types.NoneType,
-                         'Boolean': types.BooleanType,
-                         'Bool': types.BooleanType,
-                         'Integer': types.IntType,
-                         'Int': types.IntType,
-                         'Float': types.FloatType,
-                         'Str': types.StringType,
-                         'String': types.StringType,
-                         'Unicode': types.UnicodeType,
-                         'Tuple': types.TupleType,
-                         'List': types.ListType,
-                         'Dictionary': types.DictType,
-                         'Dict': types.DictType}
 
     default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl')
 
@@ -56,7 +47,7 @@ class ConfigurationValidator():
             error_msg = "%s: Found unknown configuration keys: %s. Please check module documentation." % (moduleInstance.__class__.__name__, keys)
             result.append(error_msg)
             return result
-        for configuration_key, configuration_metadata in moduleInstance.configuration_metadata.iteritems():
+        for configuration_key, configuration_metadata in moduleInstance.configuration_metadata.items():
             config_value = moduleInstance.getConfigurationValue(configuration_key)
             config_value_datatype = type(config_value)
             # Check for required parameter.
@@ -67,9 +58,10 @@ class ConfigurationValidator():
                     dependency = dependency.replace(search, replace)
                 try:
                     #print "dependency = %s" % dependency
-                    exec Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")')
-                except TypeError, e:
-                    error_msg = "%s: Could not parse dependency %s in '%s'. Error: %s" % (dependency, moduleInstance.__class__.__name__, e, configuration_key)
+                    PythonCompatFunctions.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
+                except TypeError:
+                    etype, evalue, etb = sys.exc_info()
+                    error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
                     result.append(error_msg)
                 if dependency == 'required' and not config_value:
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
@@ -80,9 +72,9 @@ class ConfigurationValidator():
             if 'type' in configuration_metadata:
                 for allowed_datatypes_as_string in configuration_metadata['type']:
                     try:
-                        allowed_datatypes.append(self.typenames_to_type[allowed_datatypes_as_string.title()])
+                        allowed_datatypes.append(Utils.typenames_to_type[allowed_datatypes_as_string.title()])
                     except KeyError:
-                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), self.typenames_to_type.keys())
+                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), Utils.typenames_to_type.keys())
                         result.append(error_msg)
                 if config_value_datatype not in allowed_datatypes:
                     error_msg = "%s: '%s' not of correct datatype. Is: %s, should be: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value_datatype, allowed_datatypes)

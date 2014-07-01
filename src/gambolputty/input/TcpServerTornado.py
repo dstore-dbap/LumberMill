@@ -26,6 +26,8 @@ class ConnectionHandler(object):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
         self.simple_separator = self.gp_module.getConfigurationValue('simple_separator')
+        if sys.hexversion > 0x03000000:
+            self.simple_separator = bytes(self.gp_module.getConfigurationValue('simple_separator'), 'utf-8')
         self.regex_separator = self.gp_module.getConfigurationValue('regex_separator')
         self.chunksize = self.gp_module.getConfigurationValue('chunksize')
         self.mode = self.gp_module.getConfigurationValue('mode')
@@ -151,7 +153,7 @@ class TcpServerTornado(BaseModule.BaseModule):
                                 'keyfile': self.getConfigurationValue("key")}
             self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
             self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
-            for fd, server_socket in self.server._sockets.iteritems():
+            for fd, server_socket in self.server._sockets.items():
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()

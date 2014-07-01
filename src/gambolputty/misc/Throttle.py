@@ -90,7 +90,7 @@ class Throttle(BaseModule.BaseModule):
                     self.persistence_backend.client.delete(*keys_to_delete)
                 return
             throttled_events_info_copy = self.throttled_events_info.copy()
-            for key, throttled_event_info in throttled_events_info_copy.iteritems():
+            for key, throttled_event_info in throttled_events_info_copy.items():
                 if (now - throttled_event_info['ctime']) > self.timeframe:
                     del self.throttled_events_info[key]
         return gcThrottledEventsInfo

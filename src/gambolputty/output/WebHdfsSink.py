@@ -166,7 +166,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             write_data[filename] += line
         write_tries = 0
         retry_sleep_time = .4
-        for filename, lines in write_data.iteritems():
+        for filename, lines in write_data.items():
             if self.compress == 'gzip':
                 filename += ".gz"
                 lines = self.compressGzip(lines)

@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
 import threading
-import Queue
 import Utils
 import BaseModule
+
+# Conditional imports for python2/3
+try:
+    import Queue as queue
+except ImportError:
+    import queue
 
 class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     """
@@ -43,7 +48,7 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
         event = False
         try:
             event = self.input_queue.get(block, timeout)
-        except Queue.Empty:
+        except queue.Empty:
             raise
         except (KeyboardInterrupt, SystemExit, ValueError, OSError):
             # Keyboard interrupt is catched in GambolPuttys main run method.
