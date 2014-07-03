@@ -224,7 +224,7 @@ class GambolPutty:
                 if not receiver_data:
                     break
                 if isinstance(receiver_data, dict):
-                    receiver_name, _ = receiver_data.items().next()
+                    receiver_name, _ = iter(receiver_data.items()).next()
                 else:
                     receiver_name = receiver_data
                 self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))

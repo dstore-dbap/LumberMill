@@ -86,7 +86,7 @@ class BaseModule():
         for receiver_config in self.getConfigurationValue('receivers'):
             if not isinstance(receiver_config, dict):
                 continue
-            receiver_name, receiver_filter_config = receiver_config.items().next()
+            receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
             self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
 
