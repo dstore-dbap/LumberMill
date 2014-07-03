@@ -28,8 +28,5 @@ class Tarpit(BaseModule.BaseModule):
         @param event: dictionary
         @return data: dictionary
         """
-        #input_module = self.gp.getModuleInfoById('TcpServerTornado')["instances"][0]
-        #input_module.shutDown()
         time.sleep(self.getConfigurationValue('delay'))
-        #input_module.run()
         yield event

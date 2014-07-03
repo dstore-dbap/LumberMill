@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-import types
 import sys
 import Utils
 
-# noinspection PyClassHasNoInit
+if sys.hexversion > 0x03000000:
+    import Py3Compat as PythonCompatFunctions
+else:
+    import Py2Compat as PythonCompatFunctions
+
 class ConfigurationValidator():
     """
     Validate a module instance based on the configuration meta data retrieved from the docstring via the ModuleDocstringParser.
@@ -21,35 +24,6 @@ class ConfigurationValidator():
       Here a simple conditional syntax is supported, e.g.
       is: required if tls is True else optional
     """
-
-    # In python3 the types constants have been eliminated.
-    if sys.hexversion > 0x03000000:
-        typenames_to_type = {'Boolean': bool,
-                             'Bool': bool,
-                             'Integer': int,
-                             'Int': int,
-                             'Float': float,
-                             'Str': str,
-                             'String': str,
-                             'Unicode': str,
-                             'Tuple': tuple,
-                             'List': list,
-                             'Dictionary': dict,
-                             'Dict': dict}
-    else:
-        typenames_to_type = {'Boolean': types.BooleanType,
-                             'Bool': types.BooleanType,
-                             'Integer': types.IntType,
-                             'Int': types.IntType,
-                             'Float': types.FloatType,
-                             'Str': types.StringType,
-                             'String': types.StringType,
-                             'Unicode': types.UnicodeType,
-                             'Tuple': types.TupleType,
-                             'List': types.ListType,
-                             'Dictionary': types.DictType,
-                             'Dict': types.DictType}
-
 
     default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl')
 
@@ -73,7 +47,7 @@ class ConfigurationValidator():
             error_msg = "%s: Found unknown configuration keys: %s. Please check module documentation." % (moduleInstance.__class__.__name__, keys)
             result.append(error_msg)
             return result
-        for configuration_key, configuration_metadata in moduleInstance.configuration_metadata.iteritems():
+        for configuration_key, configuration_metadata in moduleInstance.configuration_metadata.items():
             config_value = moduleInstance.getConfigurationValue(configuration_key)
             config_value_datatype = type(config_value)
             # Check for required parameter.
@@ -84,7 +58,7 @@ class ConfigurationValidator():
                     dependency = dependency.replace(search, replace)
                 try:
                     #print "dependency = %s" % dependency
-                    Utils.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
+                    PythonCompatFunctions.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
                 except TypeError:
                     etype, evalue, etb = sys.exc_info()
                     error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
@@ -98,9 +72,9 @@ class ConfigurationValidator():
             if 'type' in configuration_metadata:
                 for allowed_datatypes_as_string in configuration_metadata['type']:
                     try:
-                        allowed_datatypes.append(self.typenames_to_type[allowed_datatypes_as_string.title()])
+                        allowed_datatypes.append(Utils.typenames_to_type[allowed_datatypes_as_string.title()])
                     except KeyError:
-                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), self.typenames_to_type.keys())
+                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), Utils.typenames_to_type.keys())
                         result.append(error_msg)
                 if config_value_datatype not in allowed_datatypes:
                     error_msg = "%s: '%s' not of correct datatype. Is: %s, should be: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value_datatype, allowed_datatypes)
@@ -111,5 +85,3 @@ class ConfigurationValidator():
                     error_msg = "%s: '%s' has invalid value. Is: %s, should be on of: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value, configuration_metadata['values'])
                     result.append(error_msg)
         return result
-
-

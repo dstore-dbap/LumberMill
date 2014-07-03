@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
 import os
-import BaseModule
+import BaseThreadedModule
 import Utils
 import Decorators
 from operator import itemgetter
 
 @Decorators.ModuleDocstringParser
-class RegexParser(BaseModule.BaseModule):
+class RegexParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse a string by named regular expressions.
 
@@ -30,7 +31,7 @@ class RegexParser(BaseModule.BaseModule):
         source_field:                           # <default: 'data'; type: string; is: optional>
         mark_unmatched_as:                      # <default: 'Unknown'; type: string; is: optional>
         break_on_match:                         # <default: True; type: boolean; is: optional>
-        hot_rules_first:                        # <default: False; type: boolean; is: optional>
+        hot_rules_first:                        # <default: True; type: boolean; is: optional>
         field_extraction_patterns:              # <type: list; is: required>
           - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
         receivers:
@@ -42,7 +43,7 @@ class RegexParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.timed_func_handler = None
@@ -91,6 +92,9 @@ class RegexParser(BaseModule.BaseModule):
                 self.logger.error("%sRegEx error for %s pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event_type, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
             self.fieldextraction_regexpressions.append({'event_type': event_type, 'pattern': regex, 'match_type': regex_match_type, 'hitcounter': 0})
+
+    def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         if self.hot_rules_first:
             resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
             self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
@@ -149,7 +153,7 @@ class RegexParser(BaseModule.BaseModule):
                     matches_dict = matches.groupdict()
             elif regex_data['match_type'] == 'findall':
                 for match in regex_data['pattern'].finditer(string_to_match):
-                    for key, value in match.groupdict().iteritems():
+                    for key, value in match.groupdict().items():
                         try:
                             matches_dict[key].append(value)
                         except:

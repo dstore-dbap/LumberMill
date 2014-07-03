@@ -5,6 +5,7 @@ import socket
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
 class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     """

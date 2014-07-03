@@ -1,12 +1,12 @@
 import Utils
-import BaseModule
+import BaseThreadedModule
 import StatisticCollector as StatisticCollector
 import Decorators
 import os
 
 
 @Decorators.ModuleDocstringParser
-class SimpleStats(BaseModule.BaseModule):
+class SimpleStats(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log some simple gambolputty statistic data.
 
@@ -28,7 +28,7 @@ class SimpleStats(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
         self.stats_collector = StatisticCollector.StatisticCollector()
@@ -40,12 +40,12 @@ class SimpleStats(BaseModule.BaseModule):
         def runTimedFunctionsFunc():
             self.accumulateReceiveRateStats()
             self.accumulateEventTypeStats()
-            if self.gp.is_master:
+            if self.gp.is_master():
                 self.printIntervalStatistics()
         return runTimedFunctionsFunc
 
     def accumulateEventTypeStats(self):
-        for event_type, count in self.stats_collector.getAllCounters().iteritems():
+        for event_type, count in self.stats_collector.getAllCounters().items():
             if count == 0:
                 continue
             self.mp_stats_collector.incrementCounter(event_type, count)
@@ -77,7 +77,7 @@ class SimpleStats(BaseModule.BaseModule):
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
         for event_type  in sorted(self.mp_stats_collector.getAllCounters().keys()):
-            count = self.mp_stats_collector.getCounters(event_type)
+            count = self.mp_stats_collector.getCounter(event_type)
             if not event_type.startswith('event_type_'):
                 continue
             event_name = event_type.replace('event_type_', '')
@@ -90,20 +90,16 @@ class SimpleStats(BaseModule.BaseModule):
         if len(self.module_queues) == 0:
             return
         self.logger.info(">> Queue stats")
-        for module_name, queue in sorted(self.module_queues.iteritems()):
+        for module_name, queue in sorted(self.module_queues.items()):
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def run(self):
+    def initAfterFork(self):
         # Get all configured queues for waiting event stats.
-        for module_name, module_info in self.gp.modules.iteritems():
-            instance = module_info['instances'][0]
-            if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
-                continue
-            self.module_queues[module_name] = instance.getInputQueue()
+        self.module_queues = self.gp.getAllQueues()
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
-
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('events_received')

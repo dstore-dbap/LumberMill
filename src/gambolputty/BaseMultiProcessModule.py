@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
 import multiprocessing
+import pprint
+import msgpack
 import signal
 import Utils
 import BaseModule
@@ -15,7 +17,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
     filter: Filter expression to apply to incoming events. If filter succeeds, module will handle the event, else
             the event will be passed to next module unchanged.
     pool_size: How many processes should be spawned.
-    queue_size: How many events may be wating in queue.
+    queue_size: How many events may be waiting in queue.
     queue_buffer_size: How many events will be buffered before sending them to queue.
 
     Configuration example:
@@ -32,17 +34,27 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
 
     def __init__(self, gp):
         BaseModule.BaseModule.__init__(self, gp)
-        #multiprocessing.Process.__init__(self)
-        #self.input_queue = False
-        #self.output_queues = []
-        #self.alive = False
+        self.input_queue = False
+        self.alive = True
         self.worker = None
 
-    #def setInputQueue(self, queue):
-    #    self.input_queue = queue
+    def setInputQueue(self, queue):
+        self.input_queue = queue
 
-    #def getInputQueue(self):
-    #    return self.input_queue
+    def getInputQueue(self):
+        return self.input_queue
+
+    def getFromQueue(self, block=True, timeout=None):
+        try:
+            packed_data = self.input_queue.get(block, timeout)
+            events = msgpack.unpackb(packed_data)
+            # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
+            for event in events:
+                yield Utils.KeyDotNotationDict(event)
+        except (KeyboardInterrupt, SystemExit, ValueError, OSError):
+            # Keyboard interrupt is catched in GambolPuttys main run method.
+            # This will take care to shutdown all running modules.
+            pass
 
     def start(self):
         self.worker = multiprocessing.Process(target=self.run)
@@ -61,10 +73,9 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
             if self.module_type not in ['stand_alone', 'input']:
                 self.logger.error("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
-        self.pid = os.getpid()
-        self.alive = True
+        self.process_id = os.getpid()
         while self.alive:
-            for event in self.input_queue.get():
+            for event in self.getFromQueue():
                 if not event:
                     continue
                 self.receiveEvent(event)

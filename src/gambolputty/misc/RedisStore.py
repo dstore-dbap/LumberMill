@@ -2,12 +2,12 @@
 import sys
 import redis
 import cPickle
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 import Utils
 
 @ModuleDocstringParser
-class RedisStore(BaseModule.BaseModule):
+class RedisStore(BaseThreadedModule.BaseThreadedModule):
     """
     A simple wrapper around the redis python module.
 
@@ -54,7 +54,7 @@ class RedisStore(BaseModule.BaseModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         if len(self.getConfigurationValue('cluster')) == 0:
             redis_store = self.getConfigurationValue('server')
             self.client = self.getRedisClient()
@@ -101,7 +101,7 @@ class RedisStore(BaseModule.BaseModule):
         # Some modules like Facet depend on this.
         cluster = {'nodes': {}, 'master_of': {}}
         counter = 1
-        for master_node, slave_nodes in self.getConfigurationValue('cluster').iteritems():
+        for master_node, slave_nodes in self.getConfigurationValue('cluster').items():
             master_node_key = "node_%d" % counter
             node_name_or_ip, node_port = self._parseRedisServerAddress(master_node)
             cluster['nodes'].update({master_node_key: {'host':node_name_or_ip, 'port': node_port}})
@@ -221,4 +221,4 @@ class RedisStore(BaseModule.BaseModule):
             self.buffer.flush()
         except:
             pass
-        BaseModule.BaseModule.shutDown(self, silent)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)

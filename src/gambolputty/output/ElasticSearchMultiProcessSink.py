@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 import time
 import elasticsearch
@@ -126,6 +127,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         return es
 
     def handleEvent(self, event):
+        event['gambolputty']['modpid'] = os.getpid()
         if self.format:
             publish_data = self.getConfigurationValue('format', event)
         else:

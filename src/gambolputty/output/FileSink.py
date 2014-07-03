@@ -77,7 +77,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
             path = Utils.mapDynamicValue(self.file_name, mapping_dict=event, use_strftime=True)
             line = Utils.mapDynamicValue(self.format, mapping_dict=event)
             write_data["%s" % path] += line + "\n"
-        for path, lines in write_data.iteritems():
+        for path, lines in write_data.items():
             try:
                 self.ensurePathExists(path)
             except:

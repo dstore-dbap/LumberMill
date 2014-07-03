@@ -11,6 +11,7 @@ import logging
 import signal
 import Decorators
 import socket
+import types
 
 # Conditional imports for python2/3
 try:
@@ -31,16 +32,35 @@ try:
 except ImportError:
     is_pypy = False
 
-# Borrowed from Ned Batchelder
+# In python3 the types constants have been eliminated.
 if sys.hexversion > 0x03000000:
-    def exec_function(source, filename, global_map):
-        exec(compile(source, filename, "exec"), global_map)
+    typenames_to_type = {'None': type(None),
+                         'Boolean': bool,
+                         'Bool': bool,
+                         'Integer': int,
+                         'Int': int,
+                         'Float': float,
+                         'Str': str,
+                         'String': str,
+                         'Unicode': str,
+                         'Tuple': tuple,
+                         'List': list,
+                         'Dictionary': dict,
+                         'Dict': dict}
 else:
-    eval(compile("""\
-def exec_function(source, filename, global_map):
-    exec compile(source, filename, "exec") in global_map
-""",
-    "<exec_function>", "exec"))
+    typenames_to_type = {'None': types.NoneType,
+                         'Boolean': types.BooleanType,
+                         'Bool': types.BooleanType,
+                         'Integer': types.IntType,
+                         'Int': types.IntType,
+                         'Float': types.FloatType,
+                         'Str': types.StringType,
+                         'String': types.StringType,
+                         'Unicode': types.UnicodeType,
+                         'Tuple': types.TupleType,
+                         'List': types.ListType,
+                         'Dictionary': types.DictType,
+                         'Dict': types.DictType}
 
 my_hostname = socket.gethostname()
 
@@ -90,11 +110,12 @@ def reload():
 def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
     default_dict = { "data": "",
                      "gambolputty": {
-                        'event_type': event_type,
-                        'event_id': "%032x%s" % (random.getrandbits(128), os.getpid()),
-                        'source_module': caller_class_name,
-                        'received_from': received_from,
-                        'received_by': my_hostname
+                         'pid': os.getpid(),
+                         'event_type': event_type,
+                         'event_id': "%032x%s" % (random.getrandbits(128), os.getpid()),
+                         'source_module': caller_class_name,
+                         'received_from': received_from,
+                         'received_by': my_hostname
                      }
                 }
     default_dict.update(dict)
@@ -199,9 +220,11 @@ class Buffer:
         self.flush_interval = interval
         self.flush_callback = callback
         self.flush_timed_func = self.getTimedFlushMethod()
-        if self.flush_interval:
-            self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
+        self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
         self.is_storing = False
+
+    def startInterval(self):
+        self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
 
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
@@ -255,6 +278,9 @@ class BufferedQueue():
         self.buffersize = buffersize
         self.buffer = Buffer(buffersize, self.sendBuffer, 5)
 
+    def startInterval(self):
+        self.buffer.startInterval()
+
     def put(self, payload):
         self.buffer.append(payload)
 
@@ -274,8 +300,6 @@ class BufferedQueue():
     def get(self, block=True, timeout=None):
         try:
             buffered_data = self.queue.get(block, timeout)
-            #for data in buffered_data:
-            #    yield data
             buffered_data = msgpack.unpackb(buffered_data)
             # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
             for data in buffered_data:
@@ -284,10 +308,6 @@ class BufferedQueue():
             # Keyboard interrupt is catched in GambolPuttys main run method.
             # This will take care to shutdown all running modules.
             pass
-        #except:
-        #    exc_type, exc_value, exc_tb = sys.exc_info()
-        #    self.logger.error("%sCould not read data from input queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, exc_type, exc_value, AnsiColors.ENDC) )
-
 
     def qsize(self):
         return self.buffer.bufsize() + self.queue.qsize()

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
-import BaseModule
+import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class ExecPython(BaseModule.BaseModule):
+class ExecPython(BaseThreadedModule.BaseThreadedModule):
     """
     Execute python code.
 
@@ -35,11 +35,10 @@ class ExecPython(BaseModule.BaseModule):
 
     module_type = "misc"
     """Set module type"""
-    can_run_parallel = False
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         for module in self.getConfigurationValue("imports"):
             exec("import %s" % module)
         source = "def UserFunc(event):\n%s" % self.getConfigurationValue("source")

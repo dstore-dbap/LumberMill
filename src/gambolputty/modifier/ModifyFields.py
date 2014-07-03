@@ -2,12 +2,13 @@
 import sys
 import re
 import hashlib
-import BaseModule
+import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
-class ModifyFields(BaseModule.BaseModule):
+class ModifyFields(BaseThreadedModule.BaseThreadedModule):
     """
     Simple module to add/delete/change field values.
 
@@ -165,7 +166,7 @@ class ModifyFields(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Set defaults
         self.typecast_switch = { 'int': self.cast_to_int,
                                  'integer': self.cast_to_int,

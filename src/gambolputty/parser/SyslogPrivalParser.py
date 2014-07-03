@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
-class SyslogPrivalParser(BaseModule.BaseModule):
+class SyslogPrivalParser(BaseThreadedModule.BaseThreadedModule):
     """
     It will parse the source field in the event dictionary for the default severity
     and facility fields (RFC5424, http://tools.ietf.org/html/rfc5424).
@@ -100,7 +100,7 @@ class SyslogPrivalParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
         self.facility_mappings = dict(self.rfc_5424_facilities.items() + self.getConfigurationValue('facility_mappings').items())
         self.severity_mappings = dict(self.rfc_5424_severities.items() + self.getConfigurationValue('severity_mappings').items())

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 
-
 @ModuleDocstringParser
-class AddDateTime(BaseModule.BaseModule):
+class AddDateTime(BaseThreadedModule.BaseThreadedModule):
     """
     Add a field with the current datetime.
 
@@ -25,7 +24,7 @@ class AddDateTime(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
 
     def handleEvent(self, event):

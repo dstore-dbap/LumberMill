@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import httpagentparser
 import types
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
-class UserAgentParser(BaseModule.BaseModule):
+class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
     r"""
     Parse http user agent string
 
@@ -36,7 +37,7 @@ class UserAgentParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
         if isinstance(self.source_fields, types.StringTypes):

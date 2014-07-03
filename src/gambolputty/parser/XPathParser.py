@@ -5,6 +5,7 @@ import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
 class XPathParser(BaseThreadedModule.BaseThreadedModule):
     """

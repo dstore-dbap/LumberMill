@@ -3,11 +3,12 @@ import socket
 import sys
 import Utils
 import pygeoip
-import BaseModule
+import BaseThreadedModule
 import Decorators
 
+
 @Decorators.ModuleDocstringParser
-class AddGeoInfo(BaseModule.BaseModule):
+class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
     """
     Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
 
@@ -47,7 +48,7 @@ class AddGeoInfo(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.gi = False
         try:
             self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)

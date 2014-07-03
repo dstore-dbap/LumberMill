@@ -55,7 +55,7 @@ class Statistics(BaseModule.BaseModule):
         last_field_name = None
         field_counts = {}
         total_count = 0
-        for field_name_value, field_count in sorted(self.stats_collector.getAllCounters().iteritems()):
+        for field_name_value, field_count in sorted(self.stats_collector.getAllCounters().items()):
             if not isinstance(field_name_value, tuple):
                 continue
             field_name, field_value = field_name_value

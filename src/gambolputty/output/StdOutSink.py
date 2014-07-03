@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-import BaseModule
 import os
+import BaseThreadedModule
 import pprint
 import Utils
 from Decorators import ModuleDocstringParser
 import time
 
 @ModuleDocstringParser
-class StdOutSink(BaseModule.BaseModule):
+class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     """
     Print the data dictionary to stdout.
 
@@ -23,25 +23,13 @@ class StdOutSink(BaseModule.BaseModule):
 
     module_type = "output"
     """Set module type"""
+    can_run_parallel = True
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.printing = False
-
-    def run(self):
-        self.pid = os.getpid()
-        self.alive = True
-        while self.alive:
-            try:
-                print "Waiting for event in %s" % self.pid
-                events = self.input_queue.get(timeout=5)
-            except:
-                continue
-            for event in events:
-                print "Got event in %s" % self.pid
-                self.receiveEvent(event)
 
     def handleEvent(self, event):
         while self.printing:
@@ -55,7 +43,7 @@ class StdOutSink(BaseModule.BaseModule):
                 return
         else:
             output = event
-        if self.getConfigurationValue('pretty_print'):
+        if self.getConfigurationValue('pretty_print') and not self.format:
             pprint.pprint(output, indent=4)
         else:
             print "%s" % output

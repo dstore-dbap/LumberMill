@@ -3,11 +3,12 @@ import re
 import sys
 import collections
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
-class MergeEvent(BaseModule.BaseModule):
+class MergeEvent(BaseThreadedModule.BaseThreadedModule):
     """
     Merge multiple event into a single one.
 
@@ -44,7 +45,7 @@ class MergeEvent(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.pattern = self.getConfigurationValue('pattern')
         if self.pattern:
             try:

@@ -46,7 +46,7 @@ class SimpleStats(BaseModule.BaseModule):
         return runTimedFunctionsFunc
 
     def accumulateEventTypeStats(self):
-        for event_type, count in self.stats_collector.getAllCounters().iteritems():
+        for event_type, count in self.stats_collector.getAllCounters().items():
             StatisticCollector.MultiProcessStatisticCollector().incrementCounter(event_type, count)
             self.stats_collector.resetCounter(event_type)
 
@@ -65,7 +65,7 @@ class SimpleStats(BaseModule.BaseModule):
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        for event_type, count in sorted(StatisticCollector.MultiProcessStatisticCollector().getAllCounters().iteritems()):
+        for event_type, count in sorted(StatisticCollector.MultiProcessStatisticCollector().getAllCounters().items()):
             count = count.value
             if not event_type.startswith('event_type_'):
                 continue
@@ -89,14 +89,14 @@ class SimpleStats(BaseModule.BaseModule):
         if len(self.module_queues) == 0:
             return
         self.logger.info(">> Queue stats")
-        for module_name, queue in sorted(self.module_queues.iteritems()):
+        for module_name, queue in sorted(self.module_queues.items()):
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def run(self):
         # Get all configured queues for waiting event stats.
-        for module_name, module_info in self.gp.modules.iteritems():
+        for module_name, module_info in self.gp.modules.items():
             instance = module_info['instances'][0]
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue

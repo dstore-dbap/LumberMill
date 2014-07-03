@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import sys
 import socket
+import time
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
@@ -35,7 +35,6 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
         self.pid = os.getpid()
-        self.alive = True
         hostname = socket.gethostname()
         multiline_data = ""
         while self.alive:

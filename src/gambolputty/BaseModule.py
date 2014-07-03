@@ -9,7 +9,8 @@ import Utils
 
 class BaseModule():
     """
-    Base class for all gambolputty modules that will run not run.
+    Base class for all gambolputty modules.
+
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned ;)
 
@@ -26,7 +27,6 @@ class BaseModule():
 
     module_type = "generic"
     """ Set module type. """
-
     can_run_parallel = True
 
     def __init__(self, gp):
@@ -36,11 +36,16 @@ class BaseModule():
         self.configuration_data = {}
         self.input_filter = None
         self.output_filters = {}
-        self.alive = False
-        self.input_queue = None
-        self.output_queues = []
-        self.timed_function_events = []
-        self.pid = os.getpid()
+        self.process_id = os.getpid()
+
+    def initAfterFork(self):
+        #print("%s in %s" % (self, os.getpid()))
+        # Wrap queue with BufferedQueue. This is done here since the buffer uses a thread to flush buffer in
+        # given intervals. The thread will not survive a fork of the main process. So we need to start this
+        # after the fork was executed.
+        for receiver_name, receiver in self.receivers.items():
+            if hasattr(receiver, 'put'):
+                self.receivers[receiver_name] = Utils.BufferedQueue(receiver, self.gp.queue_buffer_size)
 
     def configure(self, configuration=None):
         """
@@ -56,7 +61,7 @@ class BaseModule():
             self.configuration_data.update(configuration)
         # Test for dynamic value patterns
         dynamic_var_regex = re.compile('%\(.*?\)[sdf\.\d+]+')
-        for key, value in self.configuration_data.iteritems():
+        for key, value in self.configuration_data.items():
             # Make sure that configuration values only get parsed once.
             if isinstance(value, dict) and 'contains_placeholder' in value:
                 continue
@@ -69,7 +74,7 @@ class BaseModule():
                     except:
                         pass
             elif isinstance(value, dict):
-                for _key, _value in value.iteritems():
+                for _key, _value in value.items():
                     try:
                         if dynamic_var_regex.search(_key) or dynamic_var_regex.search(_value):
                             contains_placeholder = True
@@ -88,7 +93,7 @@ class BaseModule():
         for receiver_config in self.getConfigurationValue('receivers'):
             if not isinstance(receiver_config, dict):
                 continue
-            receiver_name, receiver_filter_config = receiver_config.iteritems().next()
+            receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
             self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
 
@@ -127,12 +132,6 @@ class BaseModule():
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
-    def setInputQueue(self, queue):
-        self.input_queue = queue
-
-    def getInputQueue(self):
-        return self.input_queue
-
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
             self.receivers[receiver_name] = receiver
@@ -167,7 +166,7 @@ class BaseModule():
         if not self.output_filters:
             return self.receivers
         filterd_receivers = {}
-        for receiver_name, receiver in self.receivers.iteritems():
+        for receiver_name, receiver in self.receivers.items():
             if receiver_name not in self.output_filters:
                 filterd_receivers[receiver_name] = receiver
                 continue
@@ -186,7 +185,8 @@ class BaseModule():
         if len(self.receivers) > 1:
             event_clone = event.copy()
         copy_event = False
-        for receiver in self.receivers.itervalues():
+        for receiver in self.receivers.values():
+            #print("Sending event from %s to %s" % (self, receiver))
             if hasattr(receiver, 'receiveEvent'):
                 receiver.receiveEvent(event if not copy_event else event_clone.copy())
             else:
@@ -200,21 +200,13 @@ class BaseModule():
         if len(receivers) > 1:
             event_clone = event.copy()
         copy_event = False
-        for receiver in receivers.itervalues():
+        for receiver in receivers.values():
+            #print("Sending event from %s to %s" % (self, receiver))
             if hasattr(receiver, 'receiveEvent'):
                 receiver.receiveEvent(event if not copy_event else event_clone.copy())
             else:
                 receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
-
-    def run(self):
-        self.pid = os.getpid()
-        self.alive = True
-        while self.alive:
-            for event in self.input_queue.get():
-                if not event:
-                    continue
-                self.receiveEvent(event)
 
     def receiveEvent(self, event=None):
         for event in self.handleEvent(event):
@@ -240,6 +232,5 @@ class BaseModule():
         yield event
 
     def shutDown(self):
-        print "Shutdown called in %s" % self.pid
         self.alive = False
         #self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))

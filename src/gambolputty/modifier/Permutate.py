@@ -6,8 +6,9 @@ import Decorators
 import Utils
 import sys
 
+
 @Decorators.ModuleDocstringParser
-class Permutate(BaseModule.BaseModule):
+class Permutate(BaseThreadedModule.BaseThreadedModule):
     """
     Creates successive len('target_fields') length permutations of elements in 'source_field'.
 
@@ -57,7 +58,7 @@ class Permutate(BaseModule.BaseModule):
                     # Rewrite the context data keys to new keys in context_target_mapping
                     ctx_data = {}
                     for idx, dct in enumerate([context_data[key] for key in permutation if key in context_data]):
-                        for mapping_key, newkeys in context_target_mapping.iteritems():
+                        for mapping_key, newkeys in context_target_mapping.items():
                             if mapping_key in dct:
                                ctx_data[newkeys[idx]] = dct[mapping_key]
                     event_copy.update(ctx_data)

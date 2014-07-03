@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 import urllib
 import urlparse
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class UrlParser(BaseModule.BaseModule):
+class UrlParser(BaseThreadedModule.BaseThreadedModule):
     """
     Urlencode or decode an event field and extract url parameters.
 
@@ -32,7 +32,7 @@ class UrlParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
         if not self.getConfigurationValue('target_field'):
             self.target_field = self.source_field

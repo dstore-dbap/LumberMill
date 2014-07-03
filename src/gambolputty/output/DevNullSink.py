@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class DevNullSink(BaseModule.BaseModule):
+class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """
-    Just discard messeages send to this module.BaseThreadedModule
+    Just discard messeages send to this module.
 
     Configuration example:
 

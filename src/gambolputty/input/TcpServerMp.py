@@ -130,7 +130,7 @@ class TcpServerMp(BaseModule.BaseModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = False
+    can_run_parallel = True
 
     def configure(self, configuration):
         # Call parent configure method
@@ -163,7 +163,7 @@ class TcpServerMp(BaseModule.BaseModule):
         #        # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
         #        pass
 
-    def run(self):
+    def initAfterFork(self):
         ssl_options = None
         if self.getConfigurationValue("tls"):
             ssl_options = { 'certfile': self.getConfigurationValue("cert"),

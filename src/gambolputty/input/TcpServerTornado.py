@@ -151,7 +151,7 @@ class TcpServerTornado(BaseModule.BaseModule):
                                 'keyfile': self.getConfigurationValue("key")}
             self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
             self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
-            for fd, server_socket in self.server._sockets.iteritems():
+            for fd, server_socket in self.server._sockets.items():
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
