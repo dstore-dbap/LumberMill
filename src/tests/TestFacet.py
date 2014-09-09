@@ -1,4 +1,3 @@
-import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import unittest
@@ -18,8 +17,8 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'group_by': '%(remote_ip)s',
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
+        self.test_object.prepareRun()
         self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
@@ -30,9 +29,10 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
         events = []
-        time.sleep(.2)
+        # Wait for interval.
+        time.sleep(.3)
         for event in self.receiver.getEvent():
-            if event['event_type'] != 'facet':
+            if event['gambolputty']['event_type'] != 'facet':
                 continue
             events.append(event)
         self.assertEquals(len(events), 2)
@@ -48,8 +48,8 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'interval': .1,
                                     'redis_store': 'RedisStore',
                                     'redis_ttl': 5})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
+        self.test_object.prepareRun()
         self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
@@ -60,9 +60,10 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
         events = []
+        # Wait for interval.
         time.sleep(.3)
         for event in self.receiver.getEvent():
-            if event['event_type'] != 'facet':
+            if event['gambolputty']['event_type'] != 'facet':
                 continue
             events.append(event)
         self.assertEquals(len(events), 2)

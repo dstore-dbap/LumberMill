@@ -8,7 +8,7 @@ from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
 from tornado import autoreload
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 class TornadoTcpServer(TCPServer):
@@ -94,7 +94,7 @@ class ConnectionHandler(object):
         self.stream.close()
 
 @ModuleDocstringParser
-class TcpServerTornado(BaseModule.BaseModule):
+class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     r"""
     Reads data from tcp socket and sends it to its output queues.
     Should be the best choice perfomancewise if you are on Linux.
@@ -131,16 +131,16 @@ class TcpServerTornado(BaseModule.BaseModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.server = False
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240
         self.start_ioloop = False
 
-    def run(self):
+    def start(self):
         #if not self.receivers:
         #    self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
         #    return

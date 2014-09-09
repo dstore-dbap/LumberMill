@@ -3,7 +3,7 @@ import ModuleBaseTestCase
 import unittest
 import mock
 import StringIO
-import BaseThreadedModule
+import sys
 import StdInHandler
 
 class TestStdInHandler(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -14,7 +14,10 @@ class TestStdInHandler(ModuleBaseTestCase.ModuleBaseTestCase):
     def testStdInHandlerSingleLine(self):
         self.test_object.configure({})
         input = StringIO.StringIO("We are the knights who say ni!")
-        self.test_object.run(input)
+        stdin = sys.stdin
+        sys.stdin = input
+        self.test_object.run()
+        sys.stdin = stdin
         for event in self.receiver.getEvent():
             self.assertEquals(event['data'], "We are the knights who say ni!")
 
@@ -22,7 +25,10 @@ class TestStdInHandler(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'multiline': True})
         input = StringIO.StringIO("""We are the knights who say ni!
 Bring us a shrubbery!""")
-        self.test_object.run(input)
+        stdin = sys.stdin
+        sys.stdin = input
+        self.test_object.run()
+        sys.stdin = stdin
         for event in self.receiver.getEvent():
             self.assertEquals(event['data'], """We are the knights who say ni!
 Bring us a shrubbery!""")        
@@ -36,7 +42,10 @@ Bring us a shrubbery!""")
 Bring us a shrubbery!
 Ekki-Ekki-Ekki-Ekki-PTANG
 We are now no longer the Knights who say Ni.""")
-        self.test_object.run(input)
+        stdin = sys.stdin
+        sys.stdin = input
+        self.test_object.run()
+        sys.stdin = stdin
         item = []
         for event in self.receiver.getEvent():
             item.append(event)

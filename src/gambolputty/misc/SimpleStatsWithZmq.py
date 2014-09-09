@@ -1,12 +1,12 @@
 import Utils
-import BaseModule
+import BaseThreadedModule
 import StatisticCollector as StatisticCollector
 import Decorators
 import os
 
 
 @Decorators.ModuleDocstringParser
-class SimpleStats(BaseModule.BaseModule):
+class SimpleStats(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log some simple gambolputty statistic data.
 
@@ -28,7 +28,7 @@ class SimpleStats(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
         self.stats_collector = StatisticCollector.StatisticCollector()
@@ -94,7 +94,7 @@ class SimpleStats(BaseModule.BaseModule):
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def run(self):
+    def prepareRun(self):
         # Get all configured queues for waiting event stats.
         for module_name, module_info in self.gp.modules.items():
             instance = module_info['instances'][0]
@@ -102,6 +102,7 @@ class SimpleStats(BaseModule.BaseModule):
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
+        BaseThreadedModule.BaseThreadedModule.prepareRun()
 
 
     def handleEvent(self, event):

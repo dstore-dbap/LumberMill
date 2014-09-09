@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import types
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
-class LineParser(BaseModule.BaseModule):
+class LineParser(BaseThreadedModule.BaseThreadedModule):
     r"""
     Line parser.
 
@@ -29,7 +30,7 @@ class LineParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
         if isinstance(self.source_fields, types.StringTypes):

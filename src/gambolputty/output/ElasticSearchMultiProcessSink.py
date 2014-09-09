@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import random
 import sys
 import time
 import elasticsearch
@@ -154,7 +155,10 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
             else:
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
-            json_data.append("\n".join((header, json.dumps(event), "\n")))
+            try:
+                json_data.append("\n".join((header, json.dumps(event), "\n")))
+            except:
+                pass
         try:
             json_data = "".join(json_data)
         except UnicodeDecodeError:
@@ -168,9 +172,9 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
-            self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            #self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            #print("%s(%s): Bulk update of %s events took %s." % (self, self.process_id, len(events), time.time() - started))
             return True
-            #print "Bulk update of %s events took %s." % (len(events), time.time() - started)
         except elasticsearch.exceptions.ConnectionError:
             try:
                 self.logger.warning("%sLost connection to %s. Trying to reconnect.%s" % (Utils.AnsiColors.WARNING, (self.getConfigurationValue("nodes"),index_name), Utils.AnsiColors.ENDC))

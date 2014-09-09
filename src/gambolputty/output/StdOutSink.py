@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
 import BaseThreadedModule
 import pprint
 import Utils
 from Decorators import ModuleDocstringParser
 import time
+
 
 @ModuleDocstringParser
 class StdOutSink(BaseThreadedModule.BaseThreadedModule):
@@ -23,7 +23,7 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method

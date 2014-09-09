@@ -32,8 +32,6 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
        - ModuleAlias
     """
 
-    can_run_parallel = True
-
     def __init__(self, gp):
         BaseModule.BaseModule.__init__(self, gp)
         threading.Thread.__init__(self)
@@ -60,7 +58,8 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
             pass
 
     def run(self):
-        # This module will only be run as thread if an input_queue exists. This will depend on the actual configuration.
+        # Module will only be run as thread if an input_queue exists. This will depend on the actual configuration.
+        # This behaviour can be overwritten by implementing a custom run method.
         if not self.input_queue:
             return
         if not self.receivers:

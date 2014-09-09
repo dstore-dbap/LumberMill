@@ -36,7 +36,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         receivers:
           - NextModule
 
-    # Insert a new field with "target_field" name an "value" as new value.
+    # Insert a new field with "target_field" name and "value" as new value.
     - ModifyFields:
         action: insert                              # <type: string; is: required>
         target_field:                               # <type: string; is: required>

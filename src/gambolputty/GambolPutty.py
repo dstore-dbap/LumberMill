@@ -81,7 +81,7 @@ class GambolPutty():
         if queue_type == 'simple':
             queue =  Queue.Queue(queue_max_size)
         if queue_type == 'multiprocess':
-            if False and Utils.zmq_avaiable:
+            if Utils.zmq_avaiable and Utils.msgpack_avaiable:
                 queue = Utils.ZeroMqMpQueue(queue_max_size)
             else:
                 queue = multiprocessing.Queue(queue_max_size)
@@ -179,9 +179,14 @@ class GambolPutty():
                 tmp_mod_name = module_id.split("_",1)[0]
                 module_id = "%s_%s" % (tmp_mod_name, counter)
                 counter += 1
-            module_instance = self.initModule(module_class_name)
+            module_instances = []
+            for _ in range(self.workers):
+                module_instance = self.initModule(module_class_name)
+                module_instances.append(module_instance)
+                if not isinstance(module_instance, BaseMultiProcessModule.BaseMultiProcessModule):
+                    break
             self.modules[module_id] = {  'idx': idx,
-                                         'instance': module_instance,
+                                         'instances': module_instances,
                                          'type': module_instance.module_type,
                                          'configuration': module_config}
             start_message = "%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_id, Utils.AnsiColors.ENDC)
@@ -213,13 +218,14 @@ class GambolPutty():
     def configureModules(self):
         # Call configuration of module
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-             module_info['instance'].configure(module_info['configuration'])
+            for module_instance in module_info['instances']:
+                module_instance.configure(module_info['configuration'])
 
     def initEventStream(self):
         queues = {}
         # Iterate over all configured modules.
         for module_name, module_info in self.modules.items():
-            sender_instance = module_info['instance']
+            sender_instance = module_info['instances'][0]
             for receiver_data in sender_instance.getConfigurationValue('receivers'):
                 if not receiver_data:
                     break
@@ -231,34 +237,26 @@ class GambolPutty():
                 if receiver_name not in self.modules:
                     self.logger.error( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.FAIL, receiver_name, module_name, Utils.AnsiColors.ENDC))
                     self.shutDown()
-                receiver_instance = self.modules[receiver_name]['instance']
-                # a) If we run multiprocessed and the module is not capable of running parallel, this module will only be
-                # started in the main process. Connect the module via a queue to all child processes.
-                # b) All output modules will run in their own process because most of the outputs are quite slow compared
-                # to input and modifier mods.
-
-                """
-                if hasattr(receiver_instance, 'setInputQueue') \
-                    and \
-                        (
-                            (self.workers > 1 and not sender_instance.can_run_parallel) \
-                                or \
-                            (receiver_instance.module_type == "output" and receiver_instance.can_run_parallel)\
-                        ):
-                """
-
-                if (self.workers > 1 and (not sender_instance.can_run_parallel and receiver_instance.can_run_parallel))\
-                        or\
-                    (isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule)):
+                for receiver_instance in self.modules[receiver_name]['instances']:
+                    # a) If we run multiprocessed and the module is not capable of running parallel, this module will only be
+                    # started in the main process. Connect the module via a queue to all child processes.
+                    # b) All output modules will run in their own process because most of the outputs are quite slow compared
+                    # to input and modifier mods.
+                    if (self.workers > 1 and (not sender_instance.can_run_forked and receiver_instance.can_run_forked))\
+                            or\
+                        (isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule)):
+                        try:
+                            queue = queues[receiver_name]
+                        except KeyError:
+                            queue = self.produceQueue('multiprocess', self.queue_size, self.queue_buffer_size)
+                            queues[receiver_name] = queue
+                        receiver_instance.setInputQueue(queue)
+                # Add the receiver to senders. If a corresponding queue exist, use this else use the normal mod instance.
+                for instance in module_info['instances']:
                     try:
-                        queue = queues[receiver_name]
+                        instance.addReceiver(receiver_name, queues[receiver_name])
                     except KeyError:
-                        queue = self.produceQueue('multiprocess', self.queue_size, self.queue_buffer_size)
-                        queues[receiver_name] = queue
-                    receiver_instance.setInputQueue(queue)
-                    sender_instance.addReceiver(receiver_name, queue)
-                else:
-                    sender_instance.addReceiver(receiver_name, receiver_instance)
+                        instance.addReceiver(receiver_name, receiver_instance)
 
     def _initEventStream(self):
         """ Connect modules.
@@ -337,29 +335,44 @@ class GambolPutty():
                 self.logger.error("%sGet module by id %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_id, Utils.AnsiColors.ENDC))
             return None
 
+    def prepareModules(self):
+        # All modules are completely configured, call modules prepareRun method.
+        # prepareRun is used to (re)init modules after a process fork.
+        # BufferedQueue i.e. uses a thread to flush its buffer in given intervals.
+        # The thread will not survive a fork of the main process. So we need to start this
+        # after the fork was executed.
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            for instance in module_info['instances']:
+                instance.prepareRun()
+
     def runModules(self):
         """
         Start the configured modules if they poll queues.
         """
         # All modules are completely configured, call modules run method if it exists.
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            instance = module_info['instance']
-            if not instance.can_run_parallel and not self.is_master():
-                continue
-            # Some things (like already running threads) will not survive a fork. In initAfterFork() a module can
-            # take care of that.
-            instance.initAfterFork()
-            # The default 'start' method of threading.Thread/ will call the 'run' method of the module.
-            if getattr(instance, "start", None):
-                instance.start()
-            elif getattr(instance, "run", None):
-                instance.run()
+            for instance in module_info['instances']:
+                # Some modules, mostly input modules, use unique io devices, that can not be polled from multiple
+                # threads/processes. These modules will only be started once from the master process and the output
+                # will be send via queue to the other processes.
+                if not instance.can_run_forked and not self.is_master():
+                    continue
+                # All multiprocess modules will only be started from the main process.
+                if isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule) and not self.is_master():
+                    continue
+                # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
+                if getattr(instance, "start", None):
+                    instance.start()
+                    continue
+                if getattr(instance, "run", None):
+                    instance.run()
+                    continue
 
     def getAllQueues(self):
         """ Get all configured queues to check for pending events. """
         module_queues = {}
         for module_name, module_info in self.modules.items():
-            instance = module_info['instance']
+            instance = module_info['instances'][0]
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             module_queues[module_name] = instance.getInputQueue()
@@ -376,13 +389,14 @@ class GambolPutty():
         self.run()
 
     def run(self):
-        self.alive = True
-        print("Started Gambolputty(%s,%s)" % (self.is_master(), os.getpid()))
+        #print("Started Gambolputty(%s,%s)" % (self.is_master(), os.getpid()))
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
         signal.signal(signal.SIGINT, self.shutDown)
         signal.signal(signal.SIGALRM, self.restart)
+        self.alive = True
+        self.prepareModules()
         self.runModules()
         if self.is_master():
             self.logger.info("%sGambolPutty started with %s processes(%s).%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.child_processes)+1, os.getpid(),Utils.AnsiColors.ENDC))
@@ -439,14 +453,15 @@ class GambolPutty():
         # When shutting down after the fork, the process.join seems to have lost the access to this process.
         # Aside of this error, everything works as expected.
         # So instead of calling sys.exit we send a SIGQUIT signal, which works just fine.
-        os.kill(os.getpid(), signal.SIGQUIT)
+        #os.kill(os.getpid(), signal.SIGQUIT)
 
     def shutDownModules(self):
         tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
         for module_name, module_info in self.modules.items():
-            if module_info['instance'].module_type == "input":
-                module_info['instance'].shutDown()
+            for instance in module_info['instances']:
+                if instance.module_type == "input":
+                    instance.shutDown()
         # Get all configured queues to check for pending events.
         module_queues = self.getAllQueues()
         if len(module_queues) > 0:
@@ -465,8 +480,9 @@ class GambolPutty():
                 break
         # Shutdown all other modules.
         for module_name, module_info in self.modules.items():
-            if module_info['instance'].module_type != "input":
-                module_info['instance'].shutDown()
+            for instance in module_info['instances']:
+                if instance.module_type != "input":
+                    instance.shutDown()
 
 def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')

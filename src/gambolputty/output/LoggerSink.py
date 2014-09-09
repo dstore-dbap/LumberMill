@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 import time
 
+
 @ModuleDocstringParser
-class LoggerSink(BaseModule.BaseModule):
+class LoggerSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send data to gambolputty logger.
 
@@ -26,7 +27,7 @@ class LoggerSink(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.formats = self.getConfigurationValue('formats')
         self.printing = False
 

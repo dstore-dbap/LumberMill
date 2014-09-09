@@ -30,7 +30,7 @@ class RedisChannel(BaseModule.BaseModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
          # Call parent configure method

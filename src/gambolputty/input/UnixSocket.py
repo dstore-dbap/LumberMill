@@ -2,12 +2,12 @@
 import sys
 import os
 import socket
-from tornado import netutil
+from tornado import netutil,ioloop
 from tornado.tcpserver import TCPServer
-
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
+
 
 class SocketServer(TCPServer):
 
@@ -80,9 +80,9 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
             return
         self.running = True
         #self.server.start(0)
-        #IOLoop.instance().start()
+        ioloop.IOLoop.instance().start()
 
-    def shutDown(self, silent):
+    def shutDown(self):
         if self.running:
             try:
                 os.remove(self.getConfigurationValue('path_to_socket'))

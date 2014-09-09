@@ -2,6 +2,7 @@
 import ast
 import datetime
 import copy
+import pprint
 import random
 import time
 import os
@@ -12,6 +13,7 @@ import signal
 import Decorators
 import socket
 import types
+import platform
 
 # Conditional imports for python2/3
 try:
@@ -19,12 +21,18 @@ try:
 except ImportError:
     import builtins
 
+
 try:
     import zmq
-    import msgpack
     zmq_avaiable = True
 except ImportError:
     zmq_avaiable = False
+
+try:
+    import msgpack
+    msgpack_avaiable = True
+except ImportError:
+    msgpack_avaiable = False
 
 try:
     import __pypy__
@@ -62,7 +70,8 @@ else:
                          'Dictionary': types.DictType,
                          'Dict': types.DictType}
 
-my_hostname = socket.gethostname()
+MY_HOSTNAME = socket.gethostname()
+MY_SYSTEM_NAME = platform.system()
 
 def reload():
     """
@@ -115,7 +124,7 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
                          'event_id': "%032x%s" % (random.getrandbits(128), os.getpid()),
                          'source_module': caller_class_name,
                          'received_from': received_from,
-                         'received_by': my_hostname
+                         'received_by': MY_HOSTNAME
                      }
                 }
     default_dict.update(dict)
@@ -229,6 +238,8 @@ class Buffer:
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
         def timedFlush():
+            if len(self.buffer) == 0 or self.is_storing:
+                return
             self.flush()
         return timedFlush
 
@@ -247,11 +258,10 @@ class Buffer:
             self.flush()
 
     def flush(self):
-        if len(self.buffer) == 0 or self.is_storing:
-            return
         self.is_storing = True
         if self.flush_callback(self.buffer):
             self.buffer = []
+        self.buffer = []
         self.is_storing = False
         """
         try:
@@ -271,7 +281,7 @@ class Buffer:
     def bufsize(self):
         return len(self.buffer)
 
-class BufferedQueue():
+class BufferedQueue:
     def __init__(self, queue, buffersize=500):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.queue = queue

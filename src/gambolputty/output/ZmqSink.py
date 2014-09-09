@@ -7,6 +7,7 @@ import BaseMultiProcessModule
 import Utils
 import Decorators
 
+
 @Decorators.ModuleDocstringParser
 class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
@@ -38,7 +39,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
          # Call parent configure method
@@ -48,7 +49,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.format = self.getConfigurationValue('format')
         self.mode = self.getConfigurationValue('mode')
         if self.mode == "bind":
-            self.can_run_parallel = False
+            self.can_run_forked = False
 
     def initZmqContext(self):
         self.zmq_context = zmq.Context()
@@ -76,10 +77,10 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
 
-    def run(self):
+    def prepareRun(self):
         self.initZmqContext()
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
 
     def storeData(self, buffered_data):
         try:

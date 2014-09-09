@@ -3,6 +3,7 @@ import BaseThreadedModule
 import StatisticCollector as StatisticCollector
 import Decorators
 import os
+import pprint
 
 
 @Decorators.ModuleDocstringParser
@@ -95,11 +96,11 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def initAfterFork(self):
+    def prepareRun(self):
         # Get all configured queues for waiting event stats.
         self.module_queues = self.gp.getAllQueues()
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('events_received')

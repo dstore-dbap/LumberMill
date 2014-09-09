@@ -216,9 +216,9 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
         except:
             return self._pop(key, unpickle)
 
-    def shutDown(self, silent=True):
+    def shutDown(self):
         try:
             self.buffer.flush()
         except:
             pass
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

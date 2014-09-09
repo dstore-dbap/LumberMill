@@ -15,10 +15,9 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testTcpConnection(self):
         self.test_object.configure({})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
-        self.test_object.start_ioloop = True
+        self.checkConfiguration()
         self.test_object.start()
+        self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(.1)
         try:
@@ -43,14 +42,14 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue(event != False)
 
     def testTlsTcpConnection(self):
-        self.test_object.configure({'tls': True,
+        self.test_object.configure({'port': 5252,
+                                    'tls': True,
                                     'key': '../../exampleData/gambolputty_ca.key',
                                     'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
-        self.test_object.start_ioloop = True
+        self.checkConfiguration()
         self.test_object.start()
+        self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(1)
         try:

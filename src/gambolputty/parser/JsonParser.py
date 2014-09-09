@@ -2,10 +2,11 @@
 import re
 import sys
 import types
-import BaseModule
+import BaseThreadedModule
 import Utils
 from json import JSONDecoder
 from Decorators import ModuleDocstringParser
+
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -37,7 +38,7 @@ class ConcatJSONDecoder(JSONDecoder): # json.JSONDecoder
         return objs
 
 @ModuleDocstringParser
-class JsonParser(BaseModule.BaseModule):
+class JsonParser(BaseThreadedModule.BaseThreadedModule):
     """
     Json codec.
 
@@ -73,7 +74,7 @@ class JsonParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
         if isinstance(self.source_fields, types.StringTypes):

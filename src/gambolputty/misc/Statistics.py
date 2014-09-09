@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import Utils
 import StatisticCollector as StatisticCollector
-import BaseModule
+import BaseThreadedModule
 import Decorators
 
 @Decorators.ModuleDocstringParser
-class Statistics(BaseModule.BaseModule):
+class Statistics(BaseThreadedModule.BaseThreadedModule):
     """
     Collect and log statistic data.
 
@@ -39,7 +39,7 @@ class Statistics(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.interval = self.getConfigurationValue('interval')
         self.fields = self.getConfigurationValue('fields')
         self.stats_collector = StatisticCollector.StatisticCollector()
@@ -77,9 +77,10 @@ class Statistics(BaseModule.BaseModule):
         if last_field_name:
             self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "count_per_sec": (field_counts/self.interval), "field_name": field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def run(self):
+    def prepareRun(self):
         timed_func = self.getRunTimedFunctionsFunc()
         Utils.TimedFunctionManager.startTimedFunction(timed_func)
+        BaseThreadedModule.BaseThreadedModule.prepareRun()
 
     def handleEvent(self, event):
         for field in self.fields:

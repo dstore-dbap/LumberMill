@@ -82,7 +82,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     module_type = "stand_alone"
     """ Set module type. """
 
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method.

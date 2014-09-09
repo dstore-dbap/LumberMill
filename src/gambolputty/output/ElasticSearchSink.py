@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 import time
 import elasticsearch
 import BaseThreadedModule
-import BaseModule
 import Utils
 import Decorators
 try:
@@ -55,7 +55,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
 
     Configuration example:
 
-    - ElasticSearchMultiProcessSink:
+    - ElasticSearchSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
@@ -85,7 +85,6 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         self.index_name_pattern = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection_class = elasticsearch.connection.ThriftConnection
         if self.getConfigurationValue("connection_type") == 'http':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
@@ -94,9 +93,10 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
             return
 
-    def run(self):
+    def prepareRun(self):
+        # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseThreadedModule.BaseThreadedModule.run(self)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def connect(self):
         es = False
@@ -134,6 +134,13 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             publish_data = event
         self.buffer.append(publish_data)
         yield None
+        #try:
+        #    self.buffer.append(publish_data)
+        #except:
+        #    if self.do_print:
+        #        print("Buffer failed for %s" % (self.index_name_pattern))
+        #    self.do_print = False
+        #yield None
 
     def dataToElasticSearchJson(self, index_name, events):
         """
@@ -154,12 +161,12 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
             else:
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
-            json_data.append("\n".join((header, json.dumps(event), "\n")))
-        try:
-            json_data = "".join(json_data)
-        except UnicodeDecodeError:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+            try:
+                json_data.append("\n".join((header, json.dumps(event), "\n")))
+            except UnicodeDecodeError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+        json_data = "".join(json_data)
         return json_data
 
     def storeData(self, events):

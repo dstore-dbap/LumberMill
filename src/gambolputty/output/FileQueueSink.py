@@ -3,7 +3,7 @@ import queuelib
 import msgpack
 import sys
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 class BufferedFiFoWriteQueue():
@@ -43,7 +43,7 @@ class BufferedFiFoWriteQueue():
         return getattr(self.queue, name)
 
 @ModuleDocstringParser
-class FileQueueSink(BaseModule.BaseModule):
+class FileQueueSink(BaseThreadedModule.BaseThreadedModule):
     """
     Stores all received events in a file based queue for persistance.
 
@@ -59,11 +59,11 @@ class FileQueueSink(BaseModule.BaseModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         try:
            queue = queuelib.FifoDiskQueue(self.getConfigurationValue("path"))
            self.buffered_queue = BufferedFiFoWriteQueue(queue, buffersize=100, interval=10)

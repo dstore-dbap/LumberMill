@@ -41,7 +41,8 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue(event != False)
 
     def testTlsTcpConnection(self):
-        self.test_object.configure({'tls': True,
+        self.test_object.configure({'port': 5252,
+                                    'tls': True,
                                     'key': '../../exampleData/gambolputty_ca.key',
                                     'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})

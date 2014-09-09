@@ -7,6 +7,7 @@ import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 import Utils
 
+
 @ModuleDocstringParser
 class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     """

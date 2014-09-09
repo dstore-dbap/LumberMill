@@ -35,7 +35,7 @@ class ConfigurationValidator():
         if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
             return result
         # Check for pool_size > 1 in single threaded/processed modules.
-        if 'pool_size' in moduleInstance.configuration_data and moduleInstance.getConfigurationValue('pool_size') > 1 and moduleInstance.can_run_parallel is False:
+        if 'pool_size' in moduleInstance.configuration_data and moduleInstance.getConfigurationValue('pool_size') > 1 and moduleInstance.can_run_forked is False:
             error_msg = "%s: 'pool_size' has invalid value. Is: %s but the module can only run in one thread/process." % (moduleInstance.__class__.__name__, moduleInstance.getConfigurationValue('pool_size'))
             result.append(error_msg)
         # Check if the live configuration provides a key that is not documented in modules docstring.

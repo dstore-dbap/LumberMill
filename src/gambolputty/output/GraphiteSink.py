@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
 import Utils
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 import socket
 import time
 
+
 @ModuleDocstringParser
-class GraphiteSink(BaseModule.BaseModule):
+class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send metrics to graphite server.
 
@@ -52,7 +53,7 @@ class GraphiteSink(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.formats = self.getConfigurationValue('formats')
         self.connection_data = (self.getConfigurationValue('server'), self.getConfigurationValue('port'))
         self.connection = None
@@ -68,13 +69,13 @@ class GraphiteSink(BaseModule.BaseModule):
             self.logger.error("%sFailed to connect to %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.connection_data, etype, evalue, Utils.AnsiColors.ENDC))
             return False
 
-    def run(self):
+    def prepareRun(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection = self.connect()
         if not self.connection:
             self.gp.shutDown()
             return
-        #BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def handleEvent(self, event):
         for format in self.formats:

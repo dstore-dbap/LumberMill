@@ -1,4 +1,5 @@
 import extendSysPath
+import threading
 import unittest2
 import mock
 import ConfigurationValidator
@@ -63,6 +64,16 @@ class ModuleBaseTestCase(unittest2.TestCase):
         if hasattr(test_object, 'setInputQueue'):
             self.input_queue = Queue.Queue()
             self.test_object.setInputQueue(self.input_queue)
+
+    def checkConfiguration(self):
+        result = self.conf_validator.validateModuleInstance(self.test_object)
+        self.assertFalse(result)
+
+    def startTornadoEventLoop(self):
+        import tornado.ioloop
+        self.ioloop_thread = threading.Thread(target=tornado.ioloop.IOLoop.instance().start)
+        self.ioloop_thread.daemon = True
+        self.ioloop_thread.start()
 
     """
     def testQueueCommunication(self, config = {}):
@@ -144,4 +155,4 @@ class ModuleBaseTestCase(unittest2.TestCase):
     """
 
     def tearDown(self):
-        self.test_object.shutDown(silent=True)
+        self.test_object.shutDown()

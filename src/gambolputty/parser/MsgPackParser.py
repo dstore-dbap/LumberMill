@@ -2,12 +2,13 @@
 import sys
 import types
 import msgpack
-import BaseModule
+import BaseThreadedModule
 import Utils
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
-class MsgPackParser(BaseModule.BaseModule):
+class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
     """
     Decode:
      It will parse the msgpack data and create or replace fields in the internal data dictionary with
@@ -31,7 +32,7 @@ class MsgPackParser(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
         if isinstance(self.source_fields, types.StringTypes):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import Utils
 import itertools
-import BaseModule
+import BaseThreadedModule
 import Decorators
 import Utils
 import sys

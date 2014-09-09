@@ -31,7 +31,7 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
          # Call parent configure method

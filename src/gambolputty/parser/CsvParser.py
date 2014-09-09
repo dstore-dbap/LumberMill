@@ -5,6 +5,7 @@ import csv
 from cStringIO import StringIO
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
 class CsvParser(BaseThreadedModule.BaseThreadedModule):
     """

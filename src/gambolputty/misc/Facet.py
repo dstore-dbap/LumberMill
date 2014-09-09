@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import Utils
-import BaseModule
+import BaseThreadedModule
 import Decorators
 import sys
 
 @Decorators.ModuleDocstringParser
-class Facet(BaseModule.BaseModule):
+class Facet(BaseThreadedModule.BaseThreadedModule):
     """
     Collect different values of one field over a defined period of time and pass all
     encountered variations on as new event after period is expired.
@@ -41,15 +41,13 @@ class Facet(BaseModule.BaseModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Get redis client module.
         if self.getConfigurationValue('redis_store'):
             mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
             self.redis_store = mod_info['instances'][0]
         else:
             self.redis_store = None
-        self.evaluate_facet_data_func = self.getEvaluateFunc()
-        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
 
     def _getFacetInfoRedis(self, key):
         facet_info = self.redis_store.get(key)
@@ -113,11 +111,10 @@ class Facet(BaseModule.BaseModule):
             Facet.facet_data = {}
         return evaluateFacets
 
-    def shutDown(self, silent):
-        # Push any remaining facet data.
-        self.evaluate_facet_data_func(self)
-        # Call parent configure method.
-        BaseModule.BaseModule.shutDown(self, silent)
+    def prepareRun(self):
+        self.evaluate_facet_data_func = self.getEvaluateFunc()
+        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def handleEvent(self, event):
         """
@@ -133,8 +130,8 @@ class Facet(BaseModule.BaseModule):
             yield event
             return
         key = self.getConfigurationValue('group_by', event)
-        if not key:
-            self.logger.warning("%sCould not store facet data in redis. group_by value %s could not be generated.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
+        if not key and self.redis_store:
+            self.logger.warning("%sGroup_by value %s could not be generated. Event ignored.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
             yield event
             return
         key = "FacetValues:%s" % key
@@ -166,3 +163,9 @@ class Facet(BaseModule.BaseModule):
             if redis_lock:
                 redis_lock.release()
         yield event
+
+    def shutDown(self):
+        # Push any remaining facet data.
+        self.evaluate_facet_data_func(self)
+        # Call parent configure method.
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

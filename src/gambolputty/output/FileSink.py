@@ -7,6 +7,7 @@ import Decorators
 import Utils
 import sys
 
+
 @Decorators.ModuleDocstringParser
 class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
@@ -32,7 +33,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
          # Call parent configure method
@@ -61,11 +62,11 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-    def run(self):
+    def prepareRun(self):
         # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback
         # when running in multiple processes.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
 
     def handleEvent(self, event):
         self.buffer.append(event)

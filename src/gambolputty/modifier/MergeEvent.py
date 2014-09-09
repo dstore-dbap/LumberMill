@@ -70,11 +70,10 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
             self.sendEvent(events[0])
             return True
         else:
-            merged_event_data = ""
-            for event in events:
-                merged_event_data = "%s%s" % (merged_event_data, event["data"])
-            caller_class_name = event["gambolputty"].get("source_module", None)
-            received_from = event["gambolputty"].get("received_from", None)
-            merged_event = Utils.getDefaultEventDict({"data": merged_event_data}, caller_class_name=caller_class_name, received_from=received_from)
+            parent_event = events[0]
+            parent_event['data'] = ''.join([event["data"] for event in events])
+            caller_class_name = parent_event["gambolputty"].get("source_module", None)
+            received_from = parent_event["gambolputty"].get("received_from", None)
+            merged_event = Utils.getDefaultEventDict(parent_event, caller_class_name=caller_class_name, received_from=received_from)
             self.sendEvent(merged_event)
             return True

@@ -11,6 +11,7 @@ import Utils
 import time
 import sys
 
+
 @Decorators.ModuleDocstringParser
 class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
@@ -42,7 +43,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
          # Call parent configure method
@@ -129,11 +130,11 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             return False
         return True
 
-    def run(self):
+    def prepareRun(self):
         self.hdfs = self.getHdfsClient()
         Utils.TimedFunctionManager.startTimedFunction(self.timed_store_func)
         # Call parent run method
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions while manipulating self.events_container.

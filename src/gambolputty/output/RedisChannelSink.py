@@ -5,6 +5,7 @@ import BaseMultiProcessModule
 import Utils
 import Decorators
 
+
 @Decorators.ModuleDocstringParser
 class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
@@ -33,7 +34,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
          # Call parent configure method
@@ -48,11 +49,9 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
 
-    def run(self):
-        if not self.client:
-            return
+    def prepareRun(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
 
     def handleEvent(self, event):
         if self.format:

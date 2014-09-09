@@ -4,6 +4,7 @@ import urllib
 import urlparse
 from Decorators import ModuleDocstringParser
 
+
 @ModuleDocstringParser
 class UrlParser(BaseThreadedModule.BaseThreadedModule):
     """

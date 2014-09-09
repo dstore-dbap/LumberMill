@@ -5,6 +5,7 @@ import BaseMultiProcessModule
 import Utils
 import Decorators
 
+
 @Decorators.ModuleDocstringParser
 class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
@@ -36,7 +37,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     module_type = "output"
     """Set module type"""
-    can_run_parallel = True
+    can_run_forked = True
 
     def configure(self, configuration):
          # Call parent configure method
@@ -54,9 +55,9 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
             self.gp.shutDown()
 
-    def run(self):
+    def prepareRun(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
 
     def storeData(self, buffered_data):
         try:

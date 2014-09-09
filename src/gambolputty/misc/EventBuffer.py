@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import copy
-import os
 import gc
 import random
-import BaseModule
+import BaseThreadedModule
 import Utils
 import Decorators
 import sys
 
+
 @Decorators.ModuleDocstringParser
-class EventBuffer(BaseModule.BaseModule):
+class EventBuffer(BaseThreadedModule.BaseThreadedModule):
     """
     Store received events in a persistent backend until the event was successfully handled.
     Events, that did not get handled correctly, will be requeued when GambolPutty is restarted.
@@ -37,11 +37,11 @@ class EventBuffer(BaseModule.BaseModule):
 
     module_type = "stand_alone"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseModule.BaseModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.key_prefix = self.getConfigurationValue('key_prefix')
         self.key_buffer = {}
         self.flush_interval = self.getConfigurationValue('gc_interval')
@@ -141,5 +141,6 @@ class EventBuffer(BaseModule.BaseModule):
             self.logger.warning("%sNote: If more than one gp instance is running, requeued events count may differ from total events.%s" % (Utils.AnsiColors.WARNING, Utils.AnsiColors.ENDC))
             event = None
 
-    def run(self):
+    def prepareRun(self):
         self.timedFuncHandle = Utils.TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import re
 import os
@@ -7,6 +6,7 @@ import BaseThreadedModule
 import Utils
 import Decorators
 from operator import itemgetter
+
 
 @Decorators.ModuleDocstringParser
 class RegexParser(BaseThreadedModule.BaseThreadedModule):
@@ -93,11 +93,11 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
             self.fieldextraction_regexpressions.append({'event_type': event_type, 'pattern': regex, 'match_type': regex_match_type, 'hitcounter': 0})
 
-    def initAfterFork(self):
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+    def prepareRun(self):
         if self.hot_rules_first:
             resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
             self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def getResortFieldextractionRegexpressionsFunc(self):
         @Decorators.setInterval(10)
@@ -109,7 +109,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         return resortFieldextractionRegexpressions
 
     def readLogstashPatterns(self):
-        path = "%s/../patterns" % os.path.dirname(os.path.realpath(__file__))
+        path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
         for (dirpath, dirnames, filenames) in os.walk(path):
             for filename in filenames:
                 lines = [line.strip() for line in open('%s%s%s' % (dirpath,  os.sep, filename))]

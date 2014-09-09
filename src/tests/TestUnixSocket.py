@@ -1,5 +1,6 @@
 import os
 import time
+import tornado.ioloop
 import extendSysPath
 import mock
 import socket
@@ -18,9 +19,9 @@ class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
             pass
         self.assertFalse(os.path.exists('/tmp/test.sock'))
         self.test_object.configure({'path_to_socket': '/tmp/test.sock'})
-        errors = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(errors)
+        self.checkConfiguration()
         self.test_object.start()
+        self.startTornadoEventLoop()
         time.sleep(.1)
         self.assertTrue(os.path.exists('/tmp/test.sock'))
         unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

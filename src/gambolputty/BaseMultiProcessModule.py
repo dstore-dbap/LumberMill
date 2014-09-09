@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
 import multiprocessing
-import pprint
 import msgpack
 import signal
 import Utils
 import BaseModule
 
-class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
+class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
     """
     Base class for all gambolputty modules that will run as separate processes.
     If you happen to override one of the methods defined here, be sure to know what you
@@ -34,8 +33,9 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
 
     def __init__(self, gp):
         BaseModule.BaseModule.__init__(self, gp)
+        multiprocessing.Process.__init__(self)
         self.input_queue = False
-        self.alive = True
+        self.alive = False
         self.worker = None
 
     def setInputQueue(self, queue):
@@ -44,7 +44,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
     def getInputQueue(self):
         return self.input_queue
 
-    def getFromQueue(self, block=True, timeout=None):
+    def pollQueue(self, block=True, timeout=None):
         try:
             packed_data = self.input_queue.get(block, timeout)
             events = msgpack.unpackb(packed_data)
@@ -55,10 +55,6 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
             # Keyboard interrupt is catched in GambolPuttys main run method.
             # This will take care to shutdown all running modules.
             pass
-
-    def start(self):
-        self.worker = multiprocessing.Process(target=self.run)
-        self.worker.start()
 
     def run(self):
         if not self.receivers:
@@ -72,10 +68,11 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
             # TODO: A better solution should be implemented...
             if self.module_type not in ['stand_alone', 'input']:
                 self.logger.error("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
-            return
+                return
+        self.alive = True
         self.process_id = os.getpid()
         while self.alive:
-            for event in self.getFromQueue():
+            for event in self.pollQueue():
                 if not event:
                     continue
                 self.receiveEvent(event)
@@ -87,7 +84,8 @@ class BaseMultiProcessModule(BaseModule.BaseModule): #, multiprocessing.Process
             self.input_queue.close()
         except:
             pass
-        # Kill worker via signal. Otherwise a simple reload will not terminate the worker processes.
+        # Kill self via signal. Otherwise a simple reload will not terminate the worker processes.
         # Why that is escapes me...
-        if self.worker.pid:
-            os.kill(self.worker.pid, signal.SIGINT)
+        self.alive = False
+        if self.pid:
+            os.kill(self.pid, signal.SIGQUIT)

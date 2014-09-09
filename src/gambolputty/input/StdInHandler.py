@@ -2,10 +2,10 @@
 import os
 import sys
 import socket
-import time
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
+
 
 @ModuleDocstringParser
 class StdInHandler(BaseThreadedModule.BaseThreadedModule):
@@ -23,7 +23,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_parallel = False
+    can_run_forked = False
 
     def configure(self, configuration):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

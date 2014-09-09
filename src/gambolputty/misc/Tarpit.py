@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import time
-import BaseModule
+import BaseThreadedModule
 from Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
-class Tarpit(BaseModule.BaseModule):
+class Tarpit(BaseThreadedModule.BaseThreadedModule):
     """
     Send an event into a tarpit before passing it on.
 
@@ -21,6 +21,14 @@ class Tarpit(BaseModule.BaseModule):
     module_type = "misc"
     """Set module type"""
 
+    def fib(self, n):
+        if n == 0:
+            return 0
+        elif n == 1:
+            return 1
+        else:
+            return self.fib(n-1) + self.fib(n-2)
+
     def handleEvent(self, event):
         """
         Process the event.
@@ -28,5 +36,6 @@ class Tarpit(BaseModule.BaseModule):
         @param event: dictionary
         @return data: dictionary
         """
-        time.sleep(self.getConfigurationValue('delay'))
+        #time.sleep(self.getConfigurationValue('delay'))
+        self.fib(25)
         yield event

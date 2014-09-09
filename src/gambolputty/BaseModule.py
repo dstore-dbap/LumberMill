@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import pprint
 import re
 import abc
 import logging
@@ -7,7 +8,8 @@ import sys
 import ConfigurationValidator
 import Utils
 
-class BaseModule():
+
+class BaseModule:
     """
     Base class for all gambolputty modules.
 
@@ -27,7 +29,7 @@ class BaseModule():
 
     module_type = "generic"
     """ Set module type. """
-    can_run_parallel = True
+    can_run_forked = True
 
     def __init__(self, gp):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -37,15 +39,6 @@ class BaseModule():
         self.input_filter = None
         self.output_filters = {}
         self.process_id = os.getpid()
-
-    def initAfterFork(self):
-        #print("%s in %s" % (self, os.getpid()))
-        # Wrap queue with BufferedQueue. This is done here since the buffer uses a thread to flush buffer in
-        # given intervals. The thread will not survive a fork of the main process. So we need to start this
-        # after the fork was executed.
-        for receiver_name, receiver in self.receivers.items():
-            if hasattr(receiver, 'put'):
-                self.receivers[receiver_name] = Utils.BufferedQueue(receiver, self.gp.queue_buffer_size)
 
     def configure(self, configuration=None):
         """
@@ -178,6 +171,15 @@ class BaseModule():
             if matched:
                 filterd_receivers[receiver_name] = receiver
         return filterd_receivers
+
+    def prepareRun(self):
+        # Wrap queue with BufferedQueue. This is done here since the buffer uses a thread to flush buffer in
+        # given intervals. The thread will not survive a fork of the main process. So we need to start this
+        # after the fork was executed.
+        for receiver_name, receiver in self.receivers.items():
+            if hasattr(receiver, 'put'):
+                print("Adding buffered queue for %s" % receiver_name)
+                self.receivers[receiver_name] = Utils.BufferedQueue(receiver, self.gp.queue_buffer_size)
 
     def sendEvent(self, event):
         if not self.receivers:
