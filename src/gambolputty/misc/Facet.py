@@ -42,6 +42,8 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        self.source_field = self.getConfigurationValue('source_field')
+        self.add_event_fields = self.getConfigurationValue('add_event_fields')
         # Get redis client module.
         if self.getConfigurationValue('redis_store'):
             mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('redis_store'))
@@ -87,12 +89,13 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         self._setFacetInfoInternal(key, facet_info)
 
     def sendFacetEventToReceivers(self, facet_data):
-        event = Utils.getDefaultEventDict({'facet_field': self.getConfigurationValue('source_field'),
+        event = Utils.getDefaultEventDict({'facet_field': self.source_field,
                                           'facet_count': len(facet_data['facets']),
-                                          'facets': facet_data['facets'],
-                                          'other_event_fields': facet_data['other_event_fields']},
+                                          'facets': facet_data['facets']},
                                           caller_class_name=self.__class__.__name__,
                                           event_type='facet')
+        if facet_data['other_event_fields']:
+            event['other_event_fields'] = facet_data['other_event_fields']
         self.sendEvent(event)
 
     def getEvaluateFunc(self):
@@ -129,7 +132,8 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         except KeyError:
             yield event
             return
-        key = self.getConfigurationValue('group_by', event)
+        key = event[self.getConfigurationValue('group_by', event)]
+        print(key)
         if not key and self.redis_store:
             self.logger.warning("%sGroup_by value %s could not be generated. Event ignored.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
             yield event
@@ -146,13 +150,14 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
                 redis_lock.acquire()
             facet_info = self.getFacetInfo(key)
             if facet_value not in facet_info['facets']:
-                keep = {}
-                for keep_field in self.getConfigurationValue('add_event_fields'):
+                keep_fields = {}
+                for field_name in self.add_event_fields:
                     try:
-                        keep[keep_field] = event[keep_field]
+                        keep_fields[field_name] = event[field_name]
                     except KeyError:
                         pass
-                facet_info['other_event_fields'][facet_value] = keep
+                if keep_fields:
+                    facet_info['other_event_fields'][facet_value] = keep_fields
                 facet_info['facets'].append(facet_value)
                 self.setFacetInfo(key, facet_info)
         except:

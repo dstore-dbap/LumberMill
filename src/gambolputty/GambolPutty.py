@@ -253,9 +253,9 @@ class GambolPutty():
                         receiver_instance.setInputQueue(queue)
                 # Add the receiver to senders. If a corresponding queue exist, use this else use the normal mod instance.
                 for instance in module_info['instances']:
-                    try:
+                    if receiver_name in queues:
                         instance.addReceiver(receiver_name, queues[receiver_name])
-                    except KeyError:
+                    else:
                         instance.addReceiver(receiver_name, receiver_instance)
 
     def _initEventStream(self):
@@ -361,12 +361,12 @@ class GambolPutty():
                 if isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule) and not self.is_master():
                     continue
                 # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
-                if getattr(instance, "start", None):
+                if getattr(instance, "start", None): # and (instance.getInputQueue() or instance.module_type in ['stand_alone', 'input'])
                     instance.start()
                     continue
-                if getattr(instance, "run", None):
-                    instance.run()
-                    continue
+                #if getattr(instance, "run", None):
+                #    instance.run()
+                #    continue
 
     def getAllQueues(self):
         """ Get all configured queues to check for pending events. """
@@ -456,7 +456,6 @@ class GambolPutty():
         #os.kill(os.getpid(), signal.SIGQUIT)
 
     def shutDownModules(self):
-        tornado.ioloop.IOLoop.instance().stop()
         # Shutdown all input modules.
         for module_name, module_info in self.modules.items():
             for instance in module_info['instances']:
@@ -483,6 +482,7 @@ class GambolPutty():
             for instance in module_info['instances']:
                 if instance.module_type != "input":
                     instance.shutDown()
+        tornado.ioloop.IOLoop.instance().stop()
 
 def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')

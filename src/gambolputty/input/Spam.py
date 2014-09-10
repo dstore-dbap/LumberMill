@@ -76,4 +76,5 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
                 time.sleep(self.getConfigurationValue("sleep"))
             counter += 1
             if (counter - max_events_count == 0):
+                time.sleep(2)
                 self.gp.shutDown()

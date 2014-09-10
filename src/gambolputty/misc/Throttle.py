@@ -50,7 +50,7 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
                 self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
                 return
-            self.persistence_backend = backend_info['instance']
+            self.persistence_backend = backend_info['instances'][0]
 
     def setAndGetEventCountByKey(self, key):
         now = time.time()
