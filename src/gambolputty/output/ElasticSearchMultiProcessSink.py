@@ -172,7 +172,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
-            #self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
             #print("%s(%s): Bulk update of %s events took %s." % (self, self.process_id, len(events), time.time() - started))
             return True
         except elasticsearch.exceptions.ConnectionError:
