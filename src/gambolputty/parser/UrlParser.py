@@ -17,7 +17,7 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
     querystring_target_field: Event field to update with url parameters.
     querystring_prefix: Prefix string to prepend to url parameter keys.
 
-    Configuration example:
+    Configuration template:
 
     - UrlParser:
         mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -26,6 +26,8 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
         parse_querystring:        # <default: False; type: boolean; is: optional>
         querystring_target_field: # <default: None; type: None||string; is: optional>
         querystring_prefix:       # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "parser"

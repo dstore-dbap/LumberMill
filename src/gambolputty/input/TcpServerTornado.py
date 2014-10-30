@@ -111,7 +111,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
     chunksize:  If mode is stream, set chunksize in bytes to read from stream.
     max_buffer_size: Max kilobytes to in receiving buffer.
 
-    Configuration example:
+    Configuration template:
 
     - TcpServerTornado:
         interface:                       # <default: ''; type: string; is: optional>
@@ -167,7 +167,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
                 # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
                 pass
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.server.stop()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'

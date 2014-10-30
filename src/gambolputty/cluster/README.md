@@ -1,11 +1,11 @@
-Cluster modules
+cluster modules
 ==========
 #####Cluster
 
 Cluster base module. Handles pack leader discovery and alive checks of pack followers.
 
 IMPORTANT:
-This is just a first alpha implementation. No leader election, no fail over, no sanity checks for conflicting leaders.
+This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
 
 interface:  Ipaddress to listen on.
 port:   Port to listen on.
@@ -16,6 +16,8 @@ pack: Set this node to be either leader or member.
 name: Name of the cluster. Used for auto-discovery in same network.
 shared_secret: pre shared key to en/decrypt cluster messages.
 
+Configuration template:
+
     - Cluster:
         interface:                            # <default: '0.0.0.0'; type: string; is: optional>
         port:                                 # <default: 5252; type: integer; is: optional>
@@ -25,8 +27,7 @@ shared_secret: pre shared key to en/decrypt cluster messages.
         name:                                 # <type: string; is: required>
         secret:                               # <type: string; is: required>
 
-Cluster submodules
-==========
+
 #####ClusterConfiguration
 
 Synchronize configuration from leader to pack members.

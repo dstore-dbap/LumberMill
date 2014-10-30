@@ -18,7 +18,7 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
              synchronize events across multiple instances.
     backend_key_prefix: Prefix for the backend key.
 
-    Configuration example:
+    Configuration template:
 
     - Throttle:
         key:                # <type:string; is: required>
@@ -96,7 +96,7 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
     def prepareRun(self):
         self.gc_throttled_events_info = self.getGcThrottledEventsInfoFunc()
         self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.gc_throttled_events_info)
-        BaseThreadedModule.BaseThreadedModule.prepareRun()
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def handleEvent(self, event):
         throttled_event_key = Utils.mapDynamicValue(self.key, event)

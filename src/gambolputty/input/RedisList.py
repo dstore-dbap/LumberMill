@@ -27,6 +27,8 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
         db:                       # <default: 0; type: integer; is: optional>
         password:                 # <default: None; type: None||string; is: optional>
         timeout:                  # <default: 0; type: integer; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"

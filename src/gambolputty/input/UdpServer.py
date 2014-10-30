@@ -2,9 +2,9 @@
 import logging
 import threading
 import SocketServer
+import socket
 import ssl
 import sys
-import socket
 import Queue
 import Utils
 import BaseModule
@@ -64,33 +64,33 @@ class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
         self.requests.put((request, client_address))
 
 
-class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
-    def __init__(self, tcp_server_instance, *args, **keys):
-        self.tcp_server_instance = tcp_server_instance
+class ThreadedUdpRequestHandler(SocketServer.BaseRequestHandler):
+
+    def __init__(self, udp_server_instance, *args, **keys):
+        self.udp_server_instance = udp_server_instance
         self.logger = logging.getLogger(self.__class__.__name__)
         SocketServer.BaseRequestHandler.__init__(self, *args, **keys)
 
     def handle(self):
         try:
-            host, port = self.request.getpeername()
-            data = True
-            while data:
-                data = self.rfile.readline().strip()
-                if data == "":
-                    continue
-                event = Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded')
-                self.tcp_server_instance.sendEvent(event)
+            data = self.request[0].strip()
+            if data == "":
+                return
+            host = self.client_address[0]
+            port = self.client_address[1]
+            event = Utils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port),caller_class_name='UdpServer')
+            self.udp_server_instance.sendEvent(event)
         except socket.error, e:
            self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
         except socket.timeout, e:
             self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
 
-class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
+class ThreadedUdpServer(ThreadPoolMixIn, SocketServer.UDPServer):
 
     allow_reuse_address = True
 
     def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
-        SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
+        SocketServer.UDPServer.__init__(self, server_address, RequestHandlerClass)
         self.socket.settimeout(timeout)
         self.use_tls = tls
         self.timeout = timeout
@@ -105,23 +105,22 @@ class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
                                           suppress_ragged_eofs=True)
 
     def get_request(self):
-        (socket, addr) = SocketServer.TCPServer.get_request(self)
+        (socket, addr) = SocketServer.UDPServer.get_request(self)
         if self.use_tls:
             socket.settimeout(self.timeout)
             socket.do_handshake()
         return (socket, addr)
 
-class TCPRequestHandlerFactory:
+class UdpRequestHandlerFactory:
     def produce(self, tcp_server_instance):
         def createHandler(*args, **keys):
-            return ThreadedTCPRequestHandler(tcp_server_instance, *args, **keys)
+            return ThreadedUdpRequestHandler(tcp_server_instance, *args, **keys)
         return createHandler
 
 @ModuleDocstringParser
-class TcpServerThreaded(BaseModule.BaseModule):
+class UdpServer(BaseModule.BaseModule):
     """
-    Reads data from tcp socket and sends it to its output queues.
-    This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
+    Reads data from udp socket and sends it to its output queues.
 
     Configuration template:
 
@@ -148,9 +147,9 @@ class TcpServerThreaded(BaseModule.BaseModule):
         if not self.receivers:
             self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
             return
-        handler_factory = TCPRequestHandlerFactory()
+        handler_factory = UdpRequestHandlerFactory()
         try:
-            self.server = ThreadedTCPServer((self.getConfigurationValue("interface"),
+            self.server = ThreadedUdpServer((self.getConfigurationValue("interface"),
                                              self.getConfigurationValue("port")),
                                              handler_factory.produce(self),
                                              timeout=self.getConfigurationValue("timeout"),

@@ -15,7 +15,7 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     it will first try to retrieve the response from redis via the key setting.
     If that fails, it will execute the http request and store the result in redis.
 
-    Configuration example:
+    Configuration template:
 
     - HttpRequest:
         url:                                    # <type: string; is: required>

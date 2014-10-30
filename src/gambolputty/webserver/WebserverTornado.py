@@ -17,7 +17,7 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
     """
     A tornado based web server.
 
-    Configuration example:
+    Configuration template:
 
     - WebserverTornado:
         port: 6060                 # <default: 5100; type: integer; is: optional>

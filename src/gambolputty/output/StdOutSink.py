@@ -14,7 +14,7 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     pretty_print: Use pythons pprint function.
     format: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
 
-    Configuration example:
+    Configuration template:
 
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>

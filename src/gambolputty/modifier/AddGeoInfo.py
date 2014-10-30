@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import socket
 import sys
 import Utils
@@ -32,13 +33,13 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
      - latitude
      - longitude
 
-    Configuration example:
+    Configuration template:
 
     - AddGeoInfo:
         geoip_dat_path:           # <type: string; is: required>
         geo_info_fields:          # <default: None; type: list; is: optional>
         source_fields:            # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
-        target:                   # <default: None; type: None||string; is: optional>
+        target_field:             # <default: None; type: None||string; is: optional>
         receivers:
           - NextModule
     """
@@ -59,7 +60,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
             return False
         self.geo_info_fields = self.getConfigurationValue('geo_info_fields')
-        self.target = self.getConfigurationValue('target')
+        self.target_field = self.getConfigurationValue('target_field')
 
     def handleEvent(self, event):
         for lookup_field_name in self.getConfigurationValue('source_fields'):
@@ -76,11 +77,12 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
                     geo_info_fields = self.getGeoIpInfo(field_value)
                     if geo_info_fields:
                         break
-            if self.target:
-                event[self.target] = geo_info_fields
-            else:
-                event.update(geo_info_fields)
-            break
+            if geo_info_fields:
+                if self.target_field:
+                    event[self.target_field] = geo_info_fields
+                else:
+                    event.update(geo_info_fields)
+                break
         yield event
 
     @Decorators.memoize

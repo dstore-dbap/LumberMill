@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
 import hashlib
@@ -10,9 +11,9 @@ from Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class ModifyFields(BaseThreadedModule.BaseThreadedModule):
     """
-    Simple module to add/delete/change field values.
+    Simple module to insert/delete/change field values.
 
-    Configuration examples:
+    Configuration templates:
 
     # Keep all fields listed in source_fields, discard all others.
     - ModifyFields:
@@ -94,7 +95,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
           - NextModule
 
     # Split source field to array at separator.
-    - module: ModifyFields
+    - ModifyFields:
       action: split                                 # <type: string; is: required>
       separator:                                    # <type: string; is: required>
       source_field:                                 # <type: list; is: required>
@@ -205,6 +206,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         # Call action specific configure method.
         if "configure_%s_action" % self.action in dir(self):
             getattr(self, "configure_%s_action" % self.action)()
+        # Get action specific method
+        try:
+            self.event_handler = getattr(self, "%s" % self.action)
+        except AttributeError:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sModifyFields action called that does not exist: %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.action, etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
 
     def configure_anonymize_action(self):
         self.configure_hash_action()
@@ -236,7 +244,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     def handleEvent(self, event):
         try:
-            event = getattr(self, "%s" % self.action)(event)
+            event = self.event_handler(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sModifyFields action called that does not exist: %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.action, etype, evalue, Utils.AnsiColors.ENDC))
@@ -325,7 +333,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     def string_replace(self, event):
         """
-        Field value matching srting in data dictionary will be replace with new.
+        Field value matching string in data dictionary will be replace with new.
 
         @param event: dictionary
         @return: event: dictionary
@@ -488,13 +496,18 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.source_fields:
-            try:
-                event[field] = int(event[field])
-            except ValueError:
-                event[field] = 0
-            except KeyError:
-                pass
+        try:
+            event.update({field: int(float(event[field])) for field in self.source_fields if field in event})
+        except ValueError:
+            pass
+        #for field in self.source_fields:
+            #event[field] = int(event[field])
+            #try:
+            #    event[field] = int(event[field])
+            #except ValueError:
+            #    event[field] = 0
+            #except KeyError:
+            #    pass
         return event
 
     def cast_to_float(self, event):
@@ -504,13 +517,10 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.source_fields:
-            try:
-                event[field] = float(event[field])
-            except ValueError:
-                event[field] = 0.0
-            except KeyError:
-                pass
+        try:
+            event.update({field: float(event[field]) for field in self.source_fields if field in event})
+        except ValueError:
+            pass
         return event
 
     def cast_to_str(self, event):
@@ -520,13 +530,10 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.source_fields:
-            try:
-                event[field] = str(event[field])
-            except ValueError:
-                event[field] = ""
-            except KeyError:
-                   pass
+        try:
+            event.update({field: str(event[field]) for field in self.source_fields if field in event})
+        except ValueError:
+            pass
         return event
 
     def cast_to_bool(self, event):
@@ -536,13 +543,10 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        for field in self.source_fields:
-            try:
-                event[field] = bool(event[field])
-            except ValueError:
-                event[field] = False
-            except KeyError:
-                pass
+        try:
+            event.update({field: bool(event[field]) for field in self.source_fields if field in event})
+        except ValueError:
+            pass
         return event
 
     def anonymize(self, data):

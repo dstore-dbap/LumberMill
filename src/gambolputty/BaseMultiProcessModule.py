@@ -19,16 +19,19 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
     queue_size: How many events may be waiting in queue.
     queue_buffer_size: How many events will be buffered before sending them to queue.
 
-    Configuration example:
+    Configuration template:
 
     - module: SomeModuleName
-      id:                               # <default: ""; type: string; is: optional>
-      filter:                           # <default: None; type: None||string; is: optional>
-      queue_size:                       # <default: 50; type: integer; is: optional>
-      queue_buffer_size:                # <default: 250; type: integer; is: optional>
-      receivers:
-       - ModuleName
-       - ModuleAlias
+        id:                               # <default: ""; type: string; is: optional>
+        filter:                           # <default: None; type: None||string; is: optional>
+        add_fields:                       # <default: {}; type: dict; is: optional>
+        delete_fields:                    # <default: []; type: list; is: optional>
+        event_type:                       # <default: None; type: None||string; is: optional>
+        queue_size:                       # <default: 50; type: integer; is: optional>
+        queue_buffer_size:                # <default: 250; type: integer; is: optional>
+        receivers:
+          - ModuleName
+          - ModuleAlias
     """
 
     def __init__(self, gp):

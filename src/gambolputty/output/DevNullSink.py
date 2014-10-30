@@ -7,7 +7,7 @@ class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """
     Just discard messeages send to this module.
 
-    Configuration example:
+    Configuration template:
 
     - DevNullSink
     """

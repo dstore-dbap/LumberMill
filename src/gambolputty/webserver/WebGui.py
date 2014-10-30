@@ -15,7 +15,7 @@ class WebGui(BaseModule.BaseModule):
 
     Module dependencies:    WebserverTornado
 
-    Configuration example:
+    Configuration template:
 
     tornado_webserver: Name of the webserver module.
     document_root: Path to look for templates and static files.

@@ -10,7 +10,7 @@ class Tarpit(BaseThreadedModule.BaseThreadedModule):
 
     Useful only for testing purposes of threading problems and concurrent access to event data.
 
-    Configuration example:
+    Configuration template:
 
     - Tarpit:
         delay:          # <default: 10; type: integer; is: optional>

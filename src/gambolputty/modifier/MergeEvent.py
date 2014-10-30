@@ -29,13 +29,14 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
     flush_interval_in_secs: If interval is reached, buffer will be flushed.
     pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
 
-    Configuration example:
+    Configuration template:
 
     - MergeEvent:
         buffer_key:                 # <default: "%(gambolputty.received_from)s"; type: string; is: optional>
         buffer_size:                # <default: 50; type: integer; is: optional>
         flush_interval_in_secs:     # <default: None; type: None||integer; is: required if pattern is None else optional>
         pattern:                    # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+        match_field:                # <default: "data"; type: string; is: optional>
         receivers:
           - NextModule
     """
@@ -54,13 +55,18 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('pattern'), etype, evalue, Utils.AnsiColors.ENDC))
                 self.gp.shutDown()
+        self.match_field = self.getConfigurationValue('match_field')
         self.buffer_size = self.getConfigurationValue('buffer_size')
         self.flush_interval_in_secs = self.getConfigurationValue('flush_interval_in_secs')
+
+    def prepareRun(self):
+        # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffers = collections.defaultdict(lambda: Utils.Buffer(self.buffer_size, self.sendMergedEvent, self.flush_interval_in_secs))
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def handleEvent(self, event):
         key = self.getConfigurationValue("buffer_key", event)
-        if self.pattern and self.pattern.search(event['data']):
+        if self.pattern and self.pattern.search(event[self.match_field]):
             self.buffers[key].flush()
         self.buffers[key].append(event)
         yield None

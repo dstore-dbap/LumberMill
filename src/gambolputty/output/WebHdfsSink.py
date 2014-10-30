@@ -27,7 +27,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
     compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
-    Configuration example:
+    Configuration template:
 
     - WebHdfsSink:
         server:                               # <default: 'localhost:14000'; type: string; is: optional>

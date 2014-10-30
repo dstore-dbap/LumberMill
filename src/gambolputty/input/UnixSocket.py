@@ -45,7 +45,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from an unix socket and sends it to its output queues.
 
-    Configuration example:
+    Configuration template:
 
     - UnixSocket:
         path_to_socket:         # <type: string; is: required>

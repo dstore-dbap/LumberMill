@@ -27,7 +27,7 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
      'interval': 10,
      'total_count': 20}
 
-    Configuration example:
+    Configuration template:
 
     - Statistics:
         interval:                      # <default: 10; type: integer; is: optional>

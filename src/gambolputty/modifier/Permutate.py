@@ -15,7 +15,7 @@ class Permutate(BaseThreadedModule.BaseThreadedModule):
     To add some context data to each emitted event 'context_data_field' can specify a field
     containing a dictionary with the values of 'source_field' as keys.
 
-    Configuration example:
+    Configuration template:
 
     - Permutate:
         source_field:                   # <type: string; is: required>

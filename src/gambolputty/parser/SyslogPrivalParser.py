@@ -50,7 +50,7 @@ class SyslogPrivalParser(BaseThreadedModule.BaseThreadedModule):
       6       Informational: informational messages
       7       Debug: debug-level messages
 
-    Configuration example:
+    Configuration template:
 
     - SyslogPrivalParser:
         source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
@@ -58,7 +58,7 @@ class SyslogPrivalParser(BaseThreadedModule.BaseThreadedModule):
         facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
         severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"

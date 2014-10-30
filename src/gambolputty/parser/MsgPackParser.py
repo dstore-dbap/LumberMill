@@ -16,7 +16,7 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
     Encode:
      Encode selected fields or all to msgpack format.
 
-    Configuration example:
+    Configuration template:
 
     - MsgPackParser:
         mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -24,7 +24,7 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"
@@ -59,7 +59,11 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
             if self.target_field:
                 event.update({self.target_field: decoded_data})
             else:
-                event.update(decoded_data)
+                try:
+                    event.update(decoded_data)
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warning("%sCould not update event with msgpack data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, decoded_data, etype, evalue, Utils.AnsiColors.ENDC))
         yield event
 
     def encodeEvent(self, event):

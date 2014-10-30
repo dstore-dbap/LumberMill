@@ -19,7 +19,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names
     format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
 
-    Configuration example:
+    Configuration template:
 
     - SyslogSink:
         format:               # <default: None; type: None||string; is: optional>

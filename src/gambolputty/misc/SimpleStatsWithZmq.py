@@ -13,7 +13,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
     Use this module if you just need some simple statistics on how many events are passing through gambolputty.
     Per default, statistics will just be send to stdout.
 
-    Configuration example:
+    Configuration template:
 
     - SimpleStats:
         interval:                      # <default: 10; type: integer; is: optional>

@@ -20,7 +20,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
     compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
 
-    Configuration example:
+    Configuration template:
 
     - FileSink:
         file_name:                            # <type: string; is: required>

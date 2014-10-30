@@ -67,7 +67,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
     name: Name of the cluster. Used for auto-discovery in same network.
     shared_secret: pre shared key to en/decrypt cluster messages.
 
-    Configuration example:
+    Configuration template:
 
     - Cluster:
         interface:                            # <default: '0.0.0.0'; type: string; is: optional>
@@ -271,9 +271,9 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             # Stop timed function to remove pending host from pack members.
             Utils.TimedFunctionManager.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         # Call parent configure method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
         # Try to close socket. Failure to do so should be no problem.
         try:
             self.socket.close()

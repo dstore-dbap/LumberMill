@@ -18,7 +18,7 @@ class ZmqTornado(BaseModule.BaseModule):
     mode: Whether to run a server or client.
     separator: When using the sub pattern, messages can have a topic. Set separator to split message from topic.
 
-    Configuration example:
+    Configuration template:
 
     - Zmq:
         servers:                    # <default: ['localhost:5570']; type: list; is: optional>
@@ -26,6 +26,8 @@ class ZmqTornado(BaseModule.BaseModule):
         mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
         topic:                      # <default: ''; type: string; is: optional>
         separator:                  # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"
@@ -70,7 +72,7 @@ class ZmqTornado(BaseModule.BaseModule):
         event = Utils.getDefaultEventDict({"data": data}, caller_class_name="ZmqTornado")
         self.sendEvent(event)
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.client.close()
             self.zmq_context.term()

@@ -18,7 +18,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
     This module supports the storage of the facet info in an redis db. If redis_store is set,
     it will first try to retrieve the facet info from redis via the key setting.
 
-    Configuration example:
+    Configuration template:
 
     - Facet:
         source_field:                           # <type:string; is: required>

@@ -51,6 +51,8 @@ class FileQueueSink(BaseThreadedModule.BaseThreadedModule):
     store_interval_in_secs: sending data to es in x seconds intervals.
     batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 
+    Configuration template:
+
     - FileQueueSink:
         path:                           # <type: string; is: required>
         store_interval_in_secs:         # <default: 10; type: integer; is: optional>

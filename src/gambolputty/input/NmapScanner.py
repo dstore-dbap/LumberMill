@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 import Utils
 import BaseModule
 import nmap
@@ -10,7 +11,7 @@ class NmapScanner(BaseModule.BaseModule):
     """
     Scan network with nmap and emit result as new event.
 
-    Configuration example:
+    Configuration template:
 
     - NmapScanner:
         network:                    # <type: string; is: required>
@@ -39,9 +40,19 @@ class NmapScanner(BaseModule.BaseModule):
         @Decorators.setInterval(self.getConfigurationValue('interval'), call_on_init=True)
         def scanNetwork():
             # Get all alive hosts
-            scan_results = self.scanner.scan('%s%s' % (self.network,self.netmask), arguments="-sn")
+            try:
+                scan_results = self.scanner.scan('%s%s' % (self.network,self.netmask), arguments="-sn")
+            except nmap.PortScannerError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("%sScanning failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+                return
             for host, scan_result in scan_results['scan'].items():
-                host_scan_result = self.scanner.scan('%s/32' % (host), arguments=self.arguments)
+                try:
+                    host_scan_result = self.scanner.scan('%s/32' % (host), arguments=self.arguments)
+                except nmap.PortScannerError:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.warning("%sScanning failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+                    return
                 if host in host_scan_result['scan']:
                     self.handleEvent(host, host_scan_result['scan'][host])
         return scanNetwork

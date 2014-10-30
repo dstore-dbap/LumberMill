@@ -23,7 +23,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
     batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
 
-    Configuration example:
+    Configuration template:
 
     - ZmqSink:
         server:                     # <default: 'localhost:5570'; type: string; is: optional>

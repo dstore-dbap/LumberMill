@@ -14,7 +14,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
     It will parse the csv and create or replace fields in the internal data dictionary with
     the corresponding csv fields.
 
-    Configuration example:
+    Configuration template:
 
     - CsvParser:
         source_field:                           # <default: 'data'; type: string; is: optional>
@@ -24,7 +24,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         delimiter:                              # <default: '|'; type: char; is: optional>
         fieldnames:                             # <default: False; type: [list]; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"

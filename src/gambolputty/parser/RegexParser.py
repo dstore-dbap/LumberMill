@@ -25,7 +25,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
     break_on_match: Stop applying regex patterns after first match.
     hot_rules_first: Apply regex patterns based on their hit count.
 
-    Configuration example:
+    Configuration template:
 
     - RegexParser:
         source_field:                           # <default: 'data'; type: string; is: optional>

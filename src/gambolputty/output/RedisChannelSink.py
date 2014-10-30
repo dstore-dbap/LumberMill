@@ -18,7 +18,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
     password: Redis password.
     format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set, the whole event dict is send.
 
-    Configuration example:
+    Configuration template:
 
     - RedisChannelSink:
         channel:                    # <type: string; is: required>

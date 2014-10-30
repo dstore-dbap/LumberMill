@@ -33,7 +33,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
         backend:            # <default: 'RedisStore'; type: string; is: optional>
         gc_interval:        # <default: 5; type: integer; is: optional>
         key_prefix:         # <default: "gambolputty:eventbuffer"; type: string; is: optional>
-    """
+       """
 
     module_type = "stand_alone"
     """Set module type"""

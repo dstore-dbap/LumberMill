@@ -15,7 +15,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
     it will first try to retrieve the result from redis via the key setting.
     If that fails, it will execute the xpath query and store the result in redis.
 
-    Configuration example:
+    Configuration template:
 
     - XPathParser:
         source_field:                          # <type: string; is: required>
@@ -24,6 +24,8 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
         redis_store:                           # <default: None; type: None||string; is: optional>
         redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
         redis_ttl:                             # <default: 60; type: integer; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "parser"

@@ -20,16 +20,19 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned...
 
-    Configuration example:
+    Configuration template:
 
     - module: SomeModuleName
-      id:                               # <default: ""; type: string; is: optional>
-      filter:                           # <default: None; type: None||string; is: optional>
-      pool_size:                        # <default: 2; type: integer; is: optional>
-      queue_size:                       # <default: 20; type: integer; is: optional>
-      receivers:
-       - ModuleName
-       - ModuleAlias
+       id:                               # <default: ""; type: string; is: optional>
+       filter:                           # <default: None; type: None||string; is: optional>
+       add_fields:                       # <default: {}; type: dict; is: optional>
+       delete_fields:                    # <default: []; type: list; is: optional>
+       event_type:                       # <default: None; type: None||string; is: optional>
+       pool_size:                        # <default: 2; type: integer; is: optional>
+       queue_size:                       # <default: 20; type: integer; is: optional>
+       receivers:
+         - ModuleName
+         - ModuleAlias
     """
 
     def __init__(self, gp):

@@ -26,6 +26,8 @@ class RedisChannel(BaseModule.BaseModule):
         port:                       # <default: 6379; type: integer; is: optional>
         db:                         # <default: 0; type: integer; is: optional>
         password:                   # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"

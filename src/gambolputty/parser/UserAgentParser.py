@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import httpagentparser
+from uasparser2 import UASParser
 import types
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
@@ -29,7 +29,7 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
         source_fields:               # <type: string||list; is: required>
         target_field:                # <default: 'user_agent_info'; type:string; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"
@@ -43,10 +43,11 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
         if isinstance(self.source_fields, types.StringTypes):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
+        self.parser = UASParser(cache_dir='/tmp/', cache_ttl=3600*24*7, mem_cache_size=1000)
 
     def handleEvent(self, event):
         for source_field in self.source_fields:
             if source_field not in event:
                 continue
-            event[self.target_field] = httpagentparser.detect(event[source_field])
+            event[self.target_field] = self.parser.parse(event[source_field])
         yield event

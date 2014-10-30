@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import datetime
 import Utils
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
@@ -10,7 +9,7 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
     """
     Add a field with the current datetime.
 
-    Configuration example:
+    Configuration template:
 
     - AddDateTime:
         target_field:        # <default: '@timestamp'; type: string; is: optional>
@@ -26,7 +25,8 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
+        self.target_field = self.getConfigurationValue('target_field')
 
     def handleEvent(self, event):
-        event[self.getConfigurationValue('target_field', event)] = Utils.mapDynamicValue(datetime.datetime.utcnow().strftime(self.format), event)
+        event[self.target_field] = Utils.mapDynamicValue(self.format, event, use_strftime=True)
         yield event

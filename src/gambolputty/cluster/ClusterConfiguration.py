@@ -19,7 +19,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
     ignore_modules: List of module names to exclude from sync process.
     interval: Time in seconds between checks if master config did change.
 
-    Configuration example:
+    Configuration template:
 
     - ClusterConfiguration:
         cluster:                                # <default: 'Cluster'; type: string; is: optional>

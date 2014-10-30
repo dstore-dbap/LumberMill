@@ -58,7 +58,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
                     If decoding and target is not set, the event dict itself will be updated with decoded fields.
     keep_original:  Switch to keep or drop the original fields used in de/encoding from the event dict.
 
-    Configuration example:
+    Configuration template:
 
     - JsonParser:
         mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -66,7 +66,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"

@@ -12,7 +12,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from stdin and sends it to its output queues.
 
-    Configuration example:
+    Configuration template:
 
     - StdInHandler:
         multiline:                     # <default: False; type: boolean; is: optional>

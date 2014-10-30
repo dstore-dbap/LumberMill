@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-import redis
 import cPickle
 import BaseThreadedModule
 from Decorators import ModuleDocstringParser
@@ -10,20 +9,9 @@ import Utils
 @ModuleDocstringParser
 class RedisStore(BaseThreadedModule.BaseThreadedModule):
     """
-    A simple wrapper around the redis python module.
+    A simple wrapper around the python simplekv module.
 
-    It can be used to store results of modules in a redis key/value store.
-
-        server: Redis server to connect to.
-        cluster: Dictionary of redis masters as keys and pack_followers as values, e.g.: {'172.16.0.1:6379': '172.16.0.2:6379'}
-        port: Port redis server is listening on.
-        db: Redis db.
-        password: Redis password.
-        socket_timeout: Socket timeout in seconds.
-        charset: Charset to use.
-        errors:
-        decode_responses: specifies whether return values from Redis commands get decoded automatically using the client's charset value.
-        unix_socket_path: Path to unix socket file.
+    It can be used to store results of modules in all simplekv supported backends.
 
     When set, the following options cause RedisStore to use a buffer for setting values.
     Multiple values are set via the pipe command, which speeds up storage. Still this comes at a price.
@@ -35,9 +23,10 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - RedisStore:
-        server:                                  # <default: 'localhost'; type: string; is: optional>
-        cluster:                                 # <default: {}; type: dictionary; is: optional>
+    - KeyValueStore:
+        backend:                                 # <default: 'DictStore'; type: string; is: optional>
+        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] else optional>
+        cluster:                                 # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
         port:                                    # <default: 6379; type: integer; is: optional>
         db:                                      # <default: 0; type: integer; is: optional>
         password:                                # <default: None; type: None||string; is: optional>
@@ -54,23 +43,29 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
 
     def configure(self, configuration):
-         # Call parent configure method
+        # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        if len(self.getConfigurationValue('cluster')) == 0:
-            redis_store = self.getConfigurationValue('server')
-            self.client = self.getRedisClient()
-        else:
-            redis_store = self.getConfigurationValue('cluster')
-            self.client = self.getClusterRedisClient()
-        try:
-            self.client.ping()
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,redis_store,etype, evalue, Utils.AnsiColors.ENDC))
-            self.gp.shutDown()
+        backend = self.getConfigurationValue('backend')
+        self.backend_client = None
+        if backend == 'DictStore':
+            import simplekv.memory
+            self.backend_client = None
+            self.kv_store = simplekv.memory.DictStore()
+        elif backend == 'RedisStore':
+            import simplekv.memory.redisstore
+            self.backend_client = self.getRedisClient()
+            self.kv_store = simplekv.memory.redisstore.RedisStore(self.backend_client)
+        elif backend == 'MemcacheStore':
+            import simplekv.memory.memcachestore
+            self.backend_client = self.getMemcacheClient()
+            self.kv_store = simplekv.memory.memcachestore.MemcacheStore(self.backend_client)
+
         self.set_buffer = None
         if self.getConfigurationValue('store_interval_in_secs') or self.getConfigurationValue('batch_size'):
-            self.set_buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+            if backend == 'RedisStore':
+                self.set_buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.setRedisBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+            else:
+                 self.set_buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
             self._set = self.set
             self.set = self.setBuffered
             self._get = self.get
@@ -81,6 +76,26 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             self.pop = self.popBuffered
 
     def getRedisClient(self):
+        if len(self.getConfigurationValue('cluster')) == 0:
+            redis_store = self.getConfigurationValue('server')
+            client = self.getSimpleRedisClient()
+        else:
+            redis_store = self.getConfigurationValue('cluster')
+            client = self.getClusterRedisClient()
+        try:
+            client.ping()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not connect to redis store at %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, redis_store, etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
+        return client
+
+    def getMemcacheClient(self):
+        client = None
+        # TODO: implement memcache client
+        return client
+
+    def getSimpleRedisClient(self):
         try:
             client = redis.StrictRedis(host=self.getConfigurationValue('server'),
                                        port=self.getConfigurationValue('port'),
@@ -95,10 +110,11 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue['server'], etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
 
     def getClusterRedisClient(self):
         import rediscluster
-        # TODO: Implement a locking mechnism for the cluster client.
+        # TODO: Implement a locking mechanism for the cluster client.
         # Some modules like Facet depend on this.
         cluster = {'nodes': {}, 'master_of': {}}
         counter = 1
@@ -116,8 +132,12 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
                 node_name_or_ip, node_port = self._parseRedisServerAddress(slave_node)
                 cluster['nodes'].update({slave_node_key: {'host':node_name_or_ip, 'port': node_port}})
                 #cluster['master_of'].update({master_node_key: slave_node_key})
-        client = rediscluster.StrictRedisCluster(cluster=cluster,
-                                                 db=self.getConfigurationValue('db'))
+        try:
+            client = rediscluster.StrictRedisCluster(cluster=cluster,db=self.getConfigurationValue('db'))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue['cluster'], etype, evalue, Utils.AnsiColors.ENDC))
+            self.gp.shutDown()
         return client
 
     def _parseRedisServerAddress(self, node_address):
@@ -129,10 +149,15 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
         return (node_name_or_ip, node_port)
 
     def getClient(self):
-        return self.client
+        return self.backend_client
 
     def getLock(self, name, timeout=None, sleep=0.1):
-        return self.client.lock(name, timeout, sleep)
+        lock = False
+        try:
+            lock = self.backend_client.lock(name, timeout, sleep)
+        except:
+            pass
+        return lock
 
     def set(self, key, value, ttl=0, pickle=True):
         if pickle is True:
@@ -143,9 +168,9 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
                 self.logger.error("%sCould not store %s:%s in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
                 raise
         if ttl:
-            self.client.setex(key, ttl, value)
+            self.kv_store.put(key, value, ttl_secs=ttl)
         else:
-            self.client.set(key, value)
+            self.kv_store.put(key, value)
 
     def setBuffered(self, key, value, ttl=0, pickle=True):
         if pickle is True:
@@ -161,7 +186,14 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             self.set_buffer.append({'key':key, 'value': value})
 
     def setBufferedCallback(self, values):
-        pipe = self.client.pipeline()
+        for value in values:
+            if 'ttl' in value:
+                self._set(value['key'], value['value'], value['ttl'])
+            else:
+                self._set(value['key'], value['value'])
+
+    def setRedisBufferedCallback(self, values):
+        pipe = self.backend_client.pipeline()
         for value in values:
             if 'ttl' in value:
                 pipe.setex(value['key'], value['ttl'], value['value'])
@@ -174,9 +206,8 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
 
-
     def get(self, key, unpickle=True):
-        value = self.client.get(key)
+        value = self.kv_store.get(key)
         if unpickle and value:
             try:
                 value = cPickle.loads(value)
@@ -194,7 +225,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             return self._get(key, unpickle)
 
     def delete(self, key):
-        self.client.delete(key)
+        self.kv_store.delete(key)
 
     def deleteBuffered(self, key):
         try:

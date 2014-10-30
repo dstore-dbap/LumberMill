@@ -16,7 +16,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     mode: Whether to run a server or client.
     hwm: Highwatermark for receiving socket.
 
-    Configuration example:
+    Configuration template:
 
     - Zmq:
         server:                     # <default: 'localhost:5570'; type: string; is: optional>
@@ -24,6 +24,8 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
         mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
         topic:                      # <default: ''; type: string; is: optional>
         hwm:                        # <default: None; type: None||integer; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "input"
@@ -83,11 +85,11 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             event['zmq_topic'] = self.topic
         yield Utils.getDefaultEventDict(event, caller_class_name=self.__class__.__name__)
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.client.close()
             self.zmq_context.term()
         except AttributeError:
             pass
         # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self, silent)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

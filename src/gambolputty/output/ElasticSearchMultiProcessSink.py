@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import random
 import sys
 import time
 import elasticsearch
@@ -54,7 +53,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
 
-    Configuration example:
+    Configuration template:
 
     - ElasticSearchMultiProcessSink:
         format:                                   # <default: None; type: None||string; is: optional>

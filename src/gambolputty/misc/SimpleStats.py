@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
 import StatisticCollector as StatisticCollector
 import Decorators
 import os
-import pprint
 
 
 @Decorators.ModuleDocstringParser
@@ -14,7 +14,11 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
     Use this module if you just need some simple statistics on how many events are passing through gambolputty.
     Per default, statistics will just be send to stdout.
 
-    Configuration example:
+    As a side note: This module inits MultiProcessStatisticCollector. As it uses multiprocessing.Manager().dict()
+    this will start another process. So if you use SimpleStats, you will see workers + 1 processes in the process
+    list.
+
+    Configuration template:
 
     - SimpleStats:
         interval:                      # <default: 10; type: integer; is: optional>

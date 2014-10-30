@@ -14,7 +14,7 @@ class LineParser(BaseThreadedModule.BaseThreadedModule):
 
     source_fields:  Input fields for decode.
 
-    Configuration example:
+    Configuration template:
 
     - LineParser:
         source_fields:                        # <default: 'data'; type: string||list; is: optional>
@@ -22,7 +22,7 @@ class LineParser(BaseThreadedModule.BaseThreadedModule):
         target_field:                         # <default: 'data'; type:string; is: optional>
         keep_original:                        # <default: False; type: boolean; is: optional>
         receivers:
-          - NextHandler
+          - NextModule
     """
 
     module_type = "parser"

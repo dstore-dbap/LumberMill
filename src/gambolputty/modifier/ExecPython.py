@@ -25,12 +25,14 @@ class ExecPython(BaseThreadedModule.BaseThreadedModule):
     code: Code to execute.
     debug: Set to True to output the string that will be executed.
 
-    Configuration example:
+    Configuration template:
 
     - ExecPython:
         imports:              # <default: []; type: list; is: optional>
         source:               # <type: string; is: required>
         debug:                # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextModule
     """
 
     module_type = "misc"

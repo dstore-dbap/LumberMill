@@ -15,6 +15,7 @@ import yaml
 import tornado.ioloop
 from collections import defaultdict
 
+
 # Conditional imports for python2/3
 try:
     import Queue
@@ -364,9 +365,9 @@ class GambolPutty():
                 if getattr(instance, "start", None): # and (instance.getInputQueue() or instance.module_type in ['stand_alone', 'input'])
                     instance.start()
                     continue
-                #if getattr(instance, "run", None):
-                #    instance.run()
-                #    continue
+                if getattr(instance, "run", None):
+                    instance.run()
+                    continue
 
     def getAllQueues(self):
         """ Get all configured queues to check for pending events. """

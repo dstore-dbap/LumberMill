@@ -14,17 +14,20 @@ class BaseModule:
     Base class for all gambolputty modules.
 
     If you happen to override one of the methods defined here, be sure to know what you
-    are doing ;) You have been warned ;)
+    are doing. You have been warned ;)
 
-    Configuration example:
+    Configuration template:
 
     - module: SomeModuleName
-      id:                               # <default: ""; type: string; is: optional>
-      filter:                           # <default: None; type: None||string; is: optional>
-      ...
-      receivers:
-       - ModuleName
-       - ModuleAlias
+        id:                               # <default: ""; type: string; is: optional>
+        filter:                           # <default: None; type: None||string; is: optional>
+        add_fields:                       # <default: {}; type: dict; is: optional>
+        delete_fields:                    # <default: []; type: list; is: optional>
+        event_type:                         # <default: None; type: None||string; is: optional>
+        ...
+        receivers:
+          - ModuleName
+          - ModuleAlias
     """
 
     module_type = "generic"
@@ -53,28 +56,38 @@ class BaseModule:
         if configuration:
             self.configuration_data.update(configuration)
         # Test for dynamic value patterns
-        dynamic_var_regex = re.compile('%\(.*?\)[sdf\.\d+]+')
+        self.dynamic_var_regex = re.compile('\$\((.*?)\)[sdf\.\d+]*')
         for key, value in self.configuration_data.items():
             # Make sure that configuration values only get parsed once.
             if isinstance(value, dict) and 'contains_placeholder' in value:
                 continue
             contains_placeholder = False
             if isinstance(value, list):
-                for _value in value:
+                for i, _value in enumerate(value):
                     try:
-                        if dynamic_var_regex.search(_value):
+                        if self.dynamic_var_regex.search(_value):
+                            value[i] = self.dynamic_var_regex.sub(r"%(\1)s", _value)
                             contains_placeholder = True
                     except:
                         pass
+                if contains_placeholder:
+                    self.configuration_data[key] = value
             elif isinstance(value, dict):
                 for _key, _value in value.items():
                     try:
-                        if dynamic_var_regex.search(_key) or dynamic_var_regex.search(_value):
+                        if self.dynamic_var_regex.search(_key) or self.dynamic_var_regex.search(_value):
+                            new_key = self.dynamic_var_regex.sub(r"%(\1)s", _key)
+                            new_value = self.dynamic_var_regex.sub(r"%(\1)s", _value)
+                            value[new_key] = new_value
+                            del value[_key]
                             contains_placeholder = True
                     except:
                         pass
+                if contains_placeholder:
+                    self.configuration_data[key] = value
             elif isinstance(value, basestring):
-                if dynamic_var_regex.search(value):
+                if self.dynamic_var_regex.search(value):
+                    value = self.dynamic_var_regex.sub(r"%(\1)s", value)
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
         # Add input filter.
@@ -88,6 +101,10 @@ class BaseModule:
                 continue
             receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
             self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
+        # Set default actions.
+        self.delete_fields = self.getConfigurationValue('delete_fields')
+        self.add_fields = self.getConfigurationValue('add_fields')
+        self.event_type = self.getConfigurationValue('event_type')
         self.checkConfiguration()
 
     def checkConfiguration(self):
@@ -131,7 +148,7 @@ class BaseModule:
 
     def setInputFilter(self, filter_string):
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + self.dynamic_var_regex.sub(r"event.get('\1', False)", filter_string_tmp)
         try:
             filter = eval(filter_string_tmp)
         except:
@@ -144,7 +161,7 @@ class BaseModule:
 
     def addOutputFilter(self, receiver_name, filter_string):
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + re.sub('%\((.*?)\)', r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + self.dynamic_var_regex.sub(r"event.get('\1', False)", filter_string_tmp)
         try:
             filter = eval(filter_string_tmp)
         except:
@@ -178,12 +195,26 @@ class BaseModule:
         # after the fork was executed.
         for receiver_name, receiver in self.receivers.items():
             if hasattr(receiver, 'put'):
-                print("Adding buffered queue for %s" % receiver_name)
+                #print("Adding buffered queue for %s" % receiver_name)
                 self.receivers[receiver_name] = Utils.BufferedQueue(receiver, self.gp.queue_buffer_size)
 
-    def sendEvent(self, event):
+    def commonActions(self, event):
+        #if not self.input_filter or self.input_filter_matched:
+        # Delete fields if configured.
+        for field in self.delete_fields:
+            event.pop(field, None)
+        if self.add_fields:
+            for field_name, field_value in Utils.mapDynamicValue(self.add_fields, event).items():
+                event[field_name] = field_value
+        if self.event_type:
+            event['gambolputty']['event_type'] = Utils.mapDynamicValue(self.event_type, event)
+        return event
+
+    def sendEvent(self, event, apply_common_actions=True):
         if not self.receivers:
             return
+        if(apply_common_actions):
+            event = self.commonActions(event)
         if len(self.receivers) > 1:
             event_clone = event.copy()
         copy_event = False
@@ -195,10 +226,12 @@ class BaseModule:
                 receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
 
-    def sendEventFiltered(self, event):
+    def sendEventFiltered(self, event, apply_common_actions=True):
         receivers = self.getFilteredReceivers(event)
         if not receivers:
             return
+        if(apply_common_actions):
+            event = self.commonActions(event)
         if len(receivers) > 1:
             event_clone = event.copy()
         copy_event = False
@@ -222,7 +255,7 @@ class BaseModule:
                 if event:
                     self.sendEvent(event)
         else:
-            self.sendEvent(event)
+            self.sendEvent(event,apply_common_actions=False)
 
     @abc.abstractmethod
     def handleEvent(self, event):

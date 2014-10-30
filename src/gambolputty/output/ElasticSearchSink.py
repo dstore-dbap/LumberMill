@@ -53,7 +53,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
 
-    Configuration example:
+    Configuration template:
 
     - ElasticSearchSink:
         format:                                   # <default: None; type: None||string; is: optional>
@@ -76,7 +76,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
 
     def configure(self, configuration):
-        # Call parent configure method
+        # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
@@ -107,8 +107,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                 self.logger.debug("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
-                                                 sniff_on_start=True,
-                                                 sniff_on_connection_fail=True,
+                                                 sniff_on_start=False,
+                                                 sniff_on_connection_fail=False,
                                                  sniff_timeout=10,
                                                  maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
@@ -144,7 +144,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
 
     def dataToElasticSearchJson(self, index_name, events):
         """
-        Format data for elasticsearch bulk update
+        Format data for elasticsearch bulk update.
         """
         json_data = []
         for event in events:
@@ -191,7 +191,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 self.es = self.connect()
 
-    def shutDown(self, silent=False):
+    def shutDown(self):
         try:
             self.buffer.flush()
         except:
