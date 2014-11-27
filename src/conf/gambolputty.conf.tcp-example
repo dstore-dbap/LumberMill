@@ -4,7 +4,7 @@
 #      - RegexParser
 
 # A simple TCP Server.
-- TcpServerTornado:
+- TcpServerSingleWorker:
     port: 5151
 
 # Parse the messege using named regex patterns.
@@ -17,10 +17,10 @@
       - Statistics
       # Only messages that matched a regex will be send to this handler
       - AddDateTime:
-          filter: %(event_type) != 'unknown'
+          filter: $(event_type) != 'unknown'
       # Print out messages that did not match
       - StdOutSink:
-          filter: %(event_type) == 'unknown'
+          filter: $(event_type) == 'unknown'
 
 # Add a timestamp field.
 - AddDateTime:
@@ -33,10 +33,10 @@
     source_fields: [x_forwarded_for, remote_ip]
     geo_info_fields: ['latitude', 'longitude', 'country_code']
 
-- ElasticSearchMultiProcessSink:
+- ElasticSearchMultipleWorker:
     pool_size: 2
     nodes: ["localhost:9200"]
-    doc_id: '%(timestamp)s%(received_from)s'
+    doc_id: $(timestamp)$(received_from)
     store_interval_in_secs: 2
 
 - StdOutSink:
