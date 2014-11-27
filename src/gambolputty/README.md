@@ -17,6 +17,9 @@ Configuration template:
     - SomeModuleName:
         id:                                       # <default: ""; type: string; is: optional>
         filter:                                   # <default: None; type: None||string; is: optional>
+        add_fields:                               # <default: {}; type: dict; is: optional>
+        delete_fields:                            # <default: []; type: list; is: optional>
+        event_type:                               # <default: None; type: None||string; is: optional>
         ...
         receivers:
          - ModuleName:
