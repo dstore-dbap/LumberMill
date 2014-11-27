@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """
     Just discard messeages send to this module.

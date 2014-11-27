@@ -4,10 +4,10 @@ from tornado import autoreload
 import RedisAsyncClient
 import BaseModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class RedisChannel(BaseModule.BaseModule):
     """
     Subscribes to a redis channels and passes incoming events to receivers.
@@ -45,11 +45,11 @@ class RedisChannel(BaseModule.BaseModule):
                 self.client.fetch(('select', self.getConfigurationValue('password')), self.checkReply)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
 
     def run(self):
         if not self.receivers:
-            self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
             return
         if not self.client:
             return
@@ -57,7 +57,7 @@ class RedisChannel(BaseModule.BaseModule):
             self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not fetch event from redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not fetch event from redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
         autoreload.add_reload_hook(self.shutDown)
         #ioloop = IOLoop.instance()
         #ioloop.make_current()
@@ -69,7 +69,7 @@ class RedisChannel(BaseModule.BaseModule):
 
     def checkReply(self, answer):
         if answer != "OK":
-            self.logger.error("%sCould not connect to server %s. Server said: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), answer, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to server %s. Server said: %s." % (self.getConfigurationValue('server'), answer))
             self.gp.shutDown()
 
     def handleEvent(self, event):

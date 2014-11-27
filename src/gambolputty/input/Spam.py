@@ -3,10 +3,10 @@ import Utils
 import BaseThreadedModule
 import pprint
 import time
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class Spam(BaseThreadedModule.BaseThreadedModule):
     """
     Emits events as fast as possible.

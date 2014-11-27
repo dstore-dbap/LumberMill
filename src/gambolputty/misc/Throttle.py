@@ -5,6 +5,7 @@ import time
 import Decorators
 import Utils
 
+
 @Decorators.ModuleDocstringParser
 class Throttle(BaseThreadedModule.BaseThreadedModule):
     """
@@ -47,7 +48,7 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
         if self.getConfigurationValue('backend'):
             backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
             if not backend_info:
-                self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find %s backend for persistant storage." % (self.getConfigurationValue('backend')))
                 self.gp.shutDown()
                 return
             self.persistence_backend = backend_info['instances'][0]

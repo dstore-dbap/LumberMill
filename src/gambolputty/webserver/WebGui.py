@@ -35,7 +35,7 @@ class WebGui(BaseModule.BaseModule):
         # Get tornado webserver module instance.
         mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('tornado_webserver'))
         if not mod_info:
-            self.logger.error("%sCould not start web gui module. Required webserver module %s not found. Please check your configuration.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('tornado_webserver'), Utils.AnsiColors.ENDC))
+            self.logger.error("Could not start web gui module. Required webserver module %s not found. Please check your configuration." % (self.getConfigurationValue('tornado_webserver')))
             self.gp.shutDown()
             return
         self.webserver_module = mod_info['instances'][0]

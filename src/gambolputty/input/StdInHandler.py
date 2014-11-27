@@ -4,10 +4,10 @@ import sys
 import socket
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class StdInHandler(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from stdin and sends it to its output queues.
@@ -32,7 +32,7 @@ class StdInHandler(BaseThreadedModule.BaseThreadedModule):
 
     def run(self):
         if not self.receivers:
-            self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
             return
         self.pid = os.getpid()
         hostname = socket.gethostname()

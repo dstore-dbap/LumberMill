@@ -1,3 +1,4 @@
+import sys
 import extendSysPath
 import threading
 import unittest2
@@ -7,6 +8,18 @@ import logging
 import logging.config
 import Queue
 import Utils
+
+class StoppableThread(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
 
 class MockGambolPutty(mock.Mock):
 
@@ -18,8 +31,19 @@ class MockGambolPutty(mock.Mock):
         try:
             return self.modules[module_name]
         except KeyError:
-            self.logger.error("%sGet module by name %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_name, Utils.AnsiColors.ENDC))
+            self.logger.error("Get module by name %s failed. No such module." % (module_name, Utils.AnsiColors.ENDC))
             return None
+
+    def initModule(self, module_name):
+        instance = None
+        try:
+            module = __import__(module_name)
+            module_class = getattr(module, module_name)
+            instance = module_class(self)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
+        return instance
 
     def addModule(self, module_name, mod):
         if module_name not in self.modules:
@@ -29,9 +53,10 @@ class MockGambolPutty(mock.Mock):
         for module_name, mod in self.modules.iteritems():
             mod.shutDown()
 
-class MockReceiver():
+class MockReceiver(mock.Mock):
 
     def __init__(self):
+        mock.Mock.__init__(self)
         self.events = []
         self.filter = False
 
@@ -71,9 +96,14 @@ class ModuleBaseTestCase(unittest2.TestCase):
 
     def startTornadoEventLoop(self):
         import tornado.ioloop
-        self.ioloop_thread = threading.Thread(target=tornado.ioloop.IOLoop.instance().start)
+        self.ioloop_thread = StoppableThread(target=tornado.ioloop.IOLoop.instance().start)
         self.ioloop_thread.daemon = True
         self.ioloop_thread.start()
+
+    def stopTornadoEventLoop(self):
+        if not hasattr(self, 'ioloop_thread'):
+            return
+        self.ioloop_thread.stop()
 
     """
     def testQueueCommunication(self, config = {}):

@@ -3,10 +3,10 @@ import sys
 import BaseThreadedModule
 import csv
 from cStringIO import StringIO
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class CsvParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse a string as csv data.
@@ -39,7 +39,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
                                   delimiter=self.getConfigurationValue('delimiter', event))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not parse csv data %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.warning("Could not parse csv data %s. Exception: %s, Error: %s." % (event, etype, evalue))
             yield event
             return
         field_names = self.getConfigurationValue('fieldnames', event)

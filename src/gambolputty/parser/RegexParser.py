@@ -69,7 +69,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                     regex_options = eval(i.next())
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%sRegEx error for options %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, regex_options, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error("RegEx error for options %s. Exception: %s, Error: %s." % (regex_options, etype, evalue))
                     self.gp.shutDown()
                     return
                 # Regex match type the third (optional)
@@ -80,7 +80,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
             # Make sure regex_match_type is valid
             # At the moment only search and findall are supported
             if regex_match_type not in supported_regex_match_types:
-                self.logger.error("%sRegEx error for match type %s. Only %s are supported.%s" % (Utils.AnsiColors.FAIL, regex_options, supported_regex_match_types, Utils.AnsiColors.ENDC))
+                self.logger.error("RegEx error for match type %s. Only %s are supported." % (regex_options, supported_regex_match_types))
                 self.gp.shutDown()
                 return
             try:
@@ -89,7 +89,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sRegEx error for %s pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event_type, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("RegEx error for %s pattern %s. Exception: %s, Error: %s." % (event_type, regex_pattern, etype, evalue))
                 self.gp.shutDown()
             self.fieldextraction_regexpressions.append({'event_type': event_type, 'pattern': regex, 'match_type': regex_match_type, 'hitcounter': 0})
 
@@ -121,7 +121,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                         self.logstash_patterns[pattern_name] = pattern
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        self.logger.warning("%sCould not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, dirpath,  os.sep, filename, line_no+1, etype, evalue, Utils.AnsiColors.ENDC))
+                        self.logger.warning("Could not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s." % (dirpath,  os.sep, filename, line_no+1, etype, evalue))
 
     def replaceLogstashPatterns(self, regex_pattern):
         pattern_name_re = re.compile('%\{(.*?)\}')
@@ -131,7 +131,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                     logstash_pattern = self.replaceLogstashPatterns(self.logstash_patterns[pattern_name])
                     regex_pattern = regex_pattern.replace('%%{%s}' % pattern_name, logstash_pattern)
                 except KeyError:
-                    self.logger.warning("%sCould not parse logstash pattern %s. Pattern name not found in pattern files.%s" % (Utils.AnsiColors.WARNING, pattern_name, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not parse logstash pattern %s. Pattern name not found in pattern files." % (pattern_name))
                     continue
         return regex_pattern
 

@@ -4,9 +4,9 @@ import sys
 import zmq
 import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class Zmq(BaseThreadedModule.BaseThreadedModule):
     """
     Read events from a zeromq.
@@ -60,7 +60,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
                 self.client.bind('tcp://%s:%s' % (server_addr, server_port))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
     def getEventFromInputQueue(self):
@@ -77,7 +77,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
                 return
             if type(exc_value) != 'Socket operation on non-socket':
                 print "############%s###############" % exc_value
-            self.logger.error("%sCould not read data from zeromq. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not read data from zeromq. Exception: %s, Error: %s." % (exc_type, exc_value))
 
     def handleEvent(self, event):
         event = {"data": event}

@@ -2,11 +2,11 @@
 import BaseThreadedModule
 import pprint
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 import time
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     """
     Print the data dictionary to stdout.
@@ -19,16 +19,17 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
         format:                 # <default: None; type: None||string; is: optional>
+        parser:                 # <default: None; type: None||string; is: optional>
     """
 
     module_type = "output"
     """Set module type"""
-    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
+        self.pretty_print = self.getConfigurationValue('pretty_print')
         self.printing = False
 
     def handleEvent(self, event):
@@ -37,13 +38,9 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
         self.printing = True
         if self.format:
             output = Utils.mapDynamicValue(self.format, event)
-            # If mapping failed, no need to print anything.
-            if not output:
-                self.printing = False
-                return
         else:
             output = event
-        if self.getConfigurationValue('pretty_print') and not self.format:
+        if self.pretty_print and not self.format:
             pprint.pprint(output, indent=4)
         else:
             print "%s" % output

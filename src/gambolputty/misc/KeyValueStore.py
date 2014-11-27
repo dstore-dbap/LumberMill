@@ -2,12 +2,12 @@
 import sys
 import cPickle
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 import Utils
 
 
-@ModuleDocstringParser
-class RedisStore(BaseThreadedModule.BaseThreadedModule):
+@Decorators.ModuleDocstringParser
+class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
     """
     A simple wrapper around the python simplekv module.
 
@@ -86,7 +86,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             client.ping()
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, redis_store, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (redis_store, etype, evalue))
             self.gp.shutDown()
         return client
 
@@ -109,7 +109,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             return client
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue['server'], etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
             self.gp.shutDown()
 
     def getClusterRedisClient(self):
@@ -136,7 +136,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             client = rediscluster.StrictRedisCluster(cluster=cluster,db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue['cluster'], etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue['cluster'], etype, evalue))
             self.gp.shutDown()
         return client
 
@@ -165,7 +165,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
                 value = cPickle.dumps(value)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not store %s:%s in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
                 raise
         if ttl:
             self.kv_store.put(key, value, ttl_secs=ttl)
@@ -178,7 +178,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
                 value = cPickle.dumps(value)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not store %s:%s in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
                 raise
         if ttl:
             self.set_buffer.append({'key':key, 'ttl': ttl, 'value': value})
@@ -204,7 +204,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             return True
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not flush buffer. Exception: %s, Error: %s." % (etype, evalue))
 
     def get(self, key, unpickle=True):
         value = self.kv_store.get(key)
@@ -213,7 +213,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
                 value = cPickle.loads(value)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not unpickle %s:%s from redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, key, value, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not unpickle %s:%s from redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
                 raise
         return value
 

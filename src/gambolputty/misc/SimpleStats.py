@@ -28,7 +28,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
         emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
 
-    module_type = "stand_alone"
+    module_type = "misc"
     """Set module type"""
 
     def configure(self, configuration):
@@ -36,6 +36,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
+        self.event_type_statistics = self.getConfigurationValue('event_type_statistics')
         self.stats_collector = StatisticCollector.StatisticCollector()
         self.mp_stats_collector = StatisticCollector.MultiProcessStatisticCollector()
         self.module_queues = {}
@@ -108,7 +109,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('events_received')
-        if self.getConfigurationValue('event_type_statistics'):
+        if self.event_type_statistics:
             try:
                 self.stats_collector.incrementCounter('event_type_%s' % event['gambolputty']['event_type'])
             except:

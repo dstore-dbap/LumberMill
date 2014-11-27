@@ -13,8 +13,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_field': 'syslog_prival',
                   'map_values': False}
         self.test_object.configure(config)
-        errors = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(errors)
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
@@ -26,8 +25,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
         config = {'source_field': 'syslog_prival',
                   'map_values': True}
         self.test_object.configure(config)
-        errors = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(errors)
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
@@ -41,8 +39,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'facility_mappings': {1: 'PetShopBolton'},
                   'severity_mappings': {5: 'DeadParrotException'}}
         self.test_object.configure(config)
-        errors = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(errors)
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):

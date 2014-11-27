@@ -143,13 +143,13 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             self.socket.sendto(str_msg, host)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not send message %s to %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, message, host, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.warning("Could not send message %s to %s. Exception: %s, Error: %s." % (message, host, etype, evalue))
 
     def sendMessageToPackMember(self, message, pack_member):
-        self.logger.debug("%sSending message %s to %s.%s" % (Utils.AnsiColors.OKBLUE, message, pack_member, Utils.AnsiColors.ENDC))
+        self.logger.debug("Sending message %s to %s." % (message, pack_member))
         ip_address = pack_member.getIp()
         if ip_address not in self.pack_followers.keys():
-            self.logger.warning('%sCan not send message to unknown pack member %s.%s' % (Utils.AnsiColors.WARNING, pack_member, Utils.AnsiColors.ENDC))
+            self.logger.warning('Can not send message to unknown pack member %s.' % (pack_member))
             return
         self.sendMessage(message, pack_member.getHost())
 
@@ -158,7 +158,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             self.sendMessageToPackMember(message, pack_member)
 
     def addHandler(self, action, callback):
-        self.logger.debug('%sAdding handler %s for %s.%s' % (Utils.AnsiColors.OKBLUE, callback, action, Utils.AnsiColors.ENDC))
+        self.logger.debug('Adding handler %s for %s.' % (callback, action))
         self.handlers[action].append(callback)
 
     def run(self):
@@ -166,8 +166,8 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             self.socket.bind((self.interface_addr, self.interface_port))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
-                                                                                            self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s." % (self.getConfigurationValue("interface"),
+                                                                                            self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
             return
         # Start alive requests only if we are the leader.
@@ -183,22 +183,22 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
                 message = json.loads(self.decrypt(message))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sCould not parse cluster message %s. Maybe your secrets differ? Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, message, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("Could not parse cluster message %s. Maybe your secrets differ? Exception: %s, Error: %s." % (message, etype, evalue))
                 continue
             # Ignore messages from self and messages to other clusters.
             if message['sender'] == self.hostname or message['cluster'] != self.cluster_name:
                 continue
-            self.logger.debug("%sReceived action %s.%s" % (Utils.AnsiColors.OKBLUE, message['action'], Utils.AnsiColors.ENDC))
+            self.logger.debug("Received action %s." % (message['action']))
             pack_member = PackMember(host, message)
             # Excecute callbacks
             for callback in self.handlers["%s" % message['action']]:
-                self.logger.debug('%sCalling callback %s for %s.%s' % (Utils.AnsiColors.OKBLUE, callback, message['action'], Utils.AnsiColors.ENDC))
+                self.logger.debug('Calling callback %s for %s.' % (callback, message['action']))
                 callback(message, pack_member)
 
     @Decorators.setInterval(30, call_on_init=True)
     def sendDiscoverBroadcast(self):
         message = self.getDefaultMessageDict(action='discovery_call')
-        self.logger.debug('%sSending broadcast pack discovery.%s' % (Utils.AnsiColors.OKBLUE, Utils.AnsiColors.ENDC))
+        self.logger.debug('Sending broadcast pack discovery.')
         self.sendMessage(message, (self.broadcast_addr, self.interface_port))
 
     @Decorators.setInterval(10)
@@ -217,7 +217,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
                 pack_member_ip = pack_member.getIp()
                 self.dying_pack_followers.remove(pack_member_ip)
                 self.pack_followers.pop(pack_member_ip)
-                self.logger.warning('%sDropping dead pack member %s, %s.%s' % (Utils.AnsiColors.WARNING, pack_member.getHostName(), pack_member.getHost(), Utils.AnsiColors.ENDC))
+                self.logger.warning('Dropping dead pack member %s, %s.' % (pack_member.getHostName(), pack_member.getHost()))
             except ValueError:
                 self.logger.info("asdasd")
         return dropDeadPackMembers
@@ -239,7 +239,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         message = self.getDefaultMessageDict(action='discovery_finish', custom_dict={'success': True})
         self.sendMessage(message, pack_member.getHost())
         if not self.discovered_leader or self.discovered_leader.getHost() != pack_member.getHost():
-            self.logger.info("%sDiscovered %s as pack leader.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+            self.logger.info("Discovered %s as pack leader." % (pack_member.getHostName()))
             self.discovered_leader = pack_member
 
     def handleDiscoveryFinish(self, message, pack_member):
@@ -247,7 +247,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         if not self.leader:
             return
         if message['success'] and pack_member.getIp() not in self.pack_followers.keys():
-            self.logger.info("%sDiscovered %s as pack member.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+            self.logger.info("Discovered %s as pack member." % (pack_member.getHostName()))
             self.pack_followers[pack_member.getIp()] = pack_member
 
     ####
@@ -257,7 +257,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         # Only send reply to alive call if we are a pack member.
         if self.leader:
             return
-        self.logger.debug('%sGot alive request from %s.%s' % (Utils.AnsiColors.OKBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+        self.logger.debug('Got alive request from %s.' % (pack_member.getHostName()))
         message = self.getDefaultMessageDict(action='alive_reply', custom_dict={'reply': 'I am not dead!'})
         self.sendMessage(message, pack_member.getHost())
 

@@ -76,7 +76,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
                 Facet.redis_keys.append(key)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not store facet data in redis. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.WARNING))
+            self.logger.warning("Could not store facet data in redis. Exception: %s, Error: %s." % (etype, evalue))
             pass
 
     def _setFacetInfoInternal(self, key, facet_info):
@@ -135,7 +135,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         key = event[self.getConfigurationValue('group_by', event)]
         print(key)
         if not key and self.redis_store:
-            self.logger.warning("%sGroup_by value %s could not be generated. Event ignored.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.WARNING))
+            self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event
             return
         key = "FacetValues:%s" % key

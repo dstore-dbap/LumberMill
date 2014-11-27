@@ -6,12 +6,13 @@ import time
 import mock
 import socket
 import ssl
-import TcpServerTornado
+import TcpServerSingleWorker
 
-class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
+
+class TestTcpServerSingleWorker(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestTcpServerTornado, self).setUp(TcpServerTornado.TcpServerTornado(gp=mock.Mock()))
+        super(TestTcpServerSingleWorker, self).setUp(TcpServerSingleWorker.TcpServerSingleWorker(gp=mock.Mock()))
 
     def testTcpConnection(self):
         self.test_object.configure({})
@@ -41,7 +42,7 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event != False)
 
-    def testTlsTcpConnection(self):
+    def testATlsTcpConnection(self):
         self.test_object.configure({'port': 5252,
                                     'tls': True,
                                     'key': '../../exampleData/gambolputty_ca.key',
@@ -55,7 +56,7 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
-            s = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_SSLv23)
+            s = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
             s.connect((self.test_object.getConfigurationValue('interface'), self.test_object.getConfigurationValue('port')))
             s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
             s.close()
@@ -76,6 +77,5 @@ class TestTcpServerTornado(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue(event != False)
 
     def tearDown(self):
-        self.test_object.shutDown(silent=True)
-        # Give server process some time to shut down.
-        time.sleep(1)
+        self.test_object.shutDown()
+        ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)

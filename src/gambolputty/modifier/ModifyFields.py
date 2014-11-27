@@ -5,10 +5,10 @@ import re
 import hashlib
 import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class ModifyFields(BaseThreadedModule.BaseThreadedModule):
     """
     Simple module to insert/delete/change field values.
@@ -191,13 +191,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                     regex_options = eval(i.next())
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%sRegEx error for options %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, regex_options, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error("RegEx error for options %s. Exception: %s, Error: %s" % (regex_options, etype, evalue))
                     self.gp.shutDown()
             try:
                 self.regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, regex_pattern, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s" % (regex_pattern, etype, evalue))
                 self.gp.shutDown()
         self.source_field = self.getConfigurationValue('source_field') if "source_field" in self.configuration_data else []
         self.source_fields = self.getConfigurationValue('source_fields') if "source_fields" in self.configuration_data else []
@@ -211,8 +211,22 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             self.event_handler = getattr(self, "%s" % self.action)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sModifyFields action called that does not exist: %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.action, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
+
+    def configure_split_action(self):
+        self.separator = self.getConfigurationValue('separator')
+
+    def configure_key_value_action(self):
+        self.line_separator = self.getConfigurationValue('line_separator')
+        self.kv_separator = self.getConfigurationValue('kv_separator')
+        self.prefix = self.getConfigurationValue('prefix')
+
+    def configure_key_value_regex_action(self):
+        self.prefix = self.getConfigurationValue('prefix')
+
+    def configure_join_action(self):
+        self.separator = self.getConfigurationValue('separator')
 
     def configure_anonymize_action(self):
         self.configure_hash_action()
@@ -227,14 +241,14 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                 self.hash_func = mmh3.hash
             except ImportError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Exception: %s, Error: %s" % (etype, evalue))
                 self.gp.shutDown()
         else:
             try:
                 self.hashlib_func = getattr(hashlib, self.algorithm)
             except ImportError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sException: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Exception: %s, Error: %s" % (etype, evalue))
                 self.gp.shutDown()
                 return
             self.hash_func = self.hashlibFunc
@@ -247,7 +261,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             event = self.event_handler(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sModifyFields action called that does not exist: %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.action, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
         yield event
 
@@ -379,14 +393,14 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @return: event: dictionary
         """
         try:
-            if self.getConfigurationValue('line_separator'):
-                kv_dict = dict(kv.split(self.getConfigurationValue('kv_separator')) for kv in event[self.source_field].split(self.getConfigurationValue('line_separator')))
+            if self.line_separator:
+                kv_dict = dict(kv.split(self.kv_separator) for kv in event[self.source_field].split(self.line_separator))
             else:
-                kv_dict = event[self.source_field].split(self.getConfigurationValue('kv_separator'))
+                kv_dict = event[self.source_field].split(self.kv_separator)
         except:
             return event
-        if self.getConfigurationValue('prefix'):
-            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.getConfigurationValue('prefix'), str(key)), value), kv_dict.items()))
+        if self.prefix:
+            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:
             event[self.target_field] = kv_dict
         else:
@@ -415,8 +429,8 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             kv_dict = dict(re.findall(self.regex, event[self.source_field]))
         except:
             return event
-        if self.getConfigurationValue('prefix'):
-            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.getConfigurationValue('prefix'), str(key)), value), kv_dict.items()))
+        if self.prefix:
+            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:
             event[self.target_field] = kv_dict
         else:
@@ -439,7 +453,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @return: event: dictionary
         """
         try:
-            values = event[self.source_field].split(self.getConfigurationValue('separator'))
+            values = event[self.source_field].split(self.separator)
         except:
             return event
         target_field = self.target_field if self.target_field else self.source_field
@@ -471,7 +485,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         """
         #event.update({self.getConfigurationValue('target_field'): separator.join(fields)})
         try:
-            event[self.target_field] = self.getConfigurationValue('separator').join(event[self.source_field])
+            event[self.target_field] = self.separator.join(event[self.source_field])
         except:
             pass
         return event
@@ -496,18 +510,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        try:
-            event.update({field: int(float(event[field])) for field in self.source_fields if field in event})
-        except ValueError:
-            pass
-        #for field in self.source_fields:
-            #event[field] = int(event[field])
-            #try:
-            #    event[field] = int(event[field])
-            #except ValueError:
-            #    event[field] = 0
-            #except KeyError:
-            #    pass
+        for field in self.source_fields:
+            try:
+                event[field] = int(float(event[field]))
+            except ValueError:
+                event[field] = 0
+            except KeyError:
+                pass
         return event
 
     def cast_to_float(self, event):
@@ -517,10 +526,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        try:
-            event.update({field: float(event[field]) for field in self.source_fields if field in event})
-        except ValueError:
-            pass
+        for field in self.source_fields:
+            try:
+                event[field] = float(event[field])
+            except ValueError:
+                event[field] = 0
+            except KeyError:
+                pass
         return event
 
     def cast_to_str(self, event):
@@ -530,10 +542,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        try:
-            event.update({field: str(event[field]) for field in self.source_fields if field in event})
-        except ValueError:
-            pass
+        for field in self.source_fields:
+            try:
+                event[field] = str(event[field])
+            except ValueError:
+                event[field] = ""
+            except KeyError:
+                pass
         return event
 
     def cast_to_bool(self, event):
@@ -543,10 +558,13 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        try:
-            event.update({field: bool(event[field]) for field in self.source_fields if field in event})
-        except ValueError:
-            pass
+        for field in self.source_fields:
+            try:
+                event[field] = bool(event[field])
+            except ValueError:
+                event[field] = False
+            except KeyError:
+                pass
         return event
 
     def anonymize(self, data):

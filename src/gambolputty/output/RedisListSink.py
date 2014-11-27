@@ -52,7 +52,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.client.ping()
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'),etype, evalue))
             self.gp.shutDown()
 
     def prepareRun(self):
@@ -65,7 +65,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
             return True
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("%sCould not add event to redis list %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.list, exc_type, exc_value, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not add event to redis list %s. Exception: %s, Error: %s." % (self.list, exc_type, exc_value))
             return False
 
     def handleEvent(self, event):

@@ -12,6 +12,7 @@ class TestUrlParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testHandleEvent(self):
         self.test_object.configure({'source_field': 'uri'})
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'uri': 'http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty'})
         for event in self.test_object.handleEvent(data):
             self.assert_('uri' in event and event['uri']['query'] == 'gambol=putty')

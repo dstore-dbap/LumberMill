@@ -13,8 +13,7 @@ class TestTarpit(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testTarpit(self):
         self.test_object.configure({'delay': 1})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         before = time.time()
         self.test_object.handleEvent(Utils.getDefaultEventDict({}))
         for event in self.receiver.getEvent():

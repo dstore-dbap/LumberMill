@@ -74,7 +74,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 self.client.bind('tcp://%s:%s' % (server_addr, server_port))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
     def prepareRun(self):
@@ -94,7 +94,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
             exc_type, exc_value, exc_tb = sys.exc_info()
             if exc_value in ['Interrupted system call', 'Socket operation on non-socket']:
                 return False
-            self.logger.error("%sCould not add events to zmq. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, exc_type, exc_value, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not add events to zmq. Exception: %s, Error: %s." % (exc_type, exc_value))
             return False
 
     def handleEvent(self, event):

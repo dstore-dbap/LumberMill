@@ -3,10 +3,10 @@ import sys
 import urllib2
 import socket
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     """
     Issue an arbitrary http request and store the response in a configured field.

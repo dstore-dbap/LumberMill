@@ -2,10 +2,10 @@
 from uasparser2 import UASParser
 import types
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
     r"""
     Parse http user agent string

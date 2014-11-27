@@ -48,7 +48,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
         self.requeue_events_done = False
         backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
         if not backend_info:
-            self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
+            self.logger.error("Could not find %s backend for persistant storage." % (self.getConfigurationValue('backend')))
             self.gp.shutDown()
             return
         self.persistence_backend = backend_info['instances'][0]
@@ -83,7 +83,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
                 Utils.KeyDotNotationDict.persistence_backend.set(key, dict.copy(self), False)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not store event in persistance backend. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not store event in persistance backend. Exception: %s, Error: %s." % (etype, evalue))
                 pass
         Utils.KeyDotNotationDict.___init___ = Utils.KeyDotNotationDict.__init__
         Utils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit
@@ -122,23 +122,23 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
                 input_modules[instance.__class__.__name__] = instance
         keys = self.persistence_backend.client.keys("%s:*" % self.key_prefix)
         if len(keys) > 0:
-            self.logger.warning("%sFound %s unfinished events. Requeing...%s" % (Utils.AnsiColors.WARNING, len(keys), Utils.AnsiColors.ENDC))
+            self.logger.warning("Found %s unfinished events. Requeing..." % (len(keys)))
             requeue_counter = 0
             for key in keys:
                 event = self.persistence_backend.pop(key)
                 if not event:
                     continue
                 if "source_module" not in event.get("gambolputty", {}):
-                    self.logger.warning("%sCould not requeue event. Source module info not found in event data.%s" % (Utils.AnsiColors.WARNING, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not requeue event. Source module info not found in event data.")
                     continue
                 source_module = event["gambolputty"]["source_module"]
                 if source_module not in input_modules:
-                    self.logger.error("%sCould not requeue event. Module %s not found.%s" % (Utils.AnsiColors.WARNING, source_module, Utils.AnsiColors.ENDC))
+                    self.logger.error("Could not requeue event. Module %s not found." % (source_module))
                     continue
                 requeue_counter += 1
                 input_modules[source_module].sendEvent(Utils.KeyDotNotationDict(event))
-            self.logger.warning("%sDone. Requeued %s of %s events.%s" % (Utils.AnsiColors.WARNING, requeue_counter, len(keys), Utils.AnsiColors.ENDC))
-            self.logger.warning("%sNote: If more than one gp instance is running, requeued events count may differ from total events.%s" % (Utils.AnsiColors.WARNING, Utils.AnsiColors.ENDC))
+            self.logger.warning("Done. Requeued %s of %s events." % (requeue_counter, len(keys)))
+            self.logger.warning("Note: If more than one gp instance is running, requeued events count may differ from total events.")
             event = None
 
     def prepareRun(self):

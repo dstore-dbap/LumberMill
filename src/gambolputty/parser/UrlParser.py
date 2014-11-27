@@ -2,15 +2,15 @@
 import BaseThreadedModule
 import urllib
 import urlparse
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class UrlParser(BaseThreadedModule.BaseThreadedModule):
     """
     Urlencode or decode an event field and extract url parameters.
 
-    mode: Either encode or decode data.
+    action: Either encode or decode data.
     source_field: Event field to en/decode.
     target_field: Event field to update with en/decode result. If not set source will be replaced.
     parse_querystring: Parse url for query parameters and extract them.
@@ -20,7 +20,7 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - UrlParser:
-        mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
         source_field:             # <type: string; is: required>
         target_field:             # <default: None; type: None||string; is: optional>
         parse_querystring:        # <default: False; type: boolean; is: optional>
@@ -44,14 +44,18 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
         self.parse_querystring = self.getConfigurationValue('parse_querystring')
         self.querystring_target_field = self.getConfigurationValue('querystring_target_field')
         self.querystring_prefix = self.getConfigurationValue('querystring_prefix')
-        if self.getConfigurationValue('mode') == 'decode':
+        if self.getConfigurationValue('action') == 'decode':
             self.handleEvent = self.decodeEvent
         else:
             self.handleEvent = self.encodeEvent
 
     def decodeEvent(self, event):
         if self.source_field in event:
-            decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
+            #try:
+            #    decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
+            #except UnicodeDecodeError:
+            #    decoded_field = urllib.unquote(unicode(event[self.source_field]))
+            decoded_field = urllib.unquote(unicode(event[self.source_field]))
             parsed_result = urlparse.urlparse('%s' % decoded_field)
             parsed_url = {'scheme': parsed_result.scheme, 'path': parsed_result.path, 'params': parsed_result.params, 'query': parsed_result.query}
             event[self.target_field] = parsed_url

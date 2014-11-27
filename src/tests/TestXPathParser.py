@@ -51,7 +51,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testHandleData(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
-                                    'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
+                                    'query': '//bookstore/book[@category="$(category)"]/title/text()'})
+        self.checkConfiguration()
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
@@ -60,7 +61,8 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def testHandleDataWithTargetField(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
-                                    'query': '//bookstore/book[@category="%(category)s"]/title/text()'})
+                                    'query': '//bookstore/book[@category="$(category)"]/title/text()'})
+        self.checkConfiguration()
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
@@ -72,10 +74,11 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
-                                    'query': '//bookstore/book[@category="%(category)s"]/title/text()',
+                                    'query': '//bookstore/book[@category="$(category)"]/title/text()',
                                     'redis_store': 'RedisStore',
-                                    'redis_key': '%(category)s',
+                                    'redis_key': '$(category)',
                                     'redis_ttl': 60})
+        self.checkConfiguration()
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                          'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):

@@ -1,31 +1,27 @@
-import pprint
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
-import mock
-import socket
-import json
 import sys
 import time
-import Utils
-import JsonParser
+import mock
+import socket
+import msgpack
 import TcpServerTornado
+import MsgPackParser
 
-class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestMsgPackParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestJsonParser, self).setUp(JsonParser.JsonParser(gp=mock.Mock()))
+        super(TestMsgPackParser, self).setUp(MsgPackParser.MsgPackParser(gp=mock.Mock()))
         self.tcp_server = TcpServerTornado.TcpServerTornado(gp=mock.Mock())
-        self.tcp_server.addReceiver("JsonParser", self.test_object)
+        self.tcp_server.addReceiver("MsgPackParser", self.test_object)
 
     def testLineMode(self):
         self.tcp_server.configure({'mode': 'line'})
         self.tcp_server.start()
         self.startTornadoEventLoop()
-        self.test_object.configure({})
+        self.test_object.configure({'mode': 'line'})
         self.checkConfiguration()
-        orig_event = {'json_data': {'South African': 'Fast',
-                                    'unladen': 'swallow'}}
+        orig_event = {'spam': 'spam' * 16384}
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
         try:
@@ -36,23 +32,22 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
             print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        s.sendall(json.dumps(orig_event) + "\n")
+        s.sendall(msgpack.packb(orig_event)+ "\n")
         s.close()
         received_event = False
         time.sleep(.1)
         for received_event in self.receiver.getEvent():
             received_event.pop('gambolputty')
             self.assertDictEqual(received_event, orig_event)
-        self.assertTrue(received_event is not False)
+        self.assertTrue(received_event != False)
 
-    def __testStreamMode(self):
+    def testStreamMode(self):
         self.tcp_server.configure({'mode': 'stream'})
         self.tcp_server.start()
         self.startTornadoEventLoop()
-        self.test_object.configure({})
+        self.test_object.configure({'mode': 'stream'})
         self.checkConfiguration()
-        orig_event = {'json_data': {'South African': 'Fast' * 8192,
-                                    'unladen': 'swallow'}}
+        orig_event = {'spam': 'spam' * 16384}
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
         try:
@@ -63,27 +58,15 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
             print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        s.sendall(json.dumps(orig_event))
+        s.sendall(msgpack.packb(orig_event))
         s.close()
         received_event = False
         time.sleep(.1)
         for received_event in self.receiver.getEvent():
             received_event.pop('gambolputty')
             self.assertDictEqual(received_event, orig_event)
-        self.assertTrue(received_event is not False)
-
-    def __testSimpleJson(self):
-        self.test_object.configure({'source_fields': ['json_data']})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
-        data = Utils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})
-        for event in self.test_object.handleEvent(data):
-            self.assertTrue('South African' in event and event['South African'] == "Fast" )
+        self.assertTrue(received_event != False)
 
     def tearDown(self):
         self.tcp_server.shutDown()
         ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)
-        pass
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 import time
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class LoggerSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send data to gambolputty logger.
@@ -39,6 +39,6 @@ class LoggerSink(BaseThreadedModule.BaseThreadedModule):
             output = self.mapDynamicValue(format, event)
             if not output:
                 continue
-            self.logger.info("%s%s%s" % (Utils.AnsiColors.LIGHTBLUE, output, Utils.AnsiColors.ENDC))
+            self.logger.info("%s" % (output))
         self.printing = False
         yield None

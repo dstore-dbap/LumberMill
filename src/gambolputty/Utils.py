@@ -21,7 +21,6 @@ try:
 except ImportError:
     import builtins
 
-
 try:
     import zmq
     zmq_avaiable = True
@@ -156,7 +155,7 @@ def compileStringToConditionalObject(condition_as_string, mapping):
         return conditional
     except :
         etype, evalue, etb = sys.exc_info()
-        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s.%s" % (AnsiColors.WARNING, condition_as_string, etype, evalue, AnsiColors.ENDC))
+        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s." % (condition_as_string, etype, evalue))
         return False
 
 class AstTransformer(ast.NodeTransformer):
@@ -189,7 +188,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return False
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
             return False
     elif isinstance(value, dict):
         try:
@@ -204,7 +203,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return False
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, v, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
             return False
     elif isinstance(value, basestring):
         try:
@@ -216,7 +215,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return False
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, value, mapping_dict, etype, evalue, AnsiColors.ENDC))
+            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
             return False
 
 class Buffer:
@@ -230,7 +229,10 @@ class Buffer:
         self.flush_callback = callback
         self.flush_timed_func = self.getTimedFlushMethod()
         self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
-        self.is_storing = False
+        self.is_flushing = False
+
+    def stopInterval(self):
+        TimedFunctionManager.stopTimedFunctions(self.timed_func_handle)
 
     def startInterval(self):
         self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
@@ -238,7 +240,7 @@ class Buffer:
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
         def timedFlush():
-            if len(self.buffer) == 0 or self.is_storing:
+            if len(self.buffer) == 0 or self.is_flushing:
                 return
             self.flush()
         return timedFlush
@@ -248,35 +250,23 @@ class Buffer:
 
     def put(self, item):
         # Wait till a running store is finished to avoid strange race conditions when using this buffer with multiprocessing.
-        while self.is_storing:
+        while self.is_flushing:
             time.sleep(.00001)
         while len(self.buffer) > self.maxsize:
-            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Waiting for flush.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
+            self.logger.warning("Maximum number of items (%s) in buffer reached. Waiting for flush." % self.maxsize)
             time.sleep(1)
         self.buffer.append(item)
         if self.flush_size and len(self.buffer) == self.flush_size:
             self.flush()
 
     def flush(self):
-        self.is_storing = True
-        if self.flush_callback(self.buffer):
+        self.is_flushing = True
+        self.stopInterval()
+        success = self.flush_callback(self.buffer)
+        if success:
             self.buffer = []
-        self.buffer = []
-        self.is_storing = False
-        """
-        try:
-            if self.flush_callback(self.buffer):
-                self.buffer = []
-        except (KeyboardInterrupt, SystemExit):
-            # Keyboard interrupt is catched in GambolPuttys main run method.
-            # This will take care to shutdown all running modules.
-            pass
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not flush buffer to %s. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, self.flush_callback, etype, evalue, AnsiColors.ENDC))
-        finally:
-             self.is_storing = False
-        """
+        self.startInterval()
+        self.is_flushing = False
 
     def bufsize(self):
         return len(self.buffer)
@@ -305,7 +295,7 @@ class BufferedQueue:
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not append data to queue. Exception: %s, Error: %s.%s" % (AnsiColors.FAIL, etype, evalue, AnsiColors.ENDC))
+            self.logger.error("Could not append data to queue. Exception: %s, Error: %s." % (etype, evalue))
 
     def get(self, block=True, timeout=None):
         try:
@@ -461,35 +451,59 @@ class ZeroMqMpQueue:
     Use ZeroMQ for IPC.
     This is faster than the default multiprocessing.Queue.
 
+    Sender and receiver will be initalized on first put/get. This is neccessary since a zmq context will not
+    survive a fork.
+
     send_pyobj and recv_pyobj is not used since it performance is slower than using msgpack for serialization.
     (A test for a simple dict using send_pyobj et.al performed around 12000 eps, while msgpack and casting to
     KeyDotNotationDict after unpacking resulted in around 17000 eps)
     """
-
     def __init__(self, queue_max_size=20):
-        self.queue_size = 0
-        zmq_context = zmq.Context()
+        # Get a free random port.
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('127.0.0.1', 0))
+        sock.listen(socket.SOMAXCONN)
+        ipaddr, self.port = sock.getsockname()
+        sock.close()
         self.queue_max_size = queue_max_size
-        self.sender = zmq_context.socket(zmq.PUSH)
-        try:
-            self.sender.setsockopt(zmq.SNDHWM, queue_max_size)
-        except AttributeError:
-            self.sender.setsockopt(zmq.HWM, queue_max_size)
-        self.selected_port = self.sender.bind_to_random_port("tcp://127.0.0.1", min_port=5200, max_port=5300, max_tries=100)
+        self.queue_size = 0
+        self.sender = None
         self.receiver = None
 
+    def initSender(self):
+        print("Init sender in %s" % os.getpid())
+        zmq_context = zmq.Context()
+        self.sender = zmq_context.socket(zmq.PUSH)
+        try:
+            self.sender.setsockopt(zmq.SNDHWM, self.queue_max_size)
+        except AttributeError:
+            self.sender.setsockopt(zmq.HWM, self.queue_max_size)
+        try:
+            self.sender.bind("tcp://127.0.0.1:%d" % self.port)
+        except zmq.error.ZMQError:
+            print("Address in use. Connecting only.")
+            self.sender.connect("tcp://127.0.0.1:%d" % self.port)
+
+
+    def initReceiver(self):
+        print("Init receiver in %s" % os.getpid())
+        zmq_context = zmq.Context()
+        self.receiver = zmq_context.socket(zmq.PULL)
+        try:
+            self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
+        except AttributeError:
+            self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
+        self.receiver.connect("tcp://127.0.0.1:%d" % self.port)
+
     def put(self, data):
+        if not self.sender:
+            self.initSender()
         self.sender.send(data)
 
-    def get(self, block, timeout):
+    def get(self, block=None, timeout=None):
         if not self.receiver:
-            zmq_context = zmq.Context()
-            self.receiver = zmq_context.socket(zmq.PULL)
-            try:
-                self.receiver.setsockopt(zmq.RCVHWM, self.queue_max_size)
-            except:
-                self.receiver.setsockopt(zmq.HWM, self.queue_max_size)
-            self.receiver.connect("tcp://127.0.0.1:%d" % self.selected_port)
+            self.initReceiver()
         events = ""
         try:
             events = self.receiver.recv()

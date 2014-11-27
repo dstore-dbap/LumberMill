@@ -2,9 +2,9 @@
 import sys
 import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class ExecPython(BaseThreadedModule.BaseThreadedModule):
     """
     Execute python code.
@@ -51,7 +51,7 @@ class ExecPython(BaseThreadedModule.BaseThreadedModule):
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sExecPython failed while creating user function. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("ExecPython failed while creating user function. Exception: %s, Error: %s" % (etype, evalue))
             self.gp.shutDown()
         self._func = locals()["UserFunc"]
 
@@ -61,5 +61,5 @@ class ExecPython(BaseThreadedModule.BaseThreadedModule):
             self._func(event)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sExecPython failed. Exception: %s, Error: %s%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.warning("ExecPython failed. Exception: %s, Error: %s" % (etype, evalue))
         yield event

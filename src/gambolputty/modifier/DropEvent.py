@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class DropEvent(BaseThreadedModule.BaseThreadedModule):
     """
     Drop all events received by this module.

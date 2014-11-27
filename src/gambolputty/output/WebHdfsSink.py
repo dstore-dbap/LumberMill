@@ -64,13 +64,13 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             try:
                 import gzip
             except ImportError:
-                self.logger.error('%sGzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('Gzip compression selected but gzip module could not be loaded.')
                 self.gp.shutDown()
         if self.compress == 'snappy':
             try:
                 import snappy
             except ImportError:
-                self.logger.error('%sSnappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('Snappy compression selected but snappy module could not be loaded.')
                 self.gp.shutDown()
         self.is_storing = False
         self.lock = multiprocessing.Lock()
@@ -81,7 +81,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             hdfs = PyWebHdfsClient(host=self.server, port=self.port, user_name=self.user)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error('%sCould not connect to webfs service on %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error('Could not connect to webfs service on %s. Excpeption: %s, Error: %s.' % (self.getConfigurationValue('server'), etype, evalue))
             return None
         return hdfs
 
@@ -114,7 +114,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.hdfs.make_dir(path)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error('%sCould not create directory %s. Exception: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error('Could not create directory %s. Exception: %s, Error: %s.' % (path, etype, evalue))
             return False
         return True
 
@@ -126,7 +126,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.hdfs.create_file(path, data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error('%sCould not create file %s. Exception: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error('Could not create file %s. Exception: %s, Error: %s.' % (path, etype, evalue))
             return False
         return True
 
@@ -141,12 +141,12 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         while self.is_storing:
             time.sleep(.0001)
         while len(self.events_container) > self.backlog_size:
-            self.logger.warning("%sMaximum number of items (%s) in buffer reached. Waiting for flush.%s" % (AnsiColors.WARNING, self.maxsize, AnsiColors.ENDC))
+            self.logger.warning("Maximum number of items (%s) in buffer reached. Waiting for flush." % self.maxsize)
             time.sleep(1)
         self.events_container.append(event)
         if len(self.events_container) == self.batch_size:
             self.storeEvents(self.events_container)
-        yield event
+        yield None
 
     def storeEvents(self, events):
         """
@@ -181,7 +181,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
                     break
                 except KeyError:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error('%sCould no log event %s. The format key %s was not present in event.%s' % (Utils.AnsiColors.FAIL, event, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error('Could no log event %s. The format key %s was not present in event.' % (event, evalue))
                 except pywebhdfs.errors.PyWebHdfsException:
                     write_tries += 1
                     # Retry max_retry times. This can solve problems like leases beeing hold by another process.
@@ -190,7 +190,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
                         continue
                     # Issue error after max retries.
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error('%sMax write retries reached. Could no log event %s. Exception: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error('Max write retries reached. Could no log event %s. Exception: %s, Error: %s.' % (event, etype, evalue))
         self.events_container = []
         self.is_storing = False
 

@@ -37,7 +37,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
         # Get cluster module instance.
         mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('cluster'))
         if not mod_info:
-            self.logger.error("%sCould not start cluster configuration module. Required cluster module %s not found. Please check your configuration.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('cluster'), Utils.AnsiColors.ENDC))
+            self.logger.error("Could not start cluster configuration module. Required cluster module %s not found. Please check your configuration." % (self.getConfigurationValue('cluster')))
             self.gp.shutDown()
             return
         self.cluster_module = mod_info['instances'][0]
@@ -65,7 +65,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
         Sync current configuration to newly discovered hosts.
         """
         message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
-        self.logger.debug('%shandleDiscoveryReply called.%s' % (Utils.AnsiColors.OKBLUE, Utils.AnsiColors.ENDC))
+        self.logger.debug('handleDiscoveryReply called.')
         self.cluster_module.sendMessageToPackMember(message, pack_member)
 
     def handleUpdateConfigurationCall(self, message, pack_member):
@@ -75,7 +75,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
         leader_configuration = message['configuration']
         leader_configuration = self.filterIgnoredModules(leader_configuration)
         if leader_configuration != self.filtered_startup_config:
-            self.logger.info("%sGot new cluster configuration from %s.%s" % (Utils.AnsiColors.LIGHTBLUE, pack_member.getHostName(), Utils.AnsiColors.ENDC))
+            self.logger.info("Got new cluster configuration from %s." % (pack_member.getHostName()))
             self.gp.setConfiguration(leader_configuration, merge=True)
             # Send signal to reload GambolPutty.
             signal.alarm(1)

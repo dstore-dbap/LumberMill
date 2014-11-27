@@ -15,8 +15,7 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
     def testHandleEvent(self):
         self.test_object.configure({'source_field': 'event',
                                     'field_extraction_patterns': [{'http_access_log': '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'}]})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         event = Utils.getDefaultEventDict({'event': self.raw_data})
         for event in self.test_object.handleEvent(event):
             self.assert_('bytes_send' in event and event['bytes_send'] == '3395')

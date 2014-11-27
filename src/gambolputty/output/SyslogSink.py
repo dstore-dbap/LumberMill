@@ -4,11 +4,11 @@ import logging.handlers
 import os
 import socket
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 import Utils
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send events to syslog.
@@ -50,7 +50,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
         try:
             facility = logging.handlers.SysLogHandler.facility_names[self.getConfigurationValue('facility')]
         except KeyError:
-            self.logger.error("%sThe configured facility %s is unknown.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('facility'), Utils.AnsiColors.ENDC))
+            self.logger.error("The configured facility %s is unknown." % (self.getConfigurationValue('facility')))
         self.syslog_handler = logging.handlers.SysLogHandler(address, facility=facility, socktype=socket_type)
         self.syslogger.addHandler(self.syslog_handler)
         self.format = self.getConfigurationValue('format')
@@ -60,7 +60,7 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
             self.syslogger.info(Utils.mapDynamicValue(self.format, event))
         else:
             self.syslogger.info(event)
-        yield event
+        yield None
 
     def shutDown(self):
         self.syslog_handler.close()

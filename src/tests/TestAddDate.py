@@ -13,8 +13,7 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testIsTimeStamp(self):
         self.test_object.configure({})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', event['@timestamp'])) # 2013-08-29T10:25:26
 

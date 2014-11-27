@@ -15,8 +15,7 @@ class TestPermutate(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'target_fields': ['field1', 'field2'],
                                     'context_data_field': 'context',
                                     'context_target_mapping': {'ctx2': ['ctx2_field1', 'ctx2_field2'], 'ctx': ['ctx_field1', 'ctx_field2']}})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         events = []
         source_event = Utils.getDefaultEventDict({'facets': [1,2],
                                                   'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},

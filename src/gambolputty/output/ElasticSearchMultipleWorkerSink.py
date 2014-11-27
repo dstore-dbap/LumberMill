@@ -26,7 +26,7 @@ else:
         raise ImportError
 
 @Decorators.ModuleDocstringParser
-class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -55,7 +55,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
 
     Configuration template:
 
-    - ElasticSearchMultiProcessSink:
+    - ElasticSearchMultipleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
@@ -94,6 +94,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             return
 
     def run(self):
+        # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseMultiProcessModule.BaseMultiProcessModule.run(self)
 
@@ -103,31 +104,30 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
         while tries < 5 and not es:
             try:
                 # Connect to es node and round-robin between them.
-                self.logger.debug("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                self.logger.debug("Connecting to %s." % (self.getConfigurationValue("nodes")))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
-                                                 sniff_on_start=True,
-                                                 sniff_on_connection_fail=True,
+                                                 sniff_on_start=False,
+                                                 sniff_on_connection_fail=False,
                                                  sniff_timeout=10,
                                                  maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
                                                  http_auth=self.getConfigurationValue('http_auth'))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sConnection to %s failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("nodes"),  etype, evalue, Utils.AnsiColors.ENDC))
-                self.logger.warning("%sWaiting %s seconds before retring to connect.%s" % (Utils.AnsiColors.WARNING, (4 + tries), Utils.AnsiColors.ENDC))
+                self.logger.warning("Connection to %s failed. Exception: %s, Error: %s." % (self.getConfigurationValue("nodes"),  etype, evalue))
+                self.logger.warning("Waiting %s seconds before retring to connect." % ((4 + tries)))
                 time.sleep(4 + tries)
                 tries += 1
                 continue
         if not es:
-            self.logger.error("%sConnection to %s failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.logger.error("Connection to %s failed. Shutting down." % (self.getConfigurationValue("nodes")))
             self.gp.shutDown()
         else:
-            self.logger.debug("%sConnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.logger.debug("Connection to %s successful." % (self.getConfigurationValue("nodes")))
         return es
 
     def handleEvent(self, event):
-        event['gambolputty']['modpid'] = os.getpid()
         if self.format:
             publish_data = self.getConfigurationValue('format', event)
         else:
@@ -137,7 +137,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
 
     def dataToElasticSearchJson(self, index_name, events):
         """
-        Format data for elasticsearch bulk update
+        Format data for elasticsearch bulk update.
         """
         json_data = []
         for event in events:
@@ -145,7 +145,7 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
             routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
-                self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
             doc_id = json.dumps(doc_id.strip())
             if self.ttl:
@@ -156,16 +156,14 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
                 header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
             try:
                 json_data.append("\n".join((header, json.dumps(event), "\n")))
-            except:
-                pass
-        try:
-            json_data = "".join(json_data)
-        except UnicodeDecodeError:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+            except UnicodeDecodeError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
+        json_data = "".join(json_data)
         return json_data
 
     def storeData(self, events):
+        #started = time.time()
         index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True)
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
@@ -176,13 +174,13 @@ class ElasticSearchMultiProcessSink(BaseMultiProcessModule.BaseMultiProcessModul
             return True
         except elasticsearch.exceptions.ConnectionError:
             try:
-                self.logger.warning("%sLost connection to %s. Trying to reconnect.%s" % (Utils.AnsiColors.WARNING, (self.getConfigurationValue("nodes"),index_name), Utils.AnsiColors.ENDC))
+                self.logger.warning("Lost connection to %s. Trying to reconnect." % ((self.getConfigurationValue("nodes"),index_name)))
                 self.es = self.connect()
             except:
                 time.sleep(.5)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Server communication error. Exception: %s, Error: %s." % (etype, evalue))
             self.logger.debug("Payload: %s" % json_data)
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 self.es = self.connect()

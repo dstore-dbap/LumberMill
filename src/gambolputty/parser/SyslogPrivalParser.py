@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class SyslogPrivalParser(BaseThreadedModule.BaseThreadedModule):
     """
     It will parse the source field in the event dictionary for the default severity

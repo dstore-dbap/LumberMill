@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import types
 import msgpack
 import BaseThreadedModule
-import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
     """
     Decode:
@@ -19,7 +19,8 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - MsgPackParser:
-        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
         source_fields:                          # <default: 'data'; type: string||list; is: optional>
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
@@ -39,12 +40,34 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')
-        if self.getConfigurationValue('mode') == 'decode':
-            self.handleEvent = self.decodeEvent
+        if self.getConfigurationValue('action') == 'decode':
+            if self.getConfigurationValue('mode') == 'line':
+                self.handleEvent = self.decodeEventLine
+            else:
+                self.unpacker = msgpack.Unpacker()
+                self.handleEvent = self.decodeEventStream
         else:
             self.handleEvent = self.encodeEvent
 
-    def decodeEvent(self, event):
+    def decodeEventStream(self, event):
+        for source_field in self.source_fields:
+            if source_field not in event:
+                continue
+            self.unpacker.feed(event[source_field])
+            for decoded_data in self.unpacker:
+                if self.drop_original:
+                    event.pop(source_field, None)
+                if self.target_field:
+                    event.update({self.target_field: decoded_data})
+                else:
+                    try:
+                        event.update(decoded_data)
+                    except:
+                        etype, evalue, etb = sys.exc_info()
+                        self.logger.warning("Could not update event with msgpack data: %s. Exception: %s, Error: %s." % (decoded_data, etype, evalue))
+                yield event
+
+    def decodeEventLine(self, event):
         for source_field in self.source_fields:
             if source_field not in event:
                 continue
@@ -52,7 +75,7 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
                 decoded_data = msgpack.unpackb(event[source_field])
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sCould not parse msgpack event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event[source_field], etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("Could not parse msgpack event data: %s. Exception: %s, Error: %s." % (event[source_field], etype, evalue))
                 continue
             if self.drop_original:
                 event.pop(source_field, None)
@@ -63,7 +86,7 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
                     event.update(decoded_data)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("%sCould not update event with msgpack data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, decoded_data, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not update event with msgpack data: %s. Exception: %s, Error: %s." % (decoded_data, etype, evalue))
         yield event
 
     def encodeEvent(self, event):
@@ -81,8 +104,11 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
             encode_data = msgpack.packb(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not msgpack encode event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.warning("Could not msgpack encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
             yield event
             return
-        event.update({self.target_field: encode_data})
+        if self.source_fields == ['all']:
+            event = encode_data
+        else:
+            event.update({self.target_field: encode_data})
         yield event

@@ -2,12 +2,12 @@
 import sys
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 import socket
 import time
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send metrics to graphite server.
@@ -66,7 +66,7 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
             return connection
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to connect to %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.connection_data, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to connect to %s. Exception: %s, Error: %s." % (self.connection_data, etype, evalue))
             return False
 
     def prepareRun(self):
@@ -93,21 +93,21 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
                 return True
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Server communication error. Exception: %s, Error: %s." % (etype, evalue))
                 tries = 0
                 self.connection.close()
                 self.connection = None
                 while tries < 5 and not self.connection:
                     time.sleep(5)
-                    self.logger.warning("%sTrying to reconnect to %s.%s" % (Utils.AnsiColors.WARNING, self.connection_data, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Trying to reconnect to %s." % (self.connection_data))
                     # Try to reconnect.
                     self.connection = self.connect()
                     tries += 1
                 if not self.connection:
-                    self.logger.error("%sReconnect failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                    self.logger.error("Reconnect failed. Shutting down.")
                     self.gp.shutDown()
                 else:
-                    self.logger.info("%sReconnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.connection_data, Utils.AnsiColors.ENDC))
+                    self.logger.info("Reconnection to %s successful." % (self.connection_data))
 
     def shutDown(self):
         try:

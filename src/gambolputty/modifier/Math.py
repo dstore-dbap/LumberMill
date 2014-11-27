@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
-import pprint
 import Decorators
 import re
 import sys
@@ -39,10 +38,10 @@ class Math(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.results = []
-        function_str = "lambda event: " + self.dynamic_var_regex.sub(r"event.get('\1', False)", self.getConfigurationValue('function'))
+        function_str = "lambda event: " + re.sub('%\((.*?)\)s', r"event.get('\1', False)", self.getConfigurationValue('function'))
         self.function = self.compileFunction(function_str)
         if self.getConfigurationValue('results_function'):
-            function_str = "lambda results: "+ self.dynamic_var_regex.sub(r"results", self.getConfigurationValue('results_function'))
+            function_str = "lambda results: "+ re.sub('%\((.*?)\)s', r"results", self.getConfigurationValue('results_function'))
             self.results_function = self.compileFunction(function_str)
         self.target_field = self.getConfigurationValue('target_field')
         self.interval = self.getConfigurationValue('interval')
@@ -51,7 +50,7 @@ class Math(BaseThreadedModule.BaseThreadedModule):
         if self.getConfigurationValue('backend'):
             backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
             if not backend_info:
-                self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find %s backend for persistant storage." % (self.getConfigurationValue('backend')))
                 self.gp.shutDown()
                 return
             self.persistence_backend = backend_info['instances'][0]
@@ -61,7 +60,7 @@ class Math(BaseThreadedModule.BaseThreadedModule):
             lambda_function = eval(function_str)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to compile function: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, function_str, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to compile function: %s. Exception: %s, Error: %s." % (function_str, etype, evalue))
             self.gp.shutDown()
         return lambda_function
 
@@ -84,13 +83,11 @@ class Math(BaseThreadedModule.BaseThreadedModule):
     def evaluateResults(self):
         results = self.results
         self.results = []
-        pprint.pprint(results)
         try:
             result = self.results_function(results)
-            print("Result: %s" % result)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to evaluate result function %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('results_function'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to evaluate result function %s. Exception: %s, Error: %s." % (self.getConfigurationValue('results_function'), etype, evalue))
             return
         if self.target_field:
             event_dict = {self.target_field: result}
@@ -104,7 +101,7 @@ class Math(BaseThreadedModule.BaseThreadedModule):
             result = self.function(event)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to evaluate function %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('function'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to evaluate function %s. Exception: %s, Error: %s." % (self.getConfigurationValue('function'), etype, evalue))
         if self.interval:
             self.results.append(result)
         elif self.target_field:

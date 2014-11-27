@@ -48,13 +48,13 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 # Import module into namespace of object. Otherwise it will not be accessible when process was forked.
                 self.gzip_module = __import__('gzip')
             except ImportError:
-                self.logger.error('%sGzip compression selected but gzip module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('Gzip compression selected but gzip module could not be loaded.')
                 self.gp.shutDown()
         if self.compress == 'snappy':
             try:
                 self.snappy_module = __import__('snappy')
             except ImportError:
-                self.logger.error('%sSnappy compression selected but snappy module could not be loaded.%s' % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+                self.logger.error('Snappy compression selected but snappy module could not be loaded.')
                 self.gp.shutDown()
 
     def ensurePathExists(self, path):
@@ -83,7 +83,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 self.ensurePathExists(path)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('%sCould no create path %s. Events could not be written. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error('Could no create path %s. Events could not be written. Excpeption: %s, Error: %s.' % (path, etype, evalue))
                 return
             mode = "a+"
             if self.compress == 'gzip':
@@ -101,7 +101,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 return True
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('%sCould no write event data to %s. Excpeption: %s, Error: %s.%s' % (Utils.AnsiColors.FAIL, path, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error('Could no write event data to %s. Excpeption: %s, Error: %s.' % (path, etype, evalue))
 
     def shutDown(self):
         self.buffer.flush()

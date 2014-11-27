@@ -4,10 +4,10 @@ import sys
 import collections
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class MergeEvent(BaseThreadedModule.BaseThreadedModule):
     """
     Merge multiple event into a single one.
@@ -53,7 +53,7 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
                 self.pattern = re.compile(self.getConfigurationValue('pattern'))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sRegEx error for pattern %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('pattern'), etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("RegEx error for pattern %s. Exception: %s, Error: %s." % (self.getConfigurationValue('pattern'), etype, evalue))
                 self.gp.shutDown()
         self.match_field = self.getConfigurationValue('match_field')
         self.buffer_size = self.getConfigurationValue('buffer_size')

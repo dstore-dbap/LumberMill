@@ -64,7 +64,7 @@ class Permutate(BaseThreadedModule.BaseThreadedModule):
                     event_copy.update(ctx_data)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("%sCould not add context data. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not add context data. Exception: %s, Error: %s." % (etype, evalue))
             perm = dict(zip(target_field_names, permutation))
             event_copy.update(perm)
             yield event_copy

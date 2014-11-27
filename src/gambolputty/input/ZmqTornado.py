@@ -4,11 +4,11 @@ import sys
 import zmq
 import BaseModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 from zmq.eventloop import ioloop, zmqstream
 ioloop.install()
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class ZmqTornado(BaseModule.BaseModule):
     """
     Read events from a zeromq.
@@ -60,7 +60,7 @@ class ZmqTornado(BaseModule.BaseModule):
                     self.client.bind('tcp://%s:%s' % (server_addr, server_port))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not connect to zeromq at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, server, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (server, etype, evalue))
                 self.gp.shutDown()
             self.client = zmqstream.ZMQStream(self.client)
             self.client.on_recv(self.onReceive)

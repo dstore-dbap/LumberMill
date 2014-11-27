@@ -13,8 +13,7 @@ class TestSpam(ModuleBaseTestCase.ModuleBaseTestCase):
     def testSpam(self):
         self.test_object.configure({'event': {'Lobster': 'Thermidor', 'Truffle': 'Pate'},
                                     'events_count': 985})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         self.test_object.start()
         count = 0
         time.sleep(1)

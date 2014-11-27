@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import logging
 import time
 import socket
-from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.tcpserver import TCPServer
+from tornado.netutil import bind_sockets
 from tornado import autoreload
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
+
 
 class TornadoTcpServer(TCPServer):
 
@@ -40,18 +42,17 @@ class ConnectionHandler(object):
                     self.stream.read_until_regex(self.regex_separator, self._on_read_line)
                 elif self.mode == 'line':
                     self.stream.read_until(self.simple_separator, self._on_read_line)
-            else:
+                else:
                     self.stream.read_bytes(self.chunksize, self._on_read_chunk)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
 
     def _on_read_line(self, data):
         data = data.strip()
         if data == "":
             return
-        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
-        self.gp_module.sendEvent(event)
+        self.sendEvent(data)
         try:
             if not self.stream.reading():
                 if self.regex_separator:
@@ -62,14 +63,13 @@ class ConnectionHandler(object):
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
 
     def _on_read_chunk(self, data):
         data = data.strip()
         if data == "":
             return
-        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
-        self.gp_module.sendEvent(event)
+        self.sendEvent(data)
         try:
             if not self.stream.reading():
                 self.stream.read_bytes(self.chunksize, self._on_read_chunk)
@@ -77,27 +77,29 @@ class ConnectionHandler(object):
             pass
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to read from socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.address, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
 
     def _on_close(self):
         # Send remaining buffer if neccessary.
-        if self.gp_module.getConfigurationValue('mode') == 'stream' and self.stream._read_buffer_size > 0:
+        if self.mode == 'stream' and self.stream._read_buffer_size > 0:
             data = ""
             while True:
                 try:
                     data += self.stream._read_buffer.popleft().strip()
                 except IndexError:
                     if data != "":
-                        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port))
-                        self.gp_module.sendEvent(event)
+                        self.sendEvent(data)
                     break
         self.stream.close()
 
-@ModuleDocstringParser
-class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
+    def sendEvent(self, data):
+        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port)))
+
+@Decorators.ModuleDocstringParser
+class TcpServerMultipleWorker(BaseThreadedModule.BaseThreadedModule):
     r"""
-    Reads data from tcp socket and sends it to its output queues.
-    Should be the best choice perfomancewise if you are on Linux.
+    Reads data from tcp socket and sends it to its outputs.
+    Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
     interface:  Ipaddress to listen on.
     port:       Port to listen on.
@@ -131,7 +133,7 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_forked = False
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method
@@ -139,33 +141,26 @@ class TcpServerTornado(BaseThreadedModule.BaseThreadedModule):
         self.server = False
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240
         self.start_ioloop = False
-
-    def start(self):
-        #if not self.receivers:
-        #    self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
-        #    return
         try:
-            ssl_options = None
-            if self.getConfigurationValue("tls"):
-                ssl_options = { 'certfile': self.getConfigurationValue("cert"),
-                                'keyfile': self.getConfigurationValue("key")}
-            self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
-            self.server.listen(self.getConfigurationValue("port"), self.getConfigurationValue("interface"))
-            for fd, server_socket in self.server._sockets.items():
+            self.sockets = bind_sockets(self.getConfigurationValue("port"), self.getConfigurationValue("interface"), backlog=128)
+            for server_socket in self.sockets:
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
-                                                                                       self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s." % (self.getConfigurationValue("interface"),
+                                                                                        self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
             return
         autoreload.add_reload_hook(self.shutDown)
-        if self.start_ioloop:
-            try:
-                IOLoop.instance().start()
-            except ValueError:
-                # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
-                pass
+
+    def prepareRun(self):
+        ssl_options = None
+        if self.getConfigurationValue("tls"):
+            ssl_options = { 'certfile': self.getConfigurationValue("cert"),
+                            'keyfile': self.getConfigurationValue("key")}
+        self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
+        self.server.add_sockets(self.sockets)
+        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def shutDown(self):
         try:

@@ -59,7 +59,7 @@ class FacetV2(BaseThreadedModule.BaseThreadedModule):
         if self.getConfigurationValue('backend'):
             backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
             if not backend_info:
-                self.logger.error("%sCould not find %s backend for persistant storage.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('backend'), Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find %s backend for persistant storage." % (self.getConfigurationValue('backend')))
                 self.gp.shutDown()
                 return
             self.persistence_backend = backend_info['instances'][0]
@@ -92,7 +92,7 @@ class FacetV2(BaseThreadedModule.BaseThreadedModule):
                 FacetV2.backend_keys.append(key)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("%sCould not store facet data in persistance backend. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.WARNING))
+            self.logger.warning("Could not store facet data in persistance backend. Exception: %s, Error: %s." % (etype, evalue))
             pass
 
     def setFacetData(self, key, facet_info):
@@ -185,7 +185,7 @@ class FacetV2(BaseThreadedModule.BaseThreadedModule):
             return
         key = event[self.group_by_field]
         if not key and self.persistence_backend:
-            self.logger.warning("%sGroup_by value %s could not be generated. Event ignored.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue('group_by'), Utils.AnsiColors.ENDC))
+            self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event
             return
         key = "FacetValues:%s" % key

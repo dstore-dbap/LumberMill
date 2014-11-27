@@ -6,7 +6,7 @@ from tornado import netutil,ioloop
 from tornado.tcpserver import TCPServer
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
 class SocketServer(TCPServer):
@@ -40,7 +40,7 @@ class ConnectionHandler(object):
     def _on_close(self):
         self.stream.close()
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from an unix socket and sends it to its output queues.
@@ -63,20 +63,20 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
 
     def run(self):
         if not self.receivers:
-            self.logger.error("%sWill not start module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
             return
         try:
             self.unix_socket = netutil.bind_unix_socket(self.getConfigurationValue('path_to_socket'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sWill not start module %s. Could not create unix socket %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, self.getConfigurationValue('path_to_socket'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Will not start module %s. Could not create unix socket %s. Exception: %s, Error: %s." % (self.__class__.__name__, self.getConfigurationValue('path_to_socket'), etype, evalue))
             return
         try:
             self.server = SocketServer(gp_module=self)
             self.server.add_socket(self.unix_socket)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not access socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not access socket %s. Exception: %s, Error: %s" % (self.getConfigurationValue("path_to_socket"), etype, evalue))
             return
         self.running = True
         #self.server.start(0)
@@ -88,5 +88,5 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
                 os.remove(self.getConfigurationValue('path_to_socket'))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not remove socket %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("path_to_socket"), etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not remove socket %s. Exception: %s, Error: %s" % (self.getConfigurationValue("path_to_socket"), etype, evalue))
         return

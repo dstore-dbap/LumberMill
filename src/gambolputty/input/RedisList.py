@@ -3,10 +3,10 @@ import sys
 import redis
 import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class RedisList(BaseThreadedModule.BaseThreadedModule):
     """
     Subscribes to a redis channels/lists and passes incoming events to receivers.
@@ -48,7 +48,7 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
             self.client.ping()
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
     def getEventFromInputQueue(self):
@@ -57,7 +57,7 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
             return event
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("%sCould not read data from redis list(s) %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, self.lists, exc_type, exc_value, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
 
     def handleEvent(self, event):
         yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)

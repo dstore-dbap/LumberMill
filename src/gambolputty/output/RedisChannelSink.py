@@ -47,7 +47,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
                                       db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not connect to redis store at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('server'),etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'),etype, evalue))
 
     def prepareRun(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
@@ -62,7 +62,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.client.publish(self.getConfigurationValue('channel', event), publish_event)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not publish event to redis channel %s at %s. Excpeption: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL,self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not publish event to redis channel %s at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue))
         yield None
 
     def __handleEvent(self, event):

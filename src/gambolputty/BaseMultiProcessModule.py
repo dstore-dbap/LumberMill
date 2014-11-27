@@ -6,6 +6,7 @@ import signal
 import Utils
 import BaseModule
 
+
 class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
     """
     Base class for all gambolputty modules that will run as separate processes.
@@ -64,14 +65,14 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
             # Only issue warning for those modules that are expected to have receivers.
             # TODO: A better solution should be implemented...
             if self.module_type not in ['stand_alone', 'output']:
-                self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
-                return
+                self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
+                return False
         if not self.input_queue:
             # Only issue warning for those modules that are expected to have an input queue.
             # TODO: A better solution should be implemented...
             if self.module_type not in ['stand_alone', 'input']:
-                self.logger.error("%sShutting down module %s since no input queue set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
-                return
+                self.logger.error("Shutting down module %s since no input queue set." % (self.__class__.__name__))
+                return False
         self.alive = True
         self.process_id = os.getpid()
         while self.alive:

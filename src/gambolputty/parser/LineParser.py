@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import types
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class LineParser(BaseThreadedModule.BaseThreadedModule):
     r"""
     Line parser.

@@ -17,6 +17,7 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'delimiter': ';',
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'csv-data': """It's;just;a;flesh;wound."""})
         for event in self.test_object.handleEvent(data):
             self.assertTrue('brain' in event and event['brain'] == "just" )
@@ -29,6 +30,7 @@ class TestCsvParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'delimiter': '#',
                   'fieldnames': ["gumby", "brain", "specialist"] }
         self.test_object.configure(config)
+        self.checkConfiguration()
         data = Utils.getDefaultEventDict({'csv-data': """It's#just#a#flesh#wound."""})
         for event in self.test_object.handleEvent(data):
             self.assertTrue('brain' in event and event['brain'] == "just" )

@@ -7,11 +7,15 @@ import socket
 import pcapy
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
+from impacket.ImpactDecoder import EthDecoder
+from impacket.ImpactPacket import IP, TCP, UDP, ICMP
 
-ETH_PROTOCOLS = {'0x8': 'IPv4'}
+PROTOCOL_TO_NAMES = {'eth': 'Ethernet',
+                     '0x8': 'IPv4'}
 
-@ModuleDocstringParser
+
+@Decorators.ModuleDocstringParser
 class Sniffer(BaseThreadedModule.BaseThreadedModule):
     """
     Sniff network traffic. Needs root privileges.
@@ -46,36 +50,35 @@ class Sniffer(BaseThreadedModule.BaseThreadedModule):
         self.promiscous_mode = 1 if self.getConfigurationValue('promiscous') else 0
         self.kv_store = self.getConfigurationValue('key_value_store') if self.getConfigurationValue('key_value_store') else {}
         self.packet_decoders = {}
-        for ether_type, ether_protocol in ETH_PROTOCOLS.items():
+        for ether_type, ether_protocol in PROTOCOL_TO_NAMES.items():
             if "decodePacket%s" % ether_protocol in dir(self):
                 self.packet_decoders[ether_type] = getattr(self, "decodePacket%s" % ether_protocol)
         try:
             self.sniffer = pcapy.open_live(self.interface, 65536, self.promiscous_mode, 100)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sSniffer could not be created. Exception: %s, Error: %s.%s" %(Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Sniffer could not be created. Exception: %s, Error: %s." % (etype, evalue))
             self.gp.shutDown()
         if self.getConfigurationValue('packetfilter'):
             self.sniffer.setfilter(self.getConfigurationValue('packetfilter'))
+        self.link_layer = self.sniffer.datalink()
 
     def getPacketDecoder(self, packet_protocol):
-        if packet_protocol not in ETH_PROTOCOLS:
-            return None
         try:
             return self.packet_decoders[packet_protocol]
         except KeyError:
             # Try to find a matching decoder.
-            protocol_name = ETH_PROTOCOLS[packet_protocol]
+            protocol_name = PROTOCOL_TO_NAMES[packet_protocol]
             try:
                 packet_decoder_name = 'PacketDecoder%s' % protocol_name
                 self.packet_decoders[packet_protocol] = globals()[packet_decoder_name]()
                 return self.packet_decoders[packet_protocol]
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not find packet decoder for protocol %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, protocol_name, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find packet decoder for protocol %s. Exception: %s, Error: %s." % (protocol_name, etype, evalue))
                 return None
 
-    def decodePacket(self, packet_protocol, packet):
+    def decodePacket(self, packet, packet_protocol):
         decoder = self.getPacketDecoder(packet_protocol)
         if not decoder:
             return packet
@@ -90,7 +93,8 @@ class Sniffer(BaseThreadedModule.BaseThreadedModule):
                 pass
             if not packet:
                 continue
-            decoded_packet = Utils.getDefaultEventDict({'protocols': ['ethernet'], 'data': packet[14:], 'packet_size': pcap_header.getlen()}, caller_class_name=self.__class__.__name__)
+            p = self.decodePacket(packet, 'eth')
+            decoded_packet = Utils.getDefaultEventDict({'protocols': ['ethernet'], 'data': packet, 'packet_size': pcap_header.getlen()}, caller_class_name=self.__class__.__name__)
             decoded_packet['gambolputty']['event_type'] = 'PcapSniffer'
             dest_mac, source_mac, proto_type = struct.unpack("!6s6sH", packet[:14])
             decoded_packet['source_mac'] = ':'.join('%02x' % ord(byte) for byte in source_mac)
@@ -100,6 +104,7 @@ class Sniffer(BaseThreadedModule.BaseThreadedModule):
             packet_protocol = hex(socket.ntohs(proto_type))
             decoded_packet = self.decodePacket(packet_protocol, decoded_packet)
             self.sendEvent(decoded_packet)
+
 
 class BasePacketDecoder:
 
@@ -122,8 +127,20 @@ class BasePacketDecoder:
                 return self.packet_decoders[packet_protocol]
             except:
                 #etype, evalue, etb = sys.exc_info()
-                #self.logger.error("%sCould not find packet decoder for protocol %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, protocol_name, etype, evalue, Utils.AnsiColors.ENDC))
+                #self.logger.error("Could not find packet decoder for protocol %s. Exception: %s, Error: %s." % (protocol_name, etype, evalue))
                 return None
+
+
+class PacketDecoderEthernet(BasePacketDecoder):
+    def __init__(self):
+        BasePacketDecoder.__init__(self)
+        self.decoder = EthDecoder()
+
+    def decodePacket(self, packet):
+        decoded_packet = self.decoder.decode(packet)
+        next_layer_packet = decoded_packet.child()
+        #pprint.pprint(dir(next_layer_packet))
+        print(isinstance(next_layer_packet,IP))
 
 class PacketDecoderIPv4(BasePacketDecoder):
 
@@ -143,8 +160,8 @@ class PacketDecoderIPv4(BasePacketDecoder):
         ip_header_length = ihl * 4
         ttl = ip_header[5]
         ip_protocol = hex(ip_header[6])
-        s_addr = socket.inet_ntoa(ip_header[8]);
-        d_addr = socket.inet_ntoa(ip_header[9]);
+        s_addr = socket.inet_ntoa(ip_header[8])
+        d_addr = socket.inet_ntoa(ip_header[9])
         packet['protocols'].append('IPv4')
         packet.update({'version': version,
                        'ttl': ttl,
@@ -291,8 +308,6 @@ class PacketDecoderTCP(BasePacketDecoder):
         543: 'KLOGIN',
         544: 'KSHELL',
         548: 'AFPOVERTCP',
-        548: 'AFPOVERTCP',
-        556: 'REMOTEFS',
         1080: 'SOCKS'
     }
 
@@ -333,7 +348,7 @@ class PacketDecoderTCP(BasePacketDecoder):
         if flow_id in self.flows:
             tcp_protocol = self.flows[flow_id]
         if packet['tcp_ctrl_flags'] in (['syn'], ['ack']) and flow_id not in self.flows:
-            self.flows[flow_id] = dest_port
+            tcp_protocol = self.flows[flow_id] = dest_port
         elif packet['tcp_ctrl_flags'] in (['fin'], ['rst']) and flow_id in self.flows:
             del self.flows[flow_id]
         if tcp_protocol:

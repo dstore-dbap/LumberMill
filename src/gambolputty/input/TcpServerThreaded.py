@@ -8,7 +8,7 @@ import socket
 import Queue
 import Utils
 import BaseModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
@@ -81,9 +81,9 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
                 event = Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded')
                 self.tcp_server_instance.sendEvent(event)
         except socket.error, e:
-           self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+           self.logger.warning("Error occurred while reading from socket. Error: %s" % (e))
         except socket.timeout, e:
-            self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+            self.logger.warning("Timeout occurred while reading from socket. Error: %s" % (e))
 
 class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
 
@@ -117,11 +117,11 @@ class TCPRequestHandlerFactory:
             return ThreadedTCPRequestHandler(tcp_server_instance, *args, **keys)
         return createHandler
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class TcpServerThreaded(BaseModule.BaseModule):
     """
     Reads data from tcp socket and sends it to its output queues.
-    This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
+    This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerSingleWorker or TcpServerMultipleWorker.
 
     Configuration template:
 
@@ -146,7 +146,7 @@ class TcpServerThreaded(BaseModule.BaseModule):
 
     def run(self):
         if not self.receivers:
-            self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
             return
         handler_factory = TCPRequestHandlerFactory()
         try:
@@ -159,8 +159,8 @@ class TcpServerThreaded(BaseModule.BaseModule):
                                              cert=self.getConfigurationValue("cert"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
-                                                                                            self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
+                                                                                            self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
             return
         # Start a thread with the server -- that thread will then start one

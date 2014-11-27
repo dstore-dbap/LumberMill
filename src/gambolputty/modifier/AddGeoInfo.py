@@ -55,7 +55,7 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             self.gi = pygeoip.GeoIP(configuration['geoip_dat_path'], pygeoip.MEMORY_CACHE)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not init %s. Exception: %s, Error: %s. %s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not init %s. Exception: %s, Error: %s. " % (self.__class__.__name__, etype, evalue))
         if not self.gi:
             self.gp.shutDown()
             return False

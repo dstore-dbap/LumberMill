@@ -1,23 +1,5 @@
 input modules
 ==========
-#####FileQueue
-
-Stores all received events in a file based queue for persistance.
-
-path: Path to queue file.
-store_interval_in_secs: sending data to es in x seconds intervals.
-batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
-
-Configuration template:
-
-    - FileQueueSink:
-        path:                           # <type: string; is: required>
-        store_interval_in_secs:         # <default: 10; type: integer; is: optional>
-        batch_size:                     # <default: 500; type: integer; is: optional>
-        receivers:
-          - NextModule
-
-
 #####NmapScanner
 
 Scan network with nmap and emit result as new event.
@@ -80,24 +62,6 @@ Configuration template:
           - NextModule
 
 
-#####ScapyNetSniffer
-
-Sniff network traffic. Needs root privileges.
-
-interface: Sets interface to listen on. Default is to listen on all interfaces.
-packetfilter: Sets a filter for incoming traffic. Berkley packet filter is used, e.g.: 'tcp and port 80' (@see tcpdump).
-promiscous: Sets interface to promiscous mode. Needs root privileges.
-
-Configuration template:
-
-    - TcpSniffer:
-        interface:          # <type: None||string; default: None; is: optional>
-        packetfilter:       # <type: None||string; default: None; is: optional>
-        promiscous:         # <type: boolean; default: False; is: optional>
-        receivers:
-          - NextModule
-
-
 #####Sniffer
 
 Sniff network traffic. Needs root privileges.
@@ -155,170 +119,10 @@ Configuration template:
           - NextModule
 
 
-#####TornadoTcpServer
+#####TcpServerMultipleWorker
 
-Reads data from tcp socket and sends it to its output queues.
-Should be the best choice perfomancewise if you are on Linux.
-
-interface:  Ipaddress to listen on.
-port:       Port to listen on.
-timeout:    Sockettimeout in seconds.
-tls:        Use tls or not.
-key:        Path to tls key file.
-cert:       Path to tls cert file.
-mode:       Receive mode, line or stream.
-simple_separator:  If mode is line, set separator between lines.
-regex_separator:   If mode is line, set separator between lines. Here regex can be used.
-chunksize:  If mode is stream, set chunksize in bytes to read from stream.
-max_buffer_size: Max kilobytes to in receiving buffer.
-
-Configuration template:
-
-    - TcpServerTornado:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-        simple_separator:                # <default: '\n'; type: string; is: optional>
-        regex_separator:                 # <default: None; type: None||string; is: optional>
-        chunksize:                       # <default: 16384; type: integer; is: optional>
-        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
-        receivers:
-          - NextModule
-
-
-#####ThreadPoolMixIn
-
-Use a thread pool instead of a new thread on every request.
-
-Using a threadpool prevents the spawning of a new thread for each incoming
-request. This should increase performance a bit.
-
-See: http://code.activestate.com/recipes/574454/
-"""
-numThreads = 15
-allow_reuse_address = True  # seems to fix socket.error on server restart
-alive = True
-
-def serve_forever(self):
-"""
-Handle one request at a time until doomsday.
-"""
-# Set up the threadpool.
-self.requests = Queue.Queue(self.numThreads)
-
-for x in range(self.numThreads):
-t = threading.Thread(target=self.process_request_thread)
-t.setDaemon(1)
-t.start()
-
-# server main loop
-while self.alive:
-self.handle_request()
-self.server_close()
-
-
-def process_request_thread(self):
-"""
-obtain request from queue instead of directly from server socket
-"""
-while True:
-SocketServer.ThreadingMixIn.process_request_thread(self, *self.requests.get())
-
-
-def handle_request(self):
-"""
-simply collect requests and put them on the queue for the workers.
-"""
-try:
-request, client_address = self.get_request()
-except:
-etype, evalue, etb = sys.exc_info()
-print "Exception: %s, Error: %s." % (etype, evalue)
-return
-#if self.verify_request(request, client_address):
-self.requests.put((request, client_address))
-
-
-class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
-def __init__(self, tcp_server_instance, *args, **keys):
-self.tcp_server_instance = tcp_server_instance
-self.logger = logging.getLogger(self.__class__.__name__)
-SocketServer.BaseRequestHandler.__init__(self, *args, **keys)
-
-def handle(self):
-try:
-host, port = self.request.getpeername()
-data = True
-while data:
-data = self.rfile.readline().strip()
-if data == "":
-continue
-event = Utils.getDefaultEventDict({"received_from": "%s" % host, "data": data}, caller_class_name='TcpServerThreaded')
-self.tcp_server_instance.sendEvent(event)
-except socket.error, e:
-self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
-except socket.timeout, e:
-self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
-
-class ThreadedTCPServer(ThreadPoolMixIn, SocketServer.TCPServer):
-
-allow_reuse_address = True
-
-def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
-SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
-self.socket.settimeout(timeout)
-self.use_tls = tls
-self.timeout = timeout
-if tls:
-self.socket = ssl.wrap_socket(self.socket,
-server_side=True,
-keyfile=key,
-certfile=cert,
-cert_reqs=ssl.CERT_NONE,
-ssl_version=ssl_ver,
-do_handshake_on_connect=False,
-suppress_ragged_eofs=True)
-
-def get_request(self):
-(socket, addr) = SocketServer.TCPServer.get_request(self)
-if self.use_tls:
-socket.settimeout(self.timeout)
-socket.do_handshake()
-return (socket, addr)
-
-class TCPRequestHandlerFactory:
-def produce(self, tcp_server_instance):
-def createHandler(*args, **keys):
-return ThreadedTCPRequestHandler(tcp_server_instance, *args, **keys)
-return createHandler
-
-@ModuleDocstringParser
-class TcpServerThreaded(BaseModule.BaseModule):
-"""
-Reads data from tcp socket and sends it to its output queues.
-This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
-
-Configuration template:
-
-    - TcpServerThreaded:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-        receivers:
-          - NextModule
-
-
-#####TornadoTcpServer
-
-Reads data from tcp socket and sends it to its output queues.
-Should be the best choice perfomancewise if you are on Linux.
+Reads data from tcp socket and sends it to its outputs.
+Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
 interface:  Ipaddress to listen on.
 port:       Port to listen on.
@@ -350,117 +154,48 @@ Configuration template:
           - NextModule
 
 
-#####ThreadPoolMixIn
+#####TcpServerSingleWorker
 
-Use a thread pool instead of a new thread on every request.
-
-Using a threadpool prevents the spawning of a new thread for each incoming
-request. This should increase performance a bit.
-
-See: http://code.activestate.com/recipes/574454/
-"""
-numThreads = 15
-allow_reuse_address = True  # seems to fix socket.error on server restart
-alive = True
-
-def serve_forever(self):
-"""
-Handle one request at a time until doomsday.
-"""
-# Set up the threadpool.
-self.requests = Queue.Queue(self.numThreads)
-
-for x in range(self.numThreads):
-t = threading.Thread(target=self.process_request_thread)
-t.setDaemon(1)
-t.start()
-
-# server main loop
-while self.alive:
-self.handle_request()
-self.server_close()
-
-
-def process_request_thread(self):
-"""
-obtain request from queue instead of directly from server socket
-"""
-while True:
-SocketServer.ThreadingMixIn.process_request_thread(self, *self.requests.get())
-
-
-def handle_request(self):
-"""
-simply collect requests and put them on the queue for the workers.
-"""
-try:
-request, client_address = self.get_request()
-except:
-etype, evalue, etb = sys.exc_info()
-print "Exception: %s, Error: %s." % (etype, evalue)
-return
-#if self.verify_request(request, client_address):
-self.requests.put((request, client_address))
-
-
-class ThreadedUdpRequestHandler(SocketServer.BaseRequestHandler):
-
-def __init__(self, udp_server_instance, *args, **keys):
-self.udp_server_instance = udp_server_instance
-self.logger = logging.getLogger(self.__class__.__name__)
-SocketServer.BaseRequestHandler.__init__(self, *args, **keys)
-
-def handle(self):
-try:
-data = self.request[0].strip()
-if data == "":
-return
-host = self.client_address[0]
-port = self.client_address[1]
-event = Utils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port),caller_class_name='UdpServer')
-self.udp_server_instance.sendEvent(event)
-except socket.error, e:
-self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
-except socket.timeout, e:
-self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
-
-class ThreadedUdpServer(ThreadPoolMixIn, SocketServer.UDPServer):
-
-allow_reuse_address = True
-
-def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
-SocketServer.UDPServer.__init__(self, server_address, RequestHandlerClass)
-self.socket.settimeout(timeout)
-self.use_tls = tls
-self.timeout = timeout
-if tls:
-self.socket = ssl.wrap_socket(self.socket,
-server_side=True,
-keyfile=key,
-certfile=cert,
-cert_reqs=ssl.CERT_NONE,
-ssl_version=ssl_ver,
-do_handshake_on_connect=False,
-suppress_ragged_eofs=True)
-
-def get_request(self):
-(socket, addr) = SocketServer.UDPServer.get_request(self)
-if self.use_tls:
-socket.settimeout(self.timeout)
-socket.do_handshake()
-return (socket, addr)
-
-class UdpRequestHandlerFactory:
-def produce(self, tcp_server_instance):
-def createHandler(*args, **keys):
-return ThreadedUdpRequestHandler(tcp_server_instance, *args, **keys)
-return createHandler
-
-@ModuleDocstringParser
-class UdpServer(BaseModule.BaseModule):
-"""
 Reads data from tcp socket and sends it to its output queues.
-This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerTornado.
+Should be the best choice perfomancewise if you are on Linux and are running with only one worker.
+If running with multiple workers, consider using
+
+interface:  Ipaddress to listen on.
+port:       Port to listen on.
+timeout:    Sockettimeout in seconds.
+tls:        Use tls or not.
+key:        Path to tls key file.
+cert:       Path to tls cert file.
+mode:       Receive mode, line or stream.
+simple_separator:  If mode is line, set separator between lines.
+regex_separator:   If mode is line, set separator between lines. Here regex can be used.
+chunksize:  If mode is stream, set chunksize in bytes to read from stream.
+max_buffer_size: Max kilobytes to in receiving buffer.
+parser:     Parser for received data.
+
+Configuration template:
+
+    - TcpServerTornado:
+        interface:                       # <default: ''; type: string; is: optional>
+        port:                            # <default: 5151; type: integer; is: optional>
+        timeout:                         # <default: None; type: None||integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
+        simple_separator:                # <default: '\n'; type: string; is: optional>
+        regex_separator:                 # <default: None; type: None||string; is: optional>
+        chunksize:                       # <default: 16384; type: integer; is: optional>
+        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
+        parsers:                         # <default: None; type: None||list; is: optional>
+        receivers:
+          - NextModule
+
+
+#####TcpServerThreaded
+
+Reads data from tcp socket and sends it to its output queues.
+This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerSingleWorker or TcpServerMultipleWorker.
 
 Configuration template:
 
@@ -475,7 +210,24 @@ Configuration template:
           - NextModule
 
 
-#####SocketServer
+#####UdpServer
+
+Reads data from udp socket and sends it to its output queues.
+
+Configuration template:
+
+    - UdpServer:
+        interface:                       # <default: ''; type: string; is: optional>
+        port:                            # <default: 5151; type: integer; is: optional>
+        timeout:                         # <default: None; type: None||integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        receivers:
+          - NextModule
+
+
+#####UnixSocket
 
 Reads data from an unix socket and sends it to its output queues.
 

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
 import time
 import elasticsearch
@@ -25,8 +24,9 @@ else:
     if not json:
         raise ImportError
 
+
 @Decorators.ModuleDocstringParser
-class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
+class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -55,7 +55,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - ElasticSearchSink:
+    - ElasticSearchSingleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
@@ -78,6 +78,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        if self.gp.workers > 1:
+            self.logger.warning("Hint: Running ElasticSearchSingleWorkerSink with multiple workers will not give you the best perforamce. Using ElasticSearchMultipleWorkerSink will yield better event throughput.")
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -104,7 +106,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         while tries < 5 and not es:
             try:
                 # Connect to es node and round-robin between them.
-                self.logger.debug("%sConnecting to %s.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+                self.logger.debug("Connecting to %s." % self.getConfigurationValue("nodes"))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
                                                  sniff_on_start=False,
@@ -115,16 +117,16 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                                                  http_auth=self.getConfigurationValue('http_auth'))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sConnection to %s failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, self.getConfigurationValue("nodes"),  etype, evalue, Utils.AnsiColors.ENDC))
-                self.logger.warning("%sWaiting %s seconds before retring to connect.%s" % (Utils.AnsiColors.WARNING, (4 + tries), Utils.AnsiColors.ENDC))
+                self.logger.warning("Connection to %s failed. Exception: %s, Error: %s." % (self.getConfigurationValue("nodes"),  etype, evalue))
+                self.logger.warning("Waiting %s seconds before retring to connect." % ((4 + tries)))
                 time.sleep(4 + tries)
                 tries += 1
                 continue
         if not es:
-            self.logger.error("%sConnection to %s failed. Shutting down.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.logger.error("Connection to %s failed. Shutting down." % (self.getConfigurationValue("nodes")))
             self.gp.shutDown()
         else:
-            self.logger.debug("%sConnection to %s successful.%s" % (Utils.AnsiColors.LIGHTBLUE, self.getConfigurationValue("nodes"), Utils.AnsiColors.ENDC))
+            self.logger.debug("Connection to %s successful." % (self.getConfigurationValue("nodes")))
         return es
 
     def handleEvent(self, event):
@@ -134,13 +136,6 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             publish_data = event
         self.buffer.append(publish_data)
         yield None
-        #try:
-        #    self.buffer.append(publish_data)
-        #except:
-        #    if self.do_print:
-        #        print("Buffer failed for %s" % (self.index_name_pattern))
-        #    self.do_print = False
-        #yield None
 
     def dataToElasticSearchJson(self, index_name, events):
         """
@@ -152,7 +147,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
             routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
-                self.logger.error("%sCould not find doc_id %s for event %s.%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("doc_id"), event, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
             doc_id = json.dumps(doc_id.strip())
             if self.ttl:
@@ -165,7 +160,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                 json_data.append("\n".join((header, json.dumps(event), "\n")))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error("%sCould not json encode %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, event, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
         json_data = "".join(json_data)
         return json_data
 
@@ -180,13 +175,13 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             #print "Bulk update of %s events took %s." % (len(events), time.time() - started)
         except elasticsearch.exceptions.ConnectionError:
             try:
-                self.logger.warning("%sLost connection to %s. Trying to reconnect.%s" % (Utils.AnsiColors.WARNING, (self.getConfigurationValue("nodes"),index_name), Utils.AnsiColors.ENDC))
+                self.logger.warning("Lost connection to %s. Trying to reconnect." % ((self.getConfigurationValue("nodes"),index_name)))
                 self.es = self.connect()
             except:
                 time.sleep(.5)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sServer communication error. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Server communication error. Exception: %s, Error: %s." % (etype, evalue))
             self.logger.debug("Payload: %s" % json_data)
             if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                 self.es = self.connect()
@@ -196,3 +191,4 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             self.buffer.flush()
         except:
             pass
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

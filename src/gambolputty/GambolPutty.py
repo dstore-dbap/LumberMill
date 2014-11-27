@@ -82,12 +82,17 @@ class GambolPutty():
         if queue_type == 'simple':
             queue =  Queue.Queue(queue_max_size)
         if queue_type == 'multiprocess':
-            if Utils.zmq_avaiable and Utils.msgpack_avaiable:
-                queue = Utils.ZeroMqMpQueue(queue_max_size)
-            else:
-                queue = multiprocessing.Queue(queue_max_size)
+            # At the moment I ran into a problem with zmq.
+            # This problem causes the performance to be comparable with the normal python multiprocessing.Queue.
+            # To make things worse, the load balancing between multiple workers is better when using multiprocessing.Queue.
+            # TODO: Analyze this problem more thoroughly.
+            #if Utils.zmq_avaiable and Utils.msgpack_avaiable:
+            #    queue = Utils.ZeroMqMpQueue(queue_max_size)
+            #else:
+            #    queue = multiprocessing.Queue(queue_max_size)
+            queue = multiprocessing.Queue(queue_max_size)
         if not queue:
-            self.logger.error("%sCould not produce requested queue %s.%s" % (Utils.AnsiColors.WARNING, queue_type, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not produce requested queue %s." % (queue_type))
             self.shutDown()
         return queue
 
@@ -102,8 +107,7 @@ class GambolPutty():
             self.configuration = yaml.load(conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not read config file %s. Exception: %s, Error: %s.%s" % (
-            Utils.AnsiColors.WARNING, path_to_config_file, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             self.shutDown()
 
     def getConfiguration(self):
@@ -152,7 +156,7 @@ class GambolPutty():
             instance = module_class(self)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not init module %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, module_name, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
             self.shutDown()
         return instance
 
@@ -171,7 +175,7 @@ class GambolPutty():
                     module_id = module_class_name if 'id' not in module_config else module_config['id']
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%sError in configuration file for module %s. Exception: %s, Error: %s. Please check configuration.%s" % (Utils.AnsiColors.FAIL, module_class_name, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error("Error in configuration file for module %s. Exception: %s, Error: %s. Please check configuration." % (module_class_name, etype, evalue))
                     self.shutDown()
             else:
                 module_id = module_class_name = module_info
@@ -181,18 +185,19 @@ class GambolPutty():
                 module_id = "%s_%s" % (tmp_mod_name, counter)
                 counter += 1
             module_instances = []
-            for _ in range(self.workers):
-                module_instance = self.initModule(module_class_name)
-                module_instances.append(module_instance)
-                if not isinstance(module_instance, BaseMultiProcessModule.BaseMultiProcessModule):
-                    break
-            self.modules[module_id] = {  'idx': idx,
-                                         'instances': module_instances,
-                                         'type': module_instance.module_type,
-                                         'configuration': module_config}
-            start_message = "%sUsing module %s%s." % (Utils.AnsiColors.LIGHTBLUE, module_id, Utils.AnsiColors.ENDC)
+            module_instance = self.initModule(module_class_name)
+            module_instances.append(module_instance)
+            if isinstance(module_instance, BaseMultiProcessModule.BaseMultiProcessModule):
+                pool_size = module_config['pool_size'] if 'pool_size' in module_config else self.workers
+                for _ in range(pool_size-1):
+                    module_instance = self.initModule(module_class_name)
+                    module_instances.append(module_instance)
+            self.modules[module_id] = {'idx': idx,
+                                       'instances': module_instances,
+                                       'type': module_instance.module_type,
+                                       'configuration': module_config}
+            start_message = "Using module %s." % module_id
             self.logger.info(start_message)
-
             # Set receiver to next module in config if no receivers were set.
             if 'receivers' not in module_config:
                 try:
@@ -213,8 +218,29 @@ class GambolPutty():
                 except:
                     # Something is wrong with the configuration. Tell user.
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.error("%sError in configuration for module %s. Exception: %s, Error: %s. Please check configuration.%s" % ( Utils.AnsiColors.FAIL, module_config, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.error("Error in configuration for module %s. Exception: %s, Error: %s. Please check configuration." % (module_config, etype, evalue))
                     self.shutDown()
+
+    """
+    def __initModuleParsers(self):
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            for module_instance in module_info['instances']:
+                # Inline parsers are only supported for input and output modules.
+                if module_instance.module_type not in ['input', 'output']:
+                    continue
+                if 'parsers' not in module_info['configuration']:
+                    continue
+                for parser_data in module_info['configuration']['parsers']:
+                    if isinstance(parser_data, dict):
+                        parser_name, parser_config = iter(parser_data.items()).next()
+                    else:
+                        parser_name = parser_data
+                        parser_config = {}
+                    parser = self.initModule(parser_name)
+                    parser.configure(parser_config)
+                    parser.checkConfiguration()
+                    module_instance.addParser(parser)
+    """
 
     def configureModules(self):
         # Call configuration of module
@@ -224,9 +250,13 @@ class GambolPutty():
 
     def initEventStream(self):
         queues = {}
+
         # Iterate over all configured modules.
-        for module_name, module_info in self.modules.items():
+        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']): #self.modules.items():
             sender_instance = module_info['instances'][0]
+            # StandAlone and output modules can have no receivers.
+            if sender_instance.module_type in ['stand_alone', 'output']:
+                continue
             for receiver_data in sender_instance.getConfigurationValue('receivers'):
                 if not receiver_data:
                     break
@@ -234,15 +264,12 @@ class GambolPutty():
                     receiver_name, _ = iter(receiver_data.items()).next()
                 else:
                     receiver_name = receiver_data
-                self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
                 if receiver_name not in self.modules:
-                    self.logger.error( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.FAIL, receiver_name, module_name, Utils.AnsiColors.ENDC))
+                    self.logger.error("Could not add %s as receiver for %s. Module not found." % (receiver_name, module_name))
                     self.shutDown()
                 for receiver_instance in self.modules[receiver_name]['instances']:
-                    # a) If we run multiprocessed and the module is not capable of running parallel, this module will only be
-                    # started in the main process. Connect the module via a queue to all child processes.
-                    # b) All output modules will run in their own process because most of the outputs are quite slow compared
-                    # to input and modifier mods.
+                    # If we run multiprocessed and the module is not capable of running parallel, this module will only be
+                    # started in the main process. Connect the module via a queue to all receivers that can run forked.
                     if (self.workers > 1 and (not sender_instance.can_run_forked and receiver_instance.can_run_forked))\
                             or\
                         (isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule)):
@@ -255,8 +282,10 @@ class GambolPutty():
                 # Add the receiver to senders. If a corresponding queue exist, use this else use the normal mod instance.
                 for instance in module_info['instances']:
                     if receiver_name in queues:
+                        self.logger.debug("%s will send its output to %s via a queue." % (module_name, receiver_name))
                         instance.addReceiver(receiver_name, queues[receiver_name])
                     else:
+                        self.logger.debug("%s will send its output directly to %s." % (module_name, receiver_name))
                         instance.addReceiver(receiver_name, receiver_instance)
 
     def _initEventStream(self):
@@ -280,7 +309,7 @@ class GambolPutty():
                     receiver_name = receiver_data
                 self.logger.debug("%s will send its output to %s." % (module_name, receiver_name))
                 if receiver_name not in self.modules:
-                    self.logger.warning( "%sCould not add %s as receiver for %s. Module not found.%s" % ( Utils.AnsiColors.WARNING, receiver_name, module_name, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not add %s as receiver for %s. Module not found." % (receiver_name, module_name))
                     continue
                 receiver_instance = self.modules[receiver_name]['instance']
                 # If the sender or receiver is a thread or a process, produce the needed queue.
@@ -324,8 +353,7 @@ class GambolPutty():
         # This code can definitely be made more efficient...
         for node in module_loop_buffer:
             for loop in hasLoop(node, stack=[]):
-                self.logger.error(
-                    "%sChaining of modules produced a loop. Check configuration. Module: %s.%s" % ( Utils.AnsiColors.FAIL, loop.module.__class__.__name__, Utils.AnsiColors.ENDC))
+                self.logger.error("Chaining of modules produced a loop. Check configuration. Module: %s." % (loop.module.__class__.__name__))
                 self.shutDown()
 
     def getModuleInfoById(self, module_id, silent=True):
@@ -333,7 +361,7 @@ class GambolPutty():
             return self.modules[module_id]
         except KeyError:
             if not silent:
-                self.logger.error("%sGet module by id %s failed. No such module.%s" % (Utils.AnsiColors.FAIL, module_id, Utils.AnsiColors.ENDC))
+                self.logger.error("Get module by id %s failed. No such module." % (module_id))
             return None
 
     def prepareModules(self):
@@ -362,10 +390,15 @@ class GambolPutty():
                 if isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule) and not self.is_master():
                     continue
                 # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
+                # The module itself can then decide if it wants to be run as thread. If not, it has to return False to let Gambolputty know.
                 if getattr(instance, "start", None): # and (instance.getInputQueue() or instance.module_type in ['stand_alone', 'input'])
-                    instance.start()
+                    started = instance.start()
+                    if started:
+                        self.logger.debug("Starting module %s as thread via %s.start()." % (module_name, module_name))
                     continue
+                # TODO: get rid of this call as it is only there for backwards compatibility.
                 if getattr(instance, "run", None):
+                    self.logger.debug("Starting module %s via %s.run()" % (module_name, module_name))
                     instance.run()
                     continue
 
@@ -400,7 +433,7 @@ class GambolPutty():
         self.prepareModules()
         self.runModules()
         if self.is_master():
-            self.logger.info("%sGambolPutty started with %s processes(%s).%s" % (Utils.AnsiColors.LIGHTBLUE, len(self.child_processes)+1, os.getpid(),Utils.AnsiColors.ENDC))
+            self.logger.info("GambolPutty started with %s processes(%s)." % (len(self.child_processes)+1, os.getpid()))
         tornado.ioloop.IOLoop.instance().start()
 
     def restart(self, signum=False, frame=False):
@@ -408,7 +441,7 @@ class GambolPutty():
         # As a result, the forked gambolputty process will also catch SIGINT||SIGALARM.
         # Still we know the pid of the original main process.
         if self.is_master():
-            self.logger.info("%sRestarting GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+            self.logger.info("Restarting GambolPutty.")
         self.shutDownModules()
         self.configure()
         self.initModulesFromConfig()
@@ -430,11 +463,11 @@ class GambolPutty():
                     continue
                 os.kill(worker.pid, signal.SIGINT)
                 self.child_processes.remove(worker)
-            self.logger.info("%sShutting down GambolPutty.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+            self.logger.info("Shutting down GambolPutty.")
         self.shutDownModules()
         Utils.TimedFunctionManager.stopTimedFunctions()
         if self.is_master():
-            self.logger.info("%sShutdown complete.%s" % (Utils.AnsiColors.LIGHTBLUE, Utils.AnsiColors.ENDC))
+            self.logger.info("Shutdown complete.")
         # Using multiprocessing.Manager (e.g. in Stats module) and os.fork together will cause the following error
         # when calling sys.exit():
         #
@@ -474,7 +507,7 @@ class GambolPutty():
                 if events_in_queues > 0:
                     # Give remaining queued events some time to finish.
                     if self.is_master():
-                        self.logger.info("%s%s event(s) still in flight. Waiting %s secs. Press ctrl+c again to exit directly.%s" % (Utils.AnsiColors.LIGHTBLUE, events_in_queues, (.5 * wait_loops),Utils.AnsiColors.ENDC))
+                        self.logger.info("%s event(s) still in flight. Waiting %s secs. Press ctrl+c again to exit directly." % (events_in_queues, (.5 * wait_loops)))
                     time.sleep(.5 * wait_loops)
                     continue
                 break
@@ -485,13 +518,35 @@ class GambolPutty():
                     instance.shutDown()
         tornado.ioloop.IOLoop.instance().stop()
 
+def coloredConsoleLogging(fn):
+    # add methods we need to the class
+    def new(*args):
+        levelno = args[1].levelno
+        if(levelno>=50):
+            color = Utils.AnsiColors.FAIL
+        elif(levelno>=40):
+            color = Utils.AnsiColors.FAIL
+        elif(levelno>=30):
+            color = Utils.AnsiColors.WARNING
+        elif(levelno>=20):
+            color = Utils.AnsiColors.LIGHTBLUE
+        elif(levelno>=10):
+            color = Utils.AnsiColors.OKGREEN
+        else:
+            color = Utils.AnsiColors.LIGHTBLUE
+        args[1].msg = color + args[1].msg +  Utils.AnsiColors.ENDC # normal
+        return fn(*args)
+    return new
+
 def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')
 
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])
     config_pathname = config_pathname[:config_pathname.rfind("/")] + "/../conf"
+    # Logger configuration.
     logging.config.fileConfig('%s/logger.conf' % config_pathname)
+    logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
     logger = logging.getLogger("GambolPutty")
     path_to_config_file = ""
     run_configtest = False
@@ -509,11 +564,11 @@ if "__main__" == __name__:
         elif opt in ("--configtest"):
             run_configtest = True
     if not path_to_config_file:
-        logger.error("%sPlease provide a path to a configuration.%s" % (Utils.AnsiColors.FAIL, Utils.AnsiColors.ENDC))
+        logger.error("Please provide a path to a configuration.")
         usage()
         sys.exit(2)
     if not os.path.isfile(path_to_config_file):
-        logger.error("%sConfigfile %s could not be found.%s" % (Utils.AnsiColors.FAIL, path_to_config_file, Utils.AnsiColors.ENDC))
+        logger.error("Configfile %s could not be found." % (path_to_config_file))
         usage()
         sys.exit(2)
     gp = GambolPutty(path_to_config_file)
@@ -522,7 +577,7 @@ if "__main__" == __name__:
     gp.configureModules()
     gp.initEventStream()
     if run_configtest:
-        logger.info("%sConfigurationtest for %s finished.%s" % (Utils.AnsiColors.LIGHTBLUE, path_to_config_file, Utils.AnsiColors.ENDC))
+        logger.info("Configurationtest for %s finished.%s" % (path_to_config_file))
         sys.exit(0)
     gp.runChildren()
 

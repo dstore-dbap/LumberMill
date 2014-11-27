@@ -26,7 +26,7 @@ Configuration template:
         key_prefix:         # <default: "gambolputty:eventbuffer"; type: string; is: optional>
 
 
-#####RedisStore
+#####KeyValueStore
 
 A simple wrapper around the python simplekv module.
 

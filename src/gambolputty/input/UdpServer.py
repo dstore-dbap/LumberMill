@@ -8,7 +8,7 @@ import sys
 import Queue
 import Utils
 import BaseModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
@@ -81,9 +81,9 @@ class ThreadedUdpRequestHandler(SocketServer.BaseRequestHandler):
             event = Utils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port),caller_class_name='UdpServer')
             self.udp_server_instance.sendEvent(event)
         except socket.error, e:
-           self.logger.warning("%sError occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+           self.logger.warning("Error occurred while reading from socket. Error: %s" % (e))
         except socket.timeout, e:
-            self.logger.warning("%sTimeout occurred while reading from socket. Error: %s%s" % (Utils.AnsiColors.WARNING, e, Utils.AnsiColors.ENDC))
+            self.logger.warning("Timeout occurred while reading from socket. Error: %s" % (e))
 
 class ThreadedUdpServer(ThreadPoolMixIn, SocketServer.UDPServer):
 
@@ -117,14 +117,14 @@ class UdpRequestHandlerFactory:
             return ThreadedUdpRequestHandler(tcp_server_instance, *args, **keys)
         return createHandler
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class UdpServer(BaseModule.BaseModule):
     """
     Reads data from udp socket and sends it to its output queues.
 
     Configuration template:
 
-    - TcpServerThreaded:
+    - UdpServer:
         interface:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
@@ -145,7 +145,7 @@ class UdpServer(BaseModule.BaseModule):
 
     def run(self):
         if not self.receivers:
-            self.logger.error("%sShutting down module %s since no receivers are set.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, Utils.AnsiColors.ENDC))
+            self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
             return
         handler_factory = UdpRequestHandlerFactory()
         try:
@@ -158,8 +158,8 @@ class UdpServer(BaseModule.BaseModule):
                                              cert=self.getConfigurationValue("cert"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not listen on %s:%s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("interface"),
-                                                                                            self.getConfigurationValue("port"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
+                                                                                            self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
             return
         # Start a thread with the server -- that thread will then start one

@@ -23,7 +23,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
         emit_as_event:                 # <default: False; type: boolean; is: optional>
     """
 
-    module_type = "stand_alone"
+    module_type = "misc"
     """Set module type"""
 
     def configure(self, configuration):

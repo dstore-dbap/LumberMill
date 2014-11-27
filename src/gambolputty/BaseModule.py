@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import re
 import abc
 import logging
 import sys
 import ConfigurationValidator
 import Utils
+from  functools import wraps
 
 
 class BaseModule:
@@ -23,7 +23,7 @@ class BaseModule:
         filter:                           # <default: None; type: None||string; is: optional>
         add_fields:                       # <default: {}; type: dict; is: optional>
         delete_fields:                    # <default: []; type: list; is: optional>
-        event_type:                         # <default: None; type: None||string; is: optional>
+        event_type:                       # <default: None; type: None||string; is: optional>
         ...
         receivers:
           - ModuleName
@@ -55,8 +55,26 @@ class BaseModule:
         """
         if configuration:
             self.configuration_data.update(configuration)
+        self.parseDynamicValuesInConfiguration()
+        # Set default actions.
+        self.delete_fields = self.getConfigurationValue('delete_fields')
+        self.add_fields = self.getConfigurationValue('add_fields')
+        self.event_type = self.getConfigurationValue('event_type')
+        # Set input filter.
+        if self.getConfigurationValue('filter'):
+            self.setInputFilter(self.getConfigurationValue('filter'))
+        # Set output filter per receiver if configured.
+        if 'receivers' in self.configuration_data:
+            for receiver_config in self.getConfigurationValue('receivers'):
+                if not isinstance(receiver_config, dict):
+                    continue
+                receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
+                self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
+        self.checkConfiguration()
+
+    def parseDynamicValuesInConfiguration(self):
         # Test for dynamic value patterns
-        self.dynamic_var_regex = re.compile('\$\((.*?)\)[sdf\.\d+]*')
+        self.dynamic_var_regex = re.compile('\$\((.*?)\)') # re.compile('\$\((.*?)\)[sdf\.\d+]*')
         for key, value in self.configuration_data.items():
             # Make sure that configuration values only get parsed once.
             if isinstance(value, dict) and 'contains_placeholder' in value:
@@ -90,27 +108,11 @@ class BaseModule:
                     value = self.dynamic_var_regex.sub(r"%(\1)s", value)
                     contains_placeholder = True
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
-        # Add input filter.
-        if self.getConfigurationValue('filter'):
-            self.setInputFilter(self.getConfigurationValue('filter'))
-        if 'receivers' not in self.configuration_data:
-            return
-         # Add output filter per receiver if configured.
-        for receiver_config in self.getConfigurationValue('receivers'):
-            if not isinstance(receiver_config, dict):
-                continue
-            receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
-            self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
-        # Set default actions.
-        self.delete_fields = self.getConfigurationValue('delete_fields')
-        self.add_fields = self.getConfigurationValue('add_fields')
-        self.event_type = self.getConfigurationValue('event_type')
-        self.checkConfiguration()
 
     def checkConfiguration(self):
         configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleInstance(self)
         if configuration_errors:
-            self.logger.error("%sCould not configure module %s. Problems: %s.%s" % (Utils.AnsiColors.FAIL, self.__class__.__name__, configuration_errors, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not configure module %s. Problems: %s." % (self.__class__.__name__, configuration_errors))
             self.gp.shutDown()
 
     def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
@@ -132,15 +134,16 @@ class BaseModule:
                         return Utils.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict, use_strftime)
                     return self.configuration_metadata[key]['default']
                 except KeyError:
-                    self.logger.warning("%sCould not find configuration setting for required setting: %s.%s" % (Utils.AnsiColors.WARNING, key, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not find configuration setting for required setting: %s." % key)
                     self.gp.shutDown()
                     #return False
         if not isinstance(config_setting, dict):
-            self.logger.debug("%sConfiguration for key: %s is incorrect.%s" % (Utils.AnsiColors.FAIL, key, Utils.AnsiColors.ENDC))
+            self.logger.debug("Configuration for key: %s is incorrect." % key)
             return False
         if config_setting['contains_placeholder'] == False or not mapping_dict:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
+
 
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
@@ -148,29 +151,28 @@ class BaseModule:
 
     def setInputFilter(self, filter_string):
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + self.dynamic_var_regex.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)[sdf\d+]*", r"event.get('\1', False)", filter_string_tmp)
         try:
-            filter = eval(filter_string_tmp)
+            event_filter = eval(filter_string_tmp)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to compile filter: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, filter_string, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
             self.gp.shutDown()
-        self.input_filter = filter
-        # Replace default receiveEvent method with filtered one.
-        self.receiveEvent = self.receiveEventFiltered
+        # Wrap default receiveEvent method with filtered one.
+        self.wrapReceiveEventWithFilter(event_filter)
 
     def addOutputFilter(self, receiver_name, filter_string):
-        filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + self.dynamic_var_regex.sub(r"event.get('\1', False)", filter_string_tmp)
+        # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
+        filter_string_tmp = self.dynamic_var_regex.sub(r"%(\1)s", filter_string)
+        filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)[sdf\d+]*", r"event.get('\1', False)", filter_string_tmp)
         try:
             filter = eval(filter_string_tmp)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to compile filter: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, filter_string, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
             self.gp.shutDown()
         self.output_filters[receiver_name] = filter
-        # Replace default sendEvent method with filtered one.
-        self.sendEvent = self.sendEventFiltered
 
     def getFilteredReceivers(self, event):
         if not self.output_filters:
@@ -211,23 +213,7 @@ class BaseModule:
         return event
 
     def sendEvent(self, event, apply_common_actions=True):
-        if not self.receivers:
-            return
-        if(apply_common_actions):
-            event = self.commonActions(event)
-        if len(self.receivers) > 1:
-            event_clone = event.copy()
-        copy_event = False
-        for receiver in self.receivers.values():
-            #print("Sending event from %s to %s" % (self, receiver))
-            if hasattr(receiver, 'receiveEvent'):
-                receiver.receiveEvent(event if not copy_event else event_clone.copy())
-            else:
-                receiver.put(event if not copy_event else event_clone.copy())
-            copy_event = True
-
-    def sendEventFiltered(self, event, apply_common_actions=True):
-        receivers = self.getFilteredReceivers(event)
+        receivers = self.receivers if not self.output_filters else self.getFilteredReceivers(event)
         if not receivers:
             return
         if(apply_common_actions):
@@ -236,26 +222,26 @@ class BaseModule:
             event_clone = event.copy()
         copy_event = False
         for receiver in receivers.values():
-            #print("Sending event from %s to %s" % (self, receiver))
+            self.logger.debug("Sending event from %s to %s" % (self, receiver))
             if hasattr(receiver, 'receiveEvent'):
                 receiver.receiveEvent(event if not copy_event else event_clone.copy())
             else:
                 receiver.put(event if not copy_event else event_clone.copy())
             copy_event = True
 
-    def receiveEvent(self, event=None):
+    def receiveEvent(self, event):
         for event in self.handleEvent(event):
-            if event:
-                self.sendEvent(event)
+            self.sendEvent(event)
 
-    def receiveEventFiltered(self, event):
-        matched = self.input_filter(event)
-        if matched:
-            for event in self.handleEvent(event):
-                if event:
-                    self.sendEvent(event)
-        else:
-            self.sendEvent(event,apply_common_actions=False)
+    def wrapReceiveEventWithFilter(self, event_filter):
+        wrapped_func = self.receiveEvent
+        @wraps(wrapped_func)
+        def receiveEventFiltered(event):
+            if event_filter(event):
+                wrapped_func(event)
+            else:
+                self.sendEvent(event, apply_common_actions=False)
+        self.receiveEvent = receiveEventFiltered
 
     @abc.abstractmethod
     def handleEvent(self, event):
@@ -268,4 +254,4 @@ class BaseModule:
 
     def shutDown(self):
         self.alive = False
-        #self.logger.info('%sShutting down %s.%s' % (Utils.AnsiColors.LIGHTBLUE, self.__class__.__name__, Utils.AnsiColors.ENDC))
+        #self.logger.info('Shutting down %s.%s' % (self.__class__.__name__))

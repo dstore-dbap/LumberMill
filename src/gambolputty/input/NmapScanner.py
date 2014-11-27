@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import Utils
 import BaseModule
@@ -44,14 +45,14 @@ class NmapScanner(BaseModule.BaseModule):
                 scan_results = self.scanner.scan('%s%s' % (self.network,self.netmask), arguments="-sn")
             except nmap.PortScannerError:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sScanning failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("Scanning failed. Exception: %s, Error: %s." % (etype, evalue))
                 return
             for host, scan_result in scan_results['scan'].items():
                 try:
                     host_scan_result = self.scanner.scan('%s/32' % (host), arguments=self.arguments)
                 except nmap.PortScannerError:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("%sScanning failed. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Scanning failed. Exception: %s, Error: %s." % (etype, evalue))
                     return
                 if host in host_scan_result['scan']:
                     self.handleEvent(host, host_scan_result['scan'][host])
@@ -63,6 +64,8 @@ class NmapScanner(BaseModule.BaseModule):
             os_info = sorted(scan_result['osmatch'], key=lambda k: int(k['accuracy']))
             scan_result['detected_os'] = os_info[0]['name']
             scan_result.pop('osmatch')
+        if 'vendor' in scan_result and isinstance(scan_result['vendor'], dict) and len(scan_result['vendor']) > 0:
+            scan_result['vendor'] = scan_result['vendor'].values()[0]
         # Drop some fields.
         if 'osclass' in scan_result:
             scan_result.pop('osclass')

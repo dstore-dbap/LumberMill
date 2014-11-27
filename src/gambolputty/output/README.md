@@ -1,14 +1,5 @@
 output modules
 ==========
-#####DevNullMultiProcessSink
-
-Just discard messeages send to this module.BaseThreadedModule
-
-Configuration template:
-
-    - DevNullSink
-
-
 #####DevNullSink
 
 Just discard messeages send to this module.
@@ -18,7 +9,7 @@ Configuration template:
     - DevNullSink
 
 
-#####ElasticSearchMultiProcessSink
+#####ElasticSearchMultipleWorkerSink
 
 Store the data dictionary in an elasticsearch index.
 
@@ -47,7 +38,7 @@ backlog_size:   Maximum count of events waiting for transmission. If backlog siz
 
 Configuration template:
 
-    - ElasticSearchMultiProcessSink:
+    - ElasticSearchMultipleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
@@ -64,7 +55,7 @@ Configuration template:
         backlog_size:                             # <default: 1000; type: integer; is: optional>
 
 
-#####ElasticSearchSink
+#####ElasticSearchSingleWorkerSink
 
 Store the data dictionary in an elasticsearch index.
 
@@ -93,7 +84,7 @@ backlog_size:   Maximum count of events waiting for transmission. If backlog siz
 
 Configuration template:
 
-    - ElasticSearchSink:
+    - ElasticSearchSingleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
@@ -110,7 +101,7 @@ Configuration template:
         backlog_size:                             # <default: 1000; type: integer; is: optional>
 
 
-#####BufferedFiFoWriteQueue
+#####FileQueueSink
 
 Stores all received events in a file based queue for persistance.
 
@@ -269,6 +260,7 @@ Configuration template:
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
         format:                 # <default: None; type: None||string; is: optional>
+        parser:                 # <default: None; type: None||string; is: optional>
 
 
 #####SyslogSink

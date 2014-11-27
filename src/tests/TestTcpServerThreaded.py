@@ -15,8 +15,7 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testTcpConnection(self):
         self.test_object.configure({})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         self.test_object.run()
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,8 +45,7 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'key': '../../exampleData/gambolputty_ca.key',
                                     'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
+        self.checkConfiguration()
         self.test_object.run()
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -75,5 +73,5 @@ class TestTcpServerThreaded(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertTrue(event != False)
 
     def tearDown(self):
-        self.test_object.shutDown(silent=True)
+        self.test_object.shutDown()
         time.sleep(1)

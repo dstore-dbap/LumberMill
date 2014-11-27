@@ -69,8 +69,6 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
                 last_field_name = field_name
                 field_counts = {}
                 total_count = 0
-                #if self.emit_as_event:
-                #    self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, field_count, (field_count/self.getConfigurationValue('interval')), Utils.AnsiColors.ENDC))
             field_counts.update({field_value: field_count})
             total_count += field_count
         # Send remaining.

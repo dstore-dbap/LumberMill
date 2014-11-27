@@ -3,10 +3,10 @@ import sys
 import types
 import BaseThreadedModule
 import Utils
-from Decorators import ModuleDocstringParser
+import Decorators
 
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class CollectdParser(BaseThreadedModule.BaseThreadedModule):
     """
     Parse collectd binary protocol data.
@@ -22,7 +22,7 @@ class CollectdParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - CollectdParser:
-        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
         source_fields:                          # <default: 'data'; type: string||list; is: optional>
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
@@ -42,7 +42,7 @@ class CollectdParser(BaseThreadedModule.BaseThreadedModule):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')
-        if self.getConfigurationValue('mode') == 'decode':
+        if self.getConfigurationValue('action') == 'decode':
             self.default_list_attributes = [attrib for attrib in dir(list) if not attrib.startswith('__')]
             self.parser = Parser()
             self.handleEvent = self.decodeEvent
@@ -57,7 +57,7 @@ class CollectdParser(BaseThreadedModule.BaseThreadedModule):
                 decoded_data = self.parser.interpret(event[source_field])
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("%sCould not decode event data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, event[source_field], etype, evalue, Utils.AnsiColors.ENDC))
+                self.logger.warning("Could not decode event data: %s. Exception: %s, Error: %s." % (event[source_field], etype, evalue))
                 continue
             collectd_values = {}
             for value in decoded_data:
@@ -74,7 +74,7 @@ class CollectdParser(BaseThreadedModule.BaseThreadedModule):
                     event.update(collectd_values)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("%sCould not update event with collectd data: %s. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.WARNING, decoded_data, etype, evalue, Utils.AnsiColors.ENDC))
+                    self.logger.warning("Could not update event with collectd data: %s. Exception: %s, Error: %s." % (decoded_data, etype, evalue))
         yield event
 
     def encodeEvent(self, event):

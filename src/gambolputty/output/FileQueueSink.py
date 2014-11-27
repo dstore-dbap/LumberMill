@@ -4,7 +4,7 @@ import msgpack
 import sys
 import Utils
 import BaseThreadedModule
-from Decorators import ModuleDocstringParser
+import Decorators
 
 class BufferedFiFoWriteQueue():
     def __init__(self, queue, buffersize=100, interval=10):
@@ -21,7 +21,7 @@ class BufferedFiFoWriteQueue():
             return True
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sCould not flush buffer. Exception: %s, Error: %s.%s" % (Utils.AnsiColors.FAIL, etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Could not flush buffer. Exception: %s, Error: %s." % (etype, evalue))
 
     def pop(self):
         payload_ser = self.queue.pop()
@@ -42,7 +42,7 @@ class BufferedFiFoWriteQueue():
     def __getattr__(self, name):
         return getattr(self.queue, name)
 
-@ModuleDocstringParser
+@Decorators.ModuleDocstringParser
 class FileQueueSink(BaseThreadedModule.BaseThreadedModule):
     """
     Stores all received events in a file based queue for persistance.
@@ -71,7 +71,7 @@ class FileQueueSink(BaseThreadedModule.BaseThreadedModule):
            self.buffered_queue = BufferedFiFoWriteQueue(queue, buffersize=100, interval=10)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("%sFailed to create queue file in %s. Exception: %s, Error: %s%s" % (Utils.AnsiColors.FAIL, self.getConfigurationValue("queuefile"), etype, evalue, Utils.AnsiColors.ENDC))
+            self.logger.error("Failed to create queue file in %s. Exception: %s, Error: %s" % (self.getConfigurationValue("queuefile"), etype, evalue))
             self.gp.shutDown()
 
     def handleEvent(self, event):

@@ -15,7 +15,7 @@ Encode selected fields or all to collectd binary protocol.
 Configuration template:
 
     - CollectdParser:
-        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
         source_fields:                          # <default: 'data'; type: string||list; is: optional>
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
@@ -56,7 +56,7 @@ It will build a new list of source fields and create json of this list.
 
 At the moment only flat json files can be processed correctly.
 
-mode: Either encode or decode data.
+action: Either encode or decode data.
 source_fields:  Input fields for de/encode.
 If encoding, you can set this field to 'all' to encode the complete event dict.
 target_field:   Target field for de/encode result.
@@ -66,7 +66,8 @@ keep_original:  Switch to keep or drop the original fields used in de/encoding f
 Configuration template:
 
     - JsonParser:
-        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
         source_fields:                          # <default: 'data'; type: string||list; is: optional>
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
@@ -105,7 +106,8 @@ Encode selected fields or all to msgpack format.
 Configuration template:
 
     - MsgPackParser:
-        mode:                                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
         source_fields:                          # <default: 'data'; type: string||list; is: optional>
         target_field:                           # <default: None; type: None||string; is: optional>
         keep_original:                          # <default: False; type: boolean; is: optional>
@@ -203,7 +205,7 @@ Configuration template:
 
 Urlencode or decode an event field and extract url parameters.
 
-mode: Either encode or decode data.
+action: Either encode or decode data.
 source_field: Event field to en/decode.
 target_field: Event field to update with en/decode result. If not set source will be replaced.
 parse_querystring: Parse url for query parameters and extract them.
@@ -213,7 +215,7 @@ querystring_prefix: Prefix string to prepend to url parameter keys.
 Configuration template:
 
     - UrlParser:
-        mode:                     # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+        action:                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
         source_field:             # <type: string; is: required>
         target_field:             # <default: None; type: None||string; is: optional>
         parse_querystring:        # <default: False; type: boolean; is: optional>

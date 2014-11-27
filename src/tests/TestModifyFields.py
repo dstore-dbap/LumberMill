@@ -30,7 +30,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.default_dict['First name'] = 'Johann'
         self.default_dict['Last name'] = 'Gambolputty'
         self.test_object.configure({'action': 'insert',
-                                    'value': "%(First name)s %(Last name)s de von Ausfern",
+                                    'value': "$(First name) $(Last name) de von Ausfern",
                                     'target_field': 'Name'})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('Name' in event and event['Name'] == 'Johann Gambolputty de von Ausfern')
@@ -50,7 +50,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'action': 'replace',
                                     'source_field': 'replaceme',
                                     'regex': 'Sp.*?sh',
-                                    'with': '%(withme)s'})
+                                    'with': '$(withme)'})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertEquals(event['replaceme'], 'The English Inquisition')
 
