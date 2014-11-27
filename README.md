@@ -21,8 +21,9 @@ The different modules can be combined in any order.
 * Sniffer, sniff network traffic.
 * Spam, what it says on the can - spams GambolPutty for testing.
 * StdInHandler, read stream from standard in.
+* TcpServerMultipleWorker, read stream from a tcp socket, faster on Linux. Use when multiple workers are running.
+* TcpServerSingleWorker, read stream from a tcp socket, faster on Linux.
 * TcpServerThreaded, read stream from a tcp socket.
-* TcpServerTornado, read stream from a tcp socket, faster on Linux.
 * UdpServer, read data from udp socket.
 * UnixSocket, read stream from a named socket on unix like systems.
 * Zmq, read events from a zeromq.
@@ -53,8 +54,8 @@ The different modules can be combined in any order.
 
 #### Outputs
 * DevNullSink, discards all data that it receives.
-* ElasticSearchMultiProcessSink, same as above but multiprocessed.
-* ElasticSearchSink, stores data entries in an elasticsearch index.
+* ElasticSearchSingleWorkerSink, stores data entries in an elasticsearch index.
+* ElasticSearchMultipleWorkersSink, same as above but multiprocessed.
 * FileQueueSink, stores all received events in a file based queue.
 * FileSink, store events in a file.
 * GraphiteSink, send metrics to graphite server.
@@ -109,11 +110,11 @@ Each module configuration follows the same pattern:
 
     - SomeModuleName:
         id: AliasModuleName                     # <default: ""; type: string; is: optional>
-        filter: if %(cache_status) == "-"
+        filter: if $(cache_status) == "-"
         receivers:
          - ModuleName
          - ModuleAlias:
-             filter: if %('event_type') == 'httpd_access_log'
+             filter: if $('event_type') == 'httpd_access_log'
 
 * module: specifies the module name and maps to the class name of the module.
 * id: use to set an alias name if you run more than just one instance of a module.
@@ -164,7 +165,7 @@ Use $(variable_name) notation. If referring to a nested dict or a list, use dots
 
     - ElasticSearchMultiProcessSink:
         index_name: 1perftests
-        doc_id: '$(fields.0)-$(params.spanish.0)'
+        doc_id: $(fields.0)-$(params.spanish.0)
 
 ##### Notation in module filters:
 
