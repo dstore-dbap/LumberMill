@@ -176,13 +176,12 @@ Configuration template:
 
 Execute arbitrary math functions.
 
-If interval is set, the math function
+If interval is set, the results of <function> will be collected for the interval time and the final result
+will be calculated via the <results_function>.
 
-function:
+function: the function to be applied to/with the event data.
+results_function: if interval is configured, use this function to calculate the final result.
 interval: Number of seconds to until.
-backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
-synchronize events across multiple instances.
-backend_ttl: Time to live for backend entries. Should be greater than interval.
 
 Configuration template:
 
@@ -191,8 +190,6 @@ Configuration template:
         results_function:           # <default: None; type: None||string; is: optional if interval is None else required>
         target_field:               # <default: None; type: None||string; is: optional>
         interval:                   # <default: None; type: None||float||integer; is: optional>
-        backend:                    # <default: None; type: None||string; is: optional>
-        backend_ttl:                # <default: 60; type: integer; is: optional>
         receivers:
           - NextModule
 
