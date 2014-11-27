@@ -176,6 +176,14 @@ Configuration template:
 
 Execute arbitrary math functions.
 
+Simple example to cast nginx request time (seconds with milliseconds as float) to apache request time
+(microseconds as int):
+
+    - Math:
+        filter: if $(server_type) == "nginx"
+        target_field: request_time
+        function: int(float($(request_time)) * 1000)
+
 If interval is set, the results of <function> will be collected for the interval time and the final result
 will be calculated via the <results_function>.
 

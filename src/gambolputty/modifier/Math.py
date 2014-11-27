@@ -5,10 +5,19 @@ import Decorators
 import re
 import sys
 
+
 @Decorators.ModuleDocstringParser
 class Math(BaseThreadedModule.BaseThreadedModule):
     """
     Execute arbitrary math functions.
+
+    Simple example to cast nginx request time (seconds with milliseconds as float) to apache request time
+    (microseconds as int):
+
+    - Math:
+        filter: if $(server_type) == "nginx"
+        target_field: request_time
+        function: int(float($(request_time)) * 1000)
 
     If interval is set, the results of <function> will be collected for the interval time and the final result
     will be calculated via the <results_function>.
@@ -16,14 +25,15 @@ class Math(BaseThreadedModule.BaseThreadedModule):
     function: the function to be applied to/with the event data.
     results_function: if interval is configured, use this function to calculate the final result.
     interval: Number of seconds to until.
+    target_field: event field to store the result in.
 
     Configuration template:
 
     - Math:
         function:                   # <type: string; is: required>
         results_function:           # <default: None; type: None||string; is: optional if interval is None else required>
-        target_field:               # <default: None; type: None||string; is: optional>
         interval:                   # <default: None; type: None||float||integer; is: optional>
+        target_field:               # <default: None; type: None||string; is: optional>
         receivers:
           - NextModule
     """
@@ -42,15 +52,6 @@ class Math(BaseThreadedModule.BaseThreadedModule):
             self.results_function = self.compileFunction(function_str)
         self.target_field = self.getConfigurationValue('target_field')
         self.interval = self.getConfigurationValue('interval')
-        self.backend_ttl = self.getConfigurationValue('backend_ttl')
-        self.persistence_backend = None
-        if self.getConfigurationValue('backend'):
-            backend_info = self.gp.getModuleInfoById(self.getConfigurationValue('backend'))
-            if not backend_info:
-                self.logger.error("Could not find %s backend for persistant storage." % (self.getConfigurationValue('backend')))
-                self.gp.shutDown()
-                return
-            self.persistence_backend = backend_info['instances'][0]
 
     def compileFunction(self, function_str):
         try:
@@ -72,9 +73,6 @@ class Math(BaseThreadedModule.BaseThreadedModule):
         if self.interval:
             self.evaluate_facet_data_func = self.getEvaluateFunc()
             self.timed_func_handler_a = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
-        if self.persistence_backend:
-            self.store_facets_in_backend_func = self.getStoreFunc()
-            self.timed_func_handler_b = Utils.TimedFunctionManager.startTimedFunction(self.store_facets_in_backend_func)
         BaseThreadedModule.BaseThreadedModule.prepareRun(self)
 
     def evaluateResults(self):
