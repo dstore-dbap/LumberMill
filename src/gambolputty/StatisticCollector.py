@@ -36,7 +36,8 @@ class MultiProcessStatisticCollector:
 
     def __init__(self):
         self.lock = multiprocessing.Lock()
-        self.counter_stats = multiprocessing.Manager().dict()
+        self.sync_manager = multiprocessing.Manager()
+        self.counter_stats = self.sync_manager.dict()
         """ Stores the statistic data """
 
     def incrementCounter(self, name, increment_value=1):
@@ -87,3 +88,6 @@ class MultiProcessStatisticCollector:
 
     def getAllCounters(self):
         return self.counter_stats
+
+    def shutDown(self):
+        self.sync_manager.shutdown()

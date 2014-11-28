@@ -16,5 +16,4 @@ class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
 
     def handleEvent(self, event):
-        event = None
         yield None

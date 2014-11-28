@@ -77,10 +77,10 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
-    def prepareRun(self):
+    def initAfterFork(self):
         self.initZmqContext()
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
 
     def storeData(self, buffered_data):
         try:

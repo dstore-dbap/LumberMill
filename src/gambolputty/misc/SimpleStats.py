@@ -101,11 +101,11 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # Get all configured queues for waiting event stats.
         self.module_queues = self.gp.getAllQueues()
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         self.stats_collector.incrementCounter('events_received')
@@ -115,3 +115,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
             except:
                 pass
         yield event
+
+    def shutDown(self):
+        self.mp_stats_collector.shutDown()
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

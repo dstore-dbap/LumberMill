@@ -24,7 +24,6 @@ else:
     if not json:
         raise ImportError
 
-
 class PackMember:
 
     def __init__(self, host, message):
@@ -49,11 +48,10 @@ class PackMember:
     def getMessage(self):
         return self.message
 
-
 @Decorators.ModuleDocstringParser
-class Cluster(BaseThreadedModule.BaseThreadedModule):
+class Pack(BaseThreadedModule.BaseThreadedModule):
     """
-    Cluster base module. Handles pack leader discovery and alive checks of pack followers.
+    Pack base module. Handles pack leader discovery and alive checks of pack followers.
 
     IMPORTANT:
     This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
@@ -69,7 +67,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - Cluster:
+    - Pack:
         interface:                            # <default: '0.0.0.0'; type: string; is: optional>
         port:                                 # <default: 5252; type: integer; is: optional>
         broadcast:                            # <type: string; is: required>
@@ -91,7 +89,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         self.leader = True if self.getConfigurationValue('pack') == 'leader' else False
         self.pack_followers = {}
         self.dying_pack_followers = []
-        self.pending_alive_resonses = {}
+        self.pending_alive_responses = {}
         self.cluster_name = self.getConfigurationValue('name')
         self.discovered_leader = None
         self.secret = hashlib.sha256(self.getConfigurationValue('secret')).digest()
@@ -195,7 +193,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
                 self.logger.debug('Calling callback %s for %s.' % (callback, message['action']))
                 callback(message, pack_member)
 
-    @Decorators.setInterval(30, call_on_init=True)
+    @Decorators.setInterval(1, call_on_init=True)
     def sendDiscoverBroadcast(self):
         message = self.getDefaultMessageDict(action='discovery_call')
         self.logger.debug('Sending broadcast pack discovery.')
@@ -208,7 +206,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
             message = self.getDefaultMessageDict(action='alive_call')
             self.sendMessageToPackMember(message, pack_member)
             self.dying_pack_followers.append(ip_address)
-            self.pending_alive_resonses.update({ip_address: Utils.TimedFunctionManager.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
+            self.pending_alive_responses.update({ip_address: Utils.TimedFunctionManager.startTimedFunction(drop_dead_pack_member_timed_func, pack_member)})
 
     def getDropDeadPackMemberTimedFunc(self):
         @Decorators.setInterval(5, max_run_count=1)
@@ -234,6 +232,7 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
 
     def handleDiscoveryReply(self, message, pack_member):
         # Only pack members should handle discover replies.
+        print("Got reply")
         if self.leader:
             return
         message = self.getDefaultMessageDict(action='discovery_finish', custom_dict={'success': True})
@@ -265,11 +264,11 @@ class Cluster(BaseThreadedModule.BaseThreadedModule):
         # Only leader may handle alive replies.
         if not self.leader:
             return
-        if pack_member.getIp() not in self.pending_alive_resonses:
+        if pack_member.getIp() not in self.pending_alive_responses:
             return
         if message['reply'] == 'I am not dead!':
             # Stop timed function to remove pending host from pack members.
-            Utils.TimedFunctionManager.stopTimedFunctions(self.pending_alive_resonses.pop(pack_member.getIp()))
+            Utils.TimedFunctionManager.stopTimedFunctions(self.pending_alive_responses.pop(pack_member.getIp()))
 
     def shutDown(self):
         # Call parent configure method.

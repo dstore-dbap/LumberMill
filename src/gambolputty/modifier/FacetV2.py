@@ -162,13 +162,13 @@ class FacetV2(BaseThreadedModule.BaseThreadedModule):
         return storeFacetsInRedis
 
 
-    def prepareRun(self):
+    def initAfterFork(self):
         self.evaluate_facet_data_func = self.getEvaluateFunc()
         self.timed_func_handler_a = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
         if self.persistence_backend:
             self.store_facets_in_backend_func = self.getStoreFunc()
             self.timed_func_handler_b = Utils.TimedFunctionManager.startTimedFunction(self.store_facets_in_backend_func)
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         """

@@ -49,9 +49,9 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'),etype, evalue))
 
-    def prepareRun(self):
+    def initAfterFork(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
 
     def handleEvent(self, event):
         if self.format:

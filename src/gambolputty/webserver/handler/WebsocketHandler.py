@@ -6,6 +6,7 @@ import tornado.gen
 import logging
 import time
 
+
 class WebsocketLoggingHandler(logging.Handler):
     """
     A handler class which allows to log to a websocket.

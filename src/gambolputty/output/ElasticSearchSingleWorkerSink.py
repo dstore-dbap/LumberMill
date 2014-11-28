@@ -95,10 +95,10 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
             return
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def connect(self):
         es = False

@@ -20,8 +20,11 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - WebserverTornado:
-        port: 6060                 # <default: 5100; type: integer; is: optional>
-        document_root: other_root  # <default: 'docroot'; type: string; is: optional>
+        port:                            # <default: 5100; type: integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        document_root:                   # <default: 'docroot'; type: string; is: optional>
     """
     module_type = "stand_alone"
     """Set module type"""
@@ -50,8 +53,12 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
         return settings
 
     def run(self):
+        ssl_options = None
+        if self.getConfigurationValue("tls"):
+            ssl_options = { 'certfile': self.getConfigurationValue("cert"),
+                            'keyfile': self.getConfigurationValue("key")}
         try:
-            self.server = tornado.httpserver.HTTPServer(self.application)
+            self.server = tornado.httpserver.HTTPServer(self.application, ssl_options=ssl_options)
             self.server.listen(self.getConfigurationValue('port'))
             for fd, server_socket in self.server._sockets.items():
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -70,9 +77,9 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
             pass
 
     def shutDown(self):
-        # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
         if self.server:
             self.server.stop()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
             time.sleep(.2)
+        # Call parent shutDown method.
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

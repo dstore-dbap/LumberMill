@@ -59,10 +59,10 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
         self.buffer_size = self.getConfigurationValue('buffer_size')
         self.flush_interval_in_secs = self.getConfigurationValue('flush_interval_in_secs')
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffers = collections.defaultdict(lambda: Utils.Buffer(self.buffer_size, self.sendMergedEvent, self.flush_interval_in_secs))
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         key = self.getConfigurationValue("buffer_key", event)

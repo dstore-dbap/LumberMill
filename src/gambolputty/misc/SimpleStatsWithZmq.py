@@ -94,7 +94,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
             if self.emit_as_event:
                 self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # Get all configured queues for waiting event stats.
         for module_name, module_info in self.gp.modules.items():
             instance = module_info['instances'][0]
@@ -102,7 +102,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
         Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
-        BaseThreadedModule.BaseThreadedModule.prepareRun()
+        BaseThreadedModule.BaseThreadedModule.initAfterFork()
 
 
     def handleEvent(self, event):

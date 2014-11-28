@@ -6,7 +6,7 @@ import Utils
 
 
 @Decorators.ModuleDocstringParser
-class ClusterConfiguration(BaseModule.BaseModule):
+class PackConfiguration(BaseModule.BaseModule):
     """
     Synchronize configuration from leader to pack members.
     Any changes to the leaders configuration will be synced to all pack followers.
@@ -21,8 +21,8 @@ class ClusterConfiguration(BaseModule.BaseModule):
 
     Configuration template:
 
-    - ClusterConfiguration:
-        cluster:                                # <default: 'Cluster'; type: string; is: optional>
+    - PackConfiguration:
+        pack:                                   # <default: 'Pack'; type: string; is: optional>
         ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
         interval: 10                            # <default: 60; type: integer; is: optional>
     """
@@ -30,26 +30,28 @@ class ClusterConfiguration(BaseModule.BaseModule):
     module_type = "stand_alone"
     """Set module type"""
 
+    can_run_forked = False
+
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         #self.logger.setLevel(logging.DEBUG)
-        # Get cluster module instance.
-        mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('cluster'))
+        # Get pack module instance.
+        mod_info = self.gp.getModuleInfoById(self.getConfigurationValue('pack'))
         if not mod_info:
-            self.logger.error("Could not start cluster configuration module. Required cluster module %s not found. Please check your configuration." % (self.getConfigurationValue('cluster')))
+            self.logger.error("Could not start cluster configuration module. Required pack module %s not found. Please check your configuration." % (self.getConfigurationValue('pack')))
             self.gp.shutDown()
             return
-        self.cluster_module = mod_info['instances'][0]
-        if self.cluster_module.leader:
+        self.pack_module = mod_info['instances'][0]
+        if self.pack_module.leader:
             self.update_config_func = self.getMasterConfigurationUpdateFunc()
-            self.cluster_module.addHandler(action='discovery_finish', callback=self.handleDiscoveryFinish)
+            self.pack_module.addHandler(action='discovery_finish', callback=self.handleDiscoveryFinish)
         else:
-            self.cluster_module.addHandler(action='update_configuration_call', callback=self.handleUpdateConfigurationCall)
+            self.pack_module.addHandler(action='update_configuration_call', callback=self.handleUpdateConfigurationCall)
 
     def syncConfigurationToPack(self, configuration):
-        message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': configuration})
-        self.cluster_module.sendMessageToPack(message)
+        message = self.pack_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': configuration})
+        self.pack_module.sendMessageToPack(message)
 
     def getMasterConfigurationUpdateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
@@ -64,9 +66,9 @@ class ClusterConfiguration(BaseModule.BaseModule):
         """
         Sync current configuration to newly discovered hosts.
         """
-        message = self.cluster_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
+        message = self.pack_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
         self.logger.debug('handleDiscoveryReply called.')
-        self.cluster_module.sendMessageToPackMember(message, pack_member)
+        self.pack_module.sendMessageToPackMember(message, pack_member)
 
     def handleUpdateConfigurationCall(self, message, pack_member):
         """
@@ -75,7 +77,7 @@ class ClusterConfiguration(BaseModule.BaseModule):
         leader_configuration = message['configuration']
         leader_configuration = self.filterIgnoredModules(leader_configuration)
         if leader_configuration != self.filtered_startup_config:
-            self.logger.info("Got new cluster configuration from %s." % (pack_member.getHostName()))
+            self.logger.info("Got new pack configuration from %s." % (pack_member.getHostName()))
             self.gp.setConfiguration(leader_configuration, merge=True)
             # Send signal to reload GambolPutty.
             signal.alarm(1)
@@ -83,8 +85,8 @@ class ClusterConfiguration(BaseModule.BaseModule):
     def filterIgnoredModules(self, configuration):
         filtered_configuration = []
         for idx, module_info in enumerate(configuration):
-            # Never sync cluster modules.
-            if not 'module' in module_info or module_info['module'] in ['Cluster', 'ClusterConfiguration']:
+            # Never sync pack modules.
+            if not 'module' in module_info or module_info['module'] in ['Pack', 'PackConfiguration']:
                 continue
             # Filter ignored modules.
             if module_info['module'] not in self.getConfigurationValue('ignore_modules'):
@@ -94,6 +96,6 @@ class ClusterConfiguration(BaseModule.BaseModule):
     def run(self):
         # Get currently running configuration.
         self.filtered_startup_config = self.filterIgnoredModules(self.gp.getConfiguration())
-        if self.cluster_module.leader:
+        if self.pack_module.leader:
             Utils.TimedFunctionManager.startTimedFunction(self.update_config_func)
 

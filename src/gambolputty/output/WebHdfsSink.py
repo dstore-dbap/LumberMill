@@ -130,11 +130,11 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             return False
         return True
 
-    def prepareRun(self):
+    def initAfterFork(self):
         self.hdfs = self.getHdfsClient()
         Utils.TimedFunctionManager.startTimedFunction(self.timed_store_func)
         # Call parent run method
-        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions while manipulating self.events_container.

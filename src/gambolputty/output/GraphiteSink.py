@@ -69,13 +69,13 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("Failed to connect to %s. Exception: %s, Error: %s." % (self.connection_data, etype, evalue))
             return False
 
-    def prepareRun(self):
+    def initAfterFork(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection = self.connect()
         if not self.connection:
             self.gp.shutDown()
             return
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         for format in self.formats:

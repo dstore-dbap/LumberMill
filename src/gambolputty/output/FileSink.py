@@ -62,11 +62,11 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback
         # when running in multiple processes.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.prepareRun(self)
+        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
 
     def handleEvent(self, event):
         self.buffer.append(event)

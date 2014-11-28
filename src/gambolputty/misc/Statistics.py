@@ -75,10 +75,10 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
         if last_field_name:
             self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "count_per_sec": (field_counts/self.interval), "field_name": field_name, "field_counts": field_counts, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
-    def prepareRun(self):
+    def initAfterFork(self):
         timed_func = self.getRunTimedFunctionsFunc()
         Utils.TimedFunctionManager.startTimedFunction(timed_func)
-        BaseThreadedModule.BaseThreadedModule.prepareRun()
+        BaseThreadedModule.BaseThreadedModule.initAfterFork()
 
     def handleEvent(self, event):
         for field in self.fields:

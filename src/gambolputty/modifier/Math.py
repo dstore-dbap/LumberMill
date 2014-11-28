@@ -69,11 +69,11 @@ class Math(BaseThreadedModule.BaseThreadedModule):
                 self.evaluateResults()
         return timedEvaluateFacets
 
-    def prepareRun(self):
+    def initAfterFork(self):
         if self.interval:
             self.evaluate_facet_data_func = self.getEvaluateFunc()
             self.timed_func_handler_a = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def evaluateResults(self):
         results = self.results

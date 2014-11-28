@@ -94,10 +94,10 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
                     del self.throttled_events_info[key]
         return gcThrottledEventsInfo
 
-    def prepareRun(self):
+    def initAfterFork(self):
         self.gc_throttled_events_info = self.getGcThrottledEventsInfoFunc()
         self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.gc_throttled_events_info)
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         throttled_event_key = Utils.mapDynamicValue(self.key, event)

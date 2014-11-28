@@ -191,7 +191,7 @@ class BaseModule:
                 filterd_receivers[receiver_name] = receiver
         return filterd_receivers
 
-    def prepareRun(self):
+    def initAfterFork(self):
         # Wrap queue with BufferedQueue. This is done here since the buffer uses a thread to flush buffer in
         # given intervals. The thread will not survive a fork of the main process. So we need to start this
         # after the fork was executed.

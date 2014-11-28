@@ -1,8 +1,8 @@
 cluster modules
 ==========
-#####Cluster
+#####Pack
 
-Cluster base module. Handles pack leader discovery and alive checks of pack followers.
+Pack base module. Handles pack leader discovery and alive checks of pack followers.
 
 IMPORTANT:
 This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
@@ -18,7 +18,7 @@ shared_secret: pre shared key to en/decrypt cluster messages.
 
 Configuration template:
 
-    - Cluster:
+    - Pack:
         interface:                            # <default: '0.0.0.0'; type: string; is: optional>
         port:                                 # <default: 5252; type: integer; is: optional>
         broadcast:                            # <type: string; is: required>
@@ -35,15 +35,15 @@ Any changes to the leaders configuration will be synced to all pack followers.
 
 Locally configured modules of pack members will not be overwritten by the leaders configuration.
 
-Module dependencies: ['Cluster']
+Module dependencies: ['Pack']
 
-cluster: Name of the cluster module.
+pack: Name of the cluster module.
 ignore_modules: List of module names to exclude from sync process.
 interval: Time in seconds between checks if master config did change.
 
 Configuration template:
 
-    - ClusterConfiguration:
-        cluster:                                # <default: 'Cluster'; type: string; is: optional>
+    - PackConfiguration:
+        pack:                                   # <default: 'Pack'; type: string; is: optional>
         ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
         interval: 10                            # <default: 60; type: integer; is: optional>

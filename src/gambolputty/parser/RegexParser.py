@@ -93,11 +93,11 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
             self.fieldextraction_regexpressions.append({'event_type': event_type, 'pattern': regex, 'match_type': regex_match_type, 'hitcounter': 0})
 
-    def prepareRun(self):
+    def initAfterFork(self):
         if self.hot_rules_first:
             resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
             self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def getResortFieldextractionRegexpressionsFunc(self):
         @Decorators.setInterval(10)

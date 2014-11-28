@@ -72,7 +72,7 @@ else:
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = platform.system()
 
-def reload():
+def restartMainProcess():
     """
     Reload the whole GambolPutty process. This code is a direct copy from tornado-3.1.1-py2.7.egg/tornado/autoreload.py.
     """

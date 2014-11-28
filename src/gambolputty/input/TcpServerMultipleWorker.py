@@ -153,19 +153,20 @@ class TcpServerMultipleWorker(BaseThreadedModule.BaseThreadedModule):
             return
         autoreload.add_reload_hook(self.shutDown)
 
-    def prepareRun(self):
+    def initAfterFork(self):
         ssl_options = None
         if self.getConfigurationValue("tls"):
             ssl_options = { 'certfile': self.getConfigurationValue("cert"),
                             'keyfile': self.getConfigurationValue("key")}
         self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
         self.server.add_sockets(self.sockets)
-        BaseThreadedModule.BaseThreadedModule.prepareRun(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def shutDown(self):
         try:
             self.server.stop()
+            self.sockets.close()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
-            time.sleep(.2)
+            time.sleep(10)
         except AttributeError:
             pass
