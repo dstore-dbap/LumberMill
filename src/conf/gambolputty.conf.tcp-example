@@ -1,46 +1,41 @@
-# A handler for stin, just for testing purposes.
-#- StdInHandler:
-#    receivers:
-#      - RegexParser
+- Global:
+   workers: 2
 
 # A simple TCP Server.
-- TcpServerSingleWorker:
-    port: 5151
+- TcpServerMultipleWorker:
+   port: 5151
 
-# Parse the messege using named regex patterns.
+# Parse the message using named regex patterns.
 # The named groups will be put into correspondig fields in the data dictionary.
 - RegexParser:
-    field_extraction_patterns:
-      httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
-      #http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
-    receivers:
-      - Statistics
-      # Only messages that matched a regex will be send to this handler
-      - AddDateTime:
-          filter: $(event_type) != 'unknown'
-      # Print out messages that did not match
-      - StdOutSink:
-          filter: $(event_type) == 'unknown'
+   field_extraction_patterns:
+    - httpd_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s+(?P<identd>\w+|-)\s+(?P<user>\w+|-)\s+\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s+\"(?P<url>.*)\"\s+(?P<http_status>\d+)\s+(?P<bytes_send>\d+)'
+    # -http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
+   receivers:
+    # Only messages that matched a regex will be send to this handler
+    - SimpleStats:
+       filter: $(event_type) != 'unknown'
+    # Print out messages that did not match
+    - StdOutSink:
+       filter: $(event_type) == 'unknown'
+
+- SimpleStats
 
 # Add a timestamp field.
 - AddDateTime:
-    format: '%Y-%m-%dT%H:%M:%S.%f'
-    target_field: "timestamp"
+   format: '%Y-%m-%dT%H:%M:%S.%f'
+   target_field: "timestamp"
 
 # Add geo info based on the lookup_fields. The first field in <source_fields> that yields a result from geoip will be used.
 - AddGeoInfo:
-    geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
-    source_fields: [x_forwarded_for, remote_ip]
-    geo_info_fields: ['latitude', 'longitude', 'country_code']
+   geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
+   source_fields: [x_forwarded_for, remote_ip]
+   geo_info_fields: ['latitude', 'longitude', 'country_code']
 
-- ElasticSearchMultipleWorker:
-    pool_size: 2
-    nodes: ["localhost:9200"]
-    doc_id: $(timestamp)$(received_from)
-    store_interval_in_secs: 2
+- ElasticSearchMultipleWorkerSink:
+   nodes: ["localhost:9200"]
+   doc_id: $(timestamp)$(received_from)
+   store_interval_in_secs: 10
 
 - StdOutSink:
-    pretty_print: True
-
-- Statistics:
-    interval: 10
+   pretty_print: True
