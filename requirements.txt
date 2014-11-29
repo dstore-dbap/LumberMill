@@ -1,0 +1,9 @@
+PyYAML
+elasticsearch
+pygeoip
+tornado
+pyzmq
+msgpack
+redis
+uasparser2
+mmh3
