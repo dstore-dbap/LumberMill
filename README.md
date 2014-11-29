@@ -4,9 +4,10 @@ GambolPutty
 Why is it that the world never remembered the name of Johann Gambolputty de von Ausfern- schplenden- schlitter- crasscrenbon- fried- digger- dingle- dangle- dongle- dungle- burstein- von- knacker- thrasher- apple- banger- horowitz- ticolensic- grander- knotty- spelltinkle- grandlich- grumblemeyer- spelterwasser- kurstlich- himbleeisen- bahnwagen- gutenabend- bitte- ein- nürnburger- bratwustle- gerspurten- mitz- weimache- luber- hundsfut- gumberaber- shönedanker- kalbsfleisch- mittler- aucher von Hautkopft of Ulm?
 
 A simple log message manager in python. To run GambolPutty you will need Python 2.5+.
-For better performance you should run GambolPutty with pypy. Tested with pypy-2.0.2 and pypy-2.2.1.
-For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance
-with multiprocessing.Queue.
+For better performance you should run GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1 and pypy-2.4.
+The main goal was to avoid queues as much as possible to avoid loss of events waiting in  queues.
+Concurrency is achieved by using multiple processes and each module sends its output directly to the handler of the
+next module.
 
 To analyze i.e. log data, this tool offers a simple approach to parse the streams using different modules, the approach being quite similar to the well known logstash.
 
@@ -191,7 +192,7 @@ Modules can have an output filter:
 
 ##### Simple example to get you started ;)
 
-	echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python GambolPutty.py -c ./conf/gambolputty.conf.stdin-example
+	echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python GambolPutty.py -c ./conf/example-stdin.conf
 
 This should produce the following output:
 
