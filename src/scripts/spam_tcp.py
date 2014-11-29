@@ -9,7 +9,7 @@ import Queue
 
 def usage():
     sys.stdout = sys.stderr
-    print('Usage: spam_tcp.py -c count host [port:5151]')
+    print('Usage: spam_tcp.py -c count host [port 5151]')
     sys.exit(2)
 
 if len(sys.argv) < 4:
