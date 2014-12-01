@@ -93,10 +93,10 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServerTornado", received_from="%s:%d" % (self.host, self.port)))
+        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="Tcp", received_from="%s:%d" % (self.host, self.port)))
 
 @Decorators.ModuleDocstringParser
-class TcpServerMultipleWorker(BaseThreadedModule.BaseThreadedModule):
+class TcpServer(BaseThreadedModule.BaseThreadedModule):
     r"""
     Reads data from tcp socket and sends it to its outputs.
     Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
@@ -115,7 +115,7 @@ class TcpServerMultipleWorker(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - TcpServerTornado:
+    - TcpServer:
         interface:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
@@ -167,6 +167,6 @@ class TcpServerMultipleWorker(BaseThreadedModule.BaseThreadedModule):
             self.server.stop()
             self.sockets.close()
             # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
-            time.sleep(10)
+            time.sleep(.2)
         except AttributeError:
             pass

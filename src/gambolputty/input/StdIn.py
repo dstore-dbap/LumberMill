@@ -8,13 +8,13 @@ import Decorators
 
 
 @Decorators.ModuleDocstringParser
-class StdInHandler(BaseThreadedModule.BaseThreadedModule):
+class StdIn(BaseThreadedModule.BaseThreadedModule):
     """
     Reads data from stdin and sends it to its output queues.
 
     Configuration template:
 
-    - StdInHandler:
+    - StdIn:
         multiline:                     # <default: False; type: boolean; is: optional>
         stream_end_signal:             # <default: False; type: boolean||string; is: optional>
         receivers:

@@ -106,23 +106,22 @@ Configuration template:
           - NextModule
 
 
-#####StdInHandler
+#####StdIn
 
 Reads data from stdin and sends it to its output queues.
 
 Configuration template:
 
-    - StdInHandler:
+    - StdIn:
         multiline:                     # <default: False; type: boolean; is: optional>
         stream_end_signal:             # <default: False; type: boolean||string; is: optional>
         receivers:
           - NextModule
 
 
-#####TcpServerMultipleWorker
+#####TcpServer
 
 Reads data from tcp socket and sends it to its outputs.
-Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
 interface:  Ipaddress to listen on.
 port:       Port to listen on.
@@ -138,7 +137,7 @@ max_buffer_size: Max kilobytes to in receiving buffer.
 
 Configuration template:
 
-    - TcpServerTornado:
+    - TcpServer:
         interface:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
@@ -150,62 +149,6 @@ Configuration template:
         regex_separator:                 # <default: None; type: None||string; is: optional>
         chunksize:                       # <default: 16384; type: integer; is: optional>
         max_buffer_size:                 # <default: 10240; type: integer; is: optional>
-        receivers:
-          - NextModule
-
-
-#####TcpServerSingleWorker
-
-Reads data from tcp socket and sends it to its output queues.
-Should be the best choice perfomancewise if you are on Linux and are running with only one worker.
-If running with multiple workers, consider using
-
-interface:  Ipaddress to listen on.
-port:       Port to listen on.
-timeout:    Sockettimeout in seconds.
-tls:        Use tls or not.
-key:        Path to tls key file.
-cert:       Path to tls cert file.
-mode:       Receive mode, line or stream.
-simple_separator:  If mode is line, set separator between lines.
-regex_separator:   If mode is line, set separator between lines. Here regex can be used.
-chunksize:  If mode is stream, set chunksize in bytes to read from stream.
-max_buffer_size: Max kilobytes to in receiving buffer.
-parser:     Parser for received data.
-
-Configuration template:
-
-    - TcpServerTornado:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-        simple_separator:                # <default: '\n'; type: string; is: optional>
-        regex_separator:                 # <default: None; type: None||string; is: optional>
-        chunksize:                       # <default: 16384; type: integer; is: optional>
-        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
-        parsers:                         # <default: None; type: None||list; is: optional>
-        receivers:
-          - NextModule
-
-
-#####TcpServerThreaded
-
-Reads data from tcp socket and sends it to its output queues.
-This incarnation of a TCP Server is (at least on Linux) not as fast as the TcpServerSingleWorker or TcpServerMultipleWorker.
-
-Configuration template:
-
-    - TcpServerThreaded:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         receivers:
           - NextModule
 
