@@ -9,7 +9,7 @@ import Queue
 
 def usage():
     sys.stdout = sys.stderr
-    print('Usage: spam_tcp.py -c count host [port:5151]')
+    print('Usage: spam_tcp.py -c count host [port 5151]')
     sys.exit(2)
 
 if len(sys.argv) < 4:
@@ -76,6 +76,6 @@ class TcpLoadTester():
 
 if __name__ == '__main__':
     lt = TcpLoadTester()
-    lt.start("<13>229.25.18.182 - - [28/Jul/2006:10:27:10 -0300] \"GET /cgi-bin/try/9153/?param1=Test&param2=%s HTTP/1.0\" 200 3395\n")
+    lt.start("<13>229.25.18.182 - - [28/Jul/2006:10:27:10 -0300] \"GET /cgi-bin/try/9153/?param1=Test&param2=%s HTTP/1.0\" 200 3395 \"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0\"\n")
 
 

@@ -1,0 +1,10 @@
+PyYAML
+elasticsearch
+pygeoip
+tornado
+pyzmq
+msgpack-pypy
+redis
+uasparser2
+#GeoIP
+mmh3
