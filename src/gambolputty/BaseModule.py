@@ -110,7 +110,7 @@ class BaseModule:
             self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
 
     def checkConfiguration(self):
-        configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleInstance(self)
+        configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleConfiguration(self)
         if configuration_errors:
             self.logger.error("Could not configure module %s. Problems: %s." % (self.__class__.__name__, configuration_errors))
             self.gp.shutDown()

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import Utils
 
@@ -6,6 +7,20 @@ if sys.hexversion > 0x03000000:
     import Py3Compat as PythonCompatFunctions
 else:
     import Py2Compat as PythonCompatFunctions
+
+yaml_valid_config_template = {
+    'Global': {'types': [dict],
+               'fields': {'workers': {'types': [int]}}},
+    'Module': {'types': [dict,str],
+               'fields':  { 'id': {'types': [str]},
+                            'filter': {'types': [str]},
+                            'add_fields': {'types': [dict]},
+                            'delete_fields': {'types': [list]},
+                            'event_type': {'types': [str]},
+                            'receivers': {'types': [list]}
+                          }
+               }
+}
 
 class ConfigurationValidator():
     """
@@ -27,7 +42,55 @@ class ConfigurationValidator():
 
     default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl', 'add_fields', 'delete_fields', 'event_type')
 
-    def validateModuleInstance(self, moduleInstance):
+    @classmethod
+    def validateConfiguration(self, configuration_data):
+        """
+        Simple schema test for the global configuration.
+
+        Only a very simple "schema" is checked here.
+        Global configuration item an each module configuration item should at least adhere to the data pattern defined in
+        yaml_valid_config_template. Module specific configuration checks will be done in validateModuleInstanceConfiguration.
+        """
+        configuration_errors = []
+        for configuration_item in configuration_data:
+            if type(configuration_item) is str:
+                # Simple modules names are ok.
+                continue
+            elif type(configuration_item) is list:
+                # List items in root configuraion are not allowed.
+                error_msg = "'%s'(list) is not allowed here. Please check your configuration." % configuration_item
+                configuration_errors.append(error_msg)
+                continue
+            elif type(configuration_item) is dict:
+                for key, value in configuration_item.items():
+                    mapped_key = 'Module' if key != 'Global' else key
+                    item_configuration_errors = self.validateConfigurationItem(mapped_key, value, key)
+                    for item_configuration_error in item_configuration_errors:
+                        configuration_errors.append(item_configuration_error)
+                continue
+            else:
+                error_msg = "'%s' is of invalid type %s. Please check your configuration." % (configuration_item, type(configuration_item))
+                configuration_errors.append(error_msg)
+        return configuration_errors
+
+    @classmethod
+    def validateConfigurationItem(self, item_name, item, path, template=yaml_valid_config_template):
+        configuration_errors = []
+        if item_name in template:
+            item_template = template[item_name]
+            if type(item) not in item_template['types']:
+                error_msg = "'%s' not of correct datatype. Is: %s, should be: %s. Please check your configuration." % (path, type(item), item_template['types'])
+                configuration_errors.append(error_msg)
+            if type(item) is dict:
+                for field_key, field_value in item.items():
+                    path = "%s.%s" % (path, field_key)
+                    field_configuration_errors = self.validateConfigurationItem(field_key, field_value, path, template=item_template['fields'])
+                    for field_configuration_error in field_configuration_errors:
+                        configuration_errors.append(field_configuration_error)
+        return configuration_errors
+
+    @classmethod
+    def validateModuleConfiguration(self, moduleInstance):
         result = []
         # The ModifyFields module is an exception as it provides more than one configuration.
         # This needs to be taken into account when testing for required configuration values.
@@ -59,11 +122,13 @@ class ConfigurationValidator():
                 try:
                     #print "dependency = %s" % dependency
                     PythonCompatFunctions.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
+                    #eval(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
+                    #print ">> %s" % dependency
                 except TypeError:
                     etype, evalue, etb = sys.exc_info()
                     error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
                     result.append(error_msg)
-                if dependency == 'required' and not config_value:
+                if dependency == '"required"' and not config_value:
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
                     result.append(error_msg)
                     continue

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
+import pprint
 import Utils
 import multiprocessing
 import sys
@@ -13,6 +14,7 @@ import yaml
 import tornado.ioloop
 from collections import defaultdict
 import BaseMultiProcessModule
+import ConfigurationValidator
 
 # Conditional imports for python2/3
 try:
@@ -72,7 +74,9 @@ class GambolPutty():
         self.message_callbacks = defaultdict(lambda: [])
         self.logger = logging.getLogger(self.__class__.__name__)
         if path_to_config_file:
-            self.readConfiguration(path_to_config_file)
+            success = self.setConfiguration(self.readConfiguration(path_to_config_file), merge=False)
+            if not success:
+                self.shutDown()
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
@@ -98,18 +102,22 @@ class GambolPutty():
         """Loads and parses the configuration"""
         try:
             conf_file = open(path_to_config_file)
-            self.configuration = yaml.load(conf_file)
+            configuration = yaml.load(conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             self.shutDown()
+        return configuration
 
     def getConfiguration(self):
         return self.configuration
 
     def setConfiguration(self, configuration, merge=True):
-        if type(configuration) is not list:
-            return
+        configuration_errors = ConfigurationValidator.ConfigurationValidator().validateConfiguration(configuration)
+        for configuration_error in configuration_errors:
+            self.logger.error("Could not set configuration due to configuration errors.")
+            self.logger.error(configuration_error)
+            return False
         if merge:
             # If merge is true keep currently configured modules and only merge new ones.
             for module_info in configuration:
@@ -117,6 +125,7 @@ class GambolPutty():
                     self.configuration.append(module_info)
         else:
             self.configuration = configuration
+        return True
 
     def configureGlobal(self):
         """Set some global configuration values."""
