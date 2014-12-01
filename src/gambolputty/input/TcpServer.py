@@ -93,7 +93,7 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="Tcp", received_from="%s:%d" % (self.host, self.port)))
+        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @Decorators.ModuleDocstringParser
 class TcpServer(BaseThreadedModule.BaseThreadedModule):
