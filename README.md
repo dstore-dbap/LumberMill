@@ -3,17 +3,9 @@ GambolPutty
 
 Collect, parse and store logs with a configurable set of modules.
 
-<<<<<<< HEAD
 To run GambolPutty you will need Python 2.5+.  
 For better performance I recommend running GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.  
 For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance with multiprocessing.Queue.
-=======
-A simple log message manager in python. To run GambolPutty you will need Python 2.5+.
-For better performance you should run GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1 and pypy-2.4.
-The main goal was to avoid queues as much as possible to avoid loss of events waiting in  queues.
-Concurrency is achieved by using multiple processes and each module sends its output directly to the handler of the
-next module.
->>>>>>> 6b5c0f137e3f5c3ef297d1b4d0c56c6d2aeb54f6
 
 To give a short introduction of how GambolPutty works, here is a sample configuration:
 
