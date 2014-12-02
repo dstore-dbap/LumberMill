@@ -132,7 +132,9 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
 
 def replaceVarsAndCompileString(code_as_string, replacement):
     """
-    Parse a condition passed in as string.
+    Parse a string to python code.
+
+    This function will parse the code and replaces all variable names with the replacment.
 
     Example:
 
@@ -472,7 +474,6 @@ class ZeroMqMpQueue:
         self.receiver = None
 
     def initSender(self):
-        print("Init sender in %s" % os.getpid())
         zmq_context = zmq.Context()
         self.sender = zmq_context.socket(zmq.PUSH)
         try:
