@@ -11,18 +11,19 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     """
     Read events from a zeromq.
 
-    server: Server to poll. Pattern: hostname:port.
-    pattern: Either pull or sub.
+
     mode: Whether to run a server or client.
-    hwm: Highwatermark for receiving socket.
+    address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+    pattern: One of 'pull', 'sub'
+    hwm: Highwatermark for sending/receiving socket.
 
     Configuration template:
 
     - Zmq:
-        server:                     # <default: 'localhost:5570'; type: string; is: optional>
+        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+        address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
-        topic:                      # <default: ''; type: string; is: optional>
+        topic:                      # <default: None; type: None||string; is: required if pattern == 'sub' else optional>
         hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
@@ -32,63 +33,89 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
     can_run_forked = False
 
+
+    zmq_pattern_mapping = {'push': zmq.PUSH,
+                           'pull': zmq.PULL,
+                           'pub': zmq.PUB,
+                           'sub': zmq.SUB}
+
     def configure(self, configuration):
-         # Call parent configure method
+        # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.client = None
         self.topic = self.getConfigurationValue('topic')
-        self.zmq_context = zmq.Context()
-        if self.getConfigurationValue('pattern') == 'pull':
-            self.client = self.zmq_context.socket(zmq.PULL)
-        else:
-            self.client = self.zmq_context.socket(zmq.SUB)
-            self.client.setsockopt(zmq.SUBSCRIBE, str(self.topic))
+        self.context = zmq.Context()
+        self.socket = self.context.socket(self.zmq_pattern_mapping[self.getConfigurationValue('pattern')])
+        if self.getConfigurationValue('pattern') == 'sub' and self.getConfigurationValue('topic'):
+            self.socket.setsockopt(zmq.SUBSCRIBE, str(self.topic))
         if self.getConfigurationValue('hwm'):
-            try:
-                self.client.setsockopt(zmq.RCVHWM, self.getConfigurationValue('hwm'))
-            except:
-                self.client.setsockopt(zmq.HWM, self.getConfigurationValue('hwm'))
-        server_name, server_port = self.getConfigurationValue('server').split(":")
+            self.setReceiveHighWaterMark(self.getConfigurationValue('hwm'))
+        server_addr, server_port = self.getServerAddress(self.getConfigurationValue('address'))
+        if self.getConfigurationValue('mode') == 'server':
+            self.bind(server_addr, server_port)
+        else:
+            self.connect(server_addr, server_port)
+
+    def getServerAddress(self, server_name):
+        # ZMQ does not like hostnames too much. Try to get the ip address for server name.
+        server_name, server_port = server_name.split(":")
         try:
             server_addr = socket.gethostbyname(server_name)
         except socket.gaierror:
             server_addr = server_name
+        return (server_addr, server_port)
+
+    def setReceiveHighWaterMark(self, hwm):
         try:
-            if self.getConfigurationValue('mode') == 'connect':
-                self.client.connect('tcp://%s:%s' % (server_addr, server_port))
-            else:
-                self.client.bind('tcp://%s:%s' % (server_addr, server_port))
+            self.socket.setsockopt(zmq.RCVHWM, hwm)
+        except:
+            self.socket.setsockopt(zmq.HWM, hwm)
+
+    def bind(self, server_addr, server_port):
+        try:
+            self.socket.bind('tcp://%s:%s' % (server_addr, server_port))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
+            self.logger.error("Could not bind to %s:%s. Exception: %s, Error: %s." % (server_addr, server_port, etype, evalue))
             self.gp.shutDown()
 
-    def getEventFromInputQueue(self):
+    def connect(self, server_addr, server_port):
         try:
-            event = self.client.recv()
+            self.socket.connect('tcp://%s:%s' % (server_addr, server_port))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not connect to zeromq at %s:%s. Exception: %s, Error: %s." % (server_addr, server_port, etype, evalue))
+            self.gp.shutDown()
+
+
+    def getEventFromZmq(self):
+        try:
+            event = self.socket.recv()
             if self.topic:
                 topic, event = event.split(' ', 1)
-            return event
+            yield event
         except zmq.error.ContextTerminated:
             pass
         except:
             exc_type, exc_value, exc_tb = sys.exc_info()
             if exc_value in ['Interrupted system call', 'Socket operation on non-socket']:
                 return
-            if type(exc_value) != 'Socket operation on non-socket':
-                print "############%s###############" % exc_value
             self.logger.error("Could not read data from zeromq. Exception: %s, Error: %s." % (exc_type, exc_value))
 
-    def handleEvent(self, event):
-        event = {"data": event}
-        if self.topic:
-            event['zmq_topic'] = self.topic
-        yield Utils.getDefaultEventDict(event, caller_class_name=self.__class__.__name__)
+    def run(self):
+        if not self.receivers:
+            self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
+            return
+        while self.alive:
+            for event in self.getEventFromZmq():
+                event = Utils.getDefaultEventDict({"data": event}, caller_class_name="Zmq")
+                if self.topic:
+                    event['topic'] = self.topic
+                self.sendEvent(event)
 
     def shutDown(self):
         try:
-            self.client.close()
-            self.zmq_context.term()
+            self.socket.close()
+            self.context.term()
         except AttributeError:
             pass
         # Call parent shutDown method.

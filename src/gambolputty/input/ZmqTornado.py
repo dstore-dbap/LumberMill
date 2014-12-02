@@ -20,12 +20,13 @@ class ZmqTornado(BaseModule.BaseModule):
 
     Configuration template:
 
-    - Zmq:
-        servers:                    # <default: ['localhost:5570']; type: list; is: optional>
+    - ZmqTornado:
+        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+        address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
         topic:                      # <default: ''; type: string; is: optional>
         separator:                  # <default: None; type: None||string; is: optional>
+        hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
     """
@@ -34,36 +35,59 @@ class ZmqTornado(BaseModule.BaseModule):
     """Set module type"""
     can_run_forked = False
 
+    zmq_pattern_mapping = {'push': zmq.PUSH,
+                           'pull': zmq.PULL,
+                           'pub': zmq.PUB,
+                           'sub': zmq.SUB}
+
     def configure(self, configuration):
          # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.client = None
         self.topic = self.getConfigurationValue('topic')
         self.separator = self.getConfigurationValue('separator')
-        self.zmq_context = zmq.Context()
-        if self.getConfigurationValue('pattern') == 'pull':
-            self.client = self.zmq_context.socket(zmq.PULL)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(self.zmq_pattern_mapping[self.getConfigurationValue('pattern')])
+        if self.getConfigurationValue('hwm'):
+            self.setReceiveHighWaterMark(self.getConfigurationValue('hwm'))
+        server_addr, server_port = self.getServerAddress(self.getConfigurationValue('address'))
+        if self.getConfigurationValue('mode') == 'server':
+            self.bind(server_addr, server_port)
         else:
-            self.client = self.zmq_context.socket(zmq.SUB)
-            self.client.setsockopt(zmq.SUBSCRIBE, str(self.topic))
-        self.mode = self.getConfigurationValue('mode')
-        for server in self.getConfigurationValue('servers'):
-            server_name, server_port = server.split(":")
-            try:
-                server_addr = socket.gethostbyname(server_name)
-            except socket.gaierror:
-                server_addr = server_name
-            try:
-                if self.mode == 'connect':
-                    self.client.connect('tcp://%s:%s' % (server_addr, server_port))
-                else:
-                    self.client.bind('tcp://%s:%s' % (server_addr, server_port))
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (server, etype, evalue))
-                self.gp.shutDown()
-            self.client = zmqstream.ZMQStream(self.client)
-            self.client.on_recv(self.onReceive)
+            self.connect(server_addr, server_port)
+        self.socket = zmqstream.ZMQStream(self.socket)
+        self.socket.on_recv(self.onReceive)
+
+    def getServerAddress(self, server_name):
+        # ZMQ does not like hostnames too much. Try to get the ip address for server name.
+        server_name, server_port = server_name.split(":")
+        try:
+            server_addr = socket.gethostbyname(server_name)
+        except socket.gaierror:
+            server_addr = server_name
+        return (server_addr, server_port)
+
+    def setReceiveHighWaterMark(self, hwm):
+        try:
+            self.socket.setsockopt(zmq.RCVHWM, hwm)
+        except:
+            self.socket.setsockopt(zmq.HWM, hwm)
+
+    def bind(self, server_addr, server_port):
+        try:
+            self.socket.bind('tcp://%s:%s' % (server_addr, server_port))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not bind to %s:%s. Exception: %s, Error: %s." % (server_addr, server_port, etype, evalue))
+            self.gp.shutDown()
+
+    def connect(self, server_addr, server_port):
+        try:
+            self.socket.connect('tcp://%s:%s' % (server_addr, server_port))
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not connect to zeromq at %s:%s. Exception: %s, Error: %s." % (server_addr, server_port, etype, evalue))
+            self.gp.shutDown()
 
     def onReceive(self, data):
         data = data[0]
@@ -74,7 +98,9 @@ class ZmqTornado(BaseModule.BaseModule):
 
     def shutDown(self):
         try:
-            self.client.close()
-            self.zmq_context.term()
+            self.socket.close()
+            self.context.term()
         except AttributeError:
             pass
+        # Call parent shutDown method.
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
