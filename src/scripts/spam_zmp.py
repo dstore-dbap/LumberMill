@@ -1,24 +1,27 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+import zmq
 import sys
 import time
-import socket
 import threading
 import Queue
 
 def usage():
     sys.stdout = sys.stderr
-    print('Usage: spam_tcp.py -c count host [port 5151]')
+    print('Usage: spam_zmq.py -m [push|pub] -c count host [port 5151]')
+    print('When using pub the topic will be set to "LoadTest"')
     sys.exit(2)
 
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
     usage()
     sys.exit()
 
-count = int(eval(sys.argv[2]))
-host = sys.argv[3]
-port = int(sys.argv[4]) if len(sys.argv) == 5 else 5151
+mode = sys.argv[2]
+count = int(eval(sys.argv[4]))
+host = sys.argv[5]
+port = int(sys.argv[6]) if len(sys.argv) == 7 else 5151
+
+if mode not in ['push', 'pub'] or type(count) is not int or type(port) is not int:
+    usage()
 
 class Worker(threading.Thread):
 
@@ -29,9 +32,13 @@ class Worker(threading.Thread):
         self.connected = False
 
     def run(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        context = zmq.Context()
+        if mode == 'push':
+            sock = context.socket(zmq.PUSH)
+        else:
+            sock = context.socket(zmq.PUB)
         try:
-            sock.connect((host, port))
+            sock.connect('tcp://%s:%s' % (host, port))
             self.connected = True
         except:
             etype, evalue, etb = sys.exc_info()
@@ -40,11 +47,17 @@ class Worker(threading.Thread):
         while self.connected:
             try:
                 message = self.queue.get(timeout=.5)
-                sock.send(message)
+                if mode == 'push':
+                    sock.send(message)
+                else:
+                    sock.send('LoadTest %s' % message)
             except Queue.Empty:
+                self.connected = False
                 break
+        sock.close()
+        return
 
-class TcpLoadTester():
+class ZmqLoadTester():
 
     def __init__(self, num_workers=10):
         self.lock = threading.Lock()
@@ -76,7 +89,5 @@ class TcpLoadTester():
         print("Message sent: %s. Took %s. Mean req/s: %s" % (counter+1, stop-start, total_item_count / (stop-start)))
 
 if __name__ == '__main__':
-    lt = TcpLoadTester()
-    lt.start("<13>229.25.18.182 - - [28/Jul/2006:10:27:10 -0300] \"GET /cgi-bin/try/9153/?param1=Test&param2=%s HTTP/1.0\" 200 3395 \"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0\"\n")
-
-
+    lt = ZmqLoadTester(5)
+    lt.start("<13>229.25.18.182 - - [28/Jul/2006:10:27:10 -0300] \"GET /cgi-bin/try/9153/?param1=Test&param2=%s HTTP/1.0\" 200 3395 \"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0\"")
