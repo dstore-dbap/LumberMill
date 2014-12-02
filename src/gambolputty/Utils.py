@@ -2,7 +2,6 @@
 import ast
 import datetime
 import copy
-import pprint
 import random
 import time
 import os
@@ -131,38 +130,38 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, even
     default_dict = KeyDotNotationDict(default_dict)
     return default_dict
 
-def compileStringToConditionalObject(condition_as_string, mapping):
+def replaceVarsAndCompileString(code_as_string, replacement):
     """
     Parse a condition passed in as string.
 
     Example:
 
-    lambda event:
-
-    condition_as_string = "matched = VirtualHostName == 'www.gambolutty.com'", mapping = "event['%s']"
-
-    condition_as_string = "lambda event: VirtualHostName == 'www.gambolutty.com'", mapping = "event['%s']"
+    code_as_string = "matched = VirtualHostName == 'www.gambolutty.com'", replacement = "event['%s']"
 
      will be parsed and compiled to:
      matched = event['VirtualHostName'] == "www.gambolutty.com"
-     matched = event.get('VirtualHostName', False) == "www.gambolutty.com"
     """
     try:
-        # Build a complete expression from filter.
-        transformer = AstTransformer(mapping)
-        conditional_ast = ast.parse(condition_as_string)
-        conditional_ast = transformer.visit(conditional_ast)
-        conditional = compile(conditional_ast, '<string>', 'exec')
-        return conditional
-    except :
+        code_ast = ast.parse(code_as_string)
+    except:
         etype, evalue, etb = sys.exc_info()
-        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile conditional %s. Exception: %s, Error: %s." % (condition_as_string, etype, evalue))
+        logging.getLogger("compileStringToConditionalObject").error("%sCould not parse code %s. Exception: %s, Error: %s." % (code_as_string, etype, evalue))
         return False
+    transformer = ReplaceVars(replacement)
+    transformer.visit(code_ast)
+    try:
+        code = compile(code_ast, '<ast>', 'exec')
+    except:
+        etype, evalue, etb = sys.exc_info()
+        logging.getLogger("compileStringToConditionalObject").error("%sCould not compile code %s. Exception: %s, Error: %s." % (code_as_string, etype, evalue))
+        return False
+    return code
 
-class AstTransformer(ast.NodeTransformer):
-    def __init__(self, mapping="%s"):
+
+class ReplaceVars(ast.NodeTransformer):
+    def __init__(self, replacement):
         ast.NodeTransformer.__init__(self)
-        self.mapping = mapping
+        self.replacement = replacement
 
     def visit_Name(self, node):
         # ignore builtins and some other vars
@@ -172,7 +171,7 @@ class AstTransformer(ast.NodeTransformer):
             return node
         #pprint.pprint(self.mapping % node.id)
         #pprint.pprint(ast.dump(ast.parse(self.mapping % node.id)))
-        new_node = ast.parse(self.mapping % node.id).body[0].value
+        new_node = ast.parse(self.replacement % node.id).body[0].value
         return new_node
 
 def mapDynamicValue(value, mapping_dict={}, use_strftime=False):

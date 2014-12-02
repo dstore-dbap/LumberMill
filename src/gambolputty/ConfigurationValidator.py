@@ -89,7 +89,6 @@ class ConfigurationValidator():
                         configuration_errors.append(field_configuration_error)
         return configuration_errors
 
-    @classmethod
     def validateModuleConfiguration(self, moduleInstance):
         result = []
         # The ModifyFields module is an exception as it provides more than one configuration.
@@ -120,15 +119,13 @@ class ConfigurationValidator():
                 for search, replace in edits:
                     dependency = dependency.replace(search, replace)
                 try:
-                    #print "dependency = %s" % dependency
-                    PythonCompatFunctions.exec_function(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
-                    #eval(Utils.compileStringToConditionalObject("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'), globals(), locals())
-                    #print ">> %s" % dependency
+                    # TODO: Think of a better and more secure way to evaluate the dependencies.
+                    exec(Utils.replaceVarsAndCompileString("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
                 except TypeError:
                     etype, evalue, etb = sys.exc_info()
                     error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
                     result.append(error_msg)
-                if dependency == '"required"' and not config_value:
+                if dependency == 'required' and not config_value:
                     error_msg = "%s: '%s' not configured but is required. Please check module documentation." % (moduleInstance.__class__.__name__, configuration_key)
                     result.append(error_msg)
                     continue
