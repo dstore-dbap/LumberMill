@@ -7,7 +7,11 @@ To run GambolPutty you will need Python 2.5+.
 For better performance I recommend running GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.  
 For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance with multiprocessing.Queue.
 
-To give a short introduction of how GambolPutty works, here is a sample configuration:
+For a small how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel free to visit http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
+
+To give a short introduction of how GambolPutty works, here is a sample configuration.  
+Its receiving apache and nginx access logs via syslog messages from a syslog server and msgpacked events from [python-beaver](https://github.com/josegonzalez/python-beaver) 
+and stores them in an elasticsearch backend.
 
     # Sets number of parallel GambolPutty processes.
     - Global:
