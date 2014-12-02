@@ -103,4 +103,4 @@ class ZmqTornado(BaseModule.BaseModule):
         except AttributeError:
             pass
         # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
+        BaseModule.BaseModule.shutDown(self)
