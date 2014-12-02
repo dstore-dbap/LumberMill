@@ -186,18 +186,19 @@ Configuration template:
 
 Read events from a zeromq.
 
-server: Server to poll. Pattern: hostname:port.
-pattern: Either pull or sub.
+
 mode: Whether to run a server or client.
-hwm: Highwatermark for receiving socket.
+address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+pattern: One of 'pull', 'sub'
+hwm: Highwatermark for sending/receiving socket.
 
 Configuration template:
 
     - Zmq:
-        server:                     # <default: 'localhost:5570'; type: string; is: optional>
+        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+        address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
-        topic:                      # <default: ''; type: string; is: optional>
+        topic:                      # <default: None; type: None||string; is: required if pattern == 'sub' else optional>
         hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
@@ -207,18 +208,20 @@ Configuration template:
 
 Read events from a zeromq.
 
-servers: Servers to poll. Pattern: hostname:port.
-pattern: Either pull or sub.
 mode: Whether to run a server or client.
+address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+pattern: One of 'pull', 'sub'
+hwm: Highwatermark for sending/receiving socket.
 separator: When using the sub pattern, messages can have a topic. Set separator to split message from topic.
 
 Configuration template:
 
-    - Zmq:
-        servers:                    # <default: ['localhost:5570']; type: list; is: optional>
+    - ZmqTornado:
+        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+        address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
         topic:                      # <default: ''; type: string; is: optional>
         separator:                  # <default: None; type: None||string; is: optional>
+        hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
