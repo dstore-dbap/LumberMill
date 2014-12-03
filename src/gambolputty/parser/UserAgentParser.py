@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from uasparser2 import UASParser
+from ua_parser import user_agent_parser
 import types
 import BaseThreadedModule
 import Decorators
-
+import Utils
 
 @Decorators.ModuleDocstringParser
 class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
@@ -16,9 +16,16 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
 
     will produce this dictionary:
 
-        {'dist': {'version': '2.3.5', 'name': 'Android'},
-         'os': {'name': 'Linux'},
-         'browser': {'version': '4.0', 'name': 'Safari'}}
+    'user_agent_info': {   'device': {   'family': u'HTC DesireS'},
+                           'os': {   'family': 'Android',
+                                     'major': '2',
+                                     'minor': '3',
+                                     'patch': '5',
+                                     'patch_minor': None},
+                           'user_agent': {   'family': 'Android',
+                                             'major': '2',
+                                             'minor': '3',
+                                             'patch': '5'}}}
 
     source_fields:  Input field to parse.
     target_field: field to update with parsed info fields.
@@ -43,11 +50,19 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
         if isinstance(self.source_fields, types.StringTypes):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
-        self.parser = UASParser(cache_dir='/tmp/', cache_ttl=3600*24*7, mem_cache_size=1000)
+        self.in_mem_cache = Utils.MemoryCache(size=1000)
 
     def handleEvent(self, event):
         for source_field in self.source_fields:
             if source_field not in event:
                 continue
-            event[self.target_field] = self.parser.parse(event[source_field])
+            # Try to get it from cache.
+            try:
+                ua_info = self.in_mem_cache.get(event[source_field])
+            except KeyError:
+                # Drop the 'string' field to avoid duplicate data.
+                ua_info = user_agent_parser.Parse(event[source_field])
+                ua_info.pop('string')
+                self.in_mem_cache.set(event[source_field], ua_info)
+            event[self.target_field] = ua_info
         yield event
