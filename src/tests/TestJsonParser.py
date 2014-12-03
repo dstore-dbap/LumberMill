@@ -9,18 +9,18 @@ import sys
 import time
 import Utils
 import JsonParser
-import TcpServerTornado
+import TcpServer
 
 class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         super(TestJsonParser, self).setUp(JsonParser.JsonParser(gp=mock.Mock()))
-        self.tcp_server = TcpServerTornado.TcpServerTornado(gp=mock.Mock())
+        self.tcp_server = TcpServer.TcpServer(gp=mock.Mock())
         self.tcp_server.addReceiver("JsonParser", self.test_object)
 
     def testLineMode(self):
         self.tcp_server.configure({'mode': 'line'})
-        self.tcp_server.start()
+        self.tcp_server.initAfterFork()
         self.startTornadoEventLoop()
         self.test_object.configure({})
         self.checkConfiguration()
@@ -47,7 +47,7 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def __testStreamMode(self):
         self.tcp_server.configure({'mode': 'stream'})
-        self.tcp_server.start()
+        self.tcp_server.initAfterFork()
         self.startTornadoEventLoop()
         self.test_object.configure({})
         self.checkConfiguration()

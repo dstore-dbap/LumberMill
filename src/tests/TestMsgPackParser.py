@@ -5,19 +5,19 @@ import time
 import mock
 import socket
 import msgpack
-import TcpServerTornado
+import TcpServer
 import MsgPackParser
 
 class TestMsgPackParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         super(TestMsgPackParser, self).setUp(MsgPackParser.MsgPackParser(gp=mock.Mock()))
-        self.tcp_server = TcpServerTornado.TcpServerTornado(gp=mock.Mock())
+        self.tcp_server = TcpServer.TcpServer(gp=mock.Mock())
         self.tcp_server.addReceiver("MsgPackParser", self.test_object)
 
     def testLineMode(self):
         self.tcp_server.configure({'mode': 'line'})
-        self.tcp_server.start()
+        self.tcp_server.initAfterFork()
         self.startTornadoEventLoop()
         self.test_object.configure({'mode': 'line'})
         self.checkConfiguration()
@@ -43,7 +43,7 @@ class TestMsgPackParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testStreamMode(self):
         self.tcp_server.configure({'mode': 'stream'})
-        self.tcp_server.start()
+        self.tcp_server.initAfterFork()
         self.startTornadoEventLoop()
         self.test_object.configure({'mode': 'stream'})
         self.checkConfiguration()

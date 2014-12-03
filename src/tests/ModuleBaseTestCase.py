@@ -91,7 +91,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
             self.test_object.setInputQueue(self.input_queue)
 
     def checkConfiguration(self):
-        result = self.conf_validator.validateModuleInstance(self.test_object)
+        result = self.conf_validator.validateModuleConfiguration(self.test_object)
         self.assertFalse(result)
 
     def startTornadoEventLoop(self):

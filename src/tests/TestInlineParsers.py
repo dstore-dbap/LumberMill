@@ -6,7 +6,7 @@ import time
 import socket
 import msgpack
 import json
-import TcpServerTornado
+import TcpServer
 
 
 class TestInlineParsers(ModuleBaseTestCase.ModuleBaseTestCase):
