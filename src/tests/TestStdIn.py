@@ -4,14 +4,14 @@ import unittest
 import mock
 import StringIO
 import sys
-import StdInHandler
+import StdIn
 
-class TestStdInHandler(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestStdIn(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestStdInHandler, self).setUp(StdInHandler.StdInHandler(gp=mock.Mock()))
+        super(TestStdIn, self).setUp(StdIn.StdIn(gp=mock.Mock()))
 
-    def testStdInHandlerSingleLine(self):
+    def testStdInSingleLine(self):
         self.test_object.configure({})
         input = StringIO.StringIO("We are the knights who say ni!")
         stdin = sys.stdin
@@ -21,7 +21,7 @@ class TestStdInHandler(ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             self.assertEquals(event['data'], "We are the knights who say ni!")
 
-    def testStdInHandlerMultiLine(self):
+    def testStdInMultiLine(self):
         self.test_object.configure({'multiline': True})
         input = StringIO.StringIO("""We are the knights who say ni!
 Bring us a shrubbery!""")
@@ -33,7 +33,7 @@ Bring us a shrubbery!""")
             self.assertEquals(event['data'], """We are the knights who say ni!
 Bring us a shrubbery!""")        
 
-    def testStdInHandlerStreamBoundry(self):
+    def testStdInStreamBoundry(self):
         self.test_object.configure({'multiline': True,
                                     'stream_end_signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
         self.checkConfiguration()

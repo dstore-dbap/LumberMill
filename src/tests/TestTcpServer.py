@@ -6,18 +6,18 @@ import time
 import mock
 import socket
 import ssl
-import TcpServerSingleWorker
+import TcpServer
 
 
-class TestTcpServerSingleWorker(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestTcpServerSingleWorker, self).setUp(TcpServerSingleWorker.TcpServerSingleWorker(gp=mock.Mock()))
+        super(TestTcpServer, self).setUp(TcpServer.TcpServer(gp=mock.Mock()))
 
     def testTcpConnection(self):
         self.test_object.configure({})
         self.checkConfiguration()
-        self.test_object.start()
+        self.test_object.initAfterFork()
         self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(.1)
@@ -49,7 +49,7 @@ class TestTcpServerSingleWorker(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'cert': '../../exampleData/gambolputty_ca.crt',
                                     'timeout': 1})
         self.checkConfiguration()
-        self.test_object.start()
+        self.test_object.initAfterFork()
         self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(1)
