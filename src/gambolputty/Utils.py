@@ -13,6 +13,7 @@ import Decorators
 import socket
 import types
 import platform
+import pylru
 
 
 # Conditional imports for python2/3
@@ -517,4 +518,16 @@ class ZeroMqMpQueue:
     def qsize(self):
         return self.queue_size
 
+class MemoryCache():
 
+    def __init__(self, size=1000):
+        self.lru_dict = pylru.lrucache(size)
+
+    def set(self, key, value):
+        self.lru_dict[key] = value
+
+    def get(self, key):
+        return self.lru_dict[key]
+
+    def unset(self, key):
+        return self.lru_dict.pop(key)
