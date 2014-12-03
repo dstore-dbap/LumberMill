@@ -3,7 +3,8 @@ elasticsearch
 pygeoip
 tornado
 pyzmq
+ua-parser
 msgpack
 redis
-uasparser2
 mmh3
+pylru

@@ -5,6 +5,6 @@ tornado
 pyzmq
 msgpack-pypy
 redis
-uasparser2
-#GeoIP
+ua-parser
 mmh3
+pylru
