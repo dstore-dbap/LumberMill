@@ -1,11 +1,12 @@
 import os
 import time
-import tornado.ioloop
-import extendSysPath
 import mock
 import socket
+import extendSysPath
 import ModuleBaseTestCase
+import Utils
 import UnixSocket
+import pprint
 
 class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -29,10 +30,16 @@ class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
             unix_socket.connect('/tmp/test.sock')
         except socket.errno:
             self.fail("Could not connect to unix socket.")
-        unix_socket.send(b"http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n")
-        time.sleep(.1)
+        for _ in range(0,5000):
+            unix_socket.send(b"http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n")
+        expected_ret_val = Utils.getDefaultEventDict({'data': "http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n"})
+        expected_ret_val.pop('gambolputty')
+        time.sleep(.5)
         event = False
+        counter = 0
         for event in self.receiver.getEvent():
-            self.assert_('data' in event and event['data'] == 'http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n')
+            counter += 1
         self.assertTrue(event)
-        unix_socket.close()
+        self.assertEqual(counter, 5000)
+        event.pop('gambolputty')
+        self.assertDictEqual(event, expected_ret_val)

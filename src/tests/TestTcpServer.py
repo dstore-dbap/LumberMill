@@ -25,7 +25,8 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             s.connect(('localhost', self.test_object.getConfigurationValue('port')))
-            s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
+            for _ in range(0, 5000):
+                s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
             s.close()
             connection_succeeded = True
         except:
@@ -36,11 +37,14 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val = Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(.1)
+        time.sleep(1)
+        counter = 0
         for event in self.receiver.getEvent():
-            event.pop('gambolputty')
-            self.assertDictEqual(event, expected_ret_val)
+            counter += 1
         self.assertTrue(event != False)
+        self.assertEqual(counter, 5000)
+        event.pop('gambolputty')
+        self.assertDictEqual(event, expected_ret_val)
 
     def testATlsTcpConnection(self):
         self.test_object.configure({'port': 5252,
@@ -58,7 +62,8 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
             s.settimeout(1)
             s = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
             s.connect((self.test_object.getConfigurationValue('interface'), self.test_object.getConfigurationValue('port')))
-            s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
+            for _ in range(0, 5000):
+                s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
             s.close()
             connection_succeeded = True
         except:
@@ -70,11 +75,14 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val =  Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(.1)
+        time.sleep(1)
+        counter = 0
         for event in self.receiver.getEvent():
-            event.pop('gambolputty')
-            self.assertDictEqual(event, expected_ret_val)
+            counter += 1
         self.assertTrue(event != False)
+        self.assertEqual(counter, 5000)
+        event.pop('gambolputty')
+        self.assertDictEqual(event, expected_ret_val)
 
     def tearDown(self):
         self.test_object.shutDown()

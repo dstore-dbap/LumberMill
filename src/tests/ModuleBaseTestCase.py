@@ -77,6 +77,9 @@ class MockReceiver(mock.Mock):
         for event in self.events:
             yield event
 
+    def hasEvents(self):
+        return True if len(self.events) > 0 else False
+
 class ModuleBaseTestCase(unittest2.TestCase):
 
     def setUp(self, test_object):
