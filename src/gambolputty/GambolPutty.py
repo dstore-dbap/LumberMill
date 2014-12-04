@@ -322,10 +322,10 @@ class GambolPutty():
                 # Some modules, mostly input modules, use unique io devices, that can not be polled from multiple
                 # threads/processes. These modules will only be started once from the master process and the output
                 # will be send via queue to the other processes.
-                if not instance.can_run_forked and not self.is_master():
+                if not self.is_master() and not instance.can_run_forked:
                     continue
                 # All multiprocess modules will only be started from the main process.
-                if isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule) and not self.is_master():
+                if not self.is_master() and isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule):
                     continue
                 # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
                 # The module itself can then decide if it wants to be run as thread. If not, it has to return False to let Gambolputty know.
@@ -353,7 +353,7 @@ class GambolPutty():
     def is_master(self):
         return os.getpid() == self.main_process_pid
 
-    def runChildren(self):
+    def runWorkers(self):
         for i in range(1, self.workers):
             worker = multiprocessing.Process(target=self.run)
             worker.start()
@@ -508,7 +508,7 @@ if "__main__" == __name__:
     if run_configtest:
         logger.info("Configurationtest for %s finished.%s" % (path_to_config_file))
         sys.exit(0)
-    gp.runChildren()
+    gp.runWorkers()
 
 
 
