@@ -33,7 +33,7 @@ class ConnectionHandler(object):
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
     def _on_read_line(self, data):
-        self.gp_module.sendEvent(Utils.getDefaultEventDict({"received_from": self.address, "data": data}, caller_class_name='UnixSocket'))
+        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name='UnixSocket', received_from=self.address))
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
@@ -80,7 +80,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
             return
         self.running = True
         #self.server.start(0)
-        ioloop.IOLoop.instance().start()
+        #ioloop.IOLoop.instance().start()
 
     def shutDown(self):
         if self.running:
