@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import logging
 import time
@@ -9,7 +8,7 @@ from tornado.tcpserver import TCPServer
 from tornado.netutil import bind_sockets
 from tornado import autoreload
 import Utils
-import BaseThreadedModule
+import BaseModule
 import Decorators
 
 
@@ -96,7 +95,7 @@ class ConnectionHandler(object):
         self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @Decorators.ModuleDocstringParser
-class TcpServer(BaseThreadedModule.BaseThreadedModule):
+class TcpServer(BaseModule.BaseModule):
     r"""
     Reads data from tcp socket and sends it to its outputs.
     Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
@@ -137,7 +136,7 @@ class TcpServer(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseModule.BaseModule.configure(self, configuration)
         self.server = False
         self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240
         self.start_ioloop = False
@@ -160,7 +159,7 @@ class TcpServer(BaseThreadedModule.BaseThreadedModule):
                             'keyfile': self.getConfigurationValue("key")}
         self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
         self.server.add_sockets(self.sockets)
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+        BaseModule.BaseModule.initAfterFork(self)
 
     def shutDown(self):
         try:
