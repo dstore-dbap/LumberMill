@@ -56,17 +56,12 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
             except ImportError:
                 self.logger.error('Snappy compression selected but snappy module could not be loaded.')
                 self.gp.shutDown()
+        self.buffer = Utils.Buffer(self.batch_size, self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.backlog_size)
 
     def ensurePathExists(self, path):
         dirpath = os.path.dirname(path)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-
-    def initAfterFork(self):
-        # Init buffer here, else the flush interval method of buffer will not be able to call the correct callback
-        # when running in multiple processes.
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
 
     def handleEvent(self, event):
         self.buffer.append(event)

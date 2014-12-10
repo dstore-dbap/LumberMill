@@ -254,4 +254,3 @@ class BaseModule:
 
     def shutDown(self):
         self.alive = False
-        #self.logger.info('Shutting down %s.%s' % (self.__class__.__name__))

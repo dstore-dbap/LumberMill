@@ -141,6 +141,5 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
             self.logger.warning("Note: If more than one gp instance is running, requeued events count may differ from total events.")
             event = None
 
-    def initAfterFork(self):
+    def run(self):
         self.timedFuncHandle = Utils.TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)

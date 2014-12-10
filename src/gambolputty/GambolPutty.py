@@ -66,6 +66,7 @@ class GambolPutty():
     """
 
     def __init__(self, path_to_config_file):
+        self.path_to_config_file = path_to_config_file
         self.alive = False
         self.child_processes = []
         self.main_process_pid = os.getpid()
@@ -73,7 +74,7 @@ class GambolPutty():
         self.message_callbacks = defaultdict(lambda: [])
         self.logger = logging.getLogger(self.__class__.__name__)
         if path_to_config_file:
-            success = self.setConfiguration(self.readConfiguration(path_to_config_file), merge=False)
+            success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
             if not success:
                 self.shutDown()
 
@@ -107,6 +108,9 @@ class GambolPutty():
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
             self.shutDown()
         return configuration
+
+    def getConfigurationFilePath(self):
+        return self.path_to_config_file
 
     def getConfiguration(self):
         return self.configuration
@@ -177,10 +181,14 @@ class GambolPutty():
             else:
                 module_id = module_class_name = module_info
             counter = 1
+            # Find an unused module identifier.
             while module_id in self.modules:
                 tmp_mod_name = module_id.split("_",1)[0]
                 module_id = "%s_%s" % (tmp_mod_name, counter)
                 counter += 1
+            # Ignore some reserved module names. At the moment this is just the Global keyword.
+            if module_id in ['Global']:
+                continue
             module_instances = []
             module_instance = self.initModule(module_class_name)
             module_instances.append(module_instance)
@@ -310,7 +318,10 @@ class GambolPutty():
         """
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
             for instance in module_info['instances']:
-                instance.initAfterFork()
+                if instance.can_run_forked:
+                    instance.initAfterFork()
+                else:
+                    print("Not calling initAfterFork on %s." % module_name)
 
     def runModules(self):
         """
@@ -383,7 +394,7 @@ class GambolPutty():
             self.child_processes.remove(worker)
         self.logger.info("Restarting GambolPutty.")
         self.shutDown()
-        time.sleep(1)
+        time.sleep(5)
         Utils.restartMainProcess()
 
     def shutDown(self, signum=False, frame=False):

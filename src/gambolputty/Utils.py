@@ -87,10 +87,8 @@ def restartMainProcess():
     # is about to change on re-exec.  Add the current directory to $PYTHONPATH
     # to ensure that the new process sees the same path we did.
     path_prefix = '.' + os.pathsep
-    if (sys.path[0] == '' and
-            not os.environ.get("PYTHONPATH", "").startswith(path_prefix)):
-        os.environ["PYTHONPATH"] = (path_prefix +
-                                    os.environ.get("PYTHONPATH", ""))
+    if (sys.path[0] == '' and not os.environ.get("PYTHONPATH", "").startswith(path_prefix)):
+        os.environ["PYTHONPATH"] = (path_prefix + os.environ.get("PYTHONPATH", ""))
     if sys.platform == 'win32':
         # os.execv is broken on Windows and can't properly parse command line
         # arguments and executable name if they contain whitespaces. subprocess
@@ -437,6 +435,7 @@ class TimedFunctionManager:
         # Clear all timed functions
         for handler in TimedFunctionManager.timed_function_handlers:
             handler.set()
+            TimedFunctionManager.timed_function_handlers.remove(handler)
         TimedFunctionManager.timed_function_handlers = []
 
 class AnsiColors:
