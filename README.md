@@ -12,7 +12,7 @@ For a small how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel
 To give a short introduction of how GambolPutty works, here is a sample configuration.  
 Its receiving apache and nginx access logs via syslog messages from a syslog server and msgpacked events from [python-beaver](https://github.com/josegonzalez/python-beaver) 
 and stores them in an elasticsearch backend.  
-Below I will explain each section in detail.
+Below, I will explain each section in more detail.
 
     # Sets number of parallel GambolPutty processes.
     - Global:
