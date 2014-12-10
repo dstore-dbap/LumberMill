@@ -21,8 +21,8 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         escapechar:                             # <default: '\'; type: string; is: optional>
         skipinitialspace:                       # <default: False; type: boolean; is: optional>
         quotechar:                              # <default: '"'; type: string; is: optional>
-        delimiter:                              # <default: '|'; type: char; is: optional>
-        fieldnames:                             # <default: False; type: [list]; is: optional>
+        delimiter:                              # <default: '|'; type: string; is: optional>
+        fieldnames:                             # <default: False; type: list; is: optional>
         receivers:
           - NextModule
     """
