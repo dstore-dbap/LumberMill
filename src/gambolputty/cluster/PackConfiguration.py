@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import pprint
 import signal
+import yaml
+import logging
 import BaseModule
 import Decorators
 import Utils
+import sys
 
 
 @Decorators.ModuleDocstringParser
@@ -13,9 +17,9 @@ class PackConfiguration(BaseModule.BaseModule):
 
     Locally configured modules of pack members will not be overwritten by the leaders configuration.
 
-    Module dependencies: ['Cluster']
+    Module dependencies: ['Pack']
 
-    cluster: Name of the cluster module.
+    pack: Name of the pack module. Defaults to the standard Pack module.
     ignore_modules: List of module names to exclude from sync process.
     interval: Time in seconds between checks if master config did change.
 
@@ -42,60 +46,94 @@ class PackConfiguration(BaseModule.BaseModule):
             self.logger.error("Could not start cluster configuration module. Required pack module %s not found. Please check your configuration." % (self.getConfigurationValue('pack')))
             self.gp.shutDown()
             return
-        self.pack_module = mod_info['instances'][0]
-        if self.pack_module.leader:
+        self.pack = mod_info['instances'][0]
+        if self.pack.is_leader:
             self.update_config_func = self.getMasterConfigurationUpdateFunc()
-            self.pack_module.addHandler(action='discovery_finish', callback=self.handleDiscoveryFinish)
+            self.pack.addHandler(action='update_configuration_request', callback=self.leaderHandleUpdateConfigurationRequest)
         else:
-            self.pack_module.addHandler(action='update_configuration_call', callback=self.handleUpdateConfigurationCall)
+            self.pack.addHandler(action='discovery_finish', callback=self.followerHandleDiscoveryFinishRequest)
+            self.pack.addHandler(action='update_configuration_reply', callback=self.followerHandleUpdateConfigurationReply)
+            self.pack.addHandler(action='push_updated_configuration', callback=self.followerHandleUpdateConfigurationReply)
 
     def syncConfigurationToPack(self, configuration):
-        message = self.pack_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': configuration})
-        self.pack_module.sendMessageToPack(message)
+        """
+        Push configuration to all pack members.
+
+        In contrast to followers asking for new configurations, the leader can push a new config to all followers
+        via a call to this function.
+        """
+        message = self.pack.getDefaultMessageDict(action='push_updated_configuration', custom_dict={'configuration': configuration})
+        self.pack.sendMessageToPack(message)
 
     def getMasterConfigurationUpdateFunc(self):
         @Decorators.setInterval(self.getConfigurationValue('interval'))
-        def updateMasterConfiguration():
+        def checkForUpdatedMasterConfiguration():
             filtered_running_configuration = self.filterIgnoredModules(self.gp.getConfiguration())
             if self.filtered_startup_config != filtered_running_configuration:
                 self.filtered_startup_config = filtered_running_configuration
                 self.syncConfigurationToPack(self.filtered_startup_config)
-        return updateMasterConfiguration
+        return checkForUpdatedMasterConfiguration
 
-    def handleDiscoveryFinish(self, message, pack_member):
+    def followerHandleDiscoveryFinishRequest(self, sender, message):
         """
-        Sync current configuration to newly discovered hosts.
+        Request configuration from pack leader.
         """
-        message = self.pack_module.getDefaultMessageDict(action='update_configuration_call', custom_dict={'configuration': self.filtered_startup_config})
-        self.logger.debug('handleDiscoveryReply called.')
-        self.pack_module.sendMessageToPackMember(message, pack_member)
+        message = self.pack.getDefaultMessageDict(action='update_configuration_request')
+        self.logger.debug('Requested configuration from leader %s.' % self.pack.discovered_leader.getHostName())
+        self.pack.sendMessageToPackLeader(message)
 
-    def handleUpdateConfigurationCall(self, message, pack_member):
+    def leaderHandleUpdateConfigurationRequest(self, sender, message):
         """
-        Receive update configuration calls and handle them.
+        Receive update configuration requests and handle them.
         """
+        try:
+            pack_follower = self.pack.pack_followers[sender[0]]
+        except KeyError:
+            return
+        message = self.pack.getDefaultMessageDict(action='update_configuration_reply', custom_dict={'configuration': self.filtered_startup_config})
+        self.logger.debug('Sending update configuration reply to %s' % pack_follower.getHostName())
+        self.pack.sendMessageToPackFollower(pack_follower, message)
+
+    def followerHandleUpdateConfigurationReply(self, sender, message):
+        sender_ip = sender[0]
+        if not self.pack.discovered_leader or sender_ip != self.pack.discovered_leader.getIp():
+            return
+        self.logger.debug('Got update configuration reply from %s.' % self.pack.discovered_leader.getHostName())
         leader_configuration = message['configuration']
         leader_configuration = self.filterIgnoredModules(leader_configuration)
         if leader_configuration != self.filtered_startup_config:
-            self.logger.info("Got new pack configuration from %s." % (pack_member.getHostName()))
+            self.logger.info("Got new pack configuration from %s." % (self.pack.discovered_leader.getHostName()))
             self.gp.setConfiguration(leader_configuration, merge=True)
-            # Send signal to reload GambolPutty.
-            signal.alarm(1)
+            try:
+                with open(self.gp.getConfigurationFilePath(), 'w') as outfile:
+                    outfile.write(yaml.dump(self.gp.getConfiguration(), default_flow_style=False))
+                # Send signal to reload GambolPutty.
+                signal.alarm(1)
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("Could not update configuration file %s. Exception: %s, Error: %s." % (self.gp.getConfigurationFilePath(), etype, evalue))
 
     def filterIgnoredModules(self, configuration):
         filtered_configuration = []
         for idx, module_info in enumerate(configuration):
-            # Never sync pack modules.
-            if not 'module' in module_info or module_info['module'] in ['Pack', 'PackConfiguration']:
+            if type(module_info) is dict:
+                module_name = module_info.keys()[0]
+            elif type(module_info) is str:
+                module_name = module_info
+            else:
+                self.logger.error('Unknown module configuration. Module: %s.' % module_info)
+                self.gp.shutDown()
+            # Never sync Pack modules.
+            if module_name in ['Pack', 'PackConfiguration']:
                 continue
             # Filter ignored modules.
-            if module_info['module'] not in self.getConfigurationValue('ignore_modules'):
+            if module_name not in self.getConfigurationValue('ignore_modules'):
                 filtered_configuration.append(module_info)
         return filtered_configuration
 
     def run(self):
         # Get currently running configuration.
         self.filtered_startup_config = self.filterIgnoredModules(self.gp.getConfiguration())
-        if self.pack_module.leader:
+        if self.pack.is_leader:
             Utils.TimedFunctionManager.startTimedFunction(self.update_config_func)
 
