@@ -23,7 +23,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
         mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
         address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        topic:                      # <default: None; type: None||string; is: required if pattern == 'sub' else optional>
+        topic:                      # <default: ''; type: string; is: optional>
         hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
@@ -34,18 +34,16 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     can_run_forked = False
 
 
-    zmq_pattern_mapping = {'push': zmq.PUSH,
-                           'pull': zmq.PULL,
-                           'pub': zmq.PUB,
-                           'sub': zmq.SUB}
-
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.topic = self.getConfigurationValue('topic')
+        self.pattern = self.getConfigurationValue('pattern')
         self.context = zmq.Context()
-        self.socket = self.context.socket(self.zmq_pattern_mapping[self.getConfigurationValue('pattern')])
-        if self.getConfigurationValue('pattern') == 'sub' and self.getConfigurationValue('topic'):
+        if self.pattern == 'pull':
+            self.socket = self.context.socket(zmq.PULL)
+        elif self.pattern == 'sub':
+            self.socket = self.context.socket(zmq.SUB)
             self.socket.setsockopt(zmq.SUBSCRIBE, str(self.topic))
         if self.getConfigurationValue('hwm'):
             self.setReceiveHighWaterMark(self.getConfigurationValue('hwm'))
@@ -86,12 +84,9 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("Could not connect to zeromq at %s:%s. Exception: %s, Error: %s." % (server_addr, server_port, etype, evalue))
             self.gp.shutDown()
 
-
     def getEventFromZmq(self):
         try:
             event = self.socket.recv()
-            if self.topic:
-                topic, event = event.split(' ', 1)
             yield event
         except zmq.error.ContextTerminated:
             pass
@@ -108,15 +103,16 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
         while self.alive:
             for event in self.getEventFromZmq():
                 event = Utils.getDefaultEventDict({"data": event}, caller_class_name="Zmq")
-                if self.topic:
-                    event['topic'] = self.topic
+                if self.pattern == 'sub':
+                    topic, event['data'] = event['data'].split(' ', 1)
+                    event['topic'] = topic
                 self.sendEvent(event)
 
     def shutDown(self):
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
         try:
             self.socket.close()
             self.context.term()
         except AttributeError:
             pass
         # Call parent shutDown method.
-        BaseThreadedModule.BaseThreadedModule.shutDown(self)
