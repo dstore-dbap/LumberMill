@@ -112,8 +112,8 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
         for (dirpath, dirnames, filenames) in os.walk(path):
             for filename in filenames:
-                lines = [line.strip() for line in open('%s%s%s' % (dirpath,  os.sep, filename))]
-                for line_no,line in enumerate(lines):
+                lines = [line.strip() for line in open('%s%s%s' % (dirpath, os.sep, filename))]
+                for line_no, line in enumerate(lines):
                     if line == "" or line.startswith('#'):
                         continue
                     try:
