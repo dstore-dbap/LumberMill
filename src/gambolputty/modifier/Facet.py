@@ -132,8 +132,7 @@ class Facet(BaseThreadedModule.BaseThreadedModule):
         except KeyError:
             yield event
             return
-        key = event[self.getConfigurationValue('group_by', event)]
-        print(key)
+        key = self.getConfigurationValue('group_by', event)
         if not key and self.redis_store:
             self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event

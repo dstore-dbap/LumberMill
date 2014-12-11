@@ -9,6 +9,7 @@ import logging.config
 import Queue
 import Utils
 
+
 class StoppableThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
@@ -82,11 +83,14 @@ class MockReceiver(mock.Mock):
 
 class ModuleBaseTestCase(unittest2.TestCase):
 
-    def setUp(self, test_object):
+    def __init__(self, *args, **kwargs):
+        super(ModuleBaseTestCase, self).__init__(*args, **kwargs)
         logging.config.fileConfig('../conf/logger.conf')
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.conf_validator = ConfigurationValidator.ConfigurationValidator()
         self.receiver = MockReceiver()
-        test_object.logger.addHandler(logging.StreamHandler())
+
+    def setUp(self, test_object):
         test_object.addReceiver('MockReceiver', self.receiver)
         self.test_object = test_object
         if hasattr(test_object, 'setInputQueue'):

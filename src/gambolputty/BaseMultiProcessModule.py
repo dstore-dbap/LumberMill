@@ -28,6 +28,7 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
         add_fields:                       # <default: {}; type: dict; is: optional>
         delete_fields:                    # <default: []; type: list; is: optional>
         event_type:                       # <default: None; type: None||string; is: optional>
+        pool_size:                        # <default: 2; type: integer; is: optional>
         queue_size:                       # <default: 50; type: integer; is: optional>
         queue_buffer_size:                # <default: 250; type: integer; is: optional>
         receivers:

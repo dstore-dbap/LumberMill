@@ -1,3 +1,4 @@
+import pprint
 import extendSysPath
 import ModuleBaseTestCase
 import unittest
@@ -14,11 +15,11 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testInternalFacet(self):
         self.test_object.configure({'source_field': 'url',
-                                    'group_by': '%(remote_ip)s',
+                                    'group_by': '$(remote_ip)',
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1})
         self.checkConfiguration()
-        self.test_object.prepareRun()
+        self.test_object.initAfterFork()
         self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
@@ -43,13 +44,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         rc.configure({'server': 'es-01.dbap.de'})
         self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'url',
-                                    'group_by': '%(remote_ip)s',
+                                    'group_by': '$(remote_ip)',
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1,
                                     'redis_store': 'RedisStore',
                                     'redis_ttl': 5})
         self.checkConfiguration()
-        self.test_object.prepareRun()
+        self.test_object.initAfterFork()
         self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))

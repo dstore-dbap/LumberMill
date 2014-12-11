@@ -8,6 +8,7 @@ import netifaces
 import mock
 import Sniffer
 
+
 class TestSniffer(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):

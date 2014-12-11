@@ -241,8 +241,6 @@ class Buffer:
     def getTimedFlushMethod(self):
         @Decorators.setInterval(self.flush_interval)
         def timedFlush():
-            if len(self.buffer) == 0 or self.is_flushing:
-                return
             self.flush()
         return timedFlush
 
@@ -261,6 +259,8 @@ class Buffer:
             self.flush()
 
     def flush(self):
+        if self.bufsize() == 0 or self.is_flushing:
+            return
         self.is_flushing = True
         self.stopInterval()
         success = self.flush_callback(self.buffer)

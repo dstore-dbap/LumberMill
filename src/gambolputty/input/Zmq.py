@@ -33,7 +33,6 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     """Set module type"""
     can_run_forked = False
 
-
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)

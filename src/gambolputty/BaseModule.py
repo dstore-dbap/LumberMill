@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import pprint
 import re
 import abc
 import logging
@@ -128,15 +129,8 @@ class BaseModule:
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
-                # Try to return a default value for requested setting.
-                try:
-                    if mapping_dict or use_strftime:
-                        return Utils.mapDynamicValue(self.configuration_metadata[key]['default'], mapping_dict, use_strftime)
-                    return self.configuration_metadata[key]['default']
-                except KeyError:
-                    self.logger.warning("Could not find configuration setting for required setting: %s." % key)
-                    self.gp.shutDown()
-                    #return False
+            self.logger.warning("Could not find configuration setting for required setting: %s." % key)
+            self.gp.shutDown()
         if not isinstance(config_setting, dict):
             self.logger.debug("Configuration for key: %s is incorrect." % key)
             return False

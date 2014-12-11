@@ -31,7 +31,7 @@ class Sniffer(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - TcpSniffer:
+    - Sniffer:
         interface:              # <default: 'any'; type: None||string; is: optional>
         packetfilter:           # <default: None; type: None||string; is: optional>
         promiscous:             # <default: False; type: boolean; is: optional>

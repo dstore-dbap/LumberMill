@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import elasticsearch
@@ -44,9 +45,13 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
     routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
                 Timepatterns like %Y.%m.%d are allowed here.
     ttl:        When set, documents will be automatically deleted after ttl expired.
-                Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+                Can either set time in milliseconds or elasticsearch date format, e.g.: 1d, 15m etc.
                 This feature needs to be enabled for the index.
                 @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
+    sniff_on_start: The client can be configured to inspect the cluster state to get a list of nodes upon startup.
+                    Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+    sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
+                              Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
     consistency:    One of: 'one', 'quorum', 'all'
     replication:    One of: 'sync', 'async'.
     store_interval_in_secs:     Send data to es in x seconds intervals.
@@ -58,15 +63,17 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
     - ElasticSearchSingleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
-        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
         index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
+        doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
         routing:                                  # <default: None; type: None||string; is: optional>
-        ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        ttl:                                      # <default: None; type: None||integer||string; is: optional>
+        sniff_on_start:                           # <default: True; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
         backlog_size:                             # <default: 1000; type: integer; is: optional>
@@ -111,7 +118,7 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
                                                  connection_class=self.connection_class,
                                                  sniff_on_start=False,
                                                  sniff_on_connection_fail=False,
-                                                 sniff_timeout=10,
+                                                 sniff_timeout=5,
                                                  maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
                                                  http_auth=self.getConfigurationValue('http_auth'))
@@ -149,15 +156,19 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
             if not doc_id:
                 self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
-            doc_id = json.dumps(doc_id.strip())
+            #if not self.routing_pattern:
+            #    header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
+            #else:
+            #    header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
+            header = {'index': {'_index': index_name,
+                                '_type': event_type,
+                                '_id': doc_id}}
+            if self.routing_pattern:
+                header['index']['_routing'] = routing
             if self.ttl:
-                event['_ttl'] = self.ttl
-            if not self.routing_pattern:
-                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
-            else:
-                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
+                header['index']['_ttl'] = self.ttl
             try:
-                json_data.append("\n".join((header, json.dumps(event), "\n")))
+                json_data.append("\n".join((json.dumps(header), json.dumps(event), "\n")))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
@@ -165,14 +176,14 @@ class ElasticSearchSingleWorkerSink(BaseThreadedModule.BaseThreadedModule):
         return json_data
 
     def storeData(self, events):
-        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True)
+        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            #print("Bulk update of %s events took %s." % (len(events), time.time() - started))
             return True
-            #print "Bulk update of %s events took %s." % (len(events), time.time() - started)
         except elasticsearch.exceptions.ConnectionError:
             try:
                 self.logger.warning("Lost connection to %s. Trying to reconnect." % ((self.getConfigurationValue("nodes"),index_name)))

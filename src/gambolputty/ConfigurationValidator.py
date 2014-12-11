@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import Utils
+
 
 if sys.hexversion > 0x03000000:
     import Py3Compat as PythonCompatFunctions
