@@ -109,7 +109,7 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             return client
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
             self.gp.shutDown()
 
     def getClusterRedisClient(self):
@@ -136,7 +136,7 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             client = rediscluster.StrictRedisCluster(cluster=cluster,db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue['cluster'], etype, evalue))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue['cluster'], etype, evalue))
             self.gp.shutDown()
         return client
 

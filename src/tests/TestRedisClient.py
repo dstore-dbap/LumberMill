@@ -4,6 +4,7 @@ import ModuleBaseTestCase
 import mock
 import RedisStore
 
+
 class TestRedisStore(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):

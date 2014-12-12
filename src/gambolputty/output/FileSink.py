@@ -94,7 +94,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
                 self.file_handles[path] = {'handle': file_handle, 'lru': time.time()}
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('Could no open %s for writing. Excpeption: %s, Error: %s.' % (path, etype, evalue))
+                self.logger.error('Could no open %s for writing. Exception: %s, Error: %s.' % (path, etype, evalue))
         return file_handle
 
     def storeData(self, events):
@@ -108,7 +108,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
                 self.ensurePathExists(path)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('Could no create path %s. Events could not be written. Excpeption: %s, Error: %s.' % (path, etype, evalue))
+                self.logger.error('Could no create path %s. Events could not be written. Exception: %s, Error: %s.' % (path, etype, evalue))
                 return
             mode = "a+"
             if self.compress == 'gzip':
@@ -125,7 +125,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
                 return True
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.error('Could no write event data to %s. Excpeption: %s, Error: %s.' % (path, etype, evalue))
+                self.logger.error('Could no write event data to %s. Exception: %s, Error: %s.' % (path, etype, evalue))
 
     def shutDown(self):
         self.buffer.flush()

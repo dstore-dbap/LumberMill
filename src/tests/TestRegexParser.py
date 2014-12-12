@@ -5,6 +5,7 @@ import mock
 import Utils
 import RegexParser
 
+
 class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     raw_data= '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395'

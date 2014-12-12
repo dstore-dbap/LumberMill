@@ -48,16 +48,16 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
             self.client.ping()
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
-    def getEventFromInputQueue(self):
-        try:
-            event = self.client.blpop(self.lists, timeout=self.timeout)
-            return event
-        except:
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
-
-    def handleEvent(self, event):
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
+    def run(self):
+        while self.alive:
+            try:
+                event = self.client.blpop(self.lists, timeout=self.timeout)
+            except:
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
+                continue
+            event = Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
+            self.sendEvent(event)

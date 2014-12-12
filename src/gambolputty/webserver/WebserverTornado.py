@@ -64,7 +64,7 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
                 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not start webserver on %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('port'), etype, evalue))
+            self.logger.error("Could not start webserver on %s. Exception: %s, Error: %s." % (self.getConfigurationValue('port'), etype, evalue))
             return
         tornado.autoreload.add_reload_hook(self.shutDown)
         return

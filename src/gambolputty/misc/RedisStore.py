@@ -94,7 +94,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
             return client
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
 
     def getClusterRedisClient(self):
         import rediscluster

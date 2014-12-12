@@ -45,20 +45,14 @@ class RedisChannel(BaseModule.BaseModule):
                 self.client.fetch(('select', self.getConfigurationValue('password')), self.checkReply)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
-
-    def run(self):
-        if not self.receivers:
-            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
-            return
-        if not self.client:
-            return
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
+            self.gp.shutDown()
         try:
             self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not fetch event from redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
-        autoreload.add_reload_hook(self.shutDown)
+            self.logger.error("Could not subscribe to channel at redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
+        #autoreload.add_reload_hook(self.shutDown)
         #ioloop = IOLoop.instance()
         #ioloop.make_current()
         #try:

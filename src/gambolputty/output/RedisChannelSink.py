@@ -47,7 +47,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
                                       db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to redis store at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'),etype, evalue))
+            self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'),etype, evalue))
 
     def initAfterFork(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
@@ -62,7 +62,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.client.publish(self.getConfigurationValue('channel', event), publish_event)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not publish event to redis channel %s at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue))
+            self.logger.error("Could not publish event to redis channel %s at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue))
         yield None
 
     def __handleEvent(self, event):

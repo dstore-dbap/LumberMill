@@ -74,7 +74,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 self.client.bind('tcp://%s:%s' % (server_addr, server_port))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not connect to zeromq at %s. Excpeption: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
+            self.logger.error("Could not connect to zeromq at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
     def initAfterFork(self):

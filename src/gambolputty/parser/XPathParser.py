@@ -77,7 +77,7 @@ class XPathParser(BaseThreadedModule.BaseThreadedModule):
                     self.redis_store.set(redis_key, result, self.redis_ttl)
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("Could not parse xml doc %s Excpeption: %s, Error: %s." % (xml_string, etype, evalue))
+                self.logger.warning("Could not parse xml doc %s Exception: %s, Error: %s." % (xml_string, etype, evalue))
         if result:
             target_field_name = self.getConfigurationValue('target_field', event)
             event[target_field_name] = result

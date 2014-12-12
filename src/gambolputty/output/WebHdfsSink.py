@@ -81,7 +81,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
             hdfs = PyWebHdfsClient(host=self.server, port=self.port, user_name=self.user)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error('Could not connect to webfs service on %s. Excpeption: %s, Error: %s.' % (self.getConfigurationValue('server'), etype, evalue))
+            self.logger.error('Could not connect to webfs service on %s. Exception: %s, Error: %s.' % (self.getConfigurationValue('server'), etype, evalue))
             return None
         return hdfs
 

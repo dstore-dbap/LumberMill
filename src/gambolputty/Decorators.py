@@ -85,7 +85,7 @@ def ModuleDocstringParser(cls):
                         prop_value = ast.literal_eval(prop_value)
                     except:
                         etype, evalue, etb = sys.exc_info()
-                        instance.logger.error("Could not parse %s from docstring. Excpeption: %s, Error: %s." % (prop_value, etype, evalue))
+                        instance.logger.error("Could not parse %s from docstring. Exception: %s, Error: %s." % (prop_value, etype, evalue))
                         continue
                     # Set default values in module configuration. Will be overwritten by custom values
                     if prop_name == "default":

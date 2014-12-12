@@ -89,27 +89,10 @@ class ThreadedUdpServer(ThreadPoolMixIn, SocketServer.UDPServer):
 
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None, tls=False, key=False, cert=False, ssl_ver = ssl.PROTOCOL_SSLv23):
+    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True, timeout=None):
         SocketServer.UDPServer.__init__(self, server_address, RequestHandlerClass)
         self.socket.settimeout(timeout)
-        self.use_tls = tls
         self.timeout = timeout
-        if tls:
-            self.socket = ssl.wrap_socket(self.socket,
-                                          server_side=True,
-                                          keyfile=key,
-                                          certfile=cert,
-                                          cert_reqs=ssl.CERT_NONE,
-                                          ssl_version=ssl_ver,
-                                          do_handshake_on_connect=False,
-                                          suppress_ragged_eofs=True)
-
-    def get_request(self):
-        (socket, addr) = SocketServer.UDPServer.get_request(self)
-        if self.use_tls:
-            socket.settimeout(self.timeout)
-            socket.do_handshake()
-        return (socket, addr)
 
 class UdpRequestHandlerFactory:
     def produce(self, tcp_server_instance):
@@ -125,12 +108,9 @@ class UdpServer(BaseModule.BaseModule):
     Configuration template:
 
     - UdpServer:
-        interface:                       # <default: ''; type: string; is: optional>
+        ipaddress:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         receivers:
           - NextModule
     """
@@ -138,27 +118,26 @@ class UdpServer(BaseModule.BaseModule):
     module_type = "input"
     """Set module type"""
 
+    can_run_forked = False
+
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.server = False
 
-    def run(self):
+    def start(self):
         if not self.receivers:
             self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
             return
         handler_factory = UdpRequestHandlerFactory()
         try:
-            self.server = ThreadedUdpServer((self.getConfigurationValue("interface"),
+            self.server = ThreadedUdpServer((self.getConfigurationValue("ipaddress"),
                                              self.getConfigurationValue("port")),
                                              handler_factory.produce(self),
-                                             timeout=self.getConfigurationValue("timeout"),
-                                             tls=self.getConfigurationValue("tls"),
-                                             key=self.getConfigurationValue("key"),
-                                             cert=self.getConfigurationValue("cert"))
+                                             timeout=self.getConfigurationValue("timeout"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("ipaddress"),
                                                                                             self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
             return
