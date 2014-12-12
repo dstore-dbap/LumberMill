@@ -73,9 +73,13 @@ doc_id:     Sets the es document id for the committed event data.
 routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
 Timepatterns like %Y.%m.%d are allowed here.
 ttl:        When set, documents will be automatically deleted after ttl expired.
-Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+Can either set time in milliseconds or elasticsearch date format, e.g.: 1d, 15m etc.
 This feature needs to be enabled for the index.
 @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
+sniff_on_start: The client can be configured to inspect the cluster state to get a list of nodes upon startup.
+Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
+Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
 consistency:    One of: 'one', 'quorum', 'all'
 replication:    One of: 'sync', 'async'.
 store_interval_in_secs:     Send data to es in x seconds intervals.
@@ -87,46 +91,32 @@ Configuration template:
     - ElasticSearchSingleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
-        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
         index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
+        doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
         routing:                                  # <default: None; type: None||string; is: optional>
-        ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        ttl:                                      # <default: None; type: None||integer||string; is: optional>
+        sniff_on_start:                           # <default: True; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
         backlog_size:                             # <default: 1000; type: integer; is: optional>
-
-
-#####FileQueueSink
-
-Stores all received events in a file based queue for persistance.
-
-path: Path to queue file.
-store_interval_in_secs: sending data to es in x seconds intervals.
-batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
-
-Configuration template:
-
-    - FileQueueSink:
-        path:                           # <type: string; is: required>
-        store_interval_in_secs:         # <default: 10; type: integer; is: optional>
-        batch_size:                     # <default: 500; type: integer; is: optional>
 
 
 #####FileSink
 
 Store all received events in a file.
 
-file_name: Absolut filename. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
+file_name: absolute path to filen. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
 format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
 store_interval_in_secs: sending data to es in x seconds intervals.
 batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
 backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
-compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
+compress: Compress output as gzip or snappy file. For this to be effective, the chunk size should not be too small.
 
 Configuration template:
 

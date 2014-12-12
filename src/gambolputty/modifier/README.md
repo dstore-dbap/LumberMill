@@ -179,10 +179,10 @@ Execute arbitrary math functions.
 Simple example to cast nginx request time (seconds with milliseconds as float) to apache request time
 (microseconds as int):
 
-    - Math:
-        filter: if $(server_type) == "nginx"
-        target_field: request_time
-        function: int(float($(request_time)) * 1000)
+- Math:
+filter: if $(server_type) == "nginx"
+target_field: request_time
+function: int(float($(request_time)) * 1000)
 
 If interval is set, the results of <function> will be collected for the interval time and the final result
 will be calculated via the <results_function>.
@@ -190,14 +190,15 @@ will be calculated via the <results_function>.
 function: the function to be applied to/with the event data.
 results_function: if interval is configured, use this function to calculate the final result.
 interval: Number of seconds to until.
+target_field: event field to store the result in.
 
 Configuration template:
 
     - Math:
         function:                   # <type: string; is: required>
         results_function:           # <default: None; type: None||string; is: optional if interval is None else required>
-        target_field:               # <default: None; type: None||string; is: optional>
         interval:                   # <default: None; type: None||float||integer; is: optional>
+        target_field:               # <default: None; type: None||string; is: optional>
         receivers:
           - NextModule
 

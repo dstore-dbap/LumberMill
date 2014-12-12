@@ -37,8 +37,8 @@ Configuration template:
         escapechar:                             # <default: '\'; type: string; is: optional>
         skipinitialspace:                       # <default: False; type: boolean; is: optional>
         quotechar:                              # <default: '"'; type: string; is: optional>
-        delimiter:                              # <default: '|'; type: char; is: optional>
-        fieldnames:                             # <default: False; type: [list]; is: optional>
+        delimiter:                              # <default: '|'; type: string; is: optional>
+        fieldnames:                             # <default: False; type: list; is: optional>
         receivers:
           - NextModule
 
@@ -235,9 +235,16 @@ A string like:
 
 will produce this dictionary:
 
-{'dist': {'version': '2.3.5', 'name': 'Android'},
-'os': {'name': 'Linux'},
-'browser': {'version': '4.0', 'name': 'Safari'}}
+'user_agent_info': {   'device': {   'family': u'HTC DesireS'},
+'os': {   'family': 'Android',
+'major': '2',
+'minor': '3',
+'patch': '5',
+'patch_minor': None},
+'user_agent': {   'family': 'Android',
+'major': '2',
+'minor': '3',
+'patch': '5'}}}
 
 source_fields:  Input field to parse.
 target_field: field to update with parsed info fields.

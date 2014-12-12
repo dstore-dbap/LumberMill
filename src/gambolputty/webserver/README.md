@@ -23,5 +23,8 @@ A tornado based web server.
 Configuration template:
 
     - WebserverTornado:
-        port: 6060                 # <default: 5100; type: integer; is: optional>
-        document_root: other_root  # <default: 'docroot'; type: string; is: optional>
+        port:                            # <default: 5100; type: integer; is: optional>
+        tls:                             # <default: False; type: boolean; is: optional>
+        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+        document_root:                   # <default: 'docroot'; type: string; is: optional>

@@ -77,7 +77,7 @@ Dependencies:
 
 Configuration template:
 
-    - TcpSniffer:
+    - Sniffer:
         interface:              # <default: 'any'; type: None||string; is: optional>
         packetfilter:           # <default: None; type: None||string; is: optional>
         promiscous:             # <default: False; type: boolean; is: optional>
@@ -122,6 +122,7 @@ Configuration template:
 #####TcpServer
 
 Reads data from tcp socket and sends it to its outputs.
+Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
 interface:  Ipaddress to listen on.
 port:       Port to listen on.
@@ -160,12 +161,9 @@ Reads data from udp socket and sends it to its output queues.
 Configuration template:
 
     - UdpServer:
-        interface:                       # <default: ''; type: string; is: optional>
+        ipaddress:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         receivers:
           - NextModule
 
@@ -198,7 +196,7 @@ Configuration template:
         mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
         address:                    # <default: '*:5570'; type: string; is: optional>
         pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        topic:                      # <default: None; type: None||string; is: required if pattern == 'sub' else optional>
+        topic:                      # <default: ''; type: string; is: optional>
         hwm:                        # <default: None; type: None||integer; is: optional>
         receivers:
           - NextModule
