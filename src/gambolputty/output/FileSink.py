@@ -2,23 +2,24 @@
 import os
 from cStringIO import StringIO
 import collections
-import BaseMultiProcessModule
+import BaseThreadedModule
 import Decorators
 import Utils
 import sys
+import time
 
 
 @Decorators.ModuleDocstringParser
-class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class FileSink(BaseThreadedModule.BaseThreadedModule):
     """
     Store all received events in a file.
 
-    file_name: Absolut filename. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
+    file_name: absolute path to filen. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
     format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
     store_interval_in_secs: sending data to es in x seconds intervals.
     batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
-    compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
+    compress: Compress output as gzip or snappy file. For this to be effective, the chunk size should not be too small.
 
     Configuration template:
 
@@ -37,12 +38,13 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.batch_size = self.getConfigurationValue('batch_size')
         self.backlog_size = self.getConfigurationValue('backlog_size')
         self.file_name = self.getConfigurationValue('file_name')
         self.format = self.getConfigurationValue('format')
         self.compress = self.getConfigurationValue('compress')
+        self.file_handles = {}
         if self.compress == 'gzip':
             try:
                 # Import module into namespace of object. Otherwise it will not be accessible when process was forked.
@@ -57,6 +59,20 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 self.logger.error('Snappy compression selected but snappy module could not be loaded.')
                 self.gp.shutDown()
         self.buffer = Utils.Buffer(self.batch_size, self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.backlog_size)
+        Utils.TimedFunctionManager.startTimedFunction(self.closeStaleFileHandles)
+
+    @Decorators.setInterval(60)
+    def closeStaleFileHandles(self):
+        """
+        Close and delete file handles that are unused since 5 minutes.
+        """
+        for path, file_handle_data in self.file_handles.items():
+            last_used_time_ago = time.time() - file_handle_data['lru']
+            if last_used_time_ago < 300:
+                continue
+            self.logger.info('Closing stale file handle for %s.' % (path))
+            file_handle_data['handle'].close()
+            self.file_handles.pop(path)
 
     def ensurePathExists(self, path):
         dirpath = os.path.dirname(path)
@@ -66,6 +82,20 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def handleEvent(self, event):
         self.buffer.append(event)
         yield None
+
+    def getOrCreateFileHandle(self, path, mode):
+        file_handle = None
+        try:
+            file_handle = self.file_handles[path]['handle']
+            self.file_handles[path]['lru'] = time.time()
+        except KeyError:
+            try:
+                file_handle = open(path, mode)
+                self.file_handles[path] = {'handle': file_handle, 'lru': time.time()}
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error('Could no open %s for writing. Excpeption: %s, Error: %s.' % (path, etype, evalue))
+        return file_handle
 
     def storeData(self, events):
         write_data = collections.defaultdict(str)
@@ -90,9 +120,8 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
                 lines = self.compressSnappy(lines)
                 mode += "b"
             try:
-                fh = open(path, mode)
+                fh = self.getOrCreateFileHandle(path, mode)
                 fh.write(lines)
-                fh.close()
                 return True
             except:
                 etype, evalue, etb = sys.exc_info()
@@ -100,7 +129,7 @@ class FileSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def shutDown(self):
         self.buffer.flush()
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
 
     def compressGzip(self, data):
         buffer = StringIO()
