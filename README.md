@@ -1,11 +1,7 @@
 GambolPutty
 ==========
 
-Collect, parse and store logs with a configurable set of modules.
-
-To run GambolPutty you will need Python 2.5+.  
-For better performance I recommend running GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.  
-For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance with multiprocessing.Queue.
+Collect, parse and store logs with a configurable set of modules. Inspired by logstash but with a lesser memory footprint and faster startup time.
 
 For a small how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel free to visit http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
 
@@ -259,6 +255,10 @@ Events received by this module will be printed out to stdout. The RegexParser mo
 
 The different modules can be combined in any order.
 
+To run GambolPutty you will need Python 2.5+.  
+For better performance I recommend running GambolPutty with pypy. Tested with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.  
+For IPC ZeroMq is used instead of the default multiprocessing.Queue. This resulted in nearly 3 times of the performance with multiprocessing.Queue.
+
 ##### Working modules:
 
 #### Event inputs
@@ -301,7 +301,6 @@ The different modules can be combined in any order.
 * DevNullSink, discards all data that it receives.
 * ElasticSearchSingleWorkerSink, stores data entries in an elasticsearch index.
 * ElasticSearchMultipleWorkersSink, same as above but multiprocessed.
-* FileQueueSink, stores all received events in a file based queue.
 * FileSink, store events in a file.
 * GraphiteSink, send metrics to graphite server.
 * LoggerSink, sends data to gambolputty internal logger for output.
