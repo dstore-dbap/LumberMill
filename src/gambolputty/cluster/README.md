@@ -2,20 +2,20 @@ cluster modules
 ==========
 #####Pack
 
-Pack base module. Handles pack leader discovery and alive checks of pack followers.
+    Pack base module. Handles pack leader discovery and alive checks of pack followers.
 
-IMPORTANT:
-This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
+    IMPORTANT:  
+    This is just a first alpha implementation. No leader election, no failover, no sanity checks for conflicting leaders.
 
-name: Name of the cluster. Used for auto-discovery in same network.
-secret: pre shared key to en/decrypt cluster messages.
-broadcast: Ipaddress for udp broadcasts.
-interface:  Ipaddress to listen on.
-port:   Port to listen on.
-interval: Autodiscover interval.
-pack: Set this node to be either leader or member.
-
-Configuration template:
+    name: Name of the cluster. Used for auto-discovery in same network.  
+    secret: pre shared key to en/decrypt cluster messages.  
+    broadcast: Ipaddress for udp broadcasts.  
+    interface:  Ipaddress to listen on.  
+    port:   Port to listen on.  
+    interval: Autodiscover interval.  
+    pack: Set this node to be either leader or member.
+  
+    Configuration template:
 
     - Pack:
         name:                                 # <type: string; is: required>
@@ -29,18 +29,18 @@ Configuration template:
 
 #####PackConfiguration
 
-Synchronize configuration from leader to pack members.
-Any changes to the leaders configuration will be synced to all pack followers.
+    Synchronize configuration from leader to pack members.  
+    Any changes to the leaders configuration will be synced to all pack followers.
+  
+    Locally configured modules of pack members will not be overwritten by the leaders configuration.
+  
+    Module dependencies: ['Pack']
 
-Locally configured modules of pack members will not be overwritten by the leaders configuration.
-
-Module dependencies: ['Pack']
-
-pack: Name of the pack module. Defaults to the standard Pack module.
-ignore_modules: List of module names to exclude from sync process.
-interval: Time in seconds between checks if master config did change.
-
-Configuration template:
+    pack: Name of the pack module. Defaults to the standard Pack module.  
+    ignore_modules: List of module names to exclude from sync process.  
+    interval: Time in seconds between checks if master config did change.
+  
+    Configuration template:
 
     - PackConfiguration:
         pack:                                   # <default: 'Pack'; type: string; is: optional>
