@@ -2,41 +2,41 @@ output modules
 ==========
 #####DevNullSink
 
-    Just discard messeages send to this module.
-  
-    Configuration template:
+Just discard messeages send to this module.
+
+Configuration template:
 
     - DevNullSink
 
 
 #####ElasticSearchMultipleWorkerSink
 
-    Store the data dictionary in an elasticsearch index.
+Store the data dictionary in an elasticsearch index.
 
-    The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.  
-    Requests will the be loadbalanced via round robin.
+The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.  
+Requests will the be loadbalanced via round robin.
 
-    format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.  
-                If not set the whole event dict is send.  
-    nodes:      Configures the elasticsearch nodes.  
-    connection_type:    One of: 'thrift', 'http'  
-    http_auth:  'user:password'  
-    use_ssl:    One of: True, False  
-    index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.  
-    doc_id:     Sets the es document id for the committed event data.  
-    routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)  
-                Timepatterns like %Y.%m.%d are allowed here.  
-    ttl:        When set, documents will be automatically deleted after ttl expired.  
-                Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.  
-                This feature needs to be enabled for the index.  
-                @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html  
-    consistency:    One of: 'one', 'quorum', 'all'  
-    replication:    One of: 'sync', 'async'.  
-    store_interval_in_secs:     Send data to es in x seconds intervals.  
-    batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
-  
-    Configuration template:
+format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.  
+If not set the whole event dict is send.  
+nodes:      Configures the elasticsearch nodes.  
+connection_type:    One of: 'thrift', 'http'  
+http_auth:  'user:password'  
+use_ssl:    One of: True, False  
+index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.  
+doc_id:     Sets the es document id for the committed event data.  
+routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)  
+Timepatterns like %Y.%m.%d are allowed here.  
+ttl:        When set, documents will be automatically deleted after ttl expired.  
+Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.  
+This feature needs to be enabled for the index.  
+@See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html  
+consistency:    One of: 'one', 'quorum', 'all'  
+replication:    One of: 'sync', 'async'.  
+store_interval_in_secs:     Send data to es in x seconds intervals.  
+batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
+
+Configuration template:
 
     - ElasticSearchMultipleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
@@ -57,36 +57,36 @@ output modules
 
 #####ElasticSearchSingleWorkerSink
 
-    Store the data dictionary in an elasticsearch index.
+Store the data dictionary in an elasticsearch index.
 
-    The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.  
-    Requests will the be loadbalanced via round robin.
+The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.  
+Requests will the be loadbalanced via round robin.
 
-    format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.  
-                If not set the whole event dict is send.  
-    nodes:      Configures the elasticsearch nodes.  
-    connection_type:    One of: 'thrift', 'http'  
-    http_auth:  'user:password'  
-    use_ssl:    One of: True, False  
-    index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.  
-    doc_id:     Sets the es document id for the committed event data.  
-    routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)  
-                Timepatterns like %Y.%m.%d are allowed here.  
-    ttl:        When set, documents will be automatically deleted after ttl expired.  
-                Can either set time in milliseconds or elasticsearch date format, e.g.: 1d, 15m etc.  
-                This feature needs to be enabled for the index.  
-                @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html  
-    sniff_on_start: The client can be configured to inspect the cluster state to get a list of nodes upon startup.  
-                    Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.  
-    sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.  
-                              Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.  
-    consistency:    One of: 'one', 'quorum', 'all'  
-    replication:    One of: 'sync', 'async'.  
-    store_interval_in_secs:     Send data to es in x seconds intervals.  
-    batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
-  
-    Configuration template:
+format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.  
+If not set the whole event dict is send.  
+nodes:      Configures the elasticsearch nodes.  
+connection_type:    One of: 'thrift', 'http'  
+http_auth:  'user:password'  
+use_ssl:    One of: True, False  
+index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.  
+doc_id:     Sets the es document id for the committed event data.  
+routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)  
+Timepatterns like %Y.%m.%d are allowed here.  
+ttl:        When set, documents will be automatically deleted after ttl expired.  
+Can either set time in milliseconds or elasticsearch date format, e.g.: 1d, 15m etc.  
+This feature needs to be enabled for the index.  
+@See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html  
+sniff_on_start: The client can be configured to inspect the cluster state to get a list of nodes upon startup.  
+Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.  
+sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.  
+Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.  
+consistency:    One of: 'one', 'quorum', 'all'  
+replication:    One of: 'sync', 'async'.  
+store_interval_in_secs:     Send data to es in x seconds intervals.  
+batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
+
+Configuration template:
 
     - ElasticSearchSingleWorkerSink:
         format:                                   # <default: None; type: None||string; is: optional>
@@ -109,16 +109,16 @@ output modules
 
 #####FileSink
 
-    Store all received events in a file.
+Store all received events in a file.
 
-    file_name: absolute path to filen. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.  
-    format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'  
-    store_interval_in_secs: sending data to es in x seconds intervals.  
-    batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.  
-    compress: Compress output as gzip or snappy file. For this to be effective, the chunk size should not be too small.
-  
-    Configuration template:
+file_name: absolute path to filen. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.  
+format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'  
+store_interval_in_secs: sending data to es in x seconds intervals.  
+batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.  
+compress: Compress output as gzip or snappy file. For this to be effective, the chunk size should not be too small.
+
+Configuration template:
 
     - FileSink:
         file_name:                            # <type: string; is: required>
@@ -131,34 +131,34 @@ output modules
 
 #####GraphiteSink
 
-    Send metrics to graphite server.
+Send metrics to graphite server.
 
-    server: Graphite server to connect to.  
-    port: Port carbon-cache is listening on.  
-    formats: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].  
-    store_interval_in_secs: Send data to graphite in x seconds intervals.  
-    batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
-  
-    Here a simple example to send http_status statistics to graphite:
-  
-    ...
+server: Graphite server to connect to.  
+port: Port carbon-cache is listening on.  
+formats: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].  
+store_interval_in_secs: Send data to graphite in x seconds intervals.  
+batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
 
-    - Statistics:  
-        interval: 10  
-        fields: ['http_status']
+Here a simple example to send http_status statistics to graphite:
 
-    - GraphiteSink:  
-        filter: if %(field_name) == "http_status"  
-        server: 127.0.0.1  
-        batch_size: 1  
-        formats: ['gambolputty.stats.http_200_%(interval)ds %(field_counts.200)d',  
-                  'gambolputty.stats.http_400_%(interval)ds %(field_counts.400)d',  
-                  'gambolputty.stats.http_total_%(interval)ds %(total_count)d']
-  
-    ...
-  
-    Configuration template:
+...
+
+- Statistics:  
+interval: 10  
+fields: ['http_status']
+
+- GraphiteSink:  
+filter: if %(field_name) == "http_status"  
+server: 127.0.0.1  
+batch_size: 1  
+formats: ['gambolputty.stats.http_200_%(interval)ds %(field_counts.200)d',  
+'gambolputty.stats.http_400_%(interval)ds %(field_counts.400)d',  
+'gambolputty.stats.http_total_%(interval)ds %(total_count)d']
+
+...
+
+Configuration template:
 
     - GraphiteSink:
         server:                   # <default: 'localhost'; type: string; is: optional>
@@ -171,15 +171,15 @@ output modules
 
 #####LoggerSink
 
-    Send data to gambolputty logger.
+Send data to gambolputty logger.
 
-    formats: Format of messages to send to logger, e.g.:  
-             ['############# Statistics #############',  
-              'Received events in %(interval)ds: %(total_count)d',  
-              'EventType: httpd_access_log - Hits: %(field_counts.httpd_access_log)d',  
-              'EventType: Unknown - Hits: %(field_counts.Unknown)d']
-  
-    Configuration template:
+formats: Format of messages to send to logger, e.g.:  
+['############# Statistics #############',  
+'Received events in %(interval)ds: %(total_count)d',  
+'EventType: httpd_access_log - Hits: %(field_counts.httpd_access_log)d',  
+'EventType: Unknown - Hits: %(field_counts.Unknown)d']
+
+Configuration template:
 
     - LoggerSink:
         formats:    # <type: list; is: required>
@@ -187,16 +187,16 @@ output modules
 
 #####RedisChannelSink
 
-    Publish incoming events to redis channel.
+Publish incoming events to redis channel.
 
-    channel: Name of redis channel to send data to.  
-    server: Redis server to connect to.  
-    port: Port redis server is listening on.  
-    db: Redis db.  
-    password: Redis password.  
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set, the whole event dict is send.
-  
-    Configuration template:
+channel: Name of redis channel to send data to.  
+server: Redis server to connect to.  
+port: Port redis server is listening on.  
+db: Redis db.  
+password: Redis password.  
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set, the whole event dict is send.
+
+Configuration template:
 
     - RedisChannelSink:
         channel:                    # <type: string; is: required>
@@ -212,19 +212,19 @@ output modules
 
 #####RedisListSink
 
-    Send events to a redis lists.
+Send events to a redis lists.
 
-    list: Name of redis list to send data to.  
-    server: Redis server to connect to.  
-    port: Port redis server is listening on.  
-    db: Redis db.  
-    password: Redis password.  
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
-    store_interval_in_secs: Send data to redis in x seconds intervals.  
-    batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
-  
-    Configuration template:
+list: Name of redis list to send data to.  
+server: Redis server to connect to.  
+port: Port redis server is listening on.  
+db: Redis db.  
+password: Redis password.  
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
+store_interval_in_secs: Send data to redis in x seconds intervals.  
+batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration template:
 
     - RedisListSink:
         list:                     # <type: String; is: required>
@@ -240,12 +240,12 @@ output modules
 
 #####StdOutSink
 
-    Print the data dictionary to stdout.
+Print the data dictionary to stdout.
 
-    pretty_print: Use pythons pprint function.  
-    format: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
-  
-    Configuration template:
+pretty_print: Use pythons pprint function.  
+format: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
+
+Configuration template:
 
     - StdOutSink:
         pretty_print:           # <default: True; type: boolean; is: optional>
@@ -255,15 +255,15 @@ output modules
 
 #####SyslogSink
 
-    Send events to syslog.
+Send events to syslog.
 
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
-    address: Either a server:port pattern or a filepath to a unix socket, e.g. /dev/log.  
-    proto: Protocol to use.  
-    facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names  
-    format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
-  
-    Configuration template:
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
+address: Either a server:port pattern or a filepath to a unix socket, e.g. /dev/log.  
+proto: Protocol to use.  
+facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names  
+format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
+
+Configuration template:
 
     - SyslogSink:
         format:               # <default: None; type: None||string; is: optional>
@@ -275,19 +275,19 @@ output modules
 
 #####WebHdfsSink
 
-    Store events in hdfs via webhdfs.
+Store events in hdfs via webhdfs.
 
-    server: webhdfs/https node  
-    user: Username for webhdfs.  
-    path: Path to logfiles. String my contain any of pythons strtime directives.  
-    name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.  
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
-    store_interval_in_secs: Send data to webhdfs in x seconds intervals.  
-    batch_size: Send data to webhdfs if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.  
-    compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
-  
-    Configuration template:
+server: webhdfs/https node  
+user: Username for webhdfs.  
+path: Path to logfiles. String my contain any of pythons strtime directives.  
+name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.  
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.  
+store_interval_in_secs: Send data to webhdfs in x seconds intervals.  
+batch_size: Send data to webhdfs if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.  
+compress: Compress output as gzip file. For this to be effective, the chunk size should not be too small.
+
+Configuration template:
 
     - WebHdfsSink:
         server:                               # <default: 'localhost:14000'; type: string; is: optional>
@@ -303,19 +303,19 @@ output modules
 
 #####ZmqSink
 
-    Sends events to zeromq.
+Sends events to zeromq.
 
-    server: Server to connect to. Pattern: hostname:port.  
-    pattern: Either push or pub.  
-    mode: Whether to run a server or client. If running as server, pool size is restricted to a single process.  
-    topic: The channels topic.  
-    hwm: Highwatermark for sending socket.  
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send msgpacked.  
-    store_interval_in_secs: Send data to redis in x seconds intervals.  
-    batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.  
-    backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
-  
-    Configuration template:
+server: Server to connect to. Pattern: hostname:port.  
+pattern: Either push or pub.  
+mode: Whether to run a server or client. If running as server, pool size is restricted to a single process.  
+topic: The channels topic.  
+hwm: Highwatermark for sending socket.  
+format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send msgpacked.  
+store_interval_in_secs: Send data to redis in x seconds intervals.  
+batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.  
+backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration template:
 
     - ZmqSink:
         server:                     # <default: 'localhost:5570'; type: string; is: optional>
