@@ -1,7 +1,7 @@
 GambolPutty
 ==========
 
-Collect, parse and store logs with a configurable set of modules. Inspired by logstash but with a lesser memory footprint and faster startup time.
+Collect, parse and store logs with a configurable set of modules. Inspired by [logstash](https://github.com/elasticsearch/logstash) but with a lesser memory footprint and faster startup time.
 
 For a small how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel free to visit http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
 
