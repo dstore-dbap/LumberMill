@@ -13,23 +13,23 @@ Below, I will explain each section in more detail.
     # Sets number of parallel GambolPutty processes.
     - Global:
        workers: 2
-
+    
     # Listen on all interfaces, port 5151.
     - TcpServer:
        port: 5151
        receivers:
         - RegexParser
-
+    
     # Listen on all interfaces, port 5152.
     - TcpServer:
        port: 5152
        mode: stream
        chunksize: 32768
-
+    
     # Decode msgpacked data.
     - MsgPackParser:
        mode: stream
-
+    
     # Extract fields.
     - RegexParser:
        source_field: data
@@ -44,63 +44,63 @@ Below, I will explain each section in more detail.
         # Print out messages that did not match
         - StdOutSink:
            filter: $(gambolputty.event_type) == 'Unknown'
-
+    
     # Print out some stats every 10 seconds.
     - SimpleStats:
        interval: 10
-
+    
     # Extract the syslog prival from events received via syslog.
     - SyslogPrivalParser:
        source_field: syslog_prival
-
+    
     # Add a timestamp field.
     - AddDateTime:
        format: '%Y-%m-%dT%H:%M:%S.%f'
        target_field: "@timestamp"
-
+    
     # Add geo info based on the lookup_fields. The first field in <source_fields> that yields a result from geoip will be used.
     - AddGeoInfo:
        geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
        source_fields: [x_forwarded_for, remote_ip]
        geo_info_fields: ['latitude', 'longitude', 'country_code']
-
+    
     # Nginx logs request time in seconds with milliseconds as float. Apache logs microseconds as int.
     # At least cast nginx to integer.
     - Math:
        filter: if $(server_type) == "nginx"
        target_field: request_time
        function: float($(request_time)) * 1000
-
+    
     # Map field values of <source_field> to values in <map>.
     - ModifyFields:
        filter: if $(http_status)
        action: map
        source_field: http_status
        map: {100: 'Continue', 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 304: 'Not Modified', 400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found', 500: 'Internal Server Error', 502: 'Bad Gateway'}
-
+    
     # Kibana’s ‘bettermap’ panel needs an array of floats in order to plot events on map.
     - ModifyFields:
        filter: if $(latitude)
        action: merge
        source_fields: [longitude, latitude]
        target_field: geoip
-
+    
     # Extarct some fields from the user agent data.
     - UserAgentParser:
        source_fields: user_agent
-
+    
     # Parse the url into its components.
     - UrlParser:
        source_field: uri
        target_field: uri_parsed
        parse_querystring: True
        querystring_target_field: params
-
+    
     # Store events in elastic search.
-    - ElasticSearchSingleWorkerSink:
+    - ElasticSearchSink:
        nodes: [localhost]
        store_interval_in_secs: 5
-
+    
     - StdOutSink
 
 Let me explain it in more detail:
@@ -243,7 +243,7 @@ Extract user agent information from the user\_agent field. This module will set 
 Extract details from the uri field. This module will set fields like uri\_parsed.scheme, uri\_parsed.path, uri\_parsed.query etc.
 
     # Store events in elastic search.
-    - ElasticSearchSingleWorkerSink:
+    - ElasticSearchSink:
        nodes: [localhost]
        store_interval_in_secs: 5
        
@@ -412,7 +412,7 @@ Just use the field name. If referring to a nested dict or a list, use dots:
 
 Use $(variable_name) notation. If referring to a nested dict or a list, use dots:
 
-    - ElasticSearchMultiProcessSink:
+    - ElasticSearchSink:
         index_name: 1perftests
         doc_id: $(fields.0)-$(params.spanish.0)
 
