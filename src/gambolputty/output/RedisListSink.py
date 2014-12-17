@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
 import redis
-import BaseMultiProcessModule
+import BaseThreadedModule
 import Utils
 import Decorators
 
 
 @Decorators.ModuleDocstringParser
-class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class RedisListSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send events to a redis lists.
 
@@ -41,7 +41,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.list = self.getConfigurationValue('list')
         self.client = redis.StrictRedis(host=self.getConfigurationValue('server'),
@@ -57,7 +57,7 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def initAfterFork(self):
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def storeData(self, buffered_data):
         try:
@@ -81,4 +81,4 @@ class RedisListSink(BaseMultiProcessModule.BaseMultiProcessModule):
             self.buffer.flush()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

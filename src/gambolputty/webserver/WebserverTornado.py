@@ -52,7 +52,7 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
                      'TornadoWebserver': self}
         return settings
 
-    def run(self):
+    def start(self):
         ssl_options = None
         if self.getConfigurationValue("tls"):
             ssl_options = { 'certfile': self.getConfigurationValue("cert"),

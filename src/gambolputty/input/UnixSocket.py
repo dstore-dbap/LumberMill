@@ -61,7 +61,7 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.running = False
 
-    def run(self):
+    def start(self):
         if not self.receivers:
             self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
             return

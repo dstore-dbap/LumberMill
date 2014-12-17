@@ -3,13 +3,13 @@ import sys
 import zmq
 import socket
 import msgpack
-import BaseMultiProcessModule
+import BaseThreadedModule
 import Utils
 import Decorators
 
 
 @Decorators.ModuleDocstringParser
-class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class ZmqSink(BaseThreadedModule.BaseThreadedModule):
     """
     Sends events to zeromq.
 
@@ -43,7 +43,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.server = None
         self.topic = self.getConfigurationValue('topic')
         self.format = self.getConfigurationValue('format')
@@ -80,7 +80,7 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
     def initAfterFork(self):
         self.initZmqContext()
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def storeData(self, buffered_data):
         try:
@@ -114,4 +114,4 @@ class ZmqSink(BaseMultiProcessModule.BaseMultiProcessModule):
         except AttributeError:
             pass
         # Call parent shutDown method.
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

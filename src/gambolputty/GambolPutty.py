@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
+import pprint
 import Utils
 import multiprocessing
 import sys
@@ -11,8 +12,7 @@ import getopt
 import logging.config
 import yaml
 import tornado.ioloop
-from collections import defaultdict
-import BaseMultiProcessModule
+from collections import OrderedDict
 import ConfigurationValidator
 
 # Conditional imports for python2/3
@@ -70,8 +70,7 @@ class GambolPutty():
         self.alive = False
         self.child_processes = []
         self.main_process_pid = os.getpid()
-        self.modules = {}
-        self.message_callbacks = defaultdict(lambda: [])
+        self.modules = OrderedDict()
         self.logger = logging.getLogger(self.__class__.__name__)
         if path_to_config_file:
             success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
@@ -106,6 +105,7 @@ class GambolPutty():
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
+            usage()
             self.shutDown()
         return configuration
 
@@ -171,7 +171,7 @@ class GambolPutty():
             if isinstance(module_info, dict):
                 module_class_name = module_info.keys()[0]
                 module_config = module_info[module_class_name]
-                # Set module name. Use id if it was set in configuration.
+                # Set module id. If the id field was used in configuration use it else use class name of module.
                 try:
                     module_id = module_class_name if 'id' not in module_config else module_config['id']
                 except:
@@ -181,9 +181,9 @@ class GambolPutty():
             else:
                 module_id = module_class_name = module_info
             counter = 1
-            # Find an unused module identifier.
+            # Modules ids have to be unique. Add a counter like "_1" to id if it is already used.
             while module_id in self.modules:
-                tmp_mod_name = module_id.split("_",1)[0]
+                tmp_mod_name = module_id.split("_", 1)[0]
                 module_id = "%s_%s" % (tmp_mod_name, counter)
                 counter += 1
             # Ignore some reserved module names. At the moment this is just the Global keyword.
@@ -192,61 +192,48 @@ class GambolPutty():
             module_instances = []
             module_instance = self.initModule(module_class_name)
             module_instances.append(module_instance)
-            if isinstance(module_instance, BaseMultiProcessModule.BaseMultiProcessModule):
-                pool_size = module_config['pool_size'] if 'pool_size' in module_config else self.workers
-                for _ in range(pool_size-1):
-                    module_instance = self.initModule(module_class_name)
-                    module_instances.append(module_instance)
             self.modules[module_id] = {'idx': idx,
                                        'instances': module_instances,
                                        'type': module_instance.module_type,
                                        'configuration': module_config}
             start_message = "Using module %s." % module_id
             self.logger.info(start_message)
-            # Set receiver to next module in config if no receivers were set.
-            # TODO: Make sure stand_alone modules will not be added as receivers.
-            if 'receivers' not in module_config:
-                try:
-                    next_module_info = self.configuration[idx + 1]
-                    if isinstance(next_module_info, dict):
-                        receiver_class_name = next_module_info.keys()[0]
-                        receiver_id = receiver_class_name if (not next_module_info[receiver_class_name] or 'id' not in next_module_info[receiver_class_name]) else next_module_info[receiver_class_name]['id']
-                    else:
-                        receiver_id = receiver_class_name = next_module_info
-                    counter = 1
-                    while receiver_id in self.modules:
-                        tmp_mod_name = receiver_id.split("_",1)[0]
-                        receiver_id = "%s_%s" % (tmp_mod_name, counter)
-                        counter += 1
-                    module_config['receivers'] = [receiver_id]
-                except IndexError:
-                    module_config['receivers'] = [None]
-                except:
-                    # Something is wrong with the configuration. Tell user.
-                    etype, evalue, etb = sys.exc_info()
-                    self.logger.error("Error in configuration for module %s. Exception: %s, Error: %s. Please check configuration." % (module_config, etype, evalue))
-                    self.shutDown()
 
-    """
-    def __initModuleParsers(self):
-        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
-            for module_instance in module_info['instances']:
-                # Inline parsers are only supported for input and output modules.
-                if module_instance.module_type not in ['input', 'output']:
-                    continue
-                if 'parsers' not in module_info['configuration']:
-                    continue
-                for parser_data in module_info['configuration']['parsers']:
-                    if isinstance(parser_data, dict):
-                        parser_name, parser_config = iter(parser_data.items()).next()
-                    else:
-                        parser_name = parser_data
-                        parser_config = {}
-                    parser = self.initModule(parser_name)
-                    parser.configure(parser_config)
-                    parser.checkConfiguration()
-                    module_instance.addParser(parser)
-    """
+
+    def setDefaultReceivers(self):
+        """
+        Add default receivers if none are provided by configuration.
+
+        To make configuration less complicated, a module does not need to provide a receivers setting.
+        if receivers is not set, events are send to the next module in the configuration by default.
+        This method takes care of setting the default receivers settings.
+        """
+        # Iterate over all configured modules ordered as they appear in the current configuration.
+        for module_name, module_info in self.modules.items():
+            # If receivers is configured we can skip to next module.
+            if 'receivers' in module_info['configuration']:
+                continue
+            # Some module types do not have any receivers.
+            if module_info['type'] in ['stand_alone', 'output']:
+                module_info['configuration']['receivers'] = []
+                continue
+            # Break on last module since it can have no following receivers.
+            if module_info['idx'] == len(self.modules) - 1:
+                break
+            # Set receiver to next module in config if no receivers were set.
+            # Get next module in configuration.
+            try:
+                receiver_module_name = [nxt_mod_name for nxt_mod_name, nxt_mod_info in self.modules.items() if nxt_mod_info['idx'] == module_info['idx'] + 1][0]
+            except:
+                # Something is wrong with the configuration. Tell user.
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Error in configuration for module %s. Exception: %s, Error: %s. Please check configuration." % (module_name, etype, evalue))
+                self.shutDown()
+            # Some modules are not allowed to act as receivers. Exit if configuration is faulty.
+            if self.modules[receiver_module_name]['type'] in ['stand_alone', 'input']:
+                self.logger.error("Error in configuration. %s not allowed to act as receiver for events from %s. %s modules are not allowed as receivers. Please check configuration." % (receiver_module_name, module_name, self.modules[receiver_module_name]['type']))
+                self.shutDown()
+            module_info['configuration']['receivers'] = [receiver_module_name]
 
     def configureModules(self):
         """Call configuration method of module."""
@@ -265,11 +252,8 @@ class GambolPutty():
         """
         queues = {}
         # Iterate over all configured modules.
-        for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']): #self.modules.items():
+        for module_name, module_info in self.modules.items():
             sender_instance = module_info['instances'][0]
-            # StandAlone and output modules can have no receivers.
-            if sender_instance.module_type in ['stand_alone', 'output']:
-                continue
             for receiver_data in sender_instance.getConfigurationValue('receivers'):
                 if not receiver_data:
                     break
@@ -283,9 +267,7 @@ class GambolPutty():
                 # If we run multiprocessed and the module is not capable of running parallel, this module will only be
                 # started in the main process. Connect the module via a queue to all receivers that can run forked.
                 for receiver_instance in self.modules[receiver_name]['instances']:
-                    if (self.workers > 1 and (not sender_instance.can_run_forked and receiver_instance.can_run_forked))\
-                            or\
-                        (isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule)):
+                    if (self.workers > 1 and sender_instance.can_run_forked != receiver_instance.can_run_forked):
                         try:
                             queue = queues[receiver_name]
                         except KeyError:
@@ -302,6 +284,11 @@ class GambolPutty():
                         instance.addReceiver(receiver_name, receiver_instance)
 
     def getModuleInfoById(self, module_id, silent=True):
+        """
+        Get a module by its id.
+
+        Some modules need access to other modules. This method will return the module referenced by its id.
+        """
         try:
             return self.modules[module_id]
         except KeyError:
@@ -336,20 +323,12 @@ class GambolPutty():
                 # will be send via queue to the other processes.
                 if not self.is_master() and not instance.can_run_forked:
                     continue
-                # All multiprocess modules will only be started from the main process.
-                if not self.is_master() and isinstance(instance, BaseMultiProcessModule.BaseMultiProcessModule):
-                    continue
                 # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
                 # The module itself can then decide if it wants to be run as thread. If not, it has to return False to let Gambolputty know.
                 if getattr(instance, "start", None): # and (instance.getInputQueue() or instance.module_type in ['stand_alone', 'input'])
                     started = instance.start()
                     if started:
                         self.logger.debug("Starting module %s as thread via %s.start()." % (module_name, module_name))
-                    continue
-                # TODO: get rid of this call as it is only there for backwards compatibility.
-                if getattr(instance, "run", None):
-                    self.logger.debug("Starting module %s via %s.run()" % (module_name, module_name))
-                    instance.run()
                     continue
 
     def getAllQueues(self):
@@ -364,6 +343,22 @@ class GambolPutty():
 
     def is_master(self):
         return os.getpid() == self.main_process_pid
+
+    def configTest(self):
+        self.configureGlobal()
+        self.initModulesFromConfig()
+        self.setDefaultReceivers()
+        self.configureModules()
+        self.initEventStream()
+        return
+
+    def start(self):
+        self.configureGlobal()
+        self.initModulesFromConfig()
+        self.setDefaultReceivers()
+        self.configureModules()
+        self.initEventStream()
+        self.runWorkers()
 
     def runWorkers(self):
         for i in range(1, self.workers):
@@ -411,25 +406,6 @@ class GambolPutty():
         tornado.ioloop.IOLoop.instance().stop()
         if self.is_master():
             self.logger.info("Shutdown complete.")
-        # Using multiprocessing.Manager (e.g. in Stats module) and os.fork together will cause the following error
-        # when calling sys.exit():
-        #
-        # Error in sys.exitfunc:
-        # Traceback (most recent call last):
-        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/atexit.py", line 24, in _run_exitfuncs
-        #    func(*targs, **kargs)
-        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/util.py", line 319, in _exit_function
-        #    p.join()
-        #  File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/multiprocessing/process.py", line 143, in join
-        #    assert self._parent_pid == os.getpid(), 'can only join a child process'
-        # AssertionError: can only join a child process
-        #
-        # To make sure all subprocess share the same manager, it needs to be instantiated BEFORE the fork call.
-        # The problem is that the multiprocessing.Manager starts its own process to handle the shared data.
-        # When shutting down after the fork, the process.join seems to have lost the access to this process.
-        # Aside of this error, everything works as expected.
-        # So instead of calling sys.exit we send a SIGQUIT signal, which works just fine.
-        #os.kill(os.getpid(), signal.SIGQUIT)
 
     def shutDownModules(self):
         # Shutdown all input modules.
@@ -504,23 +480,11 @@ if "__main__" == __name__:
             path_to_config_file = arg
         elif opt in ("--configtest"):
             run_configtest = True
-    if not path_to_config_file:
-        logger.error("Please provide a path to a configuration.")
-        usage()
-        sys.exit(2)
-    if not os.path.isfile(path_to_config_file):
-        logger.error("Configfile %s could not be found." % (path_to_config_file))
-        usage()
-        sys.exit(2)
     gp = GambolPutty(path_to_config_file)
-    gp.configureGlobal()
-    gp.initModulesFromConfig()
-    gp.configureModules()
-    gp.initEventStream()
     if run_configtest:
-        logger.info("Configurationtest for %s finished.%s" % (path_to_config_file))
-        sys.exit(0)
-    gp.runWorkers()
+        gp.configTest()
+    else:
+        gp.start()
 
 
 

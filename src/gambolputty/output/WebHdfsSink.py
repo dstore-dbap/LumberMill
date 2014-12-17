@@ -4,7 +4,7 @@ import logging
 from cStringIO import StringIO
 import pywebhdfs
 from pywebhdfs.webhdfs import PyWebHdfsClient
-import BaseMultiProcessModule
+import BaseThreadedModule
 import multiprocessing
 import Decorators
 import Utils
@@ -13,7 +13,7 @@ import sys
 
 
 @Decorators.ModuleDocstringParser
-class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class WebHdfsSink(BaseThreadedModule.BaseThreadedModule):
     """
     Store events in hdfs via webhdfs.
 
@@ -47,7 +47,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         # Make urllib3s logging less verbose.
         urllib3_logger = logging.getLogger('requests.packages.urllib3.connectionpool')
         urllib3_logger.setLevel(logging.CRITICAL)
@@ -134,7 +134,7 @@ class WebHdfsSink(BaseMultiProcessModule.BaseMultiProcessModule):
         self.hdfs = self.getHdfsClient()
         Utils.TimedFunctionManager.startTimedFunction(self.timed_store_func)
         # Call parent run method
-        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         # Wait till a running store is finished to avoid strange race conditions while manipulating self.events_container.

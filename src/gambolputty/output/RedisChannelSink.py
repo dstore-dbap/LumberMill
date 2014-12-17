@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
 import redis
-import BaseMultiProcessModule
+import BaseThreadedModule
 import Utils
 import Decorators
 
 
 @Decorators.ModuleDocstringParser
-class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class RedisChannelSink(BaseThreadedModule.BaseThreadedModule):
     """
     Publish incoming events to redis channel.
 
@@ -38,7 +38,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def configure(self, configuration):
          # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         try:
             self.client = redis.Redis(host=self.getConfigurationValue('server'),
@@ -51,7 +51,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
 
     def initAfterFork(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.initAfterFork(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         if self.format:
@@ -59,7 +59,7 @@ class RedisChannelSink(BaseMultiProcessModule.BaseMultiProcessModule):
         else:
             publish_data = event
         try:
-            self.client.publish(self.getConfigurationValue('channel', event), publish_event)
+            self.client.publish(self.getConfigurationValue('channel', event), publish_data)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not publish event to redis channel %s at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('channel', event), self.getConfigurationValue('server'), etype, evalue))

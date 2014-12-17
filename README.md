@@ -299,8 +299,7 @@ For IPC ZeroMq is used instead of the default multiprocessing.Queue. This result
 
 #### Outputs
 * DevNullSink, discards all data that it receives.
-* ElasticSearchSingleWorkerSink, stores data entries in an elasticsearch index.
-* ElasticSearchMultipleWorkersSink, same as above but multiprocessed.
+* ElasticSearchSink, stores data entries in an elasticsearch index.
 * FileSink, store events in a file.
 * GraphiteSink, send metrics to graphite server.
 * LoggerSink, sends data to gambolputty internal logger for output.

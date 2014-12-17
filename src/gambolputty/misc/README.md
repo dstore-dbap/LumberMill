@@ -44,7 +44,7 @@ Configuration template:
 
     - KeyValueStore:
         backend:                                 # <default: 'DictStore'; type: string; is: optional>
-        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] else optional>
+        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
         cluster:                                 # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
         port:                                    # <default: 6379; type: integer; is: optional>
         db:                                      # <default: 0; type: integer; is: optional>

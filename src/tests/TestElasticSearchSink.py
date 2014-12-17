@@ -5,12 +5,12 @@ import ModuleBaseTestCase
 import mock
 import elasticsearch
 import Utils
-import ElasticSearchSingleWorkerSink
+import ElasticSearchSink
 
-class TestElasticSearchSingleWorkerSink(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestElasticSearchSingleWorkerSink, self).setUp(ElasticSearchSingleWorkerSink.ElasticSearchSingleWorkerSink(gp=mock.Mock()))
+        super(TestElasticSearchSink, self).setUp(ElasticSearchSink.ElasticSearchSink(gp=mock.Mock()))
         self.es_server = 'localhost'
         self.test_index_name = "test_index"
         self.es = self.connect([self.es_server])

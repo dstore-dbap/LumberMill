@@ -17,6 +17,7 @@ Configuration template:
 
 Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
 
+Here an example of fields that the module provides:  
 {'city': 'Hanover', 'region_name': '06', 'area_code': 0, 'time_zone': 'Europe/Berlin', 'dma_code': 0, 'metro_code': None, 'country_code3': 'DEU', 'latitude': 52.36670000000001, 'postal_code': '', 'longitude': 9.716700000000003, 'country_code': 'DE', 'country_name': 'Germany', 'continent': 'EU'}
 
 geoip_dat_path: path to maxmind geoip database file.  
@@ -387,6 +388,7 @@ Configuration templates:
         target_fields:                              # <default: []; type: list; is: optional>
         receivers:
           - NextModule
+          
 
 #####Permutate
 

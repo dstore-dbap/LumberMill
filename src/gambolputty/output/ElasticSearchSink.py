@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
 import sys
 import time
 import elasticsearch
-import BaseMultiProcessModule
+import BaseThreadedModule
 import Utils
 import Decorators
 try:
@@ -25,8 +24,9 @@ else:
     if not json:
         raise ImportError
 
+
 @Decorators.ModuleDocstringParser
-class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessModule):
+class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     """
     Store the data dictionary in an elasticsearch index.
 
@@ -44,9 +44,13 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
     routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
                 Timepatterns like %Y.%m.%d are allowed here.
     ttl:        When set, documents will be automatically deleted after ttl expired.
-                Can either set time in microseconds or elasticsearch date format, e.g.: 1d, 15m etc.
+                Can either set time in milliseconds or elasticsearch date format, e.g.: 1d, 15m etc.
                 This feature needs to be enabled for the index.
                 @See: http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html
+    sniff_on_start: The client can be configured to inspect the cluster state to get a list of nodes upon startup.
+                    Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+    sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
+                              Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
     consistency:    One of: 'one', 'quorum', 'all'
     replication:    One of: 'sync', 'async'.
     store_interval_in_secs:     Send data to es in x seconds intervals.
@@ -55,18 +59,20 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
 
     Configuration template:
 
-    - ElasticSearchMultipleWorkerSink:
+    - ElasticSearchSink:
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
-        connection_type:                          # <default: "http"; type: string; values: ['thrift', 'http']; is: optional>
+        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
         index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        doc_id:                                   # <default: "%(gambolputty.event_id)s"; type: string; is: optional>
+        doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
         routing:                                  # <default: None; type: None||string; is: optional>
-        ttl:                                      # <default: None; type: None||string; is: optional>
-        consistency:                              # <default: "quorum"; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication:                              # <default: "sync"; type: string;  values: ['sync', 'async']; is: optional>
+        ttl:                                      # <default: None; type: None||integer||string; is: optional>
+        sniff_on_start:                           # <default: True; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
+        replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
         backlog_size:                             # <default: 1000; type: integer; is: optional>
@@ -76,8 +82,8 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
     """Set module type"""
 
     def configure(self, configuration):
-        # Call parent configure method
-        BaseMultiProcessModule.BaseMultiProcessModule.configure(self, configuration)
+        # Call parent configure method.
+        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -93,10 +99,10 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
             self.gp.shutDown()
             return
 
-    def run(self):
+    def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseMultiProcessModule.BaseMultiProcessModule.run(self)
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def connect(self):
         es = False
@@ -104,12 +110,12 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
         while tries < 5 and not es:
             try:
                 # Connect to es node and round-robin between them.
-                self.logger.debug("Connecting to %s." % (self.getConfigurationValue("nodes")))
+                self.logger.debug("Connecting to %s." % self.getConfigurationValue("nodes"))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
                                                  sniff_on_start=False,
                                                  sniff_on_connection_fail=False,
-                                                 sniff_timeout=10,
+                                                 sniff_timeout=5,
                                                  maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
                                                  http_auth=self.getConfigurationValue('http_auth'))
@@ -147,15 +153,15 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
             if not doc_id:
                 self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
-            doc_id = json.dumps(doc_id.strip())
+            header = {'index': {'_index': index_name,
+                                '_type': event_type,
+                                '_id': doc_id}}
+            if self.routing_pattern:
+                header['index']['_routing'] = routing
             if self.ttl:
-                event['_ttl'] = self.ttl
-            if not self.routing_pattern:
-                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s}}' % (index_name, event_type, doc_id)
-            else:
-                header = '{"index": {"_index": "%s", "_type": "%s", "_id": %s, "_routing": "%s"}}' % (index_name, event_type, doc_id, routing)
+                header['index']['_ttl'] = self.ttl
             try:
-                json_data.append("\n".join((header, json.dumps(event), "\n")))
+                json_data.append("\n".join((json.dumps(header), json.dumps(event), "\n")))
             except UnicodeDecodeError:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not json encode %s. Exception: %s, Error: %s." % (event, etype, evalue))
@@ -163,14 +169,13 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
         return json_data
 
     def storeData(self, events):
-        #started = time.time()
-        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True)
+        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         json_data = self.dataToElasticSearchJson(index_name, events)
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
             self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
-            #print("%s(%s): Bulk update of %s events took %s." % (self, self.process_id, len(events), time.time() - started))
+            #print("Bulk update of %s events took %s." % (len(events), time.time() - started))
             return True
         except elasticsearch.exceptions.ConnectionError:
             try:
@@ -190,4 +195,4 @@ class ElasticSearchMultipleWorkerSink(BaseMultiProcessModule.BaseMultiProcessMod
             self.buffer.flush()
         except:
             pass
-        BaseMultiProcessModule.BaseMultiProcessModule.shutDown(self)
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)

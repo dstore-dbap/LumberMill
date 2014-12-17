@@ -131,7 +131,7 @@ class PackConfiguration(BaseModule.BaseModule):
                 filtered_configuration.append(module_info)
         return filtered_configuration
 
-    def run(self):
+    def start(self):
         # Get currently running configuration.
         self.filtered_startup_config = self.filterIgnoredModules(self.gp.getConfiguration())
         if self.pack.is_leader:

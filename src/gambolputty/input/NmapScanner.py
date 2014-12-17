@@ -73,7 +73,7 @@ class NmapScanner(BaseModule.BaseModule):
         event['gambolputty']['event_type'] = 'nmap_scan'
         self.sendEvent(event)
 
-    def run(self):
+    def start(self):
         self.scanner = nmap.PortScanner()
         timed_func = self.getScannerFunc()
         self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(timed_func)
