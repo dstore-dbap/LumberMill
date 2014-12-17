@@ -18,9 +18,10 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
     Multiple values are set via the pipe command, which speeds up storage. Still this comes at a price.
     Buffered values, that have not yet been send to redis, will be lost when GambolPutty crashes.
 
-        store_interval_in_secs: Sending data to redis in x seconds intervals.
-        batch_size: Sending data to redis if count is above, even if store_interval_in_secs is not reached.
-        backlog_size: Maximum count of values waiting for transmission. Values above count will be dropped.
+    backend: backends supported by [simplekv](http://pythonhosted.org//simplekv/)
+    store_interval_in_secs: Sending data to redis in x seconds intervals.
+    batch_size: Sending data to redis if count is above, even if store_interval_in_secs is not reached.
+    backlog_size: Maximum count of values waiting for transmission. Values above count will be dropped.
 
     Configuration template:
 
@@ -123,8 +124,8 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             master_node_key = "node_%d" % counter
             node_name_or_ip, node_port = self._parseRedisServerAddress(master_node)
             cluster['nodes'].update({master_node_key: {'host': node_name_or_ip, 'port': node_port}})
-            #if 'default_node' not in cluster:
-            #    cluster['default_node'] = master_node
+            if 'default_node' not in cluster:
+                cluster['default_node'] = master_node
             if type(slave_nodes) is str:
                 slave_nodes = [slave_nodes]
             for slave_node in slave_nodes:
@@ -132,9 +133,9 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
                 slave_node_key = "node_%d" % counter
                 node_name_or_ip, node_port = self._parseRedisServerAddress(slave_node)
                 cluster['nodes'].update({slave_node_key: {'host':node_name_or_ip, 'port': node_port}})
-                #cluster['master_of'].update({master_node_key: slave_node_key})
+                cluster['master_of'].update({master_node_key: slave_node_key})
         try:
-            client = rediscluster.StrictRedisCluster(cluster=cluster,db=self.getConfigurationValue('db'))
+            client = rediscluster.StrictRedisCluster(cluster=cluster, db=self.getConfigurationValue('db'))
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue['cluster'], etype, evalue))

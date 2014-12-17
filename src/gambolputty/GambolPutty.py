@@ -345,11 +345,13 @@ class GambolPutty():
         return os.getpid() == self.main_process_pid
 
     def configTest(self):
+        self.logger.info("Running configuration test for %s." % self.path_to_config_file)
         self.configureGlobal()
         self.initModulesFromConfig()
         self.setDefaultReceivers()
         self.configureModules()
         self.initEventStream()
+        self.logger.info("Done...")
         return
 
     def start(self):
@@ -468,7 +470,7 @@ if "__main__" == __name__:
     path_to_config_file = ""
     run_configtest = False
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help", "configtest","conf="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc:", ["help", "configtest", "conf="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
