@@ -118,7 +118,7 @@ Default number of workers is CPU_COUNT - 1.
        receivers:
         - RegexParser
 
-Starts a tcp server listening on all local interfaces port 5151. Each module comes with a set of default values, so you only need to provides settings you need to customize.  
+Starts a tcp server listening on all local interfaces port 5151. Each module comes with a set of default values, so you only need to provide settings you need to customize.  
 For a description of the default values of a module, refer to the README.md in the modules directory or its docstring.  
 By default, a module will send its output to the next module in the configuration. To set a custom receiver, set the receivers value.  
 This module will send its output directly to RegexParser.
