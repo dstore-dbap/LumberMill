@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import cPickle
+import redis
 import BaseThreadedModule
 import Decorators
 import Utils
@@ -25,7 +26,7 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
 
     - KeyValueStore:
         backend:                                 # <default: 'DictStore'; type: string; is: optional>
-        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] else optional>
+        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
         cluster:                                 # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
         port:                                    # <default: 6379; type: integer; is: optional>
         db:                                      # <default: 0; type: integer; is: optional>
@@ -76,7 +77,7 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             self.pop = self.popBuffered
 
     def getRedisClient(self):
-        if len(self.getConfigurationValue('cluster')) == 0:
+        if not self.getConfigurationValue('cluster') or len(self.getConfigurationValue('cluster')) == 0:
             redis_store = self.getConfigurationValue('server')
             client = self.getSimpleRedisClient()
         else:
@@ -121,7 +122,7 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
         for master_node, slave_nodes in self.getConfigurationValue('cluster').items():
             master_node_key = "node_%d" % counter
             node_name_or_ip, node_port = self._parseRedisServerAddress(master_node)
-            cluster['nodes'].update({master_node_key: {'host':node_name_or_ip, 'port': node_port}})
+            cluster['nodes'].update({master_node_key: {'host': node_name_or_ip, 'port': node_port}})
             #if 'default_node' not in cluster:
             #    cluster['default_node'] = master_node
             if type(slave_nodes) is str:
@@ -147,6 +148,10 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             node_name_or_ip = node_address
             node_port = self.getConfigurationValue('port')
         return (node_name_or_ip, node_port)
+
+    def iterKeys(self):
+        for key in self.kv_store.iter_keys():
+            yield key
 
     def getClient(self):
         return self.backend_client

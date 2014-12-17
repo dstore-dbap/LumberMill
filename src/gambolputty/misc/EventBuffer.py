@@ -37,7 +37,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "stand_alone"
     """Set module type"""
-    can_run_forked = False
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method
@@ -74,7 +74,6 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
             # Only act if we hold an event.
             if "event_id" not in self.get("gambolputty", {}):
                 return
-            #print "Adding to backend"
             try:
                 key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['gambolputty']['event_id'])
                 # Store a simple dict in backend, not a KeyDotNotationDict.
@@ -85,6 +84,7 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store event in persistance backend. Exception: %s, Error: %s." % (etype, evalue))
                 pass
+            print "Added to backend"
         Utils.KeyDotNotationDict.___init___ = Utils.KeyDotNotationDict.__init__
         Utils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit
 
@@ -120,8 +120,9 @@ class EventBuffer(BaseThreadedModule.BaseThreadedModule):
             instance = module_info['instances'][0]
             if instance.module_type == "input":
                 input_modules[instance.__class__.__name__] = instance
-        keys = self.persistence_backend.client.keys("%s:*" % self.key_prefix)
-        if len(keys) > 0:
+        for key in self.persistence_backend.iterKeys():
+            if not key.startswith("%s" % self.key_prefix):
+                continue
             self.logger.warning("Found %s unfinished events. Requeing..." % (len(keys)))
             requeue_counter = 0
             for key in keys:
