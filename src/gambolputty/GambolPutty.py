@@ -204,9 +204,10 @@ class GambolPutty():
             start_message = "Using module %s." % module_id
             self.logger.info(start_message)
             # Set receiver to next module in config if no receivers were set.
+            # TODO: Make sure stand_alone modules will not be added as receivers.
             if 'receivers' not in module_config:
                 try:
-                    next_module_info = self.configuration[idx+1]
+                    next_module_info = self.configuration[idx + 1]
                     if isinstance(next_module_info, dict):
                         receiver_class_name = next_module_info.keys()[0]
                         receiver_id = receiver_class_name if (not next_module_info[receiver_class_name] or 'id' not in next_module_info[receiver_class_name]) else next_module_info[receiver_class_name]['id']
@@ -279,9 +280,9 @@ class GambolPutty():
                 if receiver_name not in self.modules:
                     self.logger.error("Could not add %s as receiver for %s. Module not found." % (receiver_name, module_name))
                     self.shutDown()
+                # If we run multiprocessed and the module is not capable of running parallel, this module will only be
+                # started in the main process. Connect the module via a queue to all receivers that can run forked.
                 for receiver_instance in self.modules[receiver_name]['instances']:
-                    # If we run multiprocessed and the module is not capable of running parallel, this module will only be
-                    # started in the main process. Connect the module via a queue to all receivers that can run forked.
                     if (self.workers > 1 and (not sender_instance.can_run_forked and receiver_instance.can_run_forked))\
                             or\
                         (isinstance(receiver_instance, BaseMultiProcessModule.BaseMultiProcessModule)):
