@@ -6,7 +6,6 @@ import extendSysPath
 import ModuleBaseTestCase
 import Utils
 import UnixSocket
-import pprint
 
 class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
 

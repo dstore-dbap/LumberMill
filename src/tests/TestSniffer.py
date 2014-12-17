@@ -1,4 +1,3 @@
-import pprint
 import sys
 import time
 import extendSysPath
@@ -39,8 +38,7 @@ class TestSniffer(ModuleBaseTestCase.ModuleBaseTestCase):
         s.send('TestData\n')
         time.sleep(.5)
         #self.assertEqual(len(self.receiver.events), 6, "Exepcted packet count of 6.")
-        for event in self.receiver.getEvent():
-            pprint.pprint(event)
+
 
     def tearDown(self):
         self.server_socket.close()
