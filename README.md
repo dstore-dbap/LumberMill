@@ -109,8 +109,9 @@ Let me explain it in more detail:
     - Global:
        workers: 2
 
+The Global section lets you configure some global properties of GambolPutty. Here the number of parallel processes is set.
 In order to be able to use multiple cores with python (yay to the [GIL](http://www.dabeaz.com/GIL/)) GambolPutty can be started with multiple parallel processes.  
-Default number of workers is CPU_COUNT - 1.
+Default number of workers is CPU_COUNT - 1. 
 
     # Listen on all interfaces, port 5151.
     - TcpServer:
@@ -129,14 +130,14 @@ This module will send its output directly to RegexParser.
        mode: stream
        chunksize: 32768
 
-Also starts a tcp server, listening on port 5152. The first tcp server uses newline as separator for each received event.  
-This sever reads in max. 32k of data and passes this on to the next module.
+Also starts a tcp server, listening on port 5152. The first tcp server uses newline as separator (which is the default) for each received event.  
+Here, the sever reads in max. 32k of data and passes this on to the next module.
 
     # Decode msgpacked data.
     - MsgPackParser:
        mode: stream
 
-Decode the received data from the above tcp server in msgpack format.This can be used to e.g. handle data send via [python-beaver](https://github.com/josegonzalez/python-beaver)
+Decode the received data from the above tcp server in msgpack format. This can be used to e.g. handle data send via [python-beaver](https://github.com/josegonzalez/python-beaver)
 
     # Extract fields.
     - RegexParser:
