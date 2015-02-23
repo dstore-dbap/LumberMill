@@ -1,5 +1,4 @@
 import os
-import pprint
 import time
 import extendSysPath
 import ModuleBaseTestCase
