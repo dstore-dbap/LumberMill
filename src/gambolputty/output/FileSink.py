@@ -15,7 +15,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
     Store all received events in a file.
 
     file_name: absolute path to filen. String my contain pythons strtime directives and event fields, e.g. %Y-%m-%d.
-    format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
+    format: Which event fields to use in the logline, e.g. '$(@timestamp) - $(url) - $(country_code)'
     store_interval_in_secs: sending data to es in x seconds intervals.
     batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.

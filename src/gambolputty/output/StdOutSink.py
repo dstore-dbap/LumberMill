@@ -12,7 +12,7 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     Print the data dictionary to stdout.
 
     pretty_print: Use pythons pprint function.
-    format: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
+    format: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_$(interval)s $(event_rate)'].
 
     Configuration template:
 
@@ -43,6 +43,6 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
         if self.pretty_print and not self.format:
             pprint.pprint(output, indent=4)
         else:
-            print "%s" % output
+            print("%s" % output)
         self.printing = False
         yield None

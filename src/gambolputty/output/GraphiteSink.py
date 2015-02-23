@@ -14,7 +14,7 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
 
     server: Graphite server to connect to.
     port: Port carbon-cache is listening on.
-    formats: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_%(interval)ds %(event_rate)s'].
+    formats: Format of messages to send to graphite, e.g.: ['gambolputty.stats.event_rate_$(interval)s $(event_rate)'].
     store_interval_in_secs: Send data to graphite in x seconds intervals.
     batch_size: Send data to graphite if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Send count of events waiting for transmission. Events above count will be dropped.
@@ -28,12 +28,12 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
         fields: ['http_status']
 
     - GraphiteSink:
-        filter: if %(field_name) == "http_status"
+        filter: if $(field_name) == "http_status"
         server: 127.0.0.1
         batch_size: 1
-        formats: ['gambolputty.stats.http_200_%(interval)ds %(field_counts.200)d',
-                  'gambolputty.stats.http_400_%(interval)ds %(field_counts.400)d',
-                  'gambolputty.stats.http_total_%(interval)ds %(total_count)d']
+        formats: ['gambolputty.stats.http_200_$(interval)s $(field_counts.200)',
+                  'gambolputty.stats.http_400_$(interval)s $(field_counts.400)',
+                  'gambolputty.stats.http_total_$(interval)s $(total_count)']
 
     ...
 

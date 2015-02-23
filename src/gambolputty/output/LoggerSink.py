@@ -12,9 +12,9 @@ class LoggerSink(BaseThreadedModule.BaseThreadedModule):
 
     formats: Format of messages to send to logger, e.g.:
              ['############# Statistics #############',
-              'Received events in %(interval)ds: %(total_count)d',
-              'EventType: httpd_access_log - Hits: %(field_counts.httpd_access_log)d',
-              'EventType: Unknown - Hits: %(field_counts.Unknown)d']
+              'Received events in $(interval)s: $(total_count)',
+              'EventType: httpd_access_log - Hits: $(field_counts.httpd_access_log)',
+              'EventType: Unknown - Hits: $(field_counts.Unknown)']
 
     Configuration template:
 

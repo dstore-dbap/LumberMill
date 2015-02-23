@@ -13,20 +13,18 @@ class SyslogSink(BaseThreadedModule.BaseThreadedModule):
     """
     Send events to syslog.
 
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
+    format: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set the whole event dict is send.
     address: Either a server:port pattern or a filepath to a unix socket, e.g. /dev/log.
     proto: Protocol to use.
     facility: Syslog facility to use. List of possible values, @see: http://epydoc.sourceforge.net/stdlib/logging.handlers.SysLogHandler-class.html#facility_names
-    format: Which event fields to use in the logline, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'
 
     Configuration template:
 
     - SyslogSink:
-        format:               # <default: None; type: None||string; is: optional>
+        format:               # <type: string; is: required>
         address:              # <default: 'localhost:514'; type: string; is: required>
         proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
         facility:             # <default: 'user'; type: string; is: optional>
-        format:               # <type: string; is: required>
     """
 
     module_type = "output"

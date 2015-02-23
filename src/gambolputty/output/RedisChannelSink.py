@@ -16,7 +16,7 @@ class RedisChannelSink(BaseThreadedModule.BaseThreadedModule):
     port: Port redis server is listening on.
     db: Redis db.
     password: Redis password.
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set, the whole event dict is send.
+    format: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set, the whole event dict is send.
 
     Configuration template:
 

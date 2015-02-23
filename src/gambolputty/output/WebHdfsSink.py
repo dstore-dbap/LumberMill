@@ -21,7 +21,7 @@ class WebHdfsSink(BaseThreadedModule.BaseThreadedModule):
     user: Username for webhdfs.
     path: Path to logfiles. String my contain any of pythons strtime directives.
     name_pattern: Filename pattern. String my conatain pythons strtime directives and event fields.
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
+    format: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set the whole event dict is send.
     store_interval_in_secs: Send data to webhdfs in x seconds intervals.
     batch_size: Send data to webhdfs if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.

@@ -119,7 +119,7 @@ class BaseModule:
     def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and
-        takes care of replacing dynamic variables of the pattern e.g. %(field_name)s with the corresponding
+        takes care of replacing dynamic variables of the pattern e.g. $(field_name) with the corresponding
         entries of the mapping dictionary. Most of the time, this will be the data dictionary.
 
         It will also take care to return a default value if the module doc string provided one.
@@ -225,7 +225,8 @@ class BaseModule:
 
     def receiveEvent(self, event):
         for event in self.handleEvent(event):
-            self.sendEvent(event)
+            if event:
+                self.sendEvent(event)
 
     def wrapReceiveEventWithFilter(self, event_filter):
         wrapped_func = self.receiveEvent

@@ -33,7 +33,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
-    format:     Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'.
+    format:     Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
                 If not set the whole event dict is send.
     nodes:      Configures the elasticsearch nodes.
     connection_type:    One of: 'thrift', 'http'

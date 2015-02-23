@@ -16,7 +16,7 @@ class RedisListSink(BaseThreadedModule.BaseThreadedModule):
     port: Port redis server is listening on.
     db: Redis db.
     password: Redis password.
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send.
+    format: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set the whole event dict is send.
     store_interval_in_secs: Send data to redis in x seconds intervals.
     batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.

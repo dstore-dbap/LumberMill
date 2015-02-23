@@ -69,7 +69,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         action: map                                 # <type: string; is: required>
         source_field:                               # <type: string; is: required>
         map:                                        # <type: dictionary; is: required>
-        target_field:                               # <default: "%(source_field)s_mapped"; type: string; is: optional>
+        target_field:                               # <default: "$(source_field)_mapped"; type: string; is: optional>
         receivers:
           - NextModule
 

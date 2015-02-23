@@ -18,7 +18,7 @@ class ZmqSink(BaseThreadedModule.BaseThreadedModule):
     mode: Whether to run a server or client. If running as server, pool size is restricted to a single process.
     topic: The channels topic.
     hwm: Highwatermark for sending socket.
-    format: Which event fields to send on, e.g. '%(@timestamp)s - %(url)s - %(country_code)s'. If not set the whole event dict is send msgpacked.
+    format: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set the whole event dict is send msgpacked.
     store_interval_in_secs: Send data to redis in x seconds intervals.
     batch_size: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
     backlog_size: Maximum count of events waiting for transmission. Events above count will be dropped.
