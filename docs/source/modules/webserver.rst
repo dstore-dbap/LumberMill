@@ -1,12 +1,18 @@
+.. _webserver:
+
 webserver modules
 ==========
-#####WebGui
+
+WebGui
+-----------
 
 A WebGui plugin for GambolPutty. At the moment this is just a stub.
 
 Module dependencies:    WebserverTornado
 
 Configuration template:
+
+::
 
     tornado_webserver: Name of the webserver module.
     document_root: Path to look for templates and static files.
@@ -16,11 +22,14 @@ Configuration template:
         document_root: other_root             # <default: 'docroot'; type: string; is: optional>
 
 
-#####WebserverTornado
+WebserverTornado
+-----------
 
 A tornado based web server.
 
 Configuration template:
+
+::
 
     - WebserverTornado:
         port:                            # <default: 5100; type: integer; is: optional>

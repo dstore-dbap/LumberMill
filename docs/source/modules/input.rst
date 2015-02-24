@@ -1,10 +1,16 @@
+.. _input:
+
 input modules
 ==========
-#####NmapScanner
+
+NmapScanner
+-----------
 
 Scan network with nmap and emit result as new event.
 
 Configuration template:
+
+::
 
     - NmapScanner:
         network:                    # <type: string; is: required>
@@ -16,17 +22,20 @@ Configuration template:
           - NextModule
 
 
-#####RedisChannel
+RedisChannel
+-----------
 
 Subscribes to a redis channels and passes incoming events to receivers.
 
-channel: Name of redis channel to subscribe to.  
-server: Redis server to connect to.  
-port: Port redis server is listening on.  
-db: Redis db.  
+channel: Name of redis channel to subscribe to.
+server: Redis server to connect to.
+port: Port redis server is listening on.
+db: Redis db.
 password: Redis password.
 
 Configuration template:
+
+::
 
     - RedisChannel:
         channel:                    # <type: string; is: required>
@@ -38,18 +47,21 @@ Configuration template:
           - NextModule
 
 
-#####RedisList
+RedisList
+-----------
 
 Subscribes to a redis channels/lists and passes incoming events to receivers.
 
-lists: Name of redis lists to subscribe to.  
-server: Redis server to connect to.  
-port: Port redis server is listening on.  
-db: Redis db.  
-password: Redis password.  
+lists: Name of redis lists to subscribe to.
+server: Redis server to connect to.
+port: Port redis server is listening on.
+db: Redis db.
+password: Redis password.
 timeout: Timeout in seconds.
 
 Configuration template:
+
+::
 
     - RedisList:
         lists:                    # <type: list; is: required>
@@ -62,20 +74,23 @@ Configuration template:
           - NextModule
 
 
-#####Sniffer
+Sniffer
+-----------
 
 Sniff network traffic. Needs root privileges.
 
-Reason for using pcapy as sniffer lib:  
-As Gambolputty is intended to be run with pypy, every module should be compatible with pypy.  
-Creating a raw socket in pypy is no problem but it is (up to now) not possible to bind this  
-socket to a selected interface, e.g. socket.bind(('lo', 0)) will throw "error: unknown address family".  
+Reason for using pcapy as sniffer lib:
+As Gambolputty is intended to be run with pypy, every module should be compatible with pypy.
+Creating a raw socket in pypy is no problem but it is (up to now) not possible to bind this
+socket to a selected interface, e.g. socket.bind(('lo', 0)) will throw "error: unknown address family".
 With pcapy this problem does not exist.
 
-Dependencies:  
+Dependencies:
 - pcapy: pypy -m pip install pcapy
 
 Configuration template:
+
+::
 
     - Sniffer:
         interface:              # <default: 'any'; type: None||string; is: optional>
@@ -86,17 +101,20 @@ Configuration template:
           - NextModule
 
 
-#####Spam
+Spam
+-----------
 
 Emits events as fast as possible.
 
 Use this module to load test GambolPutty.
 
-event: Send custom event data.  
-sleep: Time to wait between sending events.  
+event: Send custom event data.
+sleep: Time to wait between sending events.
 events_count: Only send configured number of events. 0 means no limit.
 
 Configuration template:
+
+::
 
     - Spam:
         event:                    # <default: {}; type: dict; is: optional>
@@ -106,11 +124,14 @@ Configuration template:
           - NextModule
 
 
-#####StdIn
+StdIn
+-----------
 
 Reads data from stdin and sends it to its output queues.
 
 Configuration template:
+
+::
 
     - StdIn:
         multiline:                     # <default: False; type: boolean; is: optional>
@@ -119,24 +140,27 @@ Configuration template:
           - NextModule
 
 
-#####TcpServer
+TcpServer
+-----------
 
-Reads data from tcp socket and sends it to its outputs.  
+Reads data from tcp socket and sends it to its outputs.
 Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
-interface:  Ipaddress to listen on.  
-port:       Port to listen on.  
-timeout:    Sockettimeout in seconds.  
-tls:        Use tls or not.  
-key:        Path to tls key file.  
-cert:       Path to tls cert file.  
-mode:       Receive mode, line or stream.  
-simple_separator:  If mode is line, set separator between lines.  
-regex_separator:   If mode is line, set separator between lines. Here regex can be used.  
-chunksize:  If mode is stream, set chunksize in bytes to read from stream.  
+interface:  Ipaddress to listen on.
+port:       Port to listen on.
+timeout:    Sockettimeout in seconds.
+tls:        Use tls or not.
+key:        Path to tls key file.
+cert:       Path to tls cert file.
+mode:       Receive mode, line or stream.
+simple_separator:  If mode is line, set separator between lines.
+regex_separator:   If mode is line, set separator between lines. Here regex can be used.
+chunksize:  If mode is stream, set chunksize in bytes to read from stream.
 max_buffer_size: Max kilobytes to in receiving buffer.
 
 Configuration template:
+
+::
 
     - TcpServer:
         interface:                       # <default: ''; type: string; is: optional>
@@ -154,11 +178,14 @@ Configuration template:
           - NextModule
 
 
-#####UdpServer
+UdpServer
+-----------
 
 Reads data from udp socket and sends it to its output queues.
 
 Configuration template:
+
+::
 
     - UdpServer:
         ipaddress:                       # <default: ''; type: string; is: optional>
@@ -168,11 +195,14 @@ Configuration template:
           - NextModule
 
 
-#####UnixSocket
+UnixSocket
+-----------
 
 Reads data from an unix socket and sends it to its output queues.
 
 Configuration template:
+
+::
 
     - UnixSocket:
         path_to_socket:         # <type: string; is: required>
@@ -180,17 +210,20 @@ Configuration template:
           - NextModule
 
 
-#####Zmq
+Zmq
+-----------
 
 Read events from a zeromq.
 
 
-mode: Whether to run a server or client.  
-address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.  
-pattern: One of 'pull', 'sub'  
+mode: Whether to run a server or client.
+address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+pattern: One of 'pull', 'sub'
 hwm: Highwatermark for sending/receiving socket.
 
 Configuration template:
+
+::
 
     - Zmq:
         mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
@@ -202,17 +235,20 @@ Configuration template:
           - NextModule
 
 
-#####ZmqTornado
+ZmqTornado
+-----------
 
 Read events from a zeromq.
 
-mode: Whether to run a server or client.  
-address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.  
-pattern: One of 'pull', 'sub'  
-hwm: Highwatermark for sending/receiving socket.  
+mode: Whether to run a server or client.
+address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+pattern: One of 'pull', 'sub'
+hwm: Highwatermark for sending/receiving socket.
 separator: When using the sub pattern, messages can have a topic. Set separator to split message from topic.
 
 Configuration template:
+
+::
 
     - ZmqTornado:
         mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
