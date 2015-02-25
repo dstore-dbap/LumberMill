@@ -1,13 +1,22 @@
 GambolPutty
 ===========
 
+Introduction:
+'''''''''''''
+
 Collect, parse and store logs with a configurable set of modules.
 Inspired by `logstash <https://github.com/elasticsearch/logstash>`_ but
 with a smaller memory footprint and faster startup time.
 
+Installation:
+'''''''''''''
+
 For a small how-to running GambolPutty, Elasticsearch and Kibana on
 CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
+
+Configuration example (with explanations):
+''''''''''''''''''''''''''''''''''''''''''
 
 To give a short introduction of how GambolPutty works, here is a sample
 configuration.
@@ -345,8 +354,8 @@ multiprocessing.Queue.
 Working modules:
 ''''''''''''''''
 
-Event inputs
-^^^^^^^^^^^^
+Event inputs:
+^^^^^^^^^^^^^
 
 -  NmapScanner, scan network with nmap and emit result as new event.
 -  RedisChannel, read events from redis channels.
@@ -359,8 +368,8 @@ Event inputs
 -  UnixSocket, read stream from a named socket on unix like systems.
 -  Zmq, read events from a zeromq.
 
-Event parsers
-^^^^^^^^^^^^^
+Event parsers:
+^^^^^^^^^^^^^^
 
 -  CollectdParser, parse collectd binary protocol data.
 -  CSVParser, parse a char separated string.
@@ -375,8 +384,8 @@ Event parsers
 -  UserAgentParser, parse a http user agent string.
 -  XPathParser, parse an XML document via an xpath expression.
 
-Event modifiers
-^^^^^^^^^^^^^^^
+Event modifiers:
+^^^^^^^^^^^^^^^^
 
 -  AddDateTime, adds a timestamp field.
 -  AddGeoInfo, adds geo info fields.
@@ -392,8 +401,8 @@ Event modifiers
 -  Permutate, takes a list in the event data emits events for all
    possible permutations of that list.
 
-Outputs
-^^^^^^^
+Outputs:
+^^^^^^^^
 
 -  DevNullSink, discards all data that it receives.
 -  ElasticSearchSink, stores data entries in an elasticsearch index.
@@ -407,8 +416,8 @@ Outputs
 -  WebHdfsSink, store events in hdfs via webhdfs.
 -  ZmqSink, sends incoming event to zeromq.
 
-Misc modules
-^^^^^^^^^^^^
+Misc modules:
+^^^^^^^^^^^^^
 
 -  EventBuffer, store received events in a persistent backend until the
    event was successfully handled.
@@ -421,22 +430,22 @@ Misc modules
 -  Tarpit, slows event propagation down - for testing.
 -  Throttle, throttle event count over a given time period.
 
-Cluster modules
-^^^^^^^^^^^^^^^
+Cluster modules:
+^^^^^^^^^^^^^^^^
 
 -  Pack, base pack module. Handles pack leader and pack member
    discovery.
 -  PackConfiguration, syncs leader configuration to pack members.
 
-Webserver modules
-^^^^^^^^^^^^^^^^^
+Webserver modules:
+^^^^^^^^^^^^^^^^^^
 
 -  WebGui, a web interface to GambolPutty.
 -  WebserverTornado, base webserver module. Handles all incoming
    requests.
 
-Event flow basics
-~~~~~~~~~~~~~~~~~
+Event flow basics:
+''''''''''''''''''
 
 -  an input module receives an event.
 -  the event data will be wrapped in a default event dictionary of the
@@ -453,8 +462,8 @@ Event flow basics
    event propagation through the modules.
 -  output modules can not have receivers.
 
-Configuration basics
-~~~~~~~~~~~~~~~~~~~~
+Configuration basics:
+'''''''''''''''''''''
 
 The configuration is stored in a yaml formatted file. Each module
 configuration follows the same pattern:
@@ -497,8 +506,8 @@ redis.
 
 For configuration details of each module refer to its docstring.
 
-Event field notation
-^^^^^^^^^^^^^^^^^^^^
+Event field notation:
+'''''''''''''''''''''
 
 The following examples refer to this event data:
 
@@ -522,7 +531,7 @@ The following examples refer to this event data:
      'user': '-'}
 
 Notation in configuration fields like source\_field or target\_field:
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Just use the field name. If referring to a nested dict or a list, use
 dots:
@@ -536,7 +545,7 @@ dots:
         source_field: params.spanish
 
 Notation in strings:
-''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^
 
 Use $(variable\_name) notation. If referring to a nested dict or a list,
 use dots:
@@ -548,7 +557,7 @@ use dots:
         doc_id: $(fields.0)-$(params.spanish.0)
 
 Notation in module filters:
-'''''''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use $(variable\_name) notation. If referring to a nested dict, use dots:
 
@@ -557,8 +566,8 @@ Use $(variable\_name) notation. If referring to a nested dict, use dots:
     - StdOutSink:
         filter: if $(fields.0) == "nobody" and $(params.spanish.0) == 'inquisition'
 
-Filter
-^^^^^^
+Filters:
+--------
 
 Modules can have an input filter:
 
@@ -577,8 +586,8 @@ Modules can have an output filter:
           - StdOutSink:
               filter: if $(remote_ip) == '192.168.2.20' and re.match('^GET', $(url))
 
-Simple example to get you started ;)
-''''''''''''''''''''''''''''''''''''
+Simple example to get you started:
+''''''''''''''''''''''''''''''''''
 
 ::
 
