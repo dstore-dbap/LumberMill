@@ -12,7 +12,13 @@ Contents:
    :maxdepth: 3
 
    introduction
-
+   modules/input
+   modules/parser
+   modules/modifier
+   modules/misc
+   modules/output
+   modules/cluster
+   modules/webserver
 
 Indices and tables
 ==================
