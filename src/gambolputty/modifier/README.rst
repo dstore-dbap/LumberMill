@@ -1,7 +1,7 @@
-.. _modifier:
+.. _Modifier:
 
-modifier modules
-==========
+Modifier modules
+================
 
 AddDateTime
 -----------
@@ -20,7 +20,7 @@ Configuration template:
 
 
 AddGeoInfo
------------
+----------
 
 Add country_code and longitude-latitude fields based  on a geoip lookup for a given ip address.
 
@@ -59,7 +59,7 @@ Configuration template:
 
 
 DropEvent
------------
+---------
 
 Drop all events received by this module.
 
@@ -75,7 +75,7 @@ Configuration template:
 
 
 ExecPython
------------
+----------
 
 Execute python code.
 
@@ -108,7 +108,7 @@ Configuration template:
 
 
 Facet
------------
+-----
 
 Collect different values of one field over a defined period of time and pass all
 encountered variations on as new event after period is expired.
@@ -137,7 +137,7 @@ Configuration template:
 
 
 FacetV2
------------
+-------
 
 Collect different values of one field over a defined period of time and pass all
 encountered variations on as new event after period is expired.
@@ -198,7 +198,7 @@ Configuration template:
 
 
 Math
------------
+----
 
 Execute arbitrary math functions.
 
@@ -232,7 +232,7 @@ Configuration template:
 
 
 MergeEvent
------------
+----------
 
 Merge multiple event into a single one.
 
@@ -270,7 +270,7 @@ Configuration template:
 
 
 Permutate
------------
+---------
 
 Creates successive len('target_fields') length permutations of elements in 'source_field'.
 

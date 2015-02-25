@@ -1,10 +1,10 @@
-.. _parser:
+.. _Parser:
 
-parser modules
-==========
+Parser modules
+==============
 
 CollectdParser
------------
+--------------
 
 Parse collectd binary protocol data.
 
@@ -30,7 +30,7 @@ Configuration template:
 
 
 CsvParser
------------
+---------
 
 Parse a string as csv data.
 
@@ -53,7 +53,7 @@ Configuration template:
 
 
 JsonParser
------------
+----------
 
 Json codec.
 
@@ -88,7 +88,7 @@ Configuration template:
 
 
 LineParser
------------
+----------
 
 Line parser.
 
@@ -111,7 +111,7 @@ Configuration template:
 
 
 MsgPackParser
------------
+-------------
 
 Decode:
 It will parse the msgpack data and create or replace fields in the internal data dictionary with
@@ -166,7 +166,7 @@ Configuration template:
 
 
 SyslogPrivalParser
------------
+------------------
 
 It will parse the source field in the event dictionary for the default severity
 and facility fields (RFC5424, http://tools.ietf.org/html/rfc5424).
@@ -226,7 +226,7 @@ Configuration template:
 
 
 UrlParser
------------
+---------
 
 Urlencode or decode an event field and extract url parameters.
 
@@ -253,7 +253,7 @@ Configuration template:
 
 
 UserAgentParser
------------
+---------------
 
 Parse http user agent string
 
