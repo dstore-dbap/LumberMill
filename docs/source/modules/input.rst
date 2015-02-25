@@ -1,7 +1,7 @@
-.. _input:
+.. _Input:
 
-input modules
-==========
+Input modules
+=============
 
 NmapScanner
 -----------
@@ -23,7 +23,7 @@ Configuration template:
 
 
 RedisChannel
------------
+------------
 
 Subscribes to a redis channels and passes incoming events to receivers.
 
@@ -48,7 +48,7 @@ Configuration template:
 
 
 RedisList
------------
+---------
 
 Subscribes to a redis channels/lists and passes incoming events to receivers.
 
@@ -75,7 +75,7 @@ Configuration template:
 
 
 Sniffer
------------
+-------
 
 Sniff network traffic. Needs root privileges.
 
@@ -102,7 +102,7 @@ Configuration template:
 
 
 Spam
------------
+----
 
 Emits events as fast as possible.
 
@@ -125,7 +125,7 @@ Configuration template:
 
 
 StdIn
------------
+-----
 
 Reads data from stdin and sends it to its output queues.
 
@@ -141,7 +141,7 @@ Configuration template:
 
 
 TcpServer
------------
+---------
 
 Reads data from tcp socket and sends it to its outputs.
 Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
@@ -179,7 +179,7 @@ Configuration template:
 
 
 UdpServer
------------
+---------
 
 Reads data from udp socket and sends it to its output queues.
 
@@ -196,7 +196,7 @@ Configuration template:
 
 
 UnixSocket
------------
+----------
 
 Reads data from an unix socket and sends it to its output queues.
 
@@ -211,7 +211,7 @@ Configuration template:
 
 
 Zmq
------------
+---
 
 Read events from a zeromq.
 
@@ -236,7 +236,7 @@ Configuration template:
 
 
 ZmqTornado
------------
+----------
 
 Read events from a zeromq.
 

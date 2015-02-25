@@ -1,10 +1,10 @@
-.. _cluster:
+.. _Cluster:
 
-cluster modules
-==========
+Cluster modules
+===============
 
 Pack
------------
+----
 
 Pack base module. Handles pack leader discovery and alive checks of pack followers.
 
@@ -34,7 +34,7 @@ Configuration template:
 
 
 PackConfiguration
------------
+-----------------
 
 Synchronize configuration from leader to pack members.
 Any changes to the leaders configuration will be synced to all pack followers.

@@ -1,10 +1,10 @@
-.. _webserver:
+.. _Webserver:
 
-webserver modules
-==========
+Webserver modules
+=================
 
 WebGui
------------
+------
 
 A WebGui plugin for GambolPutty. At the moment this is just a stub.
 
@@ -23,7 +23,7 @@ Configuration template:
 
 
 WebserverTornado
------------
+----------------
 
 A tornado based web server.
 

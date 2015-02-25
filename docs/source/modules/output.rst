@@ -1,7 +1,7 @@
-.. _output:
+.. _Output:
 
-output modules
-==========
+Output modules
+==============
 
 DevNullSink
 -----------
@@ -16,7 +16,7 @@ Configuration template:
 
 
 ElasticSearchSink
------------
+-----------------
 
 Store the data dictionary in an elasticsearch index.
 
@@ -71,7 +71,7 @@ Configuration template:
 
 
 FileSink
------------
+--------
 
 Store all received events in a file.
 
@@ -96,7 +96,7 @@ Configuration template:
 
 
 GraphiteSink
------------
+------------
 
 Send metrics to graphite server.
 
@@ -139,7 +139,7 @@ Configuration template:
 
 
 LoggerSink
------------
+----------
 
 Send data to gambolputty logger.
 
@@ -158,7 +158,7 @@ Configuration template:
 
 
 RedisChannelSink
------------
+----------------
 
 Publish incoming events to redis channel.
 
@@ -186,7 +186,7 @@ Configuration template:
 
 
 RedisListSink
------------
+-------------
 
 Send events to a redis lists.
 
@@ -217,7 +217,7 @@ Configuration template:
 
 
 StdOutSink
------------
+----------
 
 Print the data dictionary to stdout.
 
@@ -235,7 +235,7 @@ Configuration template:
 
 
 SyslogSink
------------
+----------
 
 Send events to syslog.
 
@@ -287,7 +287,7 @@ Configuration template:
 
 
 ZmqSink
------------
+-------
 
 Sends events to zeromq.
 

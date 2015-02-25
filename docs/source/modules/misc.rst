@@ -1,7 +1,7 @@
-.. _misc:
+.. _Misc:
 
-misc modules
-==========
+Misc modules
+============
 
 EventBuffer
 -----------
@@ -33,7 +33,7 @@ Configuration template:
 
 
 KeyValueStore
------------
+-------------
 
 A simple wrapper around the python simplekv module.
 
@@ -70,7 +70,7 @@ Configuration template:
 
 
 RedisStore
------------
+----------
 
 A simple wrapper around the redis python module.
 
@@ -160,7 +160,7 @@ Configuration template:
 
 
 Statistics
------------
+----------
 
 Collect and log statistic data.
 
@@ -192,7 +192,7 @@ Configuration template:
 
 
 Tarpit
------------
+------
 
 Send an event into a tarpit before passing it on.
 
@@ -209,7 +209,7 @@ Configuration template:
 
 
 Throttle
------------
+--------
 
 Throttle event count over a given time period.
 
