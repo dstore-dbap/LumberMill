@@ -1,0 +1,13 @@
+crypto
+elasticsearch
+mmh3
+msgpack-python
+pygeoip
+pylru
+PyYAML
+pyzmq
+redis
+simplekv
+tornado
+ua-parser
+unittest2

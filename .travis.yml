@@ -1,5 +1,8 @@
 language: python
 python:
   - "2.7"
-install: "pip install -r requirements/requirements.txt --use-mirrors"
+install: "pip install -r requirements/requirements-test.txt --use-mirrors"
+services:
+  - ElasticSearch
+  - Redis
 script: nosetests
