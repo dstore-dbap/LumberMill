@@ -24,6 +24,3 @@ class TestRedisStore(ModuleBaseTestCase.ModuleBaseTestCase):
         rc.setex('Johann Gambolputty', 10, value)
         test = rc.get('Johann Gambolputty')
         self.assertEquals(test, value)
-
-if __name__ == '__main__':
-    unittest.main()

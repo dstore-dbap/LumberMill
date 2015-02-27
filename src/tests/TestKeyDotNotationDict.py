@@ -1,5 +1,4 @@
 import extendSysPath
-import unittest2
 import Utils
 
 class TestKeyDotNotationDict(unittest2.TestCase):
@@ -30,6 +29,3 @@ class TestKeyDotNotationDict(unittest2.TestCase):
         self.assertTrue(self.event['gambolputty.list.0'] == 10)
         self.assertTrue(self.event['gambolputty.list.2.hovercraft'] == 'eels')
         self.assertTrue(self.event['params.spanish'] == [u'inquisition'])
-
-if __name__ == '__main__':
-    unittest2.main()

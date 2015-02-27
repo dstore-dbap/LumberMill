@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import Utils
 import time
@@ -19,6 +18,3 @@ class TestTarpit(ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             after = time.time()
             self.assertEquals(1, int(after-before))
-
-if __name__ == '__main__':
-    unittest.main()

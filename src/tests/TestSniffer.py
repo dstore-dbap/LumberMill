@@ -6,8 +6,10 @@ import socket
 import netifaces
 import mock
 import Sniffer
+import unittest2
 
 
+@unittest2.skip("Module is dead at the moment...")
 class TestSniffer(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):

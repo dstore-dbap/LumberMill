@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import socket
 import json
@@ -83,6 +82,3 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.tcp_server.shutDown()
         ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)
         pass
-
-if __name__ == '__main__':
-    unittest.main()

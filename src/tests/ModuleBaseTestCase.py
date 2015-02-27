@@ -9,7 +9,7 @@ import logging.config
 import Queue
 import Utils
 
-
+@unittest2.skip("Base class for all tests. So skip test for this one.")
 class StoppableThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):

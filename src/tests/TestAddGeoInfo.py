@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import AddGeoInfo
 import Utils

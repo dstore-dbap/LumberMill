@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import Utils
 import Permutate
@@ -26,6 +25,3 @@ class TestPermutate(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()

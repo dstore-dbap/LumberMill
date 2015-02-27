@@ -2,7 +2,6 @@ import os
 import time
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import MergeEvent
 import Utils
@@ -47,6 +46,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         event = False
         counter = 0
         for event in self.receiver.getEvent():
+            print(event)
             counter += 1
         self.assertTrue(event != False)
         self.assertEqual(counter, 3)
@@ -69,6 +69,3 @@ java.lang.IllegalArgumentException: no category found for name: en
             counter += 1
         self.assertTrue(event != False)
         self.assertEqual(counter, 4)
-
-if __name__ == '__main__':
-    unittest.main()

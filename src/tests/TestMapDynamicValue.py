@@ -30,6 +30,3 @@ class TestMapDynaimcValue(unittest2.TestCase):
         self.assertTrue(Utils.mapDynamicValue('%(gambolputty.list.0)s', self.event) == "10")
         self.assertTrue(Utils.mapDynamicValue('%(gambolputty.list.2.hovercraft)s', self.event) == "eels")
         self.assertTrue(Utils.mapDynamicValue('%(params.spanish)s', self.event) == "[u'inquisition']")
-
-if __name__ == '__main__':
-    unittest2.main()

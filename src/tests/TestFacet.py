@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import time
 import Utils
@@ -71,6 +70,3 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()

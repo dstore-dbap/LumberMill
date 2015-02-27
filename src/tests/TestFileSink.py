@@ -2,7 +2,6 @@ import sys
 import os
 import io
 import gzip
-import time
 import extendSysPath
 import ModuleBaseTestCase
 import mock

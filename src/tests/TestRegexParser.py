@@ -1,5 +1,4 @@
 import extendSysPath
-import unittest
 import ModuleBaseTestCase
 import mock
 import Utils
@@ -23,6 +22,3 @@ class TestRegexParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()

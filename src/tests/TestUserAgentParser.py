@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import Utils
 import UserAgentParser
@@ -34,6 +33,3 @@ class TestUserAgentParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         pass
-
-if __name__ == '__main__':
-    unittest.main()

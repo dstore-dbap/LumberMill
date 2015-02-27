@@ -1,6 +1,5 @@
 import extendSysPath
 import ModuleBaseTestCase
-import unittest
 import mock
 import StringIO
 import sys
@@ -51,7 +50,4 @@ We are now no longer the Knights who say Ni.""")
         self.assertEquals(len(item), 2)
         self.assertEquals(item[0]['data'], """We are the knights who say ni!
 Bring us a shrubbery!\n""")
-        self.assertEquals(item[1]['data'], "We are now no longer the Knights who say Ni.")        
-
-if __name__ == '__main__':
-    unittest.main()
+        self.assertEquals(item[1]['data'], "We are now no longer the Knights who say Ni.")
