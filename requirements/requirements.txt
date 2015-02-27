@@ -1,7 +1,7 @@
 crypto
 elasticsearch
 mmh3
-msgpack
+msgpack-python
 pygeoip
 pylru
 PyYAML
