@@ -49,8 +49,8 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
     def testATlsTcpConnection(self):
         self.test_object.configure({'port': 5252,
                                     'tls': True,
-                                    'key': '../../exampleData/gambolputty_ca.key',
-                                    'cert': '../../exampleData/gambolputty_ca.crt',
+                                    'key': './test_data/gambolputty_ca.key',
+                                    'cert': './test_data/gambolputty_ca.crt',
                                     'timeout': 1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
