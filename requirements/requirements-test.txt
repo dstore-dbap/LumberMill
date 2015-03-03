@@ -8,8 +8,10 @@ PyYAML
 # Temporary disabled.
 # pyzmq
 redis
+rediscluster
 simplekv
 tornado
 ua-parser
 unittest2
 mock
+lxml

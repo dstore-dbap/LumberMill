@@ -10,3 +10,4 @@ redis
 simplekv
 tornado
 ua-parser
+lxml
