@@ -68,7 +68,7 @@ class TestKeyValueStore(ModuleBaseTestCase.ModuleBaseTestCase):
     def testRedisClusterBackendSimpleValue(self):
         #self.skipTest("Not yet correctly implemented.")
         self.test_object.configure({'backend': 'RedisStore',
-                                    'cluster': {'localhost': {'es-01.dbap.de'}}})
+                                    'cluster': {'localhost': {'localhost'}}})
         self.checkConfiguration()
         key = 'Gambol'
         value = 'Putty'

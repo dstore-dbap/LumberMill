@@ -39,7 +39,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testRedisFacet(self):
         rc = RedisStore.RedisStore(gp=mock.Mock())
-        rc.configure({'server': 'es-01.dbap.de'})
+        rc.configure({'server': 'localhost'})
         self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '$(remote_ip)',

@@ -48,7 +48,7 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testRedis(self):
         rc = RedisStore.RedisStore(gp=mock.Mock())
-        rc.configure({'server': 'es-01.dbap.de'})
+        rc.configure({'server': 'localhost'})
         self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'url': 'https://www.google.com',
                                     'target_field': '$(surname) Gambolputty',

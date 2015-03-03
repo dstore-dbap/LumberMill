@@ -70,7 +70,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testRedis(self):
         rc = RedisStore.RedisStore(gp=mock.Mock())
-        rc.configure({'server': 'es-01.dbap.de'})
+        rc.configure({'server': 'localhost'})
         self.test_object.gp.modules = {'RedisStore': {'instances': [rc]}}
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
