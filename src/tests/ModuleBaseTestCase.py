@@ -105,7 +105,13 @@ class ModuleBaseTestCase(unittest2.TestCase):
         import tornado.ioloop
         self.ioloop_thread = StoppableThread(target=tornado.ioloop.IOLoop.instance().start)
         self.ioloop_thread.daemon = True
-        self.ioloop_thread.start()
+        try:
+            self.ioloop_thread.start()
+        except RuntimeError,e:
+            if e.message == "RuntimeError: IOLoop is already running":
+                pass
+            else:
+                raise
 
     def stopTornadoEventLoop(self):
         if not hasattr(self, 'ioloop_thread'):
