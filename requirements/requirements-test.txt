@@ -5,7 +5,8 @@ msgpack-python
 pygeoip
 pylru
 PyYAML
-pyzmq
+# Temporary disabled.
+# pyzmq
 redis
 simplekv
 tornado
