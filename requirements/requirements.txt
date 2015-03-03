@@ -7,7 +7,6 @@ pylru
 PyYAML
 pyzmq
 redis
-rediscluster
 simplekv
 tornado
 ua-parser
