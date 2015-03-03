@@ -192,4 +192,5 @@ class ModuleBaseTestCase(unittest2.TestCase):
     """
 
     def tearDown(self):
+        self.stopTornadoEventLoop()
         self.test_object.shutDown()
