@@ -5,4 +5,4 @@ install: "pip install -r requirements/requirements-test.txt --use-mirrors"
 services:
   - ElasticSearch
   - Redis
-script: ./tests/python_run_all_tests.sh
+script: nosetests -w src/tests
