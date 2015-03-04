@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/dstore-dbap/GambolPutty.svg?branch=master
+   :target: https://travis-ci.org/dstore-dbap/GambolPutty
+
 GambolPutty
 ===========
 
