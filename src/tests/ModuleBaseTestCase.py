@@ -106,11 +106,8 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.ioloop_thread.daemon = True
         try:
             self.ioloop_thread.start()
-        except RuntimeError,e:
-            if e.message == "RuntimeError: IOLoop is already running":
-                pass
-            else:
-                raise
+        except:
+            pass
 
     def stopTornadoEventLoop(self):
         if not hasattr(self, 'ioloop_thread'):
