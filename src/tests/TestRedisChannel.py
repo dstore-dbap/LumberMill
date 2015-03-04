@@ -41,8 +41,6 @@ class TestRedisChannel(ModuleBaseTestCase.ModuleBaseTestCase):
         event = False
         time.sleep(1)
         counter = 0
-        # Needs to be done here, otherwise travis-ci will throw an error when another module calls startTornadoEventLoop().
-        self.stopTornadoEventLoop()
         for event in self.receiver.getEvent():
             counter += 1
         self.assertTrue(event != False)

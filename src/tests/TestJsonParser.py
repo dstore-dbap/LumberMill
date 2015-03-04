@@ -38,8 +38,6 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         s.close()
         received_event = False
         time.sleep(.1)
-        # Needs to be done here, otherwise travis-ci will throw an error when another module calls startTornadoEventLoop().
-        self.stopTornadoEventLoop()
         for received_event in self.receiver.getEvent():
             received_event.pop('gambolputty')
             self.assertDictEqual(received_event, orig_event)
@@ -67,8 +65,6 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         s.close()
         received_event = False
         time.sleep(.1)
-        # Needs to be done here, otherwise travis-ci will throw an error when another module calls startTornadoEventLoop().
-        self.stopTornadoEventLoop()
         for received_event in self.receiver.getEvent():
             received_event.pop('gambolputty')
             self.assertDictEqual(received_event, orig_event)
