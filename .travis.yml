@@ -1,11 +1,14 @@
 language: python
 python:
-  - "2.7"
+  - 2.7
+  - pypy
 before_install:
   # Get the GeoIP database needed for the tests
   - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
   - gunzip GeoLiteCity.dat.gz
   - mv GeoLiteCity.dat src/tests/test_data/
+  # Install dependencies for lxml
+  sudo apt-get install -qq libxml2-dev libxslt-dev
 install: "pip install -r requirements/requirements-test.txt --use-mirrors"
 services:
   - ElasticSearch
@@ -13,4 +16,4 @@ services:
 before_script:
   # Get master branch of rediscluster
   - git clone https://github.com/salimane/rediscluster-py.git && cd rediscluster-py && python setup.py install && cd ..
-script: nosetests -w src/tests
+script: python
