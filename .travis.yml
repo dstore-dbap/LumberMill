@@ -3,10 +3,9 @@ python:
   - "2.7"
 before_install:
   # Get the GeoIP database needed for the tests
-  - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
-  - gunzip ./GeoIP.dat.gz
-  - mv ./GeoIP.dat src/tests/test_data/
-  - ls -lh src/tests/test_data/
+  - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+  - gunzip ./GeoLiteCity.dat.gz
+  - mv ./GeoLiteCity.dat.gz src/tests/test_data/
 install: "pip install -r requirements/requirements-test.txt --use-mirrors"
 services:
   - ElasticSearch
