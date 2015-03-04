@@ -1,31 +1,4 @@
-# Global requirements
-crypto
-pylru
-PyYAML
-redis
-simplekv
-tornado
-# Temporary disabled.
-pyzmq
-
-# ElasticSearchSink
-elasticsearch
-
-# ModifyFields
-mmh3
+# Specific imports for pypy.
 
 # MsgPackParser
 msgpack-pypy
-
-# AddGeoInfo
-pygeoip
-
-# UserAgentParser
-ua-parser
-
-# XPathParser
-lxml
-
-# Sniffer, disabled.
-# pcapy
-# netifaces

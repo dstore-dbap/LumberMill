@@ -1,0 +1,44 @@
+html,body {
+    height:100%;
+    background-color: #f0f0f0;
+}
+
+i[class*="icon"] {
+  margin-right:5px;
+  line-height: 1;
+}
+
+.terminal {
+	display: block;
+	background: #000; 
+	color: #fff; 
+	overflow: auto; 
+	width: 65%; 
+	height: 250px;
+	max-height: 250px;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.navbar-grey {
+	color: #fff;
+	background-color: #464646;
+}
+
+.node-info-body {
+	border-top: 5px solid #AD3636; 
+	border-bottom: 4px solid #a6a6a6; 
+	background-color: #d7d7eb; 
+	/*position: relative; top: -22px*/
+}
+
+.node-body-heading {
+	padding-bottom: 5px; 
+	border-bottom: 3px solid #a6a6a6	
+}
+
+.node-headline-big {
+ font-size: 19px;	
+}
