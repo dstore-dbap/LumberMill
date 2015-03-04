@@ -1,13 +1,31 @@
+# Global requirements
 crypto
-elasticsearch
-mmh3
-msgpack-pypy
-pygeoip
 pylru
 PyYAML
-pyzmq
 redis
 simplekv
 tornado
+# Temporary disabled.
+pyzmq
+
+# ElasticSearchSink
+elasticsearch
+
+# ModifyFields
+mmh3
+
+# MsgPackParser
+msgpack-pypy
+
+# AddGeoInfo
+pygeoip
+
+# UserAgentParser
 ua-parser
+
+# XPathParser
 lxml
+
+# Sniffer, disabled.
+# pcapy
+# netifaces
