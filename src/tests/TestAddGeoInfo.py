@@ -11,7 +11,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testAddGeoInfoForFirstField(self):
         self.test_object.configure({'source_fields': ['f1'],
-                                    'geoip_dat_path': './test_data/GeoIP.dat',
+                                    'geoip_dat_path': './test_data/GeoLiteCity.dat',
                                     'target_field': 'geoip',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
@@ -21,7 +21,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
         
     def testAddGeoInfo(self):
         self.test_object.configure({'source_fields': ['f1','f2'],
-                                    'geoip_dat_path': './test_data/GeoIP.dat',
+                                    'geoip_dat_path': './test_data/GeoLiteCity.dat',
                                     'target_field': 'geoip',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
@@ -30,7 +30,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertEqual(event['geoip']['country_code'], 'US')
 
     def testAddGeoInfoFromDefaultField(self):
-        self.test_object.configure({'geoip_dat_path': './test_data/GeoIP.dat',
+        self.test_object.configure({'geoip_dat_path': './test_data/GeoLiteCity.dat',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
         dict = Utils.getDefaultEventDict({'x_forwarded_for': '99.124.167.129'})
