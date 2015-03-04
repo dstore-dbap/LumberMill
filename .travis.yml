@@ -16,4 +16,4 @@ services:
 before_script:
   # Get master branch of rediscluster
   - git clone https://github.com/salimane/rediscluster-py.git && cd rediscluster-py && python setup.py install && cd ..
-script: python src/tests/run_tests.py --pattern "Test*.py"
+script: python src/tests/run_tests.py --include "Test*.py"
