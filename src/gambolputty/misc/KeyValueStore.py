@@ -115,7 +115,11 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
 
     def getClusterRedisClient(self):
-        import rediscluster
+        try:
+            import rediscluster
+        except ImportError:
+            self.logger.error("Could not import rediscluster module. To install follow instructions @https://github.com/salimane/rediscluster-py")
+            self.gp.shutDown()
         # TODO: Implement a locking mechanism for the cluster client.
         # Some modules like Facet depend on this.
         cluster = {'nodes': {}, 'master_of': {}}
