@@ -6,7 +6,8 @@ import socket
 import unittest2
 import extendSysPath
 import Utils
-#import Zmq
+import zmq
+import Zmq
 
 class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -89,8 +90,6 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
                                                       'topic': 'Test'})
         expected_ret_val.pop('gambolputty')
         self.assertTrue(self.receiver.hasEvents() is False)
-
-
 
     def getZmqSocket(self, host, port, mode):
         context = zmq.Context()
