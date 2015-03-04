@@ -8,7 +8,6 @@ import extendSysPath
 import Utils
 #import Zmq
 
-@unittest2.skip("Temporary disabled testing.")
 class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
