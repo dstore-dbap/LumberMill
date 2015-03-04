@@ -37,7 +37,7 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val = Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(4)
+        time.sleep(5)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
@@ -75,7 +75,7 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val =  Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(4)
+        time.sleep(5)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
