@@ -25,7 +25,7 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             s.connect(('localhost', self.test_object.getConfigurationValue('port')))
-            for _ in range(0, 5000):
+            for _ in range(0, 1500):
                 s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
             s.close()
             connection_succeeded = True
@@ -37,12 +37,12 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val = Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(5)
+        time.sleep(2)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
         self.assertTrue(event != False)
-        self.assertEqual(counter, 5000)
+        self.assertEqual(counter, 1500)
         event.pop('gambolputty')
         self.assertDictEqual(event, expected_ret_val)
 
@@ -62,7 +62,7 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
             s.settimeout(1)
             s = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1)
             s.connect((self.test_object.getConfigurationValue('interface'), self.test_object.getConfigurationValue('port')))
-            for _ in range(0, 5000):
+            for _ in range(0, 1500):
                 s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
             s.close()
             connection_succeeded = True
@@ -75,12 +75,12 @@ class TestTcpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         expected_ret_val =  Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('gambolputty')
         event = False
-        time.sleep(5)
+        time.sleep(2)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
         self.assertTrue(event != False)
-        self.assertEqual(counter, 5000)
+        self.assertEqual(counter, 1500)
         event.pop('gambolputty')
         self.assertDictEqual(event, expected_ret_val)
 
