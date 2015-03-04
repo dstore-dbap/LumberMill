@@ -36,6 +36,8 @@ class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
         time.sleep(.5)
         event = False
         counter = 0
+        # Needs to be done here, otherwise travis-ci will throw an error when another module calls startTornadoEventLoop().
+        self.stopTornadoEventLoop()
         for event in self.receiver.getEvent():
             counter += 1
         self.assertTrue(event)

@@ -104,8 +104,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
         import tornado.ioloop
         self.ioloop_thread = StoppableThread(target=tornado.ioloop.IOLoop.instance().start)
         self.ioloop_thread.daemon = True
-        #self.ioloop_thread.start()
-
+        self.ioloop_thread.start()
 
     def stopTornadoEventLoop(self):
         if not hasattr(self, 'ioloop_thread'):
@@ -192,5 +191,4 @@ class ModuleBaseTestCase(unittest2.TestCase):
     """
 
     def tearDown(self):
-        self.stopTornadoEventLoop()
         self.test_object.shutDown()
