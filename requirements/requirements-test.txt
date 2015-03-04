@@ -33,3 +33,4 @@ lxml
 # Tests requirements.
 unittest2
 mock
+coverage
