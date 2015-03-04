@@ -1,18 +1,35 @@
+# Global requirements
 crypto
-elasticsearch
-mmh3
-msgpack-python
-pygeoip
 pylru
 PyYAML
-# Temporary disabled.
-# pyzmq
 redis
 simplekv
 tornado
+# Temporary disabled.
+pyzmq
+
+# ElasticSearchSink
+elasticsearch
+
+# ModifyFields
+mmh3
+
+# MsgPackParser
+msgpack-python
+
+# AddGeoInfo
+pygeoip
+
+# UserAgentParser
 ua-parser
+
+# XPathParser
+lxml
+
+# Sniffer, disabled.
+# pcapy
+# netifaces
+
+# Tests requirements.
 unittest2
 mock
-lxml
-netifaces
-pcapy
