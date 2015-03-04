@@ -46,7 +46,6 @@ java.lang.IllegalArgumentException: no category found for name: en
         event = False
         counter = 0
         for event in self.receiver.getEvent():
-            print(event)
             counter += 1
         self.assertTrue(event != False)
         self.assertEqual(counter, 3)
