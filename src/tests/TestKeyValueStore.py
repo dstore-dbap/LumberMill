@@ -66,7 +66,11 @@ class TestKeyValueStore(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertRaises(KeyError, self.test_object.get, key)
 
     def testRedisClusterBackendSimpleValue(self):
-        #self.skipTest("Not yet correctly implemented.")
+        try:
+            import rediscluster
+        except ImportError:
+            self.skipTest("Could not test redis cluster client. Module rediscluster not installed.")
+            return
         self.test_object.configure({'backend': 'RedisStore',
                                     'cluster': {'localhost': {'localhost'}}})
         self.checkConfiguration()
