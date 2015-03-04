@@ -8,7 +8,7 @@ before_install:
   - gunzip GeoLiteCity.dat.gz
   - mv GeoLiteCity.dat src/tests/test_data/
   # Install dependencies for lxml
-  sudo apt-get install -qq libxml2-dev libxslt-dev
+  - sudo apt-get install -qq libxml2-dev libxslt-dev
 install: "pip install -r requirements/requirements-test.txt --use-mirrors"
 services:
   - ElasticSearch
