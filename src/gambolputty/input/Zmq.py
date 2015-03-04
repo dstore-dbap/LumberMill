@@ -108,10 +108,11 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
                 self.sendEvent(event)
 
     def shutDown(self):
+        # Call parent shutDown method.
         BaseThreadedModule.BaseThreadedModule.shutDown(self)
         try:
             self.socket.close()
             self.context.term()
         except AttributeError:
             pass
-        # Call parent shutDown method.
+
