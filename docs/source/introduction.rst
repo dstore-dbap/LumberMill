@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/dstore-dbap/GambolPutty.svg?branch=master
+   :target: https://travis-ci.org/dstore-dbap/GambolPutty
+
 GambolPutty
 ===========
 
@@ -11,8 +14,41 @@ with a smaller memory footprint and faster startup time.
 Installation
 ''''''''''''
 
-For a small how-to running GambolPutty, Elasticsearch and Kibana on
-CentOS, feel free to visit
+Clone the github repository to /opt/GambolPutty (or any other location that fits you better :):
+
+::
+
+     git clone https://github.com/dstore-dbap/GambolPutty.git /opt/GambolPutty
+
+Install the dependencies with pip:
+
+::
+
+     cd /opt/GambolPutty
+     pip install -r requirements/requirements.txt
+
+If you are using pypy, install alternative packages:
+
+::
+
+    pip install -r requirements/requirements-pypy.txt
+
+You may need the MaxMind geo database. Install it with:
+
+::
+
+    mkdir /usr/share/GeoIP
+    cd /usr/share/GeoIP
+    wget "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+    gunzip GeoLiteCity.dat.gz
+
+Now you can give GambolPutty a testdrive with:
+
+::
+
+    python /opt/GambolPutty/gambolputty/GambolPutty.py -c /opt/GambolPutty/conf/example-tcp.conf
+
+For a how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
 
 Configuration example (with explanations)
@@ -638,7 +674,7 @@ Configure the linux syslog-ng service to send data to a tcp address
     destination d_gambolputty { tcp( localhost port(5151) ); };
     filter f_httpd_access { facility(local1); };
     log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
-    ... 
+    ...
 
 Configure GambolPutty to listen on localhost
 5151(./conf/gambolputty.conf):
