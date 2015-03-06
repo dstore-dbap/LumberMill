@@ -393,6 +393,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
+-  Kafka, receive events from apache kafka.
 -  NmapScanner, scan network with nmap and emit result as new event.
 -  RedisChannel, read events from redis channels.
 -  RedisList, read events from redis lists.
