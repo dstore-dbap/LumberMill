@@ -3,6 +3,33 @@
 Input modules
 =============
 
+Kafka
+-----
+
+Receive events from apache kafka.
+
+Configuration template:
+
+::
+
+    - Kafka:
+        brokers:                    # <type: list; is: required>
+        topics:                     # <type: string||list; is: required>
+        client_id:                  # <default: 'kafka.consumer.kafka'; type: string; is: optional>
+        group_id:                   # <default: None; type: None||string; is: optional>
+        fetch_message_max_bytes:    # <default: 1048576; type: integer; is: optional>
+        fetch_min_bytes:            # <default: 1; type: integer; is: optional>
+        fetch_wait_max_ms:          # <default: 100; type: integer; is: optional>
+        refresh_leader_backoff_ms:  # <default: 200; type: integer; is: optional>
+        socket_timeout_ms:          # <default: 10000; type: integer; is: optional>
+        auto_offset_reset:          # <default: 'largest'; type: string; is: optional>
+        auto_commit_enable:         # <default: False; type: boolean; is: optional>
+        auto_commit_interval_ms:    # <default: 60000; type: integer; is: optional>
+        consumer_timeout_ms:        # <default: -1; type: integer; is: optional>
+        receivers:
+          - NextModule
+
+
 NmapScanner
 -----------
 
