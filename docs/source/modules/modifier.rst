@@ -27,23 +27,23 @@ Add country_code and longitude-latitude fields based  on a geoip lookup for a gi
 Here an example of fields that the module provides:
 {'city': 'Hanover', 'region_name': '06', 'area_code': 0, 'time_zone': 'Europe/Berlin', 'dma_code': 0, 'metro_code': None, 'country_code3': 'DEU', 'latitude': 52.36670000000001, 'postal_code': '', 'longitude': 9.716700000000003, 'country_code': 'DE', 'country_name': 'Germany', 'continent': 'EU'}
 
-geoip_dat_path: path to maxmind geoip database file.
-source_fields: list of fields to use for lookup. The first list entry that produces a hit is used.
-target: field to populate with the geoip data. If none is provided, the field will be added directly to the event.
-geo_info_fields: fields to add. Available field names:
-- area_code
-- city
-- continent
-- country_code
-- country_code3
-- country_name
-- dma_code
-- metro_code
-- postal_code
-- region_name
-- time_zone
-- latitude
-- longitude
+| **geoip_dat_path**:  path to maxmind geoip database file.
+| **source_fields**:  list of fields to use for lookup. The first list entry that produces a hit is used.
+| **target**:  field to populate with the geoip data. If none is provided, the field will be added directly to the event.
+| geo_info_fields: fields to add. Available field names:
+| - area_code
+| - city
+| - continent
+| - country_code
+| - country_code3
+| - country_name
+| - dma_code
+| - metro_code
+| - postal_code
+| - region_name
+| - time_zone
+| - latitude
+| - longitude
 
 Configuration template:
 
@@ -91,9 +91,9 @@ except NameError:
 import math
 event['request_time'] = math.ceil(event['request_time'] * 1000)
 
-imports: Modules to import, e.g. re, math etc.
-code: Code to execute.
-debug: Set to True to output the string that will be executed.
+| **imports**:  Modules to import, e.g. re, math etc.
+| **code**:  Code to execute.
+| **debug**:  Set to True to output the string that will be executed.
 
 Configuration template:
 
@@ -150,13 +150,13 @@ The event emitted by this module will be of type: "facet" and will have "facet_f
 This module supports the storage of the facet info in an backend db (At the moment this only works for a redis backend.
 This offers the possibility of using this module across multiple instances of GambolPutty.
 
-source_field: Field to be scanned for unique values.
-group_by: Field to relate the variations to, e.g. ip address.
-add_event_fields: Fields to add from the original event to the facet event.
-interval: Number of seconds to until all encountered values of source_field will be send as new facet event.
-backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
-synchronize events across multiple instances.
-backend_ttl: Time to live for backend entries. Should be greater than interval.
+| **source_field**:  Field to be scanned for unique values.
+| **group_by**:  Field to relate the variations to, e.g. ip address.
+| **add_event_fields**:  Fields to add from the original event to the facet event.
+| **interval**:  Number of seconds to until all encountered values of source_field will be send as new facet event.
+| backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
+| synchronize events across multiple instances.
+| **backend_ttl**:  Time to live for backend entries. Should be greater than interval.
 
 Configuration template:
 
@@ -213,10 +213,10 @@ function: int(float($(request_time)) * 1000)
 If interval is set, the results of <function> will be collected for the interval time and the final result
 will be calculated via the <results_function>.
 
-function: the function to be applied to/with the event data.
-results_function: if interval is configured, use this function to calculate the final result.
-interval: Number of seconds to until.
-target_field: event field to store the result in.
+| **function**:  the function to be applied to/with the event data.
+| **results_function**:  if interval is configured, use this function to calculate the final result.
+| **interval**:  Number of seconds to until.
+| **target_field**:  event field to store the result in.
 
 Configuration template:
 
@@ -248,11 +248,11 @@ Flushing the buffer will concatenate all contained event data to form one single
 
 buffer_key: key to distinguish between different input streams
 
-buffer_key: A key to correctly group events.
-buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
-flush_interval_in_secs: If interval is reached, buffer will be flushed.
-pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
-glue: Join event data with glue as separator.
+| **buffer_key**:  A key to correctly group events.
+| **buffer_size**:  Maximum size of events in buffer. If size is exceeded a flush will be executed.
+| **flush_interval_in_secs**:  If interval is reached, buffer will be flushed.
+| **pattern**:  Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+| **glue**:  Join event data with glue as separator.
 
 Configuration template:
 
@@ -268,6 +268,161 @@ Configuration template:
         receivers:
           - NextModule
 
+
+ModifyFields
+------------
+
+Simple module to insert/delete/change field values.
+
+Configuration templates:
+
+::
+
+    # Keep all fields listed in source_fields, discard all others.
+    - ModifyFields:
+        action: keep                                # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
+
+    # Discard all fields listed in source_fields.
+    - ModifyFields:
+        action: delete                              # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
+
+    # Concat all fields listed in source_fields.
+    - ModifyFields:
+        action: concat                              # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: required>
+        receivers:
+          - NextModule
+
+    # Insert a new field with "target_field" name and "value" as new value.
+    - ModifyFields:
+        action: insert                              # <type: string; is: required>
+        target_field:                               # <type: string; is: required>
+        value:                                      # <type: string; is: required>
+        receivers:
+          - NextModule
+
+    # Replace field values matching string "old" in data dictionary with "new".
+    - ModifyFields:
+        action: string_replace                      # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        old:                                        # <type: string; is: required>
+        new:                                        # <type: string; is: required>
+        max:                                        # <default: -1; type: integer; is: optional>
+        receivers:
+          - NextModule
+
+    # Replace field values in data dictionary with self.getConfigurationValue['with'].
+    - ModifyFields:
+        action: replace                             # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+        with:                                       # <type: string; is: required>
+        receivers:
+          - NextModule
+
+    # Map a field value.
+    - ModifyFields:
+        action: map                                 # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        map:                                        # <type: dictionary; is: required>
+        target_field:                               # <default: "$(source_field)_mapped"; type: string; is: optional>
+        receivers:
+          - NextModule
+
+    # Split source field to target fields based on key value pairs.
+    - ModifyFields:
+        action: key_value                           # <type: string; is: required>
+        line_separator:                             # <type: string; is: required>
+        kv_separator:                               # <type: string; is: required>
+        source_field:                               # <type: list; is: required>
+        target_field:                               # <default: None; type: None||string; is: optional>
+        prefix:                                     # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
+
+    # Split source field to target fields based on key value pairs using regex.
+    - ModifyFields:
+        action: key_value_regex                     # <type: string; is: required>
+        regex:                                      # <type: string; is: required>
+        source_field:                               # <type: list; is: required>
+        target_field:                               # <default: None; type: None||string; is: optional>
+        prefix:                                     # <default: None; type: None||string; is: optional>
+        receivers:
+          - NextModule
+
+    # Split source field to array at separator.
+    - ModifyFields:
+      action: split                                 # <type: string; is: required>
+      separator:                                    # <type: string; is: required>
+      source_field:                                 # <type: list; is: required>
+      target_field:                                 # <default: None; type: None||string; is: optional>
+      receivers:
+        - NextModule
+
+    # Merge source fields to target field as list.
+    - ModifyFields:
+        action: merge                               # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        target_field:                               # <type: string; is: reuired>
+        receivers:
+          - NextModule
+
+    # Merge source field to target field as string.
+    - ModifyFields:
+        action: join                                # <type: string; is: required>
+        source_field:                               # <type: string; is: required>
+        target_field:                               # <type: string; is: required>
+        separator:                                  # <default: ","; type: string; is: optional>
+        receivers:
+          - NextModule
+
+    # Cast field values to integer.
+    - ModifyFields:
+        action: cast_to_int                         # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
+
+    # Cast field values to float.
+    - ModifyFields:
+      action: cast_to_float                       # <type: string; is: required>
+      source_fields:                              # <type: list; is: required>
+      receivers:
+        - NextModule
+
+    # Cast field values to string.
+    - ModifyFields:
+      action: cast_to_str                         # <type: string; is: required>
+      source_fields:                              # <type: list; is: required>
+      receivers:
+        - NextModule
+
+    # Cast field values to boolean.
+    - ModifyFields:
+        action: cast_to_bool                        # <type: string; is: required>
+        source_fields:                              # <type: list; is: required>
+        receivers:
+          - NextModule
+
+    # Create a hash from a field value.
+    # If target_fields is provided, it should have the same length as source_fields.
+    # If target_fields is not provided, source_fields will be replaced with the hashed value.
+    # Hash algorithm can be any of the in hashlib supported algorithms.
+    - ModifyFields:
+        action: hash                                # <type: string; is: required>
+        algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
+        salt:                                       # <default: None; type: None||string; is: optional;>
+        source_fields:                              # <type: list; is: required>
+        target_fields:                              # <default: []; type: list; is: optional>
+        receivers:
+          - NextModule
 
 Permutate
 ---------
