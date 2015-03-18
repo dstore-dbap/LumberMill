@@ -393,6 +393,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
+-  Kafka, receive events from apache kafka.
 -  NmapScanner, scan network with nmap and emit result as new event.
 -  RedisChannel, read events from redis channels.
 -  RedisList, read events from redis lists.
@@ -674,7 +675,7 @@ Configure the linux syslog-ng service to send data to a tcp address
     destination d_gambolputty { tcp( localhost port(5151) ); };
     filter f_httpd_access { facility(local1); };
     log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
-    ...
+    ... 
 
 Configure GambolPutty to listen on localhost
 5151(./conf/gambolputty.conf):

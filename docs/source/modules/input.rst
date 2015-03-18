@@ -6,7 +6,8 @@ Input modules
 Kafka
 -----
 
-Receive events from apache kafka.
+Simple kafka input.
+
 
 Configuration template:
 
@@ -82,6 +83,7 @@ Subscribes to a redis channels/lists and passes incoming events to receivers.
 lists: Name of redis lists to subscribe to.
 server: Redis server to connect to.
 port: Port redis server is listening on.
+batch_size: Number of events to return from redis list.
 db: Redis db.
 password: Redis password.
 timeout: Timeout in seconds.
@@ -94,6 +96,7 @@ Configuration template:
         lists:                    # <type: list; is: required>
         server:                   # <default: 'localhost'; type: string; is: optional>
         port:                     # <default: 6379; type: integer; is: optional>
+        batch_size:               # <default: 1; type: integer; is: optional>
         db:                       # <default: 0; type: integer; is: optional>
         password:                 # <default: None; type: None||string; is: optional>
         timeout:                  # <default: 0; type: integer; is: optional>
@@ -133,9 +136,13 @@ Spam
 
 Emits events as fast as possible.
 
-Use this module to load test GambolPutty.
+Use this module to load test GambolPutty. Also nice for testing your regexes.
 
-event: Send custom event data.
+The event field can either be a simple string. This string will be used to create a default gambolputty event dict.
+If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
+should your raw event string.
+
+event: Send custom event data. To send a more complex event provide a dict, use a string to send a simple event.
 sleep: Time to wait between sending events.
 events_count: Only send configured number of events. 0 means no limit.
 
@@ -144,7 +151,7 @@ Configuration template:
 ::
 
     - Spam:
-        event:                    # <default: {}; type: dict; is: optional>
+        event:                    # <default: ""; type: string||dict; is: optional>
         sleep:                    # <default: 0; type: int||float; is: optional>
         events_count:             # <default: 0; type: int; is: optional>
         receivers:
