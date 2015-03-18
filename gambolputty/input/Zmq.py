@@ -14,7 +14,7 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
 
     mode: Whether to run a server or client.
     address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
-    pattern: One of 'pull', 'sub'
+    pattern: One of 'pull', 'sub'.
     hwm: Highwatermark for sending/receiving socket.
 
     Configuration template:

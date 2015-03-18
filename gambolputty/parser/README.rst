@@ -66,12 +66,12 @@ It will build a new list of source fields and create json of this list.
 
 At the moment only flat json files can be processed correctly.
 
-action: Either encode or decode data.
-source_fields:  Input fields for de/encode.
-If encoding, you can set this field to 'all' to encode the complete event dict.
-target_field:   Target field for de/encode result.
-If decoding and target is not set, the event dict itself will be updated with decoded fields.
-keep_original:  Switch to keep or drop the original fields used in de/encoding from the event dict.
+| **action**:  Either encode or decode data.
+| **source_fields**:   Input fields for de/encode.
+| If encoding, you can set this field to 'all' to encode the complete event dict.
+| **target_field**:    Target field for de/encode result.
+| If decoding and target is not set, the event dict itself will be updated with decoded fields.
+| **keep_original**:   Switch to keep or drop the original fields used in de/encoding from the event dict.
 
 Configuration template:
 
@@ -95,7 +95,7 @@ Line parser.
 Decode:
 Will split the data in source fields and emit parts as new events. Original event will be discarded.
 
-source_fields:  Input fields for decode.
+| **source_fields**:   Input fields for decode.
 
 Configuration template:
 
@@ -145,10 +145,10 @@ In the example below this would be "httpd_access_log".
 It is also possible to define multiple regexes with the same name. This allows for different log patterns
 for the same log type, e.g. apache access logs and nginx access logs.
 
-source_field: Field to apply the regex to.
-mark_unmatched_as: Set <gambolputty.event_type> to this value if regex did not match.
-break_on_match: Stop applying regex patterns after first match.
-hot_rules_first: Apply regex patterns based on their hit count.
+| **source_field**:  Field to apply the regex to.
+| **mark_unmatched_as**:  Set <gambolputty.event_type> to this value if regex did not match.
+| **break_on_match**:  Stop applying regex patterns after first match.
+| **hot_rules_first**:  Apply regex patterns based on their hit count.
 
 Configuration template:
 
@@ -230,12 +230,12 @@ UrlParser
 
 Urlencode or decode an event field and extract url parameters.
 
-action: Either encode or decode data.
-source_field: Event field to en/decode.
-target_field: Event field to update with en/decode result. If not set source will be replaced.
-parse_querystring: Parse url for query parameters and extract them.
-querystring_target_field: Event field to update with url parameters.
-querystring_prefix: Prefix string to prepend to url parameter keys.
+| **action**:  Either encode or decode data.
+| **source_field**:  Event field to en/decode.
+| **target_field**:  Event field to update with en/decode result. If not set source will be replaced.
+| **parse_querystring**:  Parse url for query parameters and extract them.
+| **querystring_target_field**:  Event field to update with url parameters.
+| **querystring_prefix**:  Prefix string to prepend to url parameter keys.
 
 Configuration template:
 
@@ -274,8 +274,8 @@ will produce this dictionary:
 'minor': '3',
 'patch': '5'}}}
 
-source_fields:  Input field to parse.
-target_field: field to update with parsed info fields.
+| **source_fields**:   Input field to parse.
+| **target_field**:  field to update with parsed info fields.
 
 Configuration template:
 

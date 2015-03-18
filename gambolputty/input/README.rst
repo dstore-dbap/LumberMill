@@ -55,11 +55,11 @@ RedisChannel
 
 Subscribes to a redis channels and passes incoming events to receivers.
 
-channel: Name of redis channel to subscribe to.
-server: Redis server to connect to.
-port: Port redis server is listening on.
-db: Redis db.
-password: Redis password.
+| **channel**:  Name of redis channel to subscribe to.
+| **server**:  Redis server to connect to.
+| **port**:  Port redis server is listening on.
+| **db**:  Redis db.
+| **password**:  Redis password.
 
 Configuration template:
 
@@ -80,13 +80,13 @@ RedisList
 
 Subscribes to a redis channels/lists and passes incoming events to receivers.
 
-lists: Name of redis lists to subscribe to.
-server: Redis server to connect to.
-port: Port redis server is listening on.
-batch_size: Number of events to return from redis list.
-db: Redis db.
-password: Redis password.
-timeout: Timeout in seconds.
+| **lists**:  Name of redis lists to subscribe to.
+| **server**:  Redis server to connect to.
+| **port**:  Port redis server is listening on.
+| **batch_size**:  Number of events to return from redis list.
+| **db**:  Redis db.
+| **password**:  Redis password.
+| **timeout**:  Timeout in seconds.
 
 Configuration template:
 
@@ -142,9 +142,9 @@ The event field can either be a simple string. This string will be used to creat
 If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
 should your raw event string.
 
-event: Send custom event data. To send a more complex event provide a dict, use a string to send a simple event.
-sleep: Time to wait between sending events.
-events_count: Only send configured number of events. 0 means no limit.
+| **event**:  Send custom event data. To send a more complex event provide a dict, use a string to send a simple event.
+| **sleep**:  Time to wait between sending events.
+| **events_count**:  Only send configured number of events. 0 means no limit.
 
 Configuration template:
 
@@ -180,17 +180,17 @@ TcpServer
 Reads data from tcp socket and sends it to its outputs.
 Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
 
-interface:  Ipaddress to listen on.
-port:       Port to listen on.
-timeout:    Sockettimeout in seconds.
-tls:        Use tls or not.
-key:        Path to tls key file.
-cert:       Path to tls cert file.
-mode:       Receive mode, line or stream.
-simple_separator:  If mode is line, set separator between lines.
-regex_separator:   If mode is line, set separator between lines. Here regex can be used.
-chunksize:  If mode is stream, set chunksize in bytes to read from stream.
-max_buffer_size: Max kilobytes to in receiving buffer.
+| **interface**:   Ipaddress to listen on.
+| **port**:        Port to listen on.
+| **timeout**:     Sockettimeout in seconds.
+| **tls**:         Use tls or not.
+| **key**:         Path to tls key file.
+| **cert**:        Path to tls cert file.
+| **mode**:        Receive mode, line or stream.
+| **simple_separator**:   If mode is line, set separator between lines.
+| **regex_separator**:    If mode is line, set separator between lines. Here regex can be used.
+| **chunksize**:   If mode is stream, set chunksize in bytes to read from stream.
+| **max_buffer_size**:  Max kilobytes to in receiving buffer.
 
 Configuration template:
 
@@ -250,10 +250,10 @@ Zmq
 Read events from a zeromq.
 
 
-mode: Whether to run a server or client.
-address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
-pattern: One of 'pull', 'sub'
-hwm: Highwatermark for sending/receiving socket.
+| **mode**:  Whether to run a server or client.
+| **address**:  Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+| **pattern**:  One of 'pull', 'sub'.
+| **hwm**:  Highwatermark for sending/receiving socket.
 
 Configuration template:
 
@@ -274,11 +274,11 @@ ZmqTornado
 
 Read events from a zeromq.
 
-mode: Whether to run a server or client.
-address: Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
-pattern: One of 'pull', 'sub'
-hwm: Highwatermark for sending/receiving socket.
-separator: When using the sub pattern, messages can have a topic. Set separator to split message from topic.
+| **mode**:  Whether to run a server or client.
+| **address**:  Address to connect to. Pattern: hostname:port. If mode is server, this sets the addresses to listen on.
+| **pattern**:  One of 'pull', 'sub'.
+| **hwm**:  Highwatermark for sending/receiving socket.
+| **separator**:  When using the sub pattern, messages can have a topic. Set separator to split message from topic.
 
 Configuration template:
 

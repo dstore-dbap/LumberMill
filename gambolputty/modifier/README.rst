@@ -27,23 +27,23 @@ Add country_code and longitude-latitude fields based  on a geoip lookup for a gi
 Here an example of fields that the module provides:
 {'city': 'Hanover', 'region_name': '06', 'area_code': 0, 'time_zone': 'Europe/Berlin', 'dma_code': 0, 'metro_code': None, 'country_code3': 'DEU', 'latitude': 52.36670000000001, 'postal_code': '', 'longitude': 9.716700000000003, 'country_code': 'DE', 'country_name': 'Germany', 'continent': 'EU'}
 
-geoip_dat_path: path to maxmind geoip database file.
-source_fields: list of fields to use for lookup. The first list entry that produces a hit is used.
-target: field to populate with the geoip data. If none is provided, the field will be added directly to the event.
-geo_info_fields: fields to add. Available field names:
-- area_code
-- city
-- continent
-- country_code
-- country_code3
-- country_name
-- dma_code
-- metro_code
-- postal_code
-- region_name
-- time_zone
-- latitude
-- longitude
+| **geoip_dat_path**:  path to maxmind geoip database file.
+| **source_fields**:  list of fields to use for lookup. The first list entry that produces a hit is used.
+| **target**:  field to populate with the geoip data. If none is provided, the field will be added directly to the event.
+| geo_info_fields: fields to add. Available field names:
+| - area_code
+| - city
+| - continent
+| - country_code
+| - country_code3
+| - country_name
+| - dma_code
+| - metro_code
+| - postal_code
+| - region_name
+| - time_zone
+| - latitude
+| - longitude
 
 Configuration template:
 
@@ -91,9 +91,9 @@ except NameError:
 import math
 event['request_time'] = math.ceil(event['request_time'] * 1000)
 
-imports: Modules to import, e.g. re, math etc.
-code: Code to execute.
-debug: Set to True to output the string that will be executed.
+| **imports**:  Modules to import, e.g. re, math etc.
+| **code**:  Code to execute.
+| **debug**:  Set to True to output the string that will be executed.
 
 Configuration template:
 
@@ -150,13 +150,13 @@ The event emitted by this module will be of type: "facet" and will have "facet_f
 This module supports the storage of the facet info in an backend db (At the moment this only works for a redis backend.
 This offers the possibility of using this module across multiple instances of GambolPutty.
 
-source_field: Field to be scanned for unique values.
-group_by: Field to relate the variations to, e.g. ip address.
-add_event_fields: Fields to add from the original event to the facet event.
-interval: Number of seconds to until all encountered values of source_field will be send as new facet event.
-backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
-synchronize events across multiple instances.
-backend_ttl: Time to live for backend entries. Should be greater than interval.
+| **source_field**:  Field to be scanned for unique values.
+| **group_by**:  Field to relate the variations to, e.g. ip address.
+| **add_event_fields**:  Fields to add from the original event to the facet event.
+| **interval**:  Number of seconds to until all encountered values of source_field will be send as new facet event.
+| backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
+| synchronize events across multiple instances.
+| **backend_ttl**:  Time to live for backend entries. Should be greater than interval.
 
 Configuration template:
 
@@ -213,10 +213,10 @@ function: int(float($(request_time)) * 1000)
 If interval is set, the results of <function> will be collected for the interval time and the final result
 will be calculated via the <results_function>.
 
-function: the function to be applied to/with the event data.
-results_function: if interval is configured, use this function to calculate the final result.
-interval: Number of seconds to until.
-target_field: event field to store the result in.
+| **function**:  the function to be applied to/with the event data.
+| **results_function**:  if interval is configured, use this function to calculate the final result.
+| **interval**:  Number of seconds to until.
+| **target_field**:  event field to store the result in.
 
 Configuration template:
 
@@ -248,11 +248,11 @@ Flushing the buffer will concatenate all contained event data to form one single
 
 buffer_key: key to distinguish between different input streams
 
-buffer_key: A key to correctly group events.
-buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
-flush_interval_in_secs: If interval is reached, buffer will be flushed.
-pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
-glue: Join event data with glue as separator.
+| **buffer_key**:  A key to correctly group events.
+| **buffer_size**:  Maximum size of events in buffer. If size is exceeded a flush will be executed.
+| **flush_interval_in_secs**:  If interval is reached, buffer will be flushed.
+| **pattern**:  Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+| **glue**:  Join event data with glue as separator.
 
 Configuration template:
 

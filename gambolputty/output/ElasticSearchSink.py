@@ -36,9 +36,9 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     format:     Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
                 If not set the whole event dict is send.
     nodes:      Configures the elasticsearch nodes.
-    connection_type:    One of: 'thrift', 'http'
-    http_auth:  'user:password'
-    use_ssl:    One of: True, False
+    connection_type:    One of: 'thrift', 'http'.
+    http_auth:  'user:password'.
+    use_ssl:    One of: True, False.
     index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
     doc_id:     Sets the es document id for the committed event data.
     routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
@@ -51,7 +51,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                     Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
     sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
                               Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-    consistency:    One of: 'one', 'quorum', 'all'
+    consistency:    One of: 'one', 'quorum', 'all'.
     replication:    One of: 'sync', 'async'.
     store_interval_in_secs:     Send data to es in x seconds intervals.
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.

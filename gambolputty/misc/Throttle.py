@@ -15,8 +15,7 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
     timeframe: Time window in seconds from first encountered event to last.
     min_count: Minimal count of same events to allow event to be passed on.
     max_mount: Maximum count of same events before same events will be blocked.
-    backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
-             synchronize events across multiple instances.
+    backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to synchronize events across multiple instances.
     backend_key_prefix: Prefix for the backend key.
 
     Configuration template:

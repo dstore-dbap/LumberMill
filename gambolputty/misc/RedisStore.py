@@ -21,7 +21,7 @@ class RedisStore(BaseThreadedModule.BaseThreadedModule):
         password: Redis password.
         socket_timeout: Socket timeout in seconds.
         charset: Charset to use.
-        errors:
+        errors: tbd.
         decode_responses: specifies whether return values from Redis commands get decoded automatically using the client's charset value.
         unix_socket_path: Path to unix socket file.
 
