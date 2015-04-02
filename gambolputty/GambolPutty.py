@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
-import pprint
 import Utils
 import multiprocessing
 import sys
@@ -81,7 +80,7 @@ class GambolPutty():
         """Returns a queue with queue_max_size"""
         queue = None
         if queue_type == 'simple':
-            queue =  Queue.Queue(queue_max_size)
+            queue =  Utils.BufferedQueue(queue=Queue.Queue(queue_max_size), buffersize=queue_buffer_size)
         if queue_type == 'multiprocess':
             # At the moment I ran into a problem with zmq.
             # This problem causes the performance to be comparable with the normal python multiprocessing.Queue.
@@ -91,7 +90,7 @@ class GambolPutty():
             #    queue = Utils.ZeroMqMpQueue(queue_max_size)
             #else:
             #    queue = multiprocessing.Queue(queue_max_size)
-            queue = multiprocessing.Queue(queue_max_size)
+            queue = Utils.BufferedQueue(queue=multiprocessing.Queue(queue_max_size), buffersize=queue_buffer_size)
         if not queue:
             self.logger.error("Could not produce requested queue %s." % (queue_type))
             self.shutDown()

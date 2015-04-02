@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import re
 import abc
 import logging
@@ -186,13 +185,13 @@ class BaseModule:
         return filterd_receivers
 
     def initAfterFork(self):
-        # Wrap queue with BufferedQueue. This is done here since the buffer uses a thread to flush buffer in
-        # given intervals. The thread will not survive a fork of the main process. So we need to start this
-        # after the fork was executed.
+        # Call startInterval on receiver buffered queue.
+        # This is done here since the buffer uses a thread to flush buffer in
+        # given intervals. The thread will not survive a fork of the main process.
+        # So we need to start this after the fork was executed.
         for receiver_name, receiver in self.receivers.items():
             if hasattr(receiver, 'put'):
-                #print("Adding buffered queue for %s" % receiver_name)
-                self.receivers[receiver_name] = Utils.BufferedQueue(receiver, self.gp.queue_buffer_size)
+                receiver.startInterval()
 
     def commonActions(self, event):
         #if not self.input_filter or self.input_filter_matched:

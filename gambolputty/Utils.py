@@ -234,8 +234,11 @@ class Buffer:
 
     def stopInterval(self):
         TimedFunctionManager.stopTimedFunctions(self.timed_func_handle)
+        self.timed_func_handle = False
 
     def startInterval(self):
+        if self.timed_func_handle:
+            self.stopInterval()
         self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
 
     def getTimedFlushMethod(self):
@@ -488,7 +491,7 @@ class ZeroMqMpQueue:
 
 
     def initReceiver(self):
-        print("Init receiver in %s" % os.getpid())
+        #print("Init receiver in %s" % os.getpid())
         zmq_context = zmq.Context()
         self.receiver = zmq_context.socket(zmq.PULL)
         try:

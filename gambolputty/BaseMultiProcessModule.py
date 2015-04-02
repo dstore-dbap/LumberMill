@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import multiprocessing
-import msgpack
 import signal
-import Utils
 import BaseModule
 
 
@@ -51,11 +49,8 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
 
     def pollQueue(self, block=True, timeout=None):
         try:
-            packed_data = self.input_queue.get(block, timeout)
-            events = msgpack.unpackb(packed_data)
-            # After msgpack.uppackb we just have a normal dict. Cast this to KeyDotNotationDict.
-            for event in events:
-                yield Utils.KeyDotNotationDict(event)
+            for event in self.input_queue.get(block, timeout):
+                yield event
         except (KeyboardInterrupt, SystemExit, ValueError, OSError):
             # Keyboard interrupt is catched in GambolPuttys main run method.
             # This will take care to shutdown all running modules.

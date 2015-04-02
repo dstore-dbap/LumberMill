@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-from tornado import autoreload
 import RedisAsyncClient
 import BaseModule
 import Utils
