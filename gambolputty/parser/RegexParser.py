@@ -85,7 +85,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 return
             try:
                 regex_pattern = self.replaceLogstashPatterns(regex_pattern)
-                #print regex_pattern
+                print regex_pattern
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
@@ -124,12 +124,19 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                         self.logger.warning("Could not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s." % (dirpath,  os.sep, filename, line_no+1, etype, evalue))
 
     def replaceLogstashPatterns(self, regex_pattern):
+        #print regex_pattern
         pattern_name_re = re.compile('%\{(.*?)\}')
         for match in pattern_name_re.finditer(regex_pattern):
             for pattern_name in match.groups():
+                pattern_identifier = False
+                if ':' in pattern_name:
+                    pattern_name, pattern_identifier = pattern_name.split(':')
                 try:
                     logstash_pattern = self.replaceLogstashPatterns(self.logstash_patterns[pattern_name])
-                    regex_pattern = regex_pattern.replace('%%{%s}' % pattern_name, logstash_pattern)
+                    if not pattern_identifier:
+                        regex_pattern = regex_pattern.replace('%%{%s}' % pattern_name, logstash_pattern)
+                    else:
+                        regex_pattern = regex_pattern.replace('%%{%s:%s}' % (pattern_name, pattern_identifier), '(?P<%s>%s)' % (pattern_identifier, logstash_pattern))
                 except KeyError:
                     self.logger.warning("Could not parse logstash pattern %s. Pattern name not found in pattern files." % (pattern_name))
                     continue
