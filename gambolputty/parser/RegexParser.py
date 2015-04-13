@@ -85,7 +85,6 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
                 return
             try:
                 regex_pattern = self.replaceLogstashPatterns(regex_pattern)
-                print regex_pattern
                 regex = re.compile(regex_pattern, regex_options)
             except:
                 etype, evalue, etb = sys.exc_info()
