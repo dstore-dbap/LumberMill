@@ -11,11 +11,11 @@ Collect, parse and store logs with a configurable set of modules.
 Inspired by `logstash <https://github.com/elasticsearch/logstash>`_ but
 with a smaller memory footprint and faster startup time.
 
-Performance
-'''''''''''
-To run GambolPutty you will need Python 2.5+. For better performance, I recommend running GambolPutty with pypy.
-Tested with pypy-2.3, pypy-2.4 and pypy-2.5.
-A simple benchmark can be found `here <http://www.netprojects.de/simple-benchmark-of-gambolputty/>`_.
+Compatibility and Performance
+'''''''''''''''''''''''''''''
+| To run GambolPutty you will need Python 2.5+. For better performance, I recommend running GambolPutty with pypy.
+| Tested with pypy-2.3, pypy-2.4 and pypy-2.5.
+| A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-gambolputty/>`_.
 
 Installation
 ''''''''''''
