@@ -22,7 +22,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
         skipinitialspace:                       # <default: False; type: boolean; is: optional>
         quotechar:                              # <default: '"'; type: string; is: optional>
         delimiter:                              # <default: '|'; type: string; is: optional>
-        fieldnames:                             # <default: False; type: list; is: optional>
+        fieldnames:                             # <type: list; is: required>
         receivers:
           - NextModule
     """
@@ -44,11 +44,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
             return
         field_names = self.getConfigurationValue('fieldnames', event)
         for values in csv_dict:
-            if not field_names:
-                # Use first line for field names if none were provided.
-                field_names = values
-                continue
-            for index,value in enumerate(values):
+            for index, value in enumerate(values):
                 try:
                     event[field_names[index]] = value
                 except KeyError:
