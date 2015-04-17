@@ -10,9 +10,16 @@ class LineParser(BaseThreadedModule.BaseThreadedModule):
     Line parser.
 
     Decode:
-    Will split the data in source fields and emit parts as new events. Original event will be discarded.
+    Will split the data in source fields and emit parts as new events. So if e.g. data field contains:
+    message-a|message-b|message-c
+    you can split this field by "|" and three new events will be created with message-a, message-b and message-c as
+    payload.
 
-    source_fields:  Input fields for decode.
+    The original event will be discarded.
+
+    source_fields:  Input fields to split. Can be a single field or a list of fields.
+    seperator:      Char used as line seperator.
+    target_field:   event field to be filled with the new data.
 
     Configuration template:
 

@@ -51,7 +51,7 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
 
     At the moment only flat json files can be processed correctly.
 
-    action: Either encode or decode data.
+    action:         Either encode or decode data.
     source_fields:  Input fields for de/encode.
                     If encoding, you can set this field to 'all' to encode the complete event dict.
     target_field:   Target field for de/encode result.

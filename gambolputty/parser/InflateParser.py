@@ -15,10 +15,10 @@ class InflateParser(BaseThreadedModule.BaseThreadedModule):
     It will take the source fields and decompress them with the configured codecs. At the moment only gzip an zlib are
     supported.
 
-    source_fields: single field or list of fields to decompress.
-    target_fields: single field or list of fields to fill with decompressed data.
+    source_fields: Single field or list of fields to decompress.
+    target_fields: Single field or list of fields to fill with decompressed data.
                    If not provided, contents of source_fields will be replaced.
-    compression:   compression lib to use for decompression
+    compression:   Compression lib to use for decompression
 
     Configuration template:
 
