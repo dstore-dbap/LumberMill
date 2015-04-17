@@ -37,6 +37,13 @@ Parse a string as csv data.
 It will parse the csv and create or replace fields in the internal data dictionary with
 the corresponding csv fields.
 
+| **source_field**:  Field that contains the csv data.
+| **escapechar**:  Char used to escape special characters.
+| **skipinitialspace**:  When True, whitespace immediately following the delimiter is ignored. The default is False.
+| **quotechar**:  A one-character string used to quote fields containing special characters, such as the delimiter or quotechar, or which contain new-line characters.
+| **delimiter**:  A one-character string used to separate fields.
+| **fieldnames**:  Fieldnames to be used for the extracted csv data.
+
 Configuration template:
 
 ::
@@ -47,7 +54,7 @@ Configuration template:
         skipinitialspace:                       # <default: False; type: boolean; is: optional>
         quotechar:                              # <default: '"'; type: string; is: optional>
         delimiter:                              # <default: '|'; type: string; is: optional>
-        fieldnames:                             # <default: False; type: list; is: optional>
+        fieldnames:                             # <type: list; is: required>
         receivers:
           - NextModule
 
@@ -60,10 +67,10 @@ Inflate any field with supported compression codecs.
 It will take the source fields and decompress them with the configured codecs. At the moment only gzip an zlib are
 supported.
 
-source_fields: single field or list of fields to decompress.
-target_fields: single field or list of fields to fill with decompressed data.
-               If not provided, contents of source_fields will be replaced.
-compression:   compression lib to use for decompression
+| **source_fields**:  Single field or list of fields to decompress.
+| **target_fields**:  Single field or list of fields to fill with decompressed data.
+| If not provided, contents of source_fields will be replaced.
+| compression:   Compression lib to use for decompression
 
 Configuration template:
 
@@ -91,7 +98,7 @@ It will build a new list of source fields and create json of this list.
 
 At the moment only flat json files can be processed correctly.
 
-| **action**:  Either encode or decode data.
+| **action**:          Either encode or decode data.
 | **source_fields**:   Input fields for de/encode.
 | If encoding, you can set this field to 'all' to encode the complete event dict.
 | **target_field**:    Target field for de/encode result.
@@ -118,9 +125,16 @@ LineParser
 Line parser.
 
 Decode:
-Will split the data in source fields and emit parts as new events. Original event will be discarded.
+Will split the data in source fields and emit parts as new events. So if e.g. data field contains:
+message-a|message-b|message-c
+you can split this field by "|" and three new events will be created with message-a, message-b and message-c as
+payload.
 
-| **source_fields**:   Input fields for decode.
+The original event will be discarded.
+
+| **source_fields**:   Input fields to split. Can be a single field or a list of fields.
+| **seperator**:       Char used as line seperator.
+| **target_field**:    event field to be filled with the new data.
 
 Configuration template:
 

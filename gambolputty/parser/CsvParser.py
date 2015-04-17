@@ -17,8 +17,7 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
     source_field: Field that contains the csv data.
     escapechar: Char used to escape special characters.
     skipinitialspace: When True, whitespace immediately following the delimiter is ignored. The default is False.
-    quotechar: A one-character string used to quote fields containing special characters, such as the delimiter or
-               quotechar, or which contain new-line characters.
+    quotechar: A one-character string used to quote fields containing special characters, such as the delimiter or quotechar, or which contain new-line characters.
     delimiter: A one-character string used to separate fields.
     fieldnames: Fieldnames to be used for the extracted csv data.
 

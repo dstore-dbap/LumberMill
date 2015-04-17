@@ -17,6 +17,7 @@ Compatibility and Performance
 | Tested with pypy-2.3, pypy-2.4 and pypy-2.5.
 | A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-gambolputty/>`_.
 
+
 Installation
 ''''''''''''
 
