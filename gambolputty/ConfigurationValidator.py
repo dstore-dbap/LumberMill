@@ -28,7 +28,7 @@ class ConfigurationValidator():
 
     The docstring should contain patterns like:
     ...
-    target-field: 'my_timestamp' # <default: '@timestamp'; type: string; is: optional>
+    compression: 'zlib' # <default: 'gzip'; type: string; is: optional; values: [gzip, zlib]>
     ...
 
     Where:
@@ -38,6 +38,7 @@ class ConfigurationValidator():
     - is: sets whether the parameter needs to be provided or not.
       Here a simple conditional syntax is supported, e.g.
       is: required if tls is True else optional
+    - values (optional): sets a list of allowed values.
     """
 
     default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl', 'add_fields', 'delete_fields', 'event_type')
