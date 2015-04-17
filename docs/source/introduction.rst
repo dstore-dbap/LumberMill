@@ -416,6 +416,7 @@ Event parsers
 
 -  CollectdParser, parse collectd binary protocol data.
 -  CSVParser, parse a char separated string.
+-  InflateParser, inflates any fields with supported compression codecs.
 -  JsonParser, parse a json formatted string.
 -  LineParser, split lines at a seperator and emit each line as new
    event.

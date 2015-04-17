@@ -52,6 +52,31 @@ Configuration template:
           - NextModule
 
 
+InflateParser
+-------------
+
+Inflate any field with supported compression codecs.
+
+It will take the source fields and decompress them with the configured codecs. At the moment only gzip an zlib are
+supported.
+
+source_fields: single field or list of fields to decompress.
+target_fields: single field or list of fields to fill with decompressed data.
+               If not provided, contents of source_fields will be replaced.
+compression:   compression lib to use for decompression
+
+Configuration template:
+
+::
+
+    - CsvParser:
+        source_fields:                          # <default: 'data'; type: string||list; is: optional>
+        target_fields:                          # <default: None; type: None||string||list; is: optional>
+        compression:                            # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
+        receivers:
+          - NextModule
+
+
 JsonParser
 ----------
 

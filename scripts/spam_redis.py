@@ -1,79 +1,86 @@
-# -*- coding: utf-8 -*-
-import redis
-
 #!/usr/bin/env python
-#
-#  tcp_socket_throughput.py
-#  TCP Socket Connection Throughput Tester
-#  Corey Goldberg (www.goldb.org), 2008
 
+from __future__ import print_function
 import sys
 import time
-import socket
-from ctypes import c_int, c_bool
-from multiprocessing import Process, Value, Lock
+import threading
+import Queue
+import redis
 
+def usage():
+    sys.stdout = sys.stderr
+    print('Usage: spam_redis.py [channel||list] name count host [port 5151]')
+    sys.exit(2)
 
-host = sys.argv[1]
-port = int(sys.argv[2]) if len(sys.argv) == 3 else 6379
+if len(sys.argv) < 5:
+    usage()
+    sys.exit()
 
-process_count = 5  # concurrent sender agents
+redis_type = sys.argv[1]
+redis_name = sys.argv[2]
+count = int(eval(sys.argv[3]))
+host = sys.argv[4]
+port = int(sys.argv[5]) if len(sys.argv) == 6 else 6379
 
-counter_lock = Lock()
-def increment(counter):
-    with counter_lock:
-        counter.value += 1
+class Worker(threading.Thread):
 
-def reset(counter):
-    with counter_lock:
-        counter.value = 0
-
-class Controller:
-    def __init__(self):
-        self.count_ref = Value(c_int)
-        self.alive = Value(c_bool)
-
-    def start(self):
-        self.alive = True
-        for i in range(process_count):
-            agent = Agent(self.count_ref, self.alive)
-            agent.start()
-        print 'started %d threads' % (i + 1)
-        while self.alive:
-            line = 'connects/sec: %s' % self.count_ref.value
-            reset(self.count_ref)
-            print chr(0x08) * len(line)
-            print line
-            time.sleep(1)
-
-class Agent(Process):
-    def __init__(self, count_ref, parent_alive):
-        Process.__init__(self)
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
         self.daemon = True
-        self.client = redis.Redis(host=host, port=port)
-        self.count_ref = count_ref
-        self.parent_alive = parent_alive
+        self.queue = queue
+        self.connected = False
 
     def run(self):
-        start = time.time()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        alive = True
-        while alive:
-            if time.time() >= start + 20:
-                self.parent_alive = alive = False
+        self.connected = False
+        try:
+            self.client = redis.Redis(host=host, port=port)
+            self.connected = True
+        except:
+            etype, evalue, etb = sys.exc_info()
+            print('Could no connect to redis server at %s:%s. Exception: %s, Error: %s.' % (host, port, etype, evalue))
+        while self.connected:
             try:
-                now = "%f" % time.time()
-                message ='192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/%s HTTP/1.0" 200 3395' % now
-                self.client.publish('GamboPutty', '%s\n' % message)
-                increment(self.count_ref)
-                s.close()
-                time.sleep(.0000001) #.0000001
-            except:
-                self.parent_alive = alive = False
-                etype, evalue, etb = sys.exc_info()
-                print 'Exception: %s, Error: %s.' % (etype, evalue)
+                message = self.queue.get(timeout=.5)
+                if redis_type == 'channel':
+                    self.client.publish(redis_name, message)
+                else:
+                    self.client.rpush(redis_name, message)
+            except Queue.Empty:
+                break
+
+class RedisLoadTester():
+
+    def __init__(self, num_workers=10):
+        self.lock = threading.Lock()
+        self.counter = 0
+        self.queue = Queue.Queue(10)
+        self.num_workers = num_workers
+
+    def start(self, message):
+        total_item_count = count
+        workers = set()
+        for i in xrange(0, self.num_workers):
+            worker = Worker(self.queue)
+            worker.start()
+            workers.add(worker)
+            time.sleep(.1)
+            if not worker.connected:
+                sys.exit()
+        print("Start load test.")
+        start = time.time()
+        for counter in xrange(0, total_item_count):
+            if counter % 1000 == 0:
+                sys.stdout.write("Message already sent: %s. Mean req/s: %s\r" % (counter+1, counter / (time.time()-start)))
+                sys.stdout.flush()
+            now = "%f" % time.time()
+            self.queue.put(message % now)
+        for worker in workers:
+            worker.join()
+        stop = time.time()
+        print("Message sent: %s. Took %s. Mean req/s: %s" % (counter+1, stop-start, total_item_count / (stop-start)))
 
 if __name__ == '__main__':
-    controller = Controller()
-    controller.start()
+    lt = RedisLoadTester()
+    lt.start("<13>229.25.18.182 - - [28/Jul/2006:10:27:10 -0300] \"GET /cgi-bin/try/9153/?param1=Test&param2=%s HTTP/1.0\" 200 3395 \"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0\"\n")
+
 
