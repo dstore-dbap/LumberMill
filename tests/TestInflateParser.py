@@ -1,4 +1,3 @@
-import pprint
 import extendSysPath
 import StringIO
 import zlib
@@ -54,7 +53,6 @@ class TestInflateParser(ModuleBaseTestCase.ModuleBaseTestCase):
         payload2 = out.getvalue()
         data = Utils.getDefaultEventDict({'gzip-compressed1': payload1, 'gzip-compressed2': payload2})
         for event in self.test_object.handleEvent(data):
-            #pprint.pprint(event)
             self.assertTrue(event['gzip-compressed1'] == payload1)
             self.assertTrue(event['gzip-compressed2'] == payload2)
             self.assertTrue(event['gzip-inflated1'] == "Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
