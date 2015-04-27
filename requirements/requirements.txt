@@ -32,3 +32,6 @@ kafka-python
 # Sniffer, disabled.
 # pcapy
 # netifaces
+
+# AddDnsLookup
+dnspython

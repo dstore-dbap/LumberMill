@@ -19,6 +19,32 @@ Configuration template:
           - NextModule
 
 
+AddDnsLookup
+------------
+
+Add dns info for selected fields. The dns servers used are the ones configured for the system GambolPutty is
+running on.
+
+|**action**: Either resolve or revers.
+|**source_fields**: List of fields to use for (reverse) lookups. First successful lookup result will be used.
+|**target_field**: Target field to store result of lookup. If none is provided, the source field will be replaced.
+|**nameservers**: List of nameservers to use. If not provided, the system default servers will be used.
+|**timeout**: Timeout for lookups in seconds.
+
+Configuration template:
+
+::
+
+    - AddDnsLookup:
+       action:             # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
+       source_fields:      # <default: None; type: string||list; is: required>
+       target_field:       # <default: None; type: None||string; is: optional>
+       nameservers:        # <default: None; type: None||string||list; is: optional>
+       timeout:            # <default: 1; type: integer; is: optional>
+       receivers:
+          - NextModule
+
+
 AddGeoInfo
 ----------
 
@@ -30,7 +56,7 @@ Here an example of fields that the module provides:
 | **geoip_dat_path**:  path to maxmind geoip database file.
 | **source_fields**:  list of fields to use for lookup. The first list entry that produces a hit is used.
 | **target**:  field to populate with the geoip data. If none is provided, the field will be added directly to the event.
-| geo_info_fields: fields to add. Available field names:
+| **geo_info_fields**: fields to add. Available field names:
 | - area_code
 | - city
 | - continent

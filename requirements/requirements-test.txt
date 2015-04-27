@@ -26,9 +26,15 @@ ua-parser
 # XPathParser
 lxml
 
+# Kafka input/output
+kafka-python
+
 # Sniffer, disabled.
 # pcapy
 # netifaces
+
+# AddDnsLookup
+dnspython
 
 # Tests requirements.
 unittest2

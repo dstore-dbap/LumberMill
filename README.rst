@@ -433,6 +433,7 @@ Event modifiers
 ^^^^^^^^^^^^^^^
 
 -  AddDateTime, adds a timestamp field.
+-  AddDnsLookup. adds dns data.
 -  AddGeoInfo, adds geo info fields.
 -  DropEvent, discards event.
 -  ExecPython, execute custom python code.
