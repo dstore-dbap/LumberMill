@@ -3,6 +3,55 @@
 Input modules
 =============
 
+ElasticSearch
+-------------
+
+Get documents from ElasticSearch.
+
+The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
+Requests will the be loadbalanced via round robin.
+
+| **query:**         The query to be executed, in json format.
+| **search_type:**   The default search type just will return all found documents in one chunk. If set to 'scan',
+|                    it will return 'size' number of found documents, emit these as new events and then continue until
+|                    no more documents can be retrieved. @see: http://elasticsearch-py.readthedocs.org/en/master/helpers.html
+| **field_mappings:**Which fields from the result document to add to the new event.
+|                    If set to 'all' the whole document will be sent unchanged.
+|                    If a list is provided, these fields will be copied to the new event with the same field name.
+|                    If a dictionary is provided, these fields will be copied to the new event with the corresponding new field name.
+|                    E.g. if you want "_source.data" to be copied into the events "data" field, use a mapping like:
+|                    "{'_source.data': 'data'}.
+|                    For nested values use the dot syntax as described in:
+|                    @see: http://gambolputty.readthedocs.org/en/latest/introduction.html#event-field-notation
+| **nodes:**         Configures the elasticsearch nodes.
+| **connection_type:**One of: 'thrift', 'http'.
+| **http_auth:**     'user:password'.
+| **use_ssl:**       One of: True, False.
+| **index_name:**    Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
+| **sniff_on_start:**The client can be configured to inspect the cluster state to get a list of nodes upon startup.
+|                    Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+| **sniff_on_connection_fail:** The client can be configured to inspect the cluster state to get a list of nodes upon failure.
+|                               Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+| **query_interval_in_secs:**   Get data to es in x seconds intervals. NOT YET IMPLEMENTED!!
+
+Configuration template:
+
+::
+
+    - ElasticSearchSink:
+        query:                                    # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
+        search_type:                              # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
+        field_mappings:                           # <default: 'all'; type: string||list||dict; is: optional;>
+        nodes:                                    # <type: list; is: required>
+        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+        http_auth:                                # <default: None; type: None||string; is: optional>
+        use_ssl:                                  # <default: False; type: boolean; is: optional>
+        index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
+        sniff_on_start:                           # <default: True; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        query_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+
+
 Kafka
 -----
 

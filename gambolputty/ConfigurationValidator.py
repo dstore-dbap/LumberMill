@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import Utils
 
@@ -12,13 +13,12 @@ yaml_valid_config_template = {
     'Global': {'types': [dict],
                'fields': {'workers': {'types': [int]}}},
     'Module': {'types': [dict,str],
-               'fields':  { 'id': {'types': [str]},
-                            'filter': {'types': [str]},
-                            'add_fields': {'types': [dict]},
-                            'delete_fields': {'types': [list]},
-                            'event_type': {'types': [str]},
-                            'receivers': {'types': [list]}
-                          }
+               'fields': {'id': {'types': [str]},
+                          'filter': {'types': [str]},
+                          'add_fields': {'types': [dict]},
+                          'delete_fields': {'types': [list]},
+                          'event_type': {'types': [str]},
+                          'receivers': {'types': [list]}}
                }
 }
 
@@ -49,7 +49,7 @@ class ConfigurationValidator():
         Simple schema test for the global configuration.
 
         Only a very simple "schema" is checked here.
-        Global configuration item an each module configuration item should at least adhere to the data pattern defined in
+        Global configuration item and each module configuration item should at least adhere to the data pattern defined in
         yaml_valid_config_template. Module specific configuration checks will be done in validateModuleInstanceConfiguration.
         """
         configuration_errors = []
@@ -75,17 +75,20 @@ class ConfigurationValidator():
         return configuration_errors
 
     @classmethod
-    def validateConfigurationItem(self, item_name, item, path, template=yaml_valid_config_template):
+    def validateConfigurationItem(self, item_name, item_value, path, template=yaml_valid_config_template):
         configuration_errors = []
         if item_name in template:
             item_template = template[item_name]
-            if type(item) not in item_template['types']:
-                error_msg = "'%s' not of correct datatype. Is: %s, should be: %s. Please check your configuration." % (path, type(item), item_template['types'])
+            if type(item_value) not in item_template['types']:
+                error_msg = "'%s' not of correct datatype. Is: %s, should be: %s. Please check your configuration." % (path, type(item_value), item_template['types'])
                 configuration_errors.append(error_msg)
-            if type(item) is dict:
-                for field_key, field_value in item.items():
-                    path = "%s.%s" % (path, field_key)
-                    field_configuration_errors = self.validateConfigurationItem(field_key, field_value, path, template=item_template['fields'])
+            if type(item_value) is dict:
+                for field_key, field_value in item_value.items():
+                    field_path = "%s.%s" % (path, field_key)
+                    try:
+                        field_configuration_errors = self.validateConfigurationItem(field_key, field_value, field_path, template=item_template['types'])
+                    except KeyError:
+                        sys.exit()
                     for field_configuration_error in field_configuration_errors:
                         configuration_errors.append(field_configuration_error)
         return configuration_errors

@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import elasticsearch
 import BaseThreadedModule
 import Utils
 import Decorators
-try:
-    from __pypy__.builders import UnicodeBuilder
-except ImportError:
-    UnicodeBuilder = None
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -33,6 +30,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
     Requests will the be loadbalanced via round robin.
 
+    action:     Either index or update. If update be sure to provide the correct doc_id.
     format:     Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
                 If not set the whole event dict is send.
     nodes:      Configures the elasticsearch nodes.
@@ -60,6 +58,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - ElasticSearchSink:
+        action:                                   # <default: 'insert'; type: string; is: optional; values: ['index', 'update']>
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
@@ -69,8 +68,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
         routing:                                  # <default: None; type: None||string; is: optional>
         ttl:                                      # <default: None; type: None||integer||string; is: optional>
-        sniff_on_start:                           # <default: True; type: boolean; is: optional>
-        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        sniff_on_start:                           # <default: False; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: False; type: boolean; is: optional>
         consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
         replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
@@ -84,6 +83,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        self.action = self.getConfigurationValue('action')
         self.format = self.getConfigurationValue('format')
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
@@ -113,8 +113,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                 self.logger.debug("Connecting to %s." % self.getConfigurationValue("nodes"))
                 es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
                                                  connection_class=self.connection_class,
-                                                 sniff_on_start=False,
-                                                 sniff_on_connection_fail=False,
+                                                 sniff_on_start=self.getConfigurationValue('sniff_on_start'),
+                                                 sniff_on_connection_fail=self.getConfigurationValue('sniff_on_connection_fail'),
                                                  sniff_timeout=5,
                                                  maxsize=20,
                                                  use_ssl=self.getConfigurationValue('use_ssl'),
@@ -153,13 +153,15 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             if not doc_id:
                 self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
-            header = {'index': {'_index': index_name,
-                                '_type': event_type,
-                                '_id': doc_id}}
+            header = {self.action: {'_index': index_name,
+                                    '_type': event_type,
+                                    '_id': doc_id}}
             if self.routing_pattern:
                 header['index']['_routing'] = routing
             if self.ttl:
                 header['index']['_ttl'] = self.ttl
+            if self.action == 'update':
+                event = {'doc': event}
             try:
                 json_data.append("\n".join((json.dumps(header), json.dumps(event), "\n")))
             except UnicodeDecodeError:
