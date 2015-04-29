@@ -58,7 +58,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - ElasticSearchSink:
-        action:                                   # <default: 'insert'; type: string; is: optional; values: ['index', 'update']>
+        action:                                   # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
         format:                                   # <default: None; type: None||string; is: optional>
         nodes:                                    # <type: list; is: required>
         connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
