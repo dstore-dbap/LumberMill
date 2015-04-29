@@ -400,6 +400,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
+-  ElasticSearch, get documents from elasticsearch.
 -  Kafka, receive events from apache kafka.
 -  NmapScanner, scan network with nmap and emit result as new event.
 -  RedisChannel, read events from redis channels.
