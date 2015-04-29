@@ -85,12 +85,14 @@ class GambolPutty():
             # At the moment I ran into a problem with zmq.
             # This problem causes the performance to be comparable with the normal python multiprocessing.Queue.
             # To make things worse, the load balancing between multiple workers is better when using multiprocessing.Queue.
+            # Update 28.04.2015: With pypy-2.5 and normal python, the load balancing problem seems to be gone. ZMQ is
+            # still a bit faster (ca. ~15%).
             # TODO: Analyze this problem more thoroughly.
-            #if Utils.zmq_avaiable and Utils.msgpack_avaiable:
-            #    queue = Utils.ZeroMqMpQueue(queue_max_size)
-            #else:
-            #    queue = multiprocessing.Queue(queue_max_size)
-            queue = Utils.BufferedQueue(queue=multiprocessing.Queue(queue_max_size), buffersize=queue_buffer_size)
+            if False and Utils.zmq_avaiable and Utils.msgpack_avaiable:
+                queue = Utils.ZeroMqMpQueue(queue_max_size)
+            else:
+                queue = multiprocessing.Queue(queue_max_size)
+            queue = Utils.BufferedQueue(queue=queue, buffersize=queue_buffer_size)
         if not queue:
             self.logger.error("Could not produce requested queue %s." % (queue_type))
             self.shutDown()
@@ -242,7 +244,7 @@ class GambolPutty():
 
     def initEventStream(self):
         """
-        Connect all modules
+        Connect all modules.
 
         The configuration allows to connect the modules via the <receivers> parameter.
         As different types of modules exists (Base, Threaded, MultiProcess), connecting one modules output
@@ -307,8 +309,8 @@ class GambolPutty():
             for instance in module_info['instances']:
                 if instance.can_run_forked:
                     instance.initAfterFork()
-                else:
-                    print("Not calling initAfterFork on %s." % module_name)
+                #else:
+                #    print("Not calling initAfterFork on %s." % module_name)
 
     def runModules(self):
         """
