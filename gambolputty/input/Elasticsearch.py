@@ -71,6 +71,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method.
@@ -130,6 +131,8 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
                 doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
             elif isinstance(self.field_mappings, types.DictType):
                 doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
+            else:
+                doc = self.extractFieldsFromResultDocument(doc['_source'].keys(), doc['_source'])
             event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
             self.sendEvent(event)
         self.gp.shutDown()
