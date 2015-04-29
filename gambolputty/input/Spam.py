@@ -17,14 +17,17 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
     If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
     should your raw event string.
 
-    events: Send custom event data. To send a more complex event provide a dict, use a string to send a simple event.
+    events: Send custom event data. For single events, use a string or a dict. If a string is provided, the contents will
+            be put into the events data field.
+            if a dict is provided, the event will be populated with the dict fields.
+            For multiple events, provide a list of stings or dicts.
     sleep: Time to wait between sending events.
     events_count: Only send configured number of events. 0 means no limit.
 
     Configuration template:
 
     - Spam:
-        event:                    # <default: ""; type: string||list; is: optional>
+        event:                    # <default: ""; type: string||list||dict; is: optional>
         sleep:                    # <default: 0; type: int||float; is: optional>
         events_count:             # <default: 0; type: int; is: optional>
         receivers:
@@ -33,7 +36,7 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_forked = True
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method
@@ -48,7 +51,10 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
         max_events_count = self.getConfigurationValue("events_count")
         while self.alive:
             for event_data in self.events:
-                event = Utils.getDefaultEventDict({'data': event_data}, caller_class_name=self.__class__.__name__) # self.getConfigurationValue("event")
+                if isinstance(event_data, str):
+                    event = Utils.getDefaultEventDict({'data': event_data}, caller_class_name=self.__class__.__name__)
+                elif isinstance(event_data, dict):
+                    event = Utils.getDefaultEventDict(event_data, caller_class_name=self.__class__.__name__) # self.getConfigurationValue("event")
                 self.sendEvent(event)
                 if self.sleep > 0:
                     time.sleep(self.sleep)
