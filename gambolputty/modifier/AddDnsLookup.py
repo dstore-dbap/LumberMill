@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import Queue
 import Utils
 import BaseThreadedModule
+import threading
 import Decorators
 import types
-import dns.resolver
-from dns import reversename, resolver
+import socket
+
 
 @Decorators.ModuleDocstringParser
 class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
@@ -36,6 +38,7 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        self.in_mem_cache = Utils.MemoryCache(size=5000)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
         if isinstance(self.source_fields, types.StringTypes):
@@ -45,42 +48,79 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
         # Allow single string as well.
         if isinstance(self.nameservers, types.StringTypes):
             self.nameservers = [self.nameservers]
-        self.resolver = dns.resolver.Resolver()
-        if self.nameservers:
-            self.resolver.nameserves = self.nameservers
-        self.resolver.timeout = self.getConfigurationValue('timeout')
-        self.resolver.lifetime = self.getConfigurationValue('timeout')
-        # Monkeypatch the lookup method
-        if self.getConfigurationValue('action') == 'resolve':
-            self.doLookup = self.doNormalLookup
-        else:
-            self.doLookup = self.doReverseLookup
+        self.lookup_type = self.getConfigurationValue('action')
+        self.lookup_threads_pool_size = 3
 
-    def doLookup(self):
-        return
-
-    def doReverseLookup(self, ip_address):
-        try:
-            rev_name = reversename.from_address(ip_address)
-            return str(resolver.query(rev_name, "PTR")[0])
-        except:
-            return None
-
-    def doNormalLookup(self, hostname):
-        try:
-            return str(self.resolver.query(hostname)[0])
-        except:
-            return None
+    def initAfterFork(self):
+        self.queue = Queue.Queue(20)
+        self.lookup_threads = [LookupThread(self.queue, self.lookup_type, self) for _ in range(0, self.lookup_threads_pool_size)]
+        for thread in self.lookup_threads:
+            thread.start()
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
         for source_field in self.source_fields:
             if source_field not in event:
                 continue
-            result = self.doLookup(event[source_field])
-            if not result:
+            target_field = self.target_field if self.target_field else source_field
+            self.queue.put({'source_field': source_field,
+                            'target_field': target_field,
+                            'event': event})
+        yield None
+
+    def shutDown(self):
+        BaseThreadedModule.BaseThreadedModule.shutDown(self)
+        for thread in self.lookup_threads:
+            thread.stop()
+            thread.join()
+
+class LookupThread(threading.Thread):
+    def __init__(self, queue, lookup_type, caller):
+        threading.Thread.__init__(self)
+        self.queue = queue
+        self.lookup_type = lookup_type
+        self.caller = caller
+        self.daemon = True
+        self.alive = True
+
+    def stop(self):
+        self.alive = False
+
+    def run(self):
+        while self.alive:
+            try:
+                payload = self.queue.get()
+            except Queue.Empty:
                 continue
-            if self.target_field:
-                event[self.target_field] = result
-            else:
-                event[source_field] = result
-        yield event
+            source_field = payload['source_field']
+            target_field = payload['target_field']
+            event = payload['event']
+            host_or_ip = event[source_field]
+            # Try to get it from cache.
+            try:
+                result = self.caller.in_mem_cache.get(host_or_ip)
+            except KeyError:
+                if self.lookup_type == 'resolve':
+                    result = self.doLookup(host_or_ip)
+                elif self.lookup_type == 'reverse':
+                    result = self.doReverseLookup(host_or_ip)
+            self.caller.in_mem_cache.set(host_or_ip, result)
+            event[target_field] = result
+            self.caller.sendEvent(event)
+
+    def doReverseLookup(self, ip_address):
+        #started = time.time()
+        try:
+            rev_name = socket.gethostbyaddr(ip_address)[0]
+        except:
+            rev_name = None
+        #if (time.time() - started) > .1:
+        #    print("Reverse lookup of %s(%s) took %s." % (ip_address, rev_name, time.time() - started))
+        return rev_name
+
+    def doLookup(self, host_name):
+        try:
+            ip_address = socket.gethostbyname(host_name)
+        except:
+            ip_address = None
+        return ip_address
