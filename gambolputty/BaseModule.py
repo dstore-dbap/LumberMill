@@ -6,7 +6,7 @@ import logging
 import sys
 import ConfigurationValidator
 import Utils
-from  functools import wraps
+from functools import wraps
 
 
 class BaseModule:
@@ -189,6 +189,7 @@ class BaseModule:
         # This is done here since the buffer uses a thread to flush buffer in
         # given intervals. The thread will not survive a fork of the main process.
         # So we need to start this after the fork was executed.
+        self.process_id = os.getpid()
         for receiver_name, receiver in self.receivers.items():
             if hasattr(receiver, 'put'):
                 receiver.startInterval()
