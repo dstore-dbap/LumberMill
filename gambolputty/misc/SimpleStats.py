@@ -77,7 +77,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
         events_received = self.mp_stats_collector.getCounter('events_received')
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
         if self.emit_as_event:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
         self.mp_stats_collector.resetCounter('events_received')
 
     def eventTypeStatistics(self):
@@ -89,7 +89,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
             event_name = event_type.replace('event_type_', '')
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
             self.mp_stats_collector.resetCounter(event_type)
 
     def eventsInQueuesStatistics(self):
@@ -99,7 +99,7 @@ class SimpleStats(BaseThreadedModule.BaseThreadedModule):
         for module_name, queue in sorted(self.module_queues.items()):
             self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(), "field_name": "queue_counts", "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
 
     def initAfterFork(self):
         # Get all configured queues for waiting event stats.
