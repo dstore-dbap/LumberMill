@@ -22,11 +22,10 @@ Configuration template:
 AddDnsLookup
 ------------
 
-Add dns info for selected fields. The dns servers used are the ones configured for the system GambolPutty is
-running on.
+Add dns info for selected fields.
 
 |**action**: Either resolve or revers.
-|**source_fields**: List of fields to use for (reverse) lookups. First successful lookup result will be used.
+|**source_field**: Source field to use for (reverse) lookups.
 |**target_field**: Target field to store result of lookup. If none is provided, the source field will be replaced.
 |**nameservers**: List of nameservers to use. If not provided, the system default servers will be used.
 |**timeout**: Timeout for lookups in seconds.
@@ -37,7 +36,7 @@ Configuration template:
 
     - AddDnsLookup:
        action:             # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
-       source_fields:      # <default: None; type: string||list; is: required>
+       source_field:       # <default: None; type: string; is: required>
        target_field:       # <default: None; type: None||string; is: optional>
        nameservers:        # <default: None; type: None||string||list; is: optional>
        timeout:            # <default: 1; type: integer; is: optional>

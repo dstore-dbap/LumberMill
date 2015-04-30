@@ -5,8 +5,7 @@ import BaseThreadedModule
 import threading
 import Decorators
 import types
-import socket
-
+from dns import resolver, reversename
 
 @Decorators.ModuleDocstringParser
 class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
@@ -15,7 +14,7 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
     running on.
 
     action: Either resolve or revers.
-    source_fields: List of fields to use for (reverse) lookups. First successful lookup result will be used.
+    source_field: Source field to use for (reverse) lookups.
     target_field: Target field to store result of lookup. If none is provided, the source field will be replaced.
     nameservers: List of nameservers to use. If not provided, the system default servers will be used.
     timeout: Timeout for lookups in seconds.
@@ -24,7 +23,7 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
 
     - AddDnsLookup:
        action:             # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
-       source_fields:      # <default: None; type: string||list; is: required>
+       source_field:       # <default: None; type: string; is: required>
        target_field:       # <default: None; type: None||string; is: optional>
        nameservers:        # <default: None; type: None||string||list; is: optional>
        timeout:            # <default: 1; type: integer; is: optional>
@@ -39,10 +38,7 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.in_mem_cache = Utils.MemoryCache(size=5000)
-        self.source_fields = self.getConfigurationValue('source_fields')
-        # Allow single string as well.
-        if isinstance(self.source_fields, types.StringTypes):
-            self.source_fields = [self.source_fields]
+        self.source_field = self.getConfigurationValue('source_field')
         self.target_field = self.getConfigurationValue('target_field')
         self.nameservers = self.getConfigurationValue('nameservers')
         # Allow single string as well.
@@ -52,6 +48,9 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
         self.lookup_threads_pool_size = 3
 
     def initAfterFork(self):
+        self.resolver = resolver.Resolver()
+        if self.nameservers:
+            self.resolver.nameservers = self.nameservers
         self.queue = Queue.Queue(20)
         self.lookup_threads = [LookupThread(self.queue, self.lookup_type, self) for _ in range(0, self.lookup_threads_pool_size)]
         for thread in self.lookup_threads:
@@ -59,11 +58,9 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
-        for source_field in self.source_fields:
-            if source_field not in event:
-                continue
-            target_field = self.target_field if self.target_field else source_field
-            self.queue.put({'source_field': source_field,
+        if self.source_field in event:
+            target_field = self.target_field if self.target_field else self.source_field
+            self.queue.put({'source_field': self.source_field,
                             'target_field': target_field,
                             'event': event})
         yield None
@@ -111,16 +108,16 @@ class LookupThread(threading.Thread):
     def doReverseLookup(self, ip_address):
         #started = time.time()
         try:
-            rev_name = socket.gethostbyaddr(ip_address)[0]
+            hostname = str(self.caller.resolver.query(reversename.from_address(ip_address), "PTR")[0])
         except:
-            rev_name = None
+            hostname = None
         #if (time.time() - started) > .1:
         #    print("Reverse lookup of %s(%s) took %s." % (ip_address, rev_name, time.time() - started))
-        return rev_name
+        return hostname
 
-    def doLookup(self, host_name):
+    def doLookup(self, hostname):
         try:
-            ip_address = socket.gethostbyname(host_name)
+            ip_address = str(self.caller.resolver.query(hostname)[0])
         except:
             ip_address = None
         return ip_address
