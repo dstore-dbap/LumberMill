@@ -5,6 +5,7 @@ import BaseThreadedModule
 import threading
 import Decorators
 import types
+import time
 from dns import resolver, reversename
 
 @Decorators.ModuleDocstringParser
@@ -38,17 +39,20 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.in_mem_cache = Utils.MemoryCache(size=5000)
+        self.lookup_type = self.getConfigurationValue('action')
         self.source_field = self.getConfigurationValue('source_field')
         self.target_field = self.getConfigurationValue('target_field')
         self.nameservers = self.getConfigurationValue('nameservers')
+        self.timeout = self.getConfigurationValue('timeout')
         # Allow single string as well.
         if isinstance(self.nameservers, types.StringTypes):
             self.nameservers = [self.nameservers]
-        self.lookup_type = self.getConfigurationValue('action')
         self.lookup_threads_pool_size = 3
 
     def initAfterFork(self):
         self.resolver = resolver.Resolver()
+        self.resolver.timeout = self.timeout
+        self.resolver.lifetime = self.timeout
         if self.nameservers:
             self.resolver.nameservers = self.nameservers
         self.queue = Queue.Queue(20)
@@ -111,8 +115,8 @@ class LookupThread(threading.Thread):
             hostname = str(self.caller.resolver.query(reversename.from_address(ip_address), "PTR")[0])
         except:
             hostname = None
-        #if (time.time() - started) > .1:
-        #    print("Reverse lookup of %s(%s) took %s." % (ip_address, rev_name, time.time() - started))
+        #if (time.time() - started) > 1:
+        #    print("Reverse lookup of %s(%s) took %s." % (ip_address, hostname, time.time() - started))
         return hostname
 
     def doLookup(self, hostname):

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import types
@@ -6,6 +7,7 @@ from elasticsearch import Elasticsearch, helpers, connection
 import BaseThreadedModule
 import Utils
 import Decorators
+from concurrent import futures
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -124,15 +126,35 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             self.logger.debug("Connection to %s successful." % (self.getConfigurationValue("nodes")))
         return es
 
+    def __run(self):
+        with futures.ThreadPoolExecutor(max_workers=1) as worker:
+            workers = [worker.submit(self.executeQuery) for _ in range(0, 1)]
+        for worker in futures.as_completed(workers):
+            for doc in worker.result():
+                if isinstance(self.field_mappings, types.ListType):
+                    doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
+                elif isinstance(self.field_mappings, types.DictType):
+                    doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
+                else:
+                    # No special fields were selected.
+                    # Just merge _source field and all other elasticsearch fields to one level.
+                    pprint.pprint(doc)
+                    source = doc.pop('_source')
+                    doc.update(source)
+                event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
+                self.sendEvent(event)
+        self.gp.shutDown()
+
     def run(self):
         found_documents = self.executeQuery()
         for doc in found_documents:
+            # No special fields were selected.
+            # Merge _source field and all other elasticsearch fields to one level.
+            doc.update(doc.pop('_source'))
             if isinstance(self.field_mappings, types.ListType):
                 doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
             elif isinstance(self.field_mappings, types.DictType):
                 doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
-            else:
-                doc = self.extractFieldsFromResultDocument(doc['_source'].keys(), doc['_source'])
             event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
             self.sendEvent(event)
         self.gp.shutDown()
