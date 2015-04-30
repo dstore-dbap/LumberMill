@@ -24,11 +24,11 @@ AddDnsLookup
 
 Add dns info for selected fields.
 
-|**action**: Either resolve or revers.
-|**source_field**: Source field to use for (reverse) lookups.
-|**target_field**: Target field to store result of lookup. If none is provided, the source field will be replaced.
-|**nameservers**: List of nameservers to use. If not provided, the system default servers will be used.
-|**timeout**: Timeout for lookups in seconds.
+| **action**: Either resolve or revers.
+| **source_field**: Source field to use for (reverse) lookups.
+| **target_field**: Target field to store result of lookup. If none is provided, the source field will be replaced.
+| **nameservers**: List of nameservers to use. If not provided, the system default servers will be used.
+| **timeout**: Timeout for lookups in seconds.
 
 Configuration template:
 
