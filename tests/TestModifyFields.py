@@ -65,6 +65,19 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assert_('http_status_mapped' in event)
             self.assertEquals(event['http_status_mapped'], 'Continue')
 
+    def testMapWithUnmappableFields(self):
+        self.default_dict['http_status'] = 300
+        self.test_object.configure({'action': 'map',
+                                    'keep_unmappable': True,
+                                    'source_field': 'http_status',
+                                    'map': {100: 'Continue',
+                                            200: 'OK'}
+                                  })
+        for event in self.test_object.handleEvent(self.default_dict):
+            print('%s' % event)
+            self.assert_('http_status_mapped' in event)
+            self.assertEquals(event['http_status_mapped'], 300)
+
     def testMapWithTargetField(self):
         self.default_dict['http_status'] = 200
         self.test_object.configure({'action': 'map',

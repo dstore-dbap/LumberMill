@@ -70,6 +70,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         source_field:                               # <type: string; is: required>
         map:                                        # <type: dictionary; is: required>
         target_field:                               # <default: "$(source_field)_mapped"; type: string; is: optional>
+        keep_unmappable:                            # <default: False; type: boolean; is: optional>
         receivers:
           - NextModule
 
@@ -372,7 +373,10 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         try:
             event[target_field] = self.getConfigurationValue('map', event)[event[self.source_field]]
         except KeyError:
-            pass
+            if self.getConfigurationValue('keep_unmappable'):
+                event[target_field] = event[self.source_field]
+            else:
+                pass
         return event
 
     def key_value(self, event):
