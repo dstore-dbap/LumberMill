@@ -25,7 +25,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
 
     - FileSink:
         file_name:                            # <type: string; is: required>
-        format:                               # <default: '%(data)s'; type: string; is: optional>
+        format:                               # <default: '$(data)'; type: string; is: optional>
         store_interval_in_secs:               # <default: 10; type: integer; is: optional>
         batch_size:                           # <default: 500; type: integer; is: optional>
         backlog_size:                         # <default: 5000; type: integer; is: optional>
@@ -71,6 +71,12 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
             if last_used_time_ago < 300:
                 continue
             self.logger.info('Closing stale file handle for %s.' % (path))
+            file_handle_data['handle'].close()
+            self.file_handles.pop(path)
+
+    def closeAllFileHandles(self):
+        for path, file_handle_data in self.file_handles.items():
+            self.logger.info('Closing file handle for %s.' % path)
             file_handle_data['handle'].close()
             self.file_handles.pop(path)
 
@@ -129,6 +135,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
 
     def shutDown(self):
         self.buffer.flush()
+        self.closeAllFileHandles()
         BaseThreadedModule.BaseThreadedModule.shutDown(self)
 
     def compressGzip(self, data):
