@@ -36,7 +36,7 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_forked = False
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method
@@ -45,10 +45,18 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
         if not isinstance(self.events, list):
             self.events = [self.events]
         self.sleep = self.getConfigurationValue("sleep")
+        self.max_events_count = self.getConfigurationValue("events_count")
+
+    def initAfterFork(self):
+        # Calculate event count when running in multiple processes.
+        self.max_events_count = int(self.getConfigurationValue("events_count")/self.gp.workers)
+        if self.gp.is_master():
+            remainder = self.getConfigurationValue("events_count") % self.gp.workers
+            self.max_events_count += remainder
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def run(self):
         counter = 0
-        max_events_count = self.getConfigurationValue("events_count")
         while self.alive:
             for event_data in self.events:
                 if isinstance(event_data, str):
@@ -59,6 +67,6 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
                 if self.sleep > 0:
                     time.sleep(self.sleep)
                 counter += 1
-                if (counter - max_events_count == 0):
+                if (counter - self.max_events_count == 0):
                     time.sleep(2)
                     self.gp.shutDown()
