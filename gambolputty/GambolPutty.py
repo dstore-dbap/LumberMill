@@ -200,7 +200,6 @@ class GambolPutty():
             start_message = "Using module %s." % module_id
             self.logger.info(start_message)
 
-
     def setDefaultReceivers(self):
         """
         Add default receivers if none are provided by configuration.
