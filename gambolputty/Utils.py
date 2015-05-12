@@ -14,6 +14,7 @@ import socket
 import types
 import platform
 import pylru
+from collections import defaultdict
 
 
 # Conditional imports for python2/3
@@ -186,7 +187,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
                 mapped_values = [v % mapping_dict for v in value]
             return mapped_values
         except KeyError:
-            return False
+            return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
@@ -201,19 +202,24 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
                 mapped_values = [v % mapping_dict for v in value.itervalues()]
             return dict(zip(mapped_keys, mapped_values))
         except KeyError:
-            return False
+            return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
             return False
     elif isinstance(value, basestring):
+        # If a value does not exists in mapping_dict we still want to map all other values.
+        # So wrap the dict in a default dict with a None factory to avoid a KeyError.
+        tmp_dict = defaultdict(None)
+        tmp_dict.update(mapping_dict)
+        mapping_dict = tmp_dict
         try:
             if use_strftime:
                 return datetime.datetime.utcnow().strftime(value) % mapping_dict
             else:
                 return value % mapping_dict
         except KeyError:
-            return False
+            return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
             logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
