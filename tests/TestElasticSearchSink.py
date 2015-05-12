@@ -43,7 +43,7 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
             sys.exit()
         return es
 
-    def test(self):
+    def testDefaultDocId(self):
         self.test_object.configure({'index_name': self.test_index_name,
                                     'nodes': [self.es_server],
                                     'sniff_on_start': False,
@@ -130,4 +130,4 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)
-        self.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
+        #self.es.indices.delete(index=self.test_index_name, ignore=[400, 404])

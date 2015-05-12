@@ -177,6 +177,10 @@ class ReplaceVars(ast.NodeTransformer):
         return new_node
 
 def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
+    # By default this method will return the unchanged value if the mapping key does not exist in the mapping_dict.
+    # With missing_default this can be overwritten. When missing_default_func is passed in, this func will be used
+    # to determine the default value.
+
     # At the moment, just flat lists and dictionaries are supported.
     # If need arises, recursive parsing of the lists and dictionaries will be added.
     if isinstance(value, list):
@@ -190,7 +194,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
+            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
             return False
     elif isinstance(value, dict):
         try:
@@ -205,14 +209,9 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
+            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
             return False
     elif isinstance(value, basestring):
-        # If a value does not exists in mapping_dict we still want to map all other values.
-        # So wrap the dict in a default dict with a None factory to avoid a KeyError.
-        tmp_dict = defaultdict(None)
-        tmp_dict.update(mapping_dict)
-        mapping_dict = tmp_dict
         try:
             if use_strftime:
                 return datetime.datetime.utcnow().strftime(value) % mapping_dict
@@ -222,7 +221,7 @@ def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
             return value
         except (ValueError, TypeError):
             etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("%sMapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
+            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
             return False
 
 class Buffer:
@@ -379,6 +378,9 @@ class KeyDotNotationDict(dict):
 
     def __del__(self):
         pass
+
+    def __missing__(self, key):
+        raise KeyError(key)
 
     def copy(self):
         new_dict = KeyDotNotationDict(copy.deepcopy(super(KeyDotNotationDict, self)))
