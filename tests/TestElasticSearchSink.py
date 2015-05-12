@@ -130,4 +130,4 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def tearDown(self):
         ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)
-        #self.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
+        self.es.indices.delete(index=self.test_index_name, ignore=[400, 404])
