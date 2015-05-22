@@ -133,7 +133,7 @@ class BaseModule:
         if not isinstance(config_setting, dict):
             self.logger.debug("Configuration for key: %s is incorrect." % key)
             return False
-        if config_setting['contains_placeholder'] == False or not mapping_dict:
+        if config_setting['contains_placeholder'] is False or not mapping_dict:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
