@@ -60,7 +60,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     - ElasticSearchSink:
         action:                                   # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
         format:                                   # <default: None; type: None||string; is: optional>
-        nodes:                                    # <type: list; is: required>
+        nodes:                                    # <type: string||list; is: required>
         connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
@@ -85,6 +85,9 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.action = self.getConfigurationValue('action')
         self.format = self.getConfigurationValue('format')
+        self.es_nodes = self.getConfigurationValue("nodes")
+        if not isinstance(self.es_nodes, list):
+            self.es_nodes = [self.es_nodes]
         self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
@@ -110,8 +113,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         while tries < 5 and not es:
             try:
                 # Connect to es node and round-robin between them.
-                self.logger.debug("Connecting to %s." % self.getConfigurationValue("nodes"))
-                es = elasticsearch.Elasticsearch(self.getConfigurationValue('nodes'),
+                self.logger.debug("Connecting to %s." % self.es_nodes)
+                es = elasticsearch.Elasticsearch(self.es_nodes,
                                                  connection_class=self.connection_class,
                                                  sniff_on_start=self.getConfigurationValue('sniff_on_start'),
                                                  sniff_on_connection_fail=self.getConfigurationValue('sniff_on_connection_fail'),
@@ -121,16 +124,16 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
                                                  http_auth=self.getConfigurationValue('http_auth'))
             except:
                 etype, evalue, etb = sys.exc_info()
-                self.logger.warning("Connection to %s failed. Exception: %s, Error: %s." % (self.getConfigurationValue("nodes"),  etype, evalue))
+                self.logger.warning("Connection to %s failed. Exception: %s, Error: %s." % (self.es_nodes, etype, evalue))
                 self.logger.warning("Waiting %s seconds before retring to connect." % ((4 + tries)))
                 time.sleep(4 + tries)
                 tries += 1
                 continue
         if not es:
-            self.logger.error("Connection to %s failed. Shutting down." % (self.getConfigurationValue("nodes")))
+            self.logger.error("Connection to %s failed. Shutting down." % self.es_nodes)
             self.gp.shutDown()
         else:
-            self.logger.debug("Connection to %s successful." % (self.getConfigurationValue("nodes")))
+            self.logger.debug("Connection to %s successful." % self.es_nodes)
         return es
 
     def handleEvent(self, event):
@@ -181,7 +184,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             return True
         except elasticsearch.exceptions.ConnectionError:
             try:
-                self.logger.warning("Lost connection to %s. Trying to reconnect." % ((self.getConfigurationValue("nodes"),index_name)))
+                self.logger.warning("Lost connection to %s. Trying to reconnect." % (self.es_nodes, index_name))
                 self.es = self.connect()
             except:
                 time.sleep(.5)
