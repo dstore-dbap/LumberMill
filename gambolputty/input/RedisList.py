@@ -69,29 +69,29 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
 
     def handleSingleEvent(self):
         while self.alive:
+            event = None
             try:
                 event = self.client.blpop(self.lists, timeout=self.timeout)
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
-                return
-            event = Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
-            self.sendEvent(event)
+            if event:
+                event = Utils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
+                self.sendEvent(event)
 
     def handleBatchEvents(self):
+        pipeline = self.client.pipeline()
         while self.alive:
-            pipeline = self.client.pipeline()
-            for _ in xrange(0, self.batch_size):
+            for _ in range(0, self.batch_size):
                 pipeline.blpop(self.lists, timeout=self.timeout)
             try:
                 events = pipeline.execute()
             except:
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
-                return
+                continue
+            if not events:
+                continue
             for event in events:
-                if not event:
-                    time.sleep(.5)
-                    return
-                event = Utils.getDefaultEventDict(dict={"received_from": '%s' % (event[0]), "data": event[1]}, caller_class_name=self.__class__.__name__)
+                event = Utils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
