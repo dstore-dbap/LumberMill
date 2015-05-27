@@ -23,7 +23,7 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - RedisList:
-        lists:                    # <type: list; is: required>
+        lists:                    # <type: string||list; is: required>
         server:                   # <default: 'localhost'; type: string; is: optional>
         port:                     # <default: 6379; type: integer; is: optional>
         batch_size:               # <default: 1; type: integer; is: optional>
@@ -43,6 +43,8 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.redis_bulk_script = None
         self.lists = self.getConfigurationValue('lists')
+        if not isinstance(self.lists, list):
+            self.lists = [self.lists]
         self.timeout = self.getConfigurationValue('timeout')
         self.batch_size = self.getConfigurationValue('batch_size')
         self.client = redis.StrictRedis(host=self.getConfigurationValue('server'),
