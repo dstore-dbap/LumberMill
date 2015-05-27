@@ -38,7 +38,7 @@ Configuration template:
 
 ::
 
-    - ElasticSearchSink:
+    - ElasticSearch:
         query:                                    # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
         search_type:                              # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
         field_mappings:                           # <default: 'all'; type: string||list||dict; is: optional;>
