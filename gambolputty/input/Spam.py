@@ -53,6 +53,8 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
         if self.gp.is_master():
             remainder = self.getConfigurationValue("events_count") % self.gp.workers
             self.max_events_count += remainder
+        if self.max_events_count == 0:
+            self.shutDown()
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def run(self):
