@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import time
 import types
@@ -128,25 +127,6 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         else:
             self.logger.debug("Connection to %s successful." % self.es_nodes)
         return es
-
-    def __run(self):
-        with futures.ThreadPoolExecutor(max_workers=1) as worker:
-            workers = [worker.submit(self.executeQuery) for _ in range(0, 1)]
-        for worker in futures.as_completed(workers):
-            for doc in worker.result():
-                if isinstance(self.field_mappings, types.ListType):
-                    doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
-                elif isinstance(self.field_mappings, types.DictType):
-                    doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
-                else:
-                    # No special fields were selected.
-                    # Just merge _source field and all other elasticsearch fields to one level.
-                    pprint.pprint(doc)
-                    source = doc.pop('_source')
-                    doc.update(source)
-                event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
-                self.sendEvent(event)
-        self.gp.shutDown()
 
     def run(self):
         found_documents = self.executeQuery()
