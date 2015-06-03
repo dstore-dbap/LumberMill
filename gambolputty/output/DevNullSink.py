@@ -2,6 +2,7 @@
 import BaseThreadedModule
 import Decorators
 
+
 @Decorators.ModuleDocstringParser
 class DevNullSink(BaseThreadedModule.BaseThreadedModule):
     """
