@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import types
 import msgpack
@@ -54,7 +53,14 @@ class MsgPackParser(BaseThreadedModule.BaseThreadedModule):
             if source_field not in event:
                 continue
             self.unpacker.feed(event[source_field])
-            for decoded_data in self.unpacker:
+            # If decoded data contains more than one event, we need to clone all events but the first one.
+            # Otherwise we will have multiple events with the same event_id.
+            # KeyDotNotationDict.copy method will take care of creating a new event id.
+            for events_count, decoded_data in enumerate(self.unpacker):
+                if events_count > 1:
+                    event = event.copy()
+                if not isinstance(decoded_data, dict):
+                    continue
                 if self.drop_original:
                     event.pop(source_field, None)
                 if self.target_field:
