@@ -385,7 +385,8 @@ class KeyDotNotationDict(dict):
     def copy(self):
         new_dict = KeyDotNotationDict(copy.deepcopy(super(KeyDotNotationDict, self)))
         if "event_id" in new_dict.get("gambolputty", {}):
-            new_dict['gambolputty']['event_id'] = "%s-%02x" % (new_dict['gambolputty']['event_id'], random.getrandbits(8))
+            #new_dict['gambolputty']['event_id'] = "%s-%02x" % (new_dict['gambolputty']['event_id'], random.getrandbits(8))
+            new_dict['gambolputty']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
         return new_dict
 
     def get(self, key, default, dict_or_list=None):
