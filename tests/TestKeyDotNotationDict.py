@@ -12,7 +12,7 @@ class TestKeyDotNotationDict(unittest2.TestCase):
                                 'event_id': '715bd321b1016a442bf046682722c78e',
                                 'event_type': 'httpd_access_log',
                                 'received_from': '127.0.0.1',
-                                'source_module': 'StdInHandler',
+                                'source_module': 'StdIn',
                                 'list': [10, 20, {'hovercraft': 'eels'}]
                   },
                  'http_status': 200,
