@@ -115,6 +115,13 @@ class BaseModule:
             self.logger.error("Could not configure module %s. Problems: %s." % (self.__class__.__name__, configuration_errors))
             self.gp.shutDown()
 
+    def getStartMessage(self):
+        """
+        Return a start message for the module. Can be overwritten to customize the message, e.g. to include port a server is
+        listening on.
+        """
+        return 'started'
+
     def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and
@@ -137,7 +144,6 @@ class BaseModule:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
-
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
             self.receivers[receiver_name] = receiver
@@ -152,7 +158,7 @@ class BaseModule:
             self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
             self.gp.shutDown()
         # Wrap default receiveEvent method with filtered one.
-        self.wrapReceiveEventWithFilter(event_filter)
+        self.wrapReceiveEventWithFilter(event_filter, filter_string)
 
     def addOutputFilter(self, receiver_name, filter_string):
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
@@ -178,7 +184,9 @@ class BaseModule:
             try:
                 matched = self.output_filters[receiver_name](event)
             except:
-                raise
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("Output filter for %s failed. Exception: %s, Error: %s." % (receiver_name, etype, evalue))
+                continue
             # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
             if matched:
                 filterd_receivers[receiver_name] = receiver
@@ -228,13 +236,19 @@ class BaseModule:
             if event:
                 self.sendEvent(event)
 
-    def wrapReceiveEventWithFilter(self, event_filter):
+    def wrapReceiveEventWithFilter(self, event_filter, filter_string):
         wrapped_func = self.receiveEvent
         @wraps(wrapped_func)
         def receiveEventFiltered(event):
-            if event_filter(event):
-                wrapped_func(event)
-            else:
+            try:
+                if event_filter(event):
+                    wrapped_func(event)
+                else:
+                    self.sendEvent(event, apply_common_actions=False)
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.warning("Filter <%s> failed. Exception: %s, Error: %s." % (filter_string, etype, evalue))
+                # Pass event to next module.
                 self.sendEvent(event, apply_common_actions=False)
         self.receiveEvent = receiveEventFiltered
 
