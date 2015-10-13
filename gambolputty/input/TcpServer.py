@@ -152,6 +152,13 @@ class TcpServer(BaseModule.BaseModule):
             return
         autoreload.add_reload_hook(self.shutDown)
 
+    def getStartMessage(self):
+        """
+        Return the module name.
+        """
+        return "listening on %s:%s" % (self.getConfigurationValue("ipaddress"), self.getConfigurationValue("port"))
+
+
     def initAfterFork(self):
         ssl_options = None
         if self.getConfigurationValue("tls"):
