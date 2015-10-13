@@ -4,6 +4,7 @@ import redis
 import BaseThreadedModule
 import Utils
 import Decorators
+import time
 
 
 @Decorators.ModuleDocstringParser
@@ -40,7 +41,6 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
          # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        self.redis_bulk_script = None
         self.lists = self.getConfigurationValue('lists')
         if not isinstance(self.lists, list):
             self.lists = [self.lists]
@@ -77,6 +77,10 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
             if event:
                 event = Utils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
+            else:
+                # Queue is exhausted. Sleep a bit and retry.
+                time.sleep(.5)
+                continue
 
     def handleBatchEvents(self):
         pipeline = self.client.pipeline()
@@ -93,6 +97,8 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
                 # If batch_size is bigger than events waiting in redis queue, the remaining entries will be filled with None values.
                 # So break out if a None value is found.
                 if not event:
+                    # Queue is exhausted. Sleep a bit and retry.
+                    time.sleep(.5)
                     break
                 event = Utils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
