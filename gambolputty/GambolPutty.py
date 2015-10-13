@@ -101,8 +101,9 @@ class GambolPutty():
     def readConfiguration(self, path_to_config_file):
         """Loads and parses the configuration"""
         try:
-            conf_file = open(path_to_config_file)
-            configuration = yaml.load(conf_file)
+            with open(path_to_config_file, "r") as configuration_file:
+                self.raw_conf_file = configuration_file.read()
+            configuration = yaml.load(self.raw_conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
@@ -115,6 +116,9 @@ class GambolPutty():
 
     def getConfiguration(self):
         return self.configuration
+
+    def getRawConfiguration(self):
+        return self.raw_conf_file
 
     def setConfiguration(self, configuration, merge=True):
         configuration_errors = ConfigurationValidator.ConfigurationValidator().validateConfiguration(configuration)
@@ -197,8 +201,6 @@ class GambolPutty():
                                        'instances': module_instances,
                                        'type': module_instance.module_type,
                                        'configuration': module_config}
-            start_message = "Using module %s." % module_id
-            self.logger.info(start_message)
 
     def setDefaultReceivers(self):
         """
@@ -317,6 +319,9 @@ class GambolPutty():
         """
         # All modules are completely configured, call modules run method if it exists.
         for module_name, module_info in sorted(self.modules.items(), key=lambda x: x[1]['idx']):
+            if self.is_master():
+                start_message = "%s - %s" % (module_name, module_info['instances'][0].getStartMessage())
+                self.logger.info(start_message)
             for instance in module_info['instances']:
                 # Some modules, mostly input modules, use unique io devices, that can not be polled from multiple
                 # threads/processes. These modules will only be started once from the master process and the output
