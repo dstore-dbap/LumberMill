@@ -34,3 +34,6 @@ kafka-python
 
 # AddDnsLookup
 dnspython
+
+# WebGui
+Pygments

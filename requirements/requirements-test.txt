@@ -36,6 +36,9 @@ kafka-python
 # AddDnsLookup
 dnspython
 
+# WebGui
+Pygments
+
 # Tests requirements.
 unittest2
 mock
