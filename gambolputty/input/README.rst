@@ -271,7 +271,7 @@ Configuration template:
 ::
 
     - UdpServer:
-        ipaddress:                       # <default: ''; type: string; is: optional>
+        interface:                       # <default: ''; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
         receivers:
