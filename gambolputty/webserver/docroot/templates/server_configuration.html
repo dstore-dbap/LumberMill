@@ -1,0 +1,145 @@
+<!doctype html>
+
+<html>
+
+    <head>
+        <title>{{ escape(page_title) }}</title>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/cosmo/bootstrap.min.css">
+        <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+        <link rel="stylesheet" href="http://visjs.org/dist/vis.css">
+        <link rel="stylesheet" href="css/gambolputty_web.css">
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/config.js"></script>
+        <script type="text/javascript" src="js/utils.js"></script>
+        <script type="text/javascript" src="js/bootbox.js"></script>
+        <script type="text/javascript" src="js/gambolputty_web.js"></script>
+        <script type="text/javascript" src="http://visjs.org/dist/vis.js"></script>
+    </head>
+
+<body>
+
+<div id="module_graph" style="width: 2000px; height: 500px;"></div>
+<pre id="eventSpan"></pre>
+</body>
+</html>
+<script type="text/javascript">
+var module_graph = null;
+var layoutMethod = "hubsize";
+var configured_modules = {}
+
+function Module()   {
+    this.name = ""
+    this.configuration_parameters = {}
+
+    this.setType = function(type) { this.type = type; return this; }
+    this.setName = function(name) { this.name = name; return this; }
+    this.setConfiguration = function(configuration) { this.configuration = configuration; return this; }
+    this.getType = function() { return this.type }
+    this.getName = function() { return this.name }
+    this.getConfiguration = function() { return this.configuration; }
+    this.getReceivers = function() { return this.configuration['receivers'] }
+}
+
+function destroyModuleGraph() {
+    if (module_graph !== null) {
+        module_graph.destroy();
+        module_graph = null;
+    }
+}
+
+$(document).ready(function()	{
+    getServerConfiguration('vagrant-centos65.vagrantup.com')
+})
+
+function getServerConfiguration(hostname)	{
+	$.getJSON("http://"+hostname+":"+location.port+"/rest/server/configuration", drawModuleGraph)
+}
+
+function drawModuleGraph(jsonData)  {
+	for(var module_name in jsonData)    {
+	    var module = new Module()
+        var module_configuration = jsonData[module_name]
+        module.setName(module_name).setType(jsonData[module_name]['type']).setConfiguration(jsonData[module_name]['configuration'])
+        configured_modules[module_name] = module
+	}
+    destroyModuleGraph();
+
+    var nodes = [];
+    var edges = [];
+    var node_level = 2
+    for (var module_name in configured_modules) {
+        var module = configured_modules[module_name]
+        var node_config = {
+            id: module.getName(),
+            label: module.getName(),
+            payload: module,
+            shape: 'box',
+            group: module.getType(),
+            title: module.getConfiguration(),
+        }
+        switch(module.getType()) {
+            case 'stand_alone':
+                node_config['level'] = 0
+                break
+            case 'input':
+                node_config['level'] = 1
+                break
+            case 'output':
+                node_config['level'] = 28
+                break
+            default:
+                node_config['level'] = node_level
+                node_level++
+                break
+        }
+
+        nodes.push(node_config);
+        var receivers = module.getReceivers()
+        for(var idx_receivers in receivers) {
+            var edge_configuration = { from: module.getName(),
+                                       font: {align: 'top'} }
+            var receiver = receivers[idx_receivers]
+            if(typeof(receiver) === 'string')   {
+                edge_configuration['to'] = receiver
+            } else {
+                edge_configuration['to'] = Object.keys(receiver)[0]
+                edge_configuration['label'] = 'conditional', //receiver[Object.keys(receiver)[0]]['filter'],
+                edge_configuration['dashes'] = true
+            }
+            edges.push(edge_configuration)
+        }
+    }
+    // create a module_graph
+    var container = document.getElementById('module_graph');
+    var data = {
+        nodes: nodes,
+        edges: edges
+    };
+
+    var options = {
+        layout: {
+          hierarchical: {
+            sortMethod: layoutMethod,
+            direction: 'LR'
+          }
+        },
+        edges: {
+          smooth: {
+            roundness: .5
+          },
+          arrows: {to : true }
+        },
+        physics: true,
+    };
+    module_graph = new vis.Network(container, data, options);
+
+    // add event listeners
+    module_graph.on("click", function (params) {
+        //console.log(params.nodes[0])
+        params.event = "[original event]";
+        document.getElementById('eventSpan').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(configured_modules[params.nodes[0]].getConfiguration(), null, 4);
+    });
+}
+</script>

@@ -2,6 +2,7 @@
 import socket
 import os
 import psutil
+import collections
 import subprocess
 import tornado.web
 import tornado.escape
@@ -47,13 +48,23 @@ class GetServerInformation(BaseHandler):
                 output = df.communicate()[0]
                 device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
                 disk_usage[partition.mountpoint] = {'total': int(size)*1024, 'used': int(used)*1024, 'free': int(available)*1024, 'percent': percent}
-
+        try:
+            cpu_count = psutil.NUM_CPUS
+        except AttributeError:
+            cpu_count = psutil.cpu_count()
         self.write(tornado.escape.json_encode({ 'hostname': socket.gethostname(),
-                                                'cpu_count': psutil.NUM_CPUS,
+                                                'cpu_count': cpu_count,
                                                 'load': os.getloadavg(),
                                                 'memory': {'total': mem.total, 'used': mem.used, 'available': mem.available, 'percent': mem.percent},
                                                 'disk_usage': disk_usage,
                                                 'configuration': self.webserver_module.gp.configuration}))
+
+class GetServerConfiguration(BaseHandler):
+    def get(self):
+        modules_info = collections.OrderedDict()
+        for module_id, module_info in sorted(self.webserver_module.gp.modules.items(), key=lambda x: x[1]['idx']):
+            modules_info[module_id] = {'id': module_id, 'type': module_info['type'], 'configuration': module_info['configuration']}
+        self.write(tornado.escape.json_encode(modules_info))
 
 class RestartHandler(BaseHandler):
     def get(self):

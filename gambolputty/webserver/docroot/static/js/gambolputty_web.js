@@ -68,3 +68,7 @@ function updateServerSystemInfo()	{
 		})
 	})
 }
+
+function showServerConfiguration() {
+	// Gets server config from server.
+}

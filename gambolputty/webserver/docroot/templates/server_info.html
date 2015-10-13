@@ -1,0 +1,32 @@
+            <div class="gp-container">
+                <div class="gp-container-header">
+                    <div class="row">
+                        <div class="btn-group" style="text-align: left">
+                            <a class="btn btn-default" data-toggle="dropdown" href="#"><i class="fa fa-server"></i> {{ escape(node['server_name']) }}</a><a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                <a href="#" onClick="confirmRestartGambolPuttyService('{{ escape(node['server_name']) }}')"><i class="fa fa-rotate-right pull-left icon"></i><span>&nbsp;Restart</span></a>
+                                </li>
+                                <li>
+                                <a href="#" onClick="confirmRestartGambolPuttyService('{{ escape(node['server_name']) }}')"><i class="fa fa-stop pull-left icon"></i><span>&nbsp;Stop</span></a>
+                                </li>
+                                <li>
+                                <a href="#"><i class="fa fa-pause pull-left icon"></i><span>&nbsp;Pause</span></a>
+                                </li>
+                                <li>
+                                <a href="#"><i class="fa fa-cogs pull-left icon"></i><span>&nbsp;Test-Mode</span></a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="gp-container-content">
+                    <div id="{{ escape(node['server_name']) }}_sysinfo">
+                        <h5 title="CPUs" alt="CPUs"><i class="fa fa-th-large pull-left icon"></i><span id="{{ escape(node['server_name']) }}_cpus"></span></h5>
+                        <h5 title="RAM" alt="RAM"><i class="fa fa-tasks pull-left"></i><span id="{{ escape(node['server_name']) }}_ram"></span></h5>
+                        <h5 title="Systemload" alt="Systemload"><i class="fa fa-tachometer pull-left"></i><span id="{{ escape(node['server_name']) }}_load"></span></h5>
+                        <div title="HDDs" alt="HDDs" id="{{ escape(node['server_name']) }}_hdds"></div>
+                        <h5 title="Events/s" alt="Events/s"><i class="fa fa-bar-chart pull-left"></i><span id="{{ escape(node['server_name']) }}_load"></span></h5>
+                    </div>
+                </div>
+            </div>

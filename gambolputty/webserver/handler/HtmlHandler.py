@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
+import pprint
 import tornado.web
 import tornado.escape
 import socket
+import json
+import yaml
+from pygments import highlight
+from pygments.lexers import YamlLexer
+from pygments.formatters import HtmlFormatter
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
@@ -27,9 +33,19 @@ class MainHandler(BaseHandler):
                 for pack_member in cluster_module.getPackMembers().itervalues():
                     nodes.append({'server_name': pack_member.getHostName(),
                                   'server_type': "PackLeader" if pack_member.leader else "PackMember"})
-        nodes.insert(0,localnode)
-        self.render(
-                "index.html",
-                page_title="GambolPutty WebGui",
-                nodes = nodes,
-        )
+        nodes.insert(0, localnode)
+        self.render("index.html",
+                    page_title="GambolPutty WebGui",
+                    nodes=nodes,
+                    webserver_module=self.webserver_module)
+
+class ServerConfigurationAsText(BaseHandler):
+    def get(self):
+        config_as_html = highlight(self.webserver_module.gp.getRawConfiguration(), YamlLexer(), HtmlFormatter(noclasses=True))
+        self.content_type = 'text/html'
+        self.write(config_as_html)
+
+class ConfigurationHandler(BaseHandler):
+    def get(self):
+        self.render("server_configuration.html",
+                    page_title="Server configuration")
