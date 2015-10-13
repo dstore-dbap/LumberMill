@@ -406,6 +406,23 @@ class KeyDotNotationDict(dict):
         except KeyError:
             return default
 
+    def pop(self, key, default, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        if "." not in key:
+            if not isinstance(dict_or_list, list):
+                return dict_or_list.pop(key, default)
+            else:
+                try:
+                    return dict_or_list[int(key)]
+                except KeyError:
+                    return default
+        current_key, remaining_keys = key.split('.', 1)
+        try:
+            dict_or_list = dict_or_list.__getitem__(current_key)
+            return self.pop(remaining_keys, default, dict_or_list)
+        except KeyError:
+            return default
+
 class TimedFunctionManager:
     """
     The decorator setInterval provides a simple way to repeatedly execute a function in intervals.
