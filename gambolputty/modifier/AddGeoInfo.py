@@ -60,10 +60,18 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
             self.gp.shutDown()
             return False
         self.geo_info_fields = self.getConfigurationValue('geo_info_fields')
+        self.source_fields = self.getConfigurationValue('source_fields')
         self.target_field = self.getConfigurationValue('target_field')
 
+    def getStartMessage(self):
+        """
+        Return the module name.
+        """
+        return "from %s to %s" % (self.source_fields, self.target_field)
+
+
     def handleEvent(self, event):
-        for lookup_field_name in self.getConfigurationValue('source_fields'):
+        for lookup_field_name in self.source_fields:
             try:
                 lookup_field_name_value = event[lookup_field_name]
             except KeyError:

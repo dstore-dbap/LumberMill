@@ -253,6 +253,19 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
                 return
             self.hash_func = self.hashlibFunc
 
+    def getStartMessage(self):
+        """
+        Return the module name.
+        """
+        source = self.source_field if self.source_field else self.source_fields
+        target = self.target_field if self.target_field else self.target_fields
+        if not source:
+            return "%s: %s" % (self.action, target)
+        elif not target:
+            return "%s: %s" % (self.action, source)
+        else:
+            return "%s: %s => %s" % (self.action, source, target)
+
     def hashlibFunc(self, string):
         return self.hashlib_func(string).hexdigest()
 
