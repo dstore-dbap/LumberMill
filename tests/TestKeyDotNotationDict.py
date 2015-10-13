@@ -24,9 +24,11 @@ class TestKeyDotNotationDict(unittest2.TestCase):
                  'user': '-'}
         self.event = Utils.getDefaultEventDict(event)
 
-    def testKeyDotNotationDict(self):
+    def testDotAccessToDict(self):
         self.assertTrue(self.event['bytes_send'] == 3395)
         self.assertTrue(self.event['gambolputty.event_id'] == "715bd321b1016a442bf046682722c78e")
+        self.assertTrue(self.event['params.spanish'] == [u'inquisition'])
+
+    def testDotAccessToList(self):
         self.assertTrue(self.event['gambolputty.list.0'] == 10)
         self.assertTrue(self.event['gambolputty.list.2.hovercraft'] == 'eels')
-        self.assertTrue(self.event['params.spanish'] == [u'inquisition'])
