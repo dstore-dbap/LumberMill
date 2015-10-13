@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import tornado.web
@@ -10,7 +11,6 @@ import os.path
 import BaseThreadedModule
 import Decorators
 import Utils
-import uimodules.ServerListItem
 
 @Decorators.ModuleDocstringParser
 class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
@@ -25,6 +25,7 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
         key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
         cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         document_root:                   # <default: 'docroot'; type: string; is: optional>
+        application_settings:            # <default: None; type: None||dict; is: optional>
     """
     module_type = "stand_alone"
     """Set module type"""
@@ -45,12 +46,29 @@ class WebserverTornado(BaseThreadedModule.BaseThreadedModule):
         base_path = self.getConfigurationValue('document_root')
         if base_path == 'docroot':
             base_path = "%s/docroot" % os.path.dirname(__file__)
-        settings =  {'template_path' : "%s/templates" % base_path,
-                     'static_path': "%s/static" % base_path,
-                     'ui_modules': uimodules.ServerListItem,
-                     'debug': False,
-                     'TornadoWebserver': self}
+        settings = {'template_path' : "%s/templates" % base_path,
+                    'static_path': "%s/static" % base_path,
+                    'ui_modules': [],
+                    'debug': False,
+                    'TornadoWebserver': self}
+        if self.getConfigurationValue('application_settings'):
+            settings.update(self.getConfigurationValue('application_settings'))
         return settings
+
+    def addUiModules(self, modules):
+        if not isinstance(modules, list):
+            modules = [modules]
+        for module in modules:
+            if module in self.application.settings['ui_modules']:
+                continue
+            self.application.settings['ui_modules'].append(module)
+            self.application._load_ui_modules(module)
+
+    def getUiModule(self, module_name):
+        try:
+            return self.application.ui_modules[module_name]
+        except KeyError:
+            return False
 
     def start(self):
         ssl_options = None

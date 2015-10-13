@@ -6,7 +6,7 @@ import Utils
 import handler.ActionHandler
 import handler.HtmlHandler
 import handler.WebsocketHandler
-#import uimodules.ServerListItem
+import uimodules.WebGui.ServerInfo
 
 @Decorators.ModuleDocstringParser
 class WebGui(BaseModule.BaseModule):
@@ -39,19 +39,23 @@ class WebGui(BaseModule.BaseModule):
             self.gp.shutDown()
             return
         self.webserver_module = mod_info['instances'][0]
+        self.webserver_module.addUiModules([uimodules.WebGui.ServerInfo])
         self.webserver_module.addHandlers(self.getHandlers())
 
     def getHandlers(self):
         settings = self.webserver_module.getSettings()
         handlers =  [# HtmlHandler
                      (r"/", handler.HtmlHandler.MainHandler),
+                     (r"/server_configuration", handler.HtmlHandler.ServerConfigurationAsText),
+                     (r"/configuration", handler.HtmlHandler.ConfigurationHandler),
                      # StaticFilesHandler
                      (r"/images/(.*)",tornado.web.StaticFileHandler, {"path": "%s/images/" % settings['static_path']}),
                      (r"/css/(.*)",tornado.web.StaticFileHandler, {"path": "%s/css/" % settings['static_path']}),
                      (r"/js/(.*)",tornado.web.StaticFileHandler, {"path": "%s/js/" % settings['static_path']},),
-                     # ActionHandler
-                     (r"/actions/restart", handler.ActionHandler.RestartHandler),
-                     (r"/actions/get_server_info", handler.ActionHandler.GetServerInformation),
+                     # REST ActionHandler
+                     (r"/rest/server/restart", handler.ActionHandler.RestartHandler),
+                     (r"/rest/server/info", handler.ActionHandler.GetServerInformation),
+                     (r"/rest/server/configuration", handler.ActionHandler.GetServerConfiguration),
                      # WebsocketHandler
                      (r"/websockets/statistics", handler.WebsocketHandler.StatisticsWebSocketHandler),
                      (r"/websockets/get_logs", handler.WebsocketHandler.LogToWebSocketHandler)]
