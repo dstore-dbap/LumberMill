@@ -3,7 +3,6 @@ import logging
 import threading
 import SocketServer
 import socket
-import ssl
 import sys
 import Queue
 import Utils
@@ -105,10 +104,14 @@ class UdpServer(BaseModule.BaseModule):
     """
     Reads data from udp socket and sends it to its output queues.
 
+    interface:  Ipaddress to listen on.
+    port:       Port to listen on.
+    timeout:    Sockettimeout in seconds.
+
     Configuration template:
 
     - UdpServer:
-        ipaddress:                       # <default: ''; type: string; is: optional>
+        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
         receivers:
@@ -118,28 +121,34 @@ class UdpServer(BaseModule.BaseModule):
     module_type = "input"
     """Set module type"""
 
-    can_run_forked = False
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.BaseModule.configure(self, configuration)
         self.server = False
-
-    def start(self):
-        if not self.receivers:
-            self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
-            return
         handler_factory = UdpRequestHandlerFactory()
         try:
-            self.server = ThreadedUdpServer((self.getConfigurationValue("ipaddress"),
+            self.server = ThreadedUdpServer((self.getConfigurationValue("interface"),
                                              self.getConfigurationValue("port")),
                                              handler_factory.produce(self),
                                              timeout=self.getConfigurationValue("timeout"))
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("ipaddress"),
-                                                                                            self.getConfigurationValue("port"), etype, evalue))
+            self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s" % (self.getConfigurationValue("interface"),
+                                                                                       self.getConfigurationValue("port"), etype, evalue))
             self.gp.shutDown()
+            return
+
+    def getStartMessage(self):
+        """
+        Return the module name.
+        """
+        return "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
+
+    def start(self):
+        if not self.receivers:
+            self.logger.error("Shutting down module %s since no receivers are set." % (self.__class__.__name__))
             return
         # Start a thread with the server -- that thread will then start one
         # more threads for each request.
