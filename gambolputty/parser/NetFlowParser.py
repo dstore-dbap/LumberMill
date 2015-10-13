@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import struct
+import sys
 from socket import inet_ntoa
+import re
+import os
 import BaseThreadedModule
 import Decorators
-
 
 @Decorators.ModuleDocstringParser
 class NetFlowParser(BaseThreadedModule.BaseThreadedModule):
@@ -31,12 +33,55 @@ class NetFlowParser(BaseThreadedModule.BaseThreadedModule):
     NF_V5_HEADER_LENGTH = 24
     NF_V5_RECORD_LENGTH = 48
 
+    TH_FIN = 0x01  # end of data
+    TH_SYN = 0x02  # synchronize sequence numbers
+    TH_RST = 0x04  # reset connection
+    TH_PUSH = 0x08  # push
+    TH_ACK = 0x10  # acknowledgment number set
+    TH_URG = 0x20  # urgent pointer set
+    TH_ECE = 0x40  # ECN echo, RFC 3168
+    TH_CWR = 0x80  # congestion window reduced
+
+    IP_PROTOCOLS = {}
+
+    # Helper functions
+    def readProtocolInfo(self):
+        path = "%s/../assets/ip_protocols" % os.path.dirname(os.path.realpath(__file__))
+        r = re.compile("(?P<proto>\S+)\s+(?P<num>\d+)")
+        with open(path, 'r') as f:
+            for line in f:
+                m = r.match(line)
+                if not m:
+                    continue
+                NetFlowParser.IP_PROTOCOLS[int(m.group("num"))] = m.group("proto")
+
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
         self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')
+        self.readProtocolInfo()
+
+    def getTcpFflags(self, flags):
+        ret = []
+        if flags & NetFlowParser.TH_FIN:
+                ret.append('FIN')
+        if flags & NetFlowParser.TH_SYN:
+                ret.append('SYN')
+        if flags & NetFlowParser.TH_RST:
+                ret.append('RST')
+        if flags & NetFlowParser.TH_PUSH:
+                ret.append('PUSH')
+        if flags & NetFlowParser.TH_ACK:
+                ret.append('ACk')
+        if flags & NetFlowParser.TH_URG:
+                ret.append('URG')
+        if flags & NetFlowParser.TH_ECE:
+                ret.append('ECE')
+        if flags & NetFlowParser.TH_CWR:
+                ret.append('CWR')
+        return ret
 
     def decodeVersion5(self, raw_nf_data, record_count):
         nf_data = {}
@@ -57,8 +102,10 @@ class NetFlowParser(BaseThreadedModule.BaseThreadedModule):
             nf_data['uptime_end'] = decoded_record[5]
             nf_data['srcport'] = decoded_record[6]
             nf_data['dstport'] = decoded_record[7]
-            nf_data['tcp_flags'] = decoded_record[9]
+            nf_data['tcp_flags_binary'] = decoded_record[9]
+            nf_data['tcp_flags'] = self.getTcpFflags(decoded_record[9])
             nf_data['prot'] = decoded_record[10]
+            nf_data['prot_name'] = NetFlowParser.IP_PROTOCOLS[decoded_record[10]]
             nf_data['tos'] = decoded_record[11]
             nf_data['src_as'] = decoded_record[12]
             nf_data['dst_as'] = decoded_record[13]
@@ -79,19 +126,21 @@ class NetFlowParser(BaseThreadedModule.BaseThreadedModule):
             self.logger.warning("Could not detect netflow version: %s. Exception: %s, Error: %s." % (raw_nf_data, etype, evalue))
             yield event
         # Call decoder for detected version.
-        decoded_netflow_data = None
         try:
-            copy_event = False
-            for netflow_data in getattr(self, "decodeVersion%s" % version)(raw_nf_data, record_count):
-                if copy_event:
-                    event = event.copy()
-                copy_event = True
-                if self.drop_original and self.source_field is not self.target_field:
-                    event.pop(self.source_field, None)
-                event.update({self.target_field: netflow_data})
-                yield event
+            decoder_func = getattr(self, "decodeVersion%s" % version)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Netflow parser does not implement decoder for netflow version: %s. Exception: %s, Error: %s" % (version, etype, evalue))
             self.gp.shutDown()
+        copy_event = False
+        for netflow_data in decoder_func(raw_nf_data, record_count):
+            if copy_event:
+                event = event.copy()
+            copy_event = True
+            if self.drop_original and self.source_field is not self.target_field:
+                event.pop(self.source_field, None)
+            event.update({self.target_field: netflow_data})
+            event['gambolputty']['event_type'] = "NetFlowV%s" % version
+            yield event
+
 
