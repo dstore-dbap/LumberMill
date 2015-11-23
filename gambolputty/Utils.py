@@ -332,12 +332,8 @@ class KeyDotNotationDict(dict):
     "value"
     """
 
-    def __init__(self, *args, **kwargs):
-        super(KeyDotNotationDict,self).__init__(*args, **kwargs)
-        self.base_dictionary_class = super(KeyDotNotationDict, self)
-
     def __getitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
@@ -350,7 +346,7 @@ class KeyDotNotationDict(dict):
         return self.__getitem__(remaining_keys, dict_or_list)
 
     def __setitem__(self, key, value, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
@@ -360,7 +356,7 @@ class KeyDotNotationDict(dict):
         return self.__setitem__(remaining_keys, value, dict_or_list)
 
     def __delitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
@@ -370,7 +366,7 @@ class KeyDotNotationDict(dict):
         return self.__delitem__(remaining_keys, dict_or_list)
 
     def __contains__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
             return dict_or_list.__contains__(key)
         current_key, remaining_keys = key.split('.', 1)
@@ -382,13 +378,12 @@ class KeyDotNotationDict(dict):
 
     #def __del__(self, key):
     #    pass
-    #    return self.__delitem__(key)
 
     def __missing__(self, key):
         raise KeyError(key)
 
     def copy(self):
-        new_dict = KeyDotNotationDict(copy.deepcopy(self.base_dictionary_class))
+        new_dict = KeyDotNotationDict(copy.deepcopy(super(KeyDotNotationDict, self)))
         if "event_id" in new_dict.get("gambolputty", {}):
             #new_dict['gambolputty']['event_id'] = "%s-%02x" % (new_dict['gambolputty']['event_id'], random.getrandbits(8))
             new_dict['gambolputty']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
@@ -402,25 +397,8 @@ class KeyDotNotationDict(dict):
                 return default
             raise
 
-    def __get(self, key, default, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
-        if "." not in key:
-            if not isinstance(dict_or_list, list):
-                return dict_or_list.get(key, default)
-            else:
-                try:
-                    return dict_or_list[int(key)]
-                except KeyError:
-                    return default
-        current_key, remaining_keys = key.split('.', 1)
-        try:
-            dict_or_list = dict_or_list.__getitem__(current_key)
-            return self.get(remaining_keys, default, dict_or_list)
-        except KeyError:
-            return default
-
     def pop(self, key, default=None, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else self.base_dictionary_class
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
         if "." not in key:
             if not isinstance(dict_or_list, list):
                 return dict_or_list.pop(key, default)
