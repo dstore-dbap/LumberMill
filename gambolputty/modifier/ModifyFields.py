@@ -56,12 +56,40 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - ModifyFields:
-        action: replace                             # <type: string; is: required>
-        source_field:                               # <type: string; is: required>
-        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-        with:                                       # <type: string; is: required>
-        receivers:
-          - NextModule
+       action: replace                             # <type: string; is: required>
+       source_field:                               # <type: string; is: required>
+       regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+       with:                                       # <type: string; is: required>
+       receivers:
+        - NextModule
+
+    # Rename a field.
+    - ModifyFields:
+       action: rename                               # <type: string; is: required>
+       source_field:                                # <type: string; is: required>
+       target_field:                                # <type: string; is: required>
+       receivers:
+        - NextModule
+
+    # Rename a field by regex.
+    - ModifyFields:
+       action: rename_regex                         # <type: string; is: required>
+       regex:                                       # <type: string; is: required>
+       source_field:                                # <default: None; type: None||string; is: optional>
+       target_field_pattern:                        # <type: string; is: required>
+       recursive:                                   # <default: True; type: boolean; is: optional>
+       receivers:
+        - NextModule
+
+    # Rename a field by replace.
+    - ModifyFields:
+       action: rename_replace                       # <type: string; is: required>
+       old:                                         # <type: string; is: required>
+       new:                                         # <type: string; is: required>
+       source_field:                                # <default: None; type: None||string; is: optional>
+       recursive:                                   # <default: True; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
     # Map a field value.
     - ModifyFields:
@@ -214,6 +242,15 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
 
+    def configure_rename_replace_action(self):
+        self.recursive = self.getConfigurationValue('recursive')
+        self.old = self.getConfigurationValue('old')
+        self.new = self.getConfigurationValue('new')
+
+    def configure_rename_regex_action(self):
+        self.recursive = self.getConfigurationValue('recursive')
+        self.target_field_pattern = self.getConfigurationValue('target_field_pattern')
+
     def configure_split_action(self):
         self.separator = self.getConfigurationValue('separator')
 
@@ -274,7 +311,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
             event = self.event_handler(event)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
+            self.logger.error("ModifyFields action %s threw an error. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.gp.shutDown()
         yield event
 
@@ -347,7 +384,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     def replace(self, event):
         """
-        Field value in data dictionary will be replace with ['with']
+        Field value in data dictionary will be replaced with ['with']
 
         @param event: dictionary
         @return: event: dictionary
@@ -357,6 +394,64 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
         except KeyError:
             pass
         return event
+
+    def rename(self, event):
+        """
+        Field name ['from'] in data dictionary will be renamed to ['to']
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        try:
+            event[self.target_field] = event.pop(self.source_field)
+        except KeyError:
+            pass
+        return event
+
+    def rename_regex(self, event):
+        if self.source_field:
+            try:
+                dict_to_scan = event[self.source_field]
+            except KeyError:
+                return event
+        else:
+            dict_to_scan = event
+        self._rename_regex_recursive(dict_to_scan)
+        return event
+
+    def _rename_regex_recursive(self, dict_to_scan):
+        fields_to_rename = {}
+        for field_name, field_value in dict_to_scan.iteritems():
+            new_field_name = self.regex.sub(self.target_field_pattern, field_name)
+            if field_name != new_field_name:
+                fields_to_rename[field_name] = new_field_name
+            if self.recursive and isinstance(field_value, dict):
+                self._rename_regex_recursive(field_value)
+        for old_field_name, new_field_name in fields_to_rename.iteritems():
+            dict_to_scan[new_field_name] = dict_to_scan.pop(old_field_name)
+
+    def rename_replace(self, event):
+        self.event = event
+        if self.source_field:
+            try:
+                dict_to_scan = event[self.source_field]
+            except KeyError:
+                return event
+        else:
+            dict_to_scan = event
+        self._rename_replace_recursive(dict_to_scan)
+        return event
+
+    def _rename_replace_recursive(self, dict_to_scan):
+        fields_to_rename = {}
+        for field_name, field_value in dict_to_scan.iteritems():
+            new_field_name = field_name.replace(self.old, self.new)
+            if field_name != new_field_name:
+                fields_to_rename[field_name] = new_field_name
+            if self.recursive and isinstance(field_value, dict):
+                self._rename_replace_recursive(field_value)
+        for old_field_name, new_field_name in fields_to_rename.iteritems():
+            dict_to_scan[new_field_name] = dict_to_scan.pop(old_field_name)
 
     def string_replace(self, event):
         """

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import signal
 import yaml
 import logging

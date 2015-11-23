@@ -32,3 +32,9 @@ class TestKeyDotNotationDict(unittest2.TestCase):
     def testDotAccessToList(self):
         self.assertTrue(self.event['gambolputty.list.0'] == 10)
         self.assertTrue(self.event['gambolputty.list.2.hovercraft'] == 'eels')
+
+    def testDotAccessToDictWithDefault(self):
+        self.assertTrue(self.event.get('gambolputty.event_id', 'default value') == "715bd321b1016a442bf046682722c78e")
+        self.assertTrue(self.event.get('gambolputty.missing_key', 'default value') == "default value")
+        self.assertTrue(self.event.get('gambolputty.list.2.hovercraft', 'default value') == 'eels')
+        self.assertTrue(self.event.get('gambolputty.list.3.hovercraft', 'default value') == 'default value')

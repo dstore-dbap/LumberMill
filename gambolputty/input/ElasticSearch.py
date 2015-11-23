@@ -2,11 +2,12 @@
 import sys
 import time
 import types
+
+import pprint
 from elasticsearch import Elasticsearch, helpers, connection
 import BaseThreadedModule
 import Utils
 import Decorators
-from concurrent import futures
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -91,9 +92,9 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         self.search_type = self.getConfigurationValue("search_type")
         self.field_mappings = self.getConfigurationValue("field_mappings")
         self.index_name_pattern = self.getConfigurationValue("index_name")
-        self.connection_class = connection.ThriftConnection
-        if self.getConfigurationValue("connection_type") == 'http':
-            self.connection_class = connection.Urllib3HttpConnection
+        self.connection_class = connection.Urllib3HttpConnection
+        if self.getConfigurationValue("connection_type") == 'thrift':
+            self.connection_class = connection.ThriftConnection
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()

@@ -23,6 +23,7 @@ Store the data dictionary in an elasticsearch index.
 The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
 Requests will the be loadbalanced via round robin.
 
+| **action**:      Either index or update. If update be sure to provide the correct doc_id.
 | **format**:      Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
 | If not set the whole event dict is send.
 | **nodes**:       Configures the elasticsearch nodes.
@@ -42,7 +43,6 @@ Requests will the be loadbalanced via round robin.
 | **sniff_on_connection_fail**:  The client can be configured to inspect the cluster state to get a list of nodes upon failure.
 | Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
 | **consistency**:     One of: 'one', 'quorum', 'all'.
-| **replication**:     One of: 'sync', 'async'.
 | **store_interval_in_secs**:      Send data to es in x seconds intervals.
 | **batch_size**:  Sending data to es if event count is above, even if store_interval_in_secs is not reached.
 | **backlog_size**:    Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
@@ -52,8 +52,9 @@ Configuration template:
 ::
 
     - ElasticSearchSink:
+        action:                                   # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
         format:                                   # <default: None; type: None||string; is: optional>
-        nodes:                                    # <type: list; is: required>
+        nodes:                                    # <type: string||list; is: required>
         connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
@@ -61,10 +62,9 @@ Configuration template:
         doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
         routing:                                  # <default: None; type: None||string; is: optional>
         ttl:                                      # <default: None; type: None||integer||string; is: optional>
-        sniff_on_start:                           # <default: True; type: boolean; is: optional>
-        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
+        sniff_on_start:                           # <default: False; type: boolean; is: optional>
+        sniff_on_connection_fail:                 # <default: False; type: boolean; is: optional>
         consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
         backlog_size:                             # <default: 1000; type: integer; is: optional>
@@ -88,7 +88,7 @@ Configuration template:
 
     - FileSink:
         file_name:                            # <type: string; is: required>
-        format:                               # <default: '%(data)s'; type: string; is: optional>
+        format:                               # <default: '$(data)'; type: string; is: optional>
         store_interval_in_secs:               # <default: 10; type: integer; is: optional>
         batch_size:                           # <default: 500; type: integer; is: optional>
         backlog_size:                         # <default: 5000; type: integer; is: optional>

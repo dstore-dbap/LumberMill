@@ -172,6 +172,28 @@ Configuration template:
           - NextModule
 
 
+NetFlowParser
+-------------
+
+Netflow parser
+
+Decode netflow packets.
+
+| **source_field**:    Input field to decode.
+| **target_field**:    Event field to be filled with the new data.
+
+Configuration template:
+
+::
+
+    - NetFlowParser:
+        source_field:                         # <default: 'data'; type: string; is: optional>
+        target_field:                         # <default: 'data'; type: string; is: optional>
+        keep_original:                        # <default: False; type: boolean; is: optional>
+        receivers:
+          - NextModule
+
+
 RegexParser
 -----------
 

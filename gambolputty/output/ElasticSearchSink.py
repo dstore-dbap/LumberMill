@@ -49,7 +49,6 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
                               Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
     consistency:    One of: 'one', 'quorum', 'all'.
-    replication:    One of: 'sync', 'async'.
     store_interval_in_secs:     Send data to es in x seconds intervals.
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
@@ -70,7 +69,6 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         sniff_on_start:                           # <default: False; type: boolean; is: optional>
         sniff_on_connection_fail:                 # <default: False; type: boolean; is: optional>
         consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        replication:                              # <default: 'sync'; type: string;  values: ['sync', 'async']; is: optional>
         store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
         batch_size:                               # <default: 500; type: integer; is: optional>
         backlog_size:                             # <default: 1000; type: integer; is: optional>
@@ -87,21 +85,21 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         self.es_nodes = self.getConfigurationValue("nodes")
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
-        self.replication = self.getConfigurationValue("replication")
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
         self.index_name_pattern = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
-        self.connection_class = elasticsearch.connection.ThriftConnection
-        if self.getConfigurationValue("connection_type") == 'http':
-            self.connection_class = elasticsearch.connection.Urllib3HttpConnection
+        self.connection_class = elasticsearch.connection.Urllib3HttpConnection
+        if self.getConfigurationValue("connection_type") == 'thrift':
+            self.connection_class = elasticsearch.connection.ThriftConnection
+
+    def initAfterFork(self):
+        # Init es client after fork as mentioned in https://elasticsearch-py.readthedocs.org/en/master/
         self.es = self.connect()
         if not self.es:
             self.gp.shutDown()
             return
-
-    def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
@@ -178,7 +176,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
-            self.es.bulk(body=json_data, consistency=self.consistency, replication=self.replication)
+            self.es.bulk(body=json_data, consistency=self.consistency)
             #print("Bulk update of %s events took %s." % (len(events), time.time() - started))
             return True
         except elasticsearch.exceptions.ConnectionError:

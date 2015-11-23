@@ -11,28 +11,28 @@ Get documents from ElasticSearch.
 The elasticsearch module takes care of discovering all nodes of the elasticsearch cluster.
 Requests will the be loadbalanced via round robin.
 
-| **query:**         The query to be executed, in json format.
-| **search_type:**   The default search type just will return all found documents in one chunk. If set to 'scan',
-|                    it will return 'size' number of found documents, emit these as new events and then continue until
-|                    no more documents can be retrieved. @see: http://elasticsearch-py.readthedocs.org/en/master/helpers.html
-| **field_mappings:** Which fields from the result document to add to the new event.
-|                     If set to 'all' the whole document will be sent unchanged.
-|                     If a list is provided, these fields will be copied to the new event with the same field name.
-|                     If a dictionary is provided, these fields will be copied to the new event with the corresponding new field name.
-|                     E.g. if you want "_source.data" to be copied into the events "data" field, use a mapping like:
-|                     "{'_source.data': 'data'}.
-|                     For nested values use the dot syntax as described in:
-|                     @see: http://gambolputty.readthedocs.org/en/latest/introduction.html#event-field-notation
-| **nodes:**         Configures the elasticsearch nodes.
-| **connection_type:** One of: 'thrift', 'http'.
-| **http_auth:**     'user:password'.
-| **use_ssl:**       One of: True, False.
-| **index_name:**    Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
-| **sniff_on_start:** The client can be configured to inspect the cluster state to get a list of nodes upon startup.
-|                     Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-| **sniff_on_connection_fail:** The client can be configured to inspect the cluster state to get a list of nodes upon failure.
-|                               Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-| **query_interval_in_secs:**   Get data to es in x seconds intervals. NOT YET IMPLEMENTED!!
+| **query**:               The query to be executed, in json format.
+| search_type:        The default search type just will return all found documents. If set to 'scan' it will return
+| 'batch_size' number of found documents, emit these as new events and then continue until all
+| documents have been sent.
+| **field_mappings**:      Which fields from the result document to add to the new event.
+| If set to 'all' the whole document will be sent unchanged.
+| If a list is provided, these fields will be copied to the new event with the same field name.
+| If a dictionary is provided, these fields will be copied to the new event with a new field name.
+| E.g. if you want "_source.data" to be copied into the events "data" field, use a mapping like:
+| "{'_source.data': 'data'}.
+| For nested values use the dot syntax as described in:
+| http://gambolputty.readthedocs.org/en/latest/introduction.html#event-field-notation
+| **nodes**:               Configures the elasticsearch nodes.
+| **connection_type**:     One of: 'thrift', 'http'.
+| **http_auth**:           'user:password'.
+| **use_ssl**:             One of: True, False.
+| **index_name**:          Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
+| **sniff_on_start**:      The client can be configured to inspect the cluster state to get a list of nodes upon startup.
+| Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+| **sniff_on_connection_fail**:  The client can be configured to inspect the cluster state to get a list of nodes upon failure.
+| Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
+| query_interval_in_secs:   Get data to es in x seconds intervals. NOT YET IMPLEMENTED!!
 
 Configuration template:
 
@@ -42,7 +42,7 @@ Configuration template:
         query:                                    # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
         search_type:                              # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
         field_mappings:                           # <default: 'all'; type: string||list||dict; is: optional;>
-        nodes:                                    # <type: list; is: required>
+        nodes:                                    # <type: string||list; is: required>
         connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
         http_auth:                                # <default: None; type: None||string; is: optional>
         use_ssl:                                  # <default: False; type: boolean; is: optional>
@@ -142,7 +142,7 @@ Configuration template:
 ::
 
     - RedisList:
-        lists:                    # <type: list; is: required>
+        lists:                    # <type: string||list; is: required>
         server:                   # <default: 'localhost'; type: string; is: optional>
         port:                     # <default: 6379; type: integer; is: optional>
         batch_size:               # <default: 1; type: integer; is: optional>
@@ -191,7 +191,10 @@ The event field can either be a simple string. This string will be used to creat
 If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
 should your raw event string.
 
-| **event**:  Send custom event data. To send a more complex event provide a dict, use a string to send a simple event.
+events: Send custom event data. For single events, use a string or a dict. If a string is provided, the contents will
+be put into the events data field.
+if a dict is provided, the event will be populated with the dict fields.
+For multiple events, provide a list of stings or dicts.
 | **sleep**:  Time to wait between sending events.
 | **events_count**:  Only send configured number of events. 0 means no limit.
 
@@ -200,7 +203,7 @@ Configuration template:
 ::
 
     - Spam:
-        event:                    # <default: ""; type: string||dict; is: optional>
+        event:                    # <default: ""; type: string||list||dict; is: optional>
         sleep:                    # <default: 0; type: int||float; is: optional>
         events_count:             # <default: 0; type: int; is: optional>
         receivers:
@@ -266,12 +269,16 @@ UdpServer
 
 Reads data from udp socket and sends it to its output queues.
 
+| **interface**:   Ipaddress to listen on.
+| **port**:        Port to listen on.
+| **timeout**:     Sockettimeout in seconds.
+
 Configuration template:
 
 ::
 
     - UdpServer:
-        interface:                       # <default: ''; type: string; is: optional>
+        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
         port:                            # <default: 5151; type: integer; is: optional>
         timeout:                         # <default: None; type: None||integer; is: optional>
         receivers:

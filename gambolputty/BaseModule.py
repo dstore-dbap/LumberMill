@@ -132,10 +132,11 @@ class BaseModule:
         """
         # Test if requested key exists.
         config_setting = False
+        config_setting = self.configuration_data[key]
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
-            self.logger.warning("Could not find configuration setting for required setting: %s." % key)
+            self.logger.warning("Could not find configuration setting for: %s." % key)
             self.gp.shutDown()
         if not isinstance(config_setting, dict):
             self.logger.debug("Configuration for key: %s is incorrect." % key)

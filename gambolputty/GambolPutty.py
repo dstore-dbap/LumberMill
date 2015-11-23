@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
+
+import pprint
+
 import Utils
 import multiprocessing
 import sys
@@ -71,10 +74,9 @@ class GambolPutty():
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
         self.logger = logging.getLogger(self.__class__.__name__)
-        if path_to_config_file:
-            success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
-            if not success:
-                self.shutDown()
+        success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
+        if not success:
+            self.shutDown()
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
@@ -89,7 +91,7 @@ class GambolPutty():
             # still a bit faster (ca. ~15%).
             # TODO: Analyze this problem more thoroughly.
             if False and Utils.zmq_avaiable and Utils.msgpack_avaiable:
-                queue = Utils.ZeroMqMpQueue(queue_max_size)
+                  queue = Utils.ZeroMqMpQueue(queue_max_size)
             else:
                 queue = multiprocessing.Queue(queue_max_size)
             queue = Utils.BufferedQueue(queue=queue, buffersize=queue_buffer_size)

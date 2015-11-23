@@ -156,7 +156,7 @@ class TcpServer(BaseModule.BaseModule):
         """
         Return the module name.
         """
-        return "listening on %s:%s" % (self.getConfigurationValue("ipaddress"), self.getConfigurationValue("port"))
+        return "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
 
 
     def initAfterFork(self):

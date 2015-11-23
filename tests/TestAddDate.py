@@ -27,7 +27,7 @@ class TestAddDateTime(ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_('@timestamp' in event)
 
-    def testAddDateTimeCustomField(self):
+    def testAddDateTimeCustomFieldtestAddDateTimeCustomField(self):
         self.test_object.configure({'target_field': 'test'})
         for event in self.test_object.handleEvent(Utils.getDefaultEventDict({})):
             self.assert_('test' in event)

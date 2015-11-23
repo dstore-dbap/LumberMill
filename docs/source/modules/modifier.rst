@@ -22,13 +22,14 @@ Configuration template:
 AddDnsLookup
 ------------
 
-Add dns info for selected fields.
+Add dns info for selected fields. The dns servers used are the ones configured for the system GambolPutty is
+running on.
 
-| **action**: Either resolve or revers.
-| **source_field**: Source field to use for (reverse) lookups.
-| **target_field**: Target field to store result of lookup. If none is provided, the source field will be replaced.
-| **nameservers**: List of nameservers to use. If not provided, the system default servers will be used.
-| **timeout**: Timeout for lookups in seconds.
+| **action**:  Either resolve or revers.
+| **source_field**:  Source field to use for (reverse) lookups.
+| **target_field**:  Target field to store result of lookup. If none is provided, the source field will be replaced.
+| **nameservers**:  List of nameservers to use. If not provided, the system default servers will be used.
+| **timeout**:  Timeout for lookups in seconds.
 
 Configuration template:
 
@@ -345,12 +346,40 @@ Configuration templates:
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - ModifyFields:
-        action: replace                             # <type: string; is: required>
-        source_field:                               # <type: string; is: required>
-        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-        with:                                       # <type: string; is: required>
-        receivers:
-          - NextModule
+       action: replace                             # <type: string; is: required>
+       source_field:                               # <type: string; is: required>
+       regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
+       with:                                       # <type: string; is: required>
+       receivers:
+        - NextModule
+
+    # Rename a field.
+    - ModifyFields:
+       action: rename                               # <type: string; is: required>
+       source_field:                                # <type: string; is: required>
+       target_field:                                # <type: string; is: required>
+       receivers:
+        - NextModule
+
+    # Rename a field by regex.
+    - ModifyFields:
+       action: rename_regex                         # <type: string; is: required>
+       regex:                                       # <type: string; is: required>
+       source_field:                                # <default: None; type: None||string; is: optional>
+       target_field_pattern:                        # <type: string; is: required>
+       recursive:                                   # <default: True; type: boolean; is: optional>
+       receivers:
+        - NextModule
+
+    # Rename a field by replace.
+    - ModifyFields:
+       action: rename_replace                       # <type: string; is: required>
+       old:                                         # <type: string; is: required>
+       new:                                         # <type: string; is: required>
+       source_field:                                # <default: None; type: None||string; is: optional>
+       recursive:                                   # <default: True; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
     # Map a field value.
     - ModifyFields:
@@ -358,6 +387,7 @@ Configuration templates:
         source_field:                               # <type: string; is: required>
         map:                                        # <type: dictionary; is: required>
         target_field:                               # <default: "$(source_field)_mapped"; type: string; is: optional>
+        keep_unmappable:                            # <default: False; type: boolean; is: optional>
         receivers:
           - NextModule
 

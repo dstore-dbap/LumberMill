@@ -37,3 +37,4 @@ Configuration template:
         key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
         cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
         document_root:                   # <default: 'docroot'; type: string; is: optional>
+        application_settings:            # <default: None; type: None||dict; is: optional>
