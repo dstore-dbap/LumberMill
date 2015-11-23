@@ -3,7 +3,8 @@ language: python
 sudo: false
 python:
   - 2.7
-  - pypy
+# Currently deactivated, since travis pypy support seems to be broken.
+#  - pypy
 before_install:
   # Get the GeoIP database needed for the tests
   - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
