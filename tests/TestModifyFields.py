@@ -74,7 +74,6 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                             200: 'OK'}
                                   })
         for event in self.test_object.handleEvent(self.default_dict):
-            print('%s' % event)
             self.assert_('http_status_mapped' in event)
             self.assertEquals(event['http_status_mapped'], 300)
 
