@@ -62,7 +62,8 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
             except KeyError:
                 # Drop the 'string' field to avoid duplicate data.
                 ua_info = user_agent_parser.Parse(event[source_field])
-                ua_info.pop('string')
+                if 'string' in ua_info:
+                    ua_info.pop('string')
                 self.in_mem_cache.set(event[source_field], ua_info)
             event[self.target_field] = ua_info
         yield event
