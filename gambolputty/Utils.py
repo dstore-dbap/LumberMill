@@ -389,13 +389,32 @@ class KeyDotNotationDict(dict):
             new_dict['gambolputty']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
         return new_dict
 
-    def get(self, key, default=None):
+    def get(self, key, *args):
         try:
             return self.__getitem__(key)
-        except (KeyError, IndexError):
-            if default:
-                return default
-            raise
+        except (KeyError, IndexError) as e:
+            # Try to return a default value for not existing dict keys.
+            try:
+                return args[0]
+            except KeyError:
+                raise e
+
+    def __get(self, key, default, dict_or_list=None):
+        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        if "." not in key:
+            if not isinstance(dict_or_list, list):
+                return dict_or_list.get(key, default)
+            else:
+                try:
+                    return dict_or_list[int(key)]
+                except KeyError:
+                    return default
+        current_key, remaining_keys = key.split('.', 1)
+        try:
+            dict_or_list = dict_or_list.__getitem__(current_key)
+            return self.get(remaining_keys, default, dict_or_list)
+        except KeyError:
+            return default
 
     def pop(self, key, default=None, dict_or_list=None):
         dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
