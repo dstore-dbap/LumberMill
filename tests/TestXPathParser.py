@@ -6,6 +6,7 @@ import Utils
 import XPathParser
 import RedisStore
 
+
 class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     xml_string = """<?xml version="1.0" encoding="ISO-8859-1"?>
