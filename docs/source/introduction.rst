@@ -408,6 +408,7 @@ Event inputs
 -  Sniffer, sniff network traffic.
 -  Spam, what it says on the can - spams GambolPutty for testing.
 -  StdIn, read stream from standard in.
+-  SQS, read messages from amazons simple queue service.
 -  TcpServer, read stream from a tcp socket.
 -  UdpServer, read data from udp socket.
 -  UnixSocket, read stream from a named socket on unix like systems.

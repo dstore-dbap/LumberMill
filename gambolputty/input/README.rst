@@ -210,6 +210,36 @@ Configuration template:
           - NextModule
 
 
+SQS
+----
+
+Read messages from amazon sqs service.
+
+| **aws_access_key_id**: Your AWS id.
+| **aws_secret_access_key**: Your AWS password.
+| **region**: The region in which to find your sqs service.
+| **queue**: Queue name.
+| **attribute_names**: A list of attributes that need to be returned along with each message.
+| **message_attribute_names**: A list of message attributes that need to be returned.
+| **poll_interval_in_secs**: How often should the queue be checked for new messages.
+| **batch_size**: Number of messages to retrieve in one call.
+
+::
+
+    Configuration template:
+
+    - SQS:
+        aws_access_key_id:        # <type: string; is: required>
+        aws_secret_access_key:    # <type: string; is: required>
+        region:                   # <type: string; is: required>
+        queue:                    # <type: string; is: required>
+        attribute_names:          # <default: ['All']; type: list; is: optional>
+        message_attribute_names:  # <default: ['All']; type: list; is: optional>
+        poll_interval_in_secs:    # <default: 1; type: integer; is: optional>
+        batch_size:               # <default: 10; type: integer; is: optional>
+        receivers:
+          - NextModule
+
 StdIn
 -----
 
