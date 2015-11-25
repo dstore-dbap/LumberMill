@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import Utils
 import BaseThreadedModule
-import pprint
 import time
 import Decorators
 
@@ -71,4 +70,5 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
                 counter += 1
                 if (counter - self.max_events_count == 0):
                     time.sleep(2)
-                    self.gp.shutDown()
+                    self.alive = False
+        self.gp.shutDown()
