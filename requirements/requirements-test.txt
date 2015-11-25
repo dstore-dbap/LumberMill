@@ -36,6 +36,9 @@ kafka-python
 # AddDnsLookup
 dnspython
 
+# AWS Services
+boto3
+
 # WebGui
 Pygments
 

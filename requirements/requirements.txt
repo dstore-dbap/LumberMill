@@ -23,7 +23,8 @@ pygeoip
 ua-parser
 
 # XPathParser
-lxml
+# Need to switch to another parser, lxml seems to be incompatible with pypy4.
+#lxml
 
 # Kafka input/output
 kafka-python
@@ -34,6 +35,9 @@ kafka-python
 
 # AddDnsLookup
 dnspython
+
+# AWS Services
+boto3
 
 # WebGui
 Pygments
