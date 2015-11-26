@@ -2,12 +2,11 @@
 import sys
 import time
 import types
-
-import pprint
 from elasticsearch import Elasticsearch, helpers, connection
 import BaseThreadedModule
 import Utils
 import Decorators
+
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -92,6 +91,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         self.search_type = self.getConfigurationValue("search_type")
         self.field_mappings = self.getConfigurationValue("field_mappings")
         self.index_name_pattern = self.getConfigurationValue("index_name")
+        self.index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         self.connection_class = connection.Urllib3HttpConnection
         if self.getConfigurationValue("connection_type") == 'thrift':
             self.connection_class = connection.ThriftConnection
@@ -147,9 +147,9 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         found_documents = []
         try:
             if self.search_type == 'scan':
-                found_documents = helpers.scan(client=self.es, index=self.index_name_pattern, query=self.query, scroll="5m", timeout="5m")
+                found_documents = helpers.scan(client=self.es, index=self.index_name, query=self.query, scroll="5m", timeout="5m")
             else:
-                found_documents = self.es.search(index=self.index_name_pattern, body=self.query)['hits']['hits']
+                found_documents = self.es.search(index=self.index_name, body=self.query)['hits']['hits']
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("Elasticsearch query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
