@@ -21,8 +21,8 @@ class WebGui(BaseModule.BaseModule):
     document_root: Path to look for templates and static files.
 
     - WebGui:
-        tornado_webserver: webserver          # <default: 'WebserverTornado'; type: string; is: optional>
-        document_root: other_root             # <default: 'docroot'; type: string; is: optional>
+       tornado_webserver: webserver     # <default: 'WebserverTornado'; type: string; is: optional>
+       document_root: other_root        # <default: 'docroot'; type: string; is: optional>
     """
     module_type = "stand_alone"
     """Set module type"""

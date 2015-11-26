@@ -295,7 +295,6 @@ Configuration template:
 
 ModifyFields
 ------------
-
 Simple module to insert/delete/change field values.
 
 Configuration templates:
@@ -476,6 +475,7 @@ Configuration templates:
        target_fields:                   # <default: []; type: list; is: optional>
        receivers:
         - NextModule
+
 
 Permutate
 ---------

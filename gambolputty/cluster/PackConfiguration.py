@@ -25,7 +25,6 @@ class PackConfiguration(BaseModule.BaseModule):
     Configuration template:
 
     - PackConfiguration:
-       query:                           #
        pack:                            # <default: 'Pack'; type: string; is: optional>
        ignore_modules:                  # <default: []; type: list; is: optional>
        interval: 10                     # <default: 60; type: integer; is: optional>

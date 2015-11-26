@@ -45,7 +45,7 @@ class SQSSink(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - SQS:
+    - SQSSink:
        aws_access_key_id:               # <type: string; is: required>
        aws_secret_access_key:           # <type: string; is: required>
        region:                          # <type: string; is: required>

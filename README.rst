@@ -460,6 +460,7 @@ Outputs
 -  RedisChannelSink, publish incoming events to redis channel.
 -  RedisListSink, publish incoming events to redis list.
 -  StdOutSink, prints all received data to standard out.
+-  SQSSink, sends events to amazons simple queue service.
 -  SyslogSink, send events to syslog.
 -  WebHdfsSink, store events in hdfs via webhdfs.
 -  ZmqSink, sends incoming event to zeromq.

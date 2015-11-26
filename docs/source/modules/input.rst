@@ -65,7 +65,6 @@ Configuration template:
 ::
 
     - Kafka:
-       query:                           #
        brokers:                         # <type: list; is: required>
        topics:                          # <type: string||list; is: required>
        client_id:                       # <default: 'kafka.consumer.kafka'; type: string; is: optional>
