@@ -61,13 +61,13 @@ class JsonParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - JsonParser:
-        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_field:                           # <default: None; type: None||string; is: optional>
-        keep_original:                          # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

@@ -407,8 +407,8 @@ Event inputs
 -  RedisList, read events from redis lists.
 -  Sniffer, sniff network traffic.
 -  Spam, what it says on the can - spams GambolPutty for testing.
--  StdIn, read stream from standard in.
 -  SQS, read messages from amazons simple queue service.
+-  StdIn, read stream from standard in.
 -  TcpServer, read stream from a tcp socket.
 -  UdpServer, read data from udp socket.
 -  UnixSocket, read stream from a named socket on unix like systems.

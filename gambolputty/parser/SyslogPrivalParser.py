@@ -53,12 +53,12 @@ class SyslogPrivalParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - SyslogPrivalParser:
-        source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
-        map_values: False                           # <default: True; type: boolean; is: optional>
-        facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
-        severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'syslog_prival'; type: string; is: optional>
+       map_values: False                # <default: True; type: boolean; is: optional>
+       facility_mappings:               # <default: {}; type: dictionary; is: optional>
+       severity_mappings:               # <default: {}; type: dictionary; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

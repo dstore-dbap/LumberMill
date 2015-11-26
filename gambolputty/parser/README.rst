@@ -21,12 +21,12 @@ Configuration template:
 ::
 
     - CollectdParser:
-        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_field:                           # <default: None; type: None||string; is: optional>
-        keep_original:                          # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
 
 CsvParser
@@ -49,14 +49,14 @@ Configuration template:
 ::
 
     - CsvParser:
-        source_field:                           # <default: 'data'; type: string; is: optional>
-        escapechar:                             # <default: '\'; type: string; is: optional>
-        skipinitialspace:                       # <default: False; type: boolean; is: optional>
-        quotechar:                              # <default: '"'; type: string; is: optional>
-        delimiter:                              # <default: '|'; type: string; is: optional>
-        fieldnames:                             # <type: list; is: required>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       escapechar:                      # <default: '\'; type: string; is: optional>
+       skipinitialspace:                # <default: False; type: boolean; is: optional>
+       quotechar:                       # <default: '"'; type: string; is: optional>
+       delimiter:                       # <default: '|'; type: string; is: optional>
+       fieldnames:                      # <type: list; is: required>
+       receivers:
+        - NextModule
 
 
 InflateParser
@@ -70,18 +70,18 @@ supported.
 | **source_fields**:  Single field or list of fields to decompress.
 | **target_fields**:  Single field or list of fields to fill with decompressed data.
 | If not provided, contents of source_fields will be replaced.
-| compression:   Compression lib to use for decompression
+| **compression**:    Compression lib to use for decompression.
 
 Configuration template:
 
 ::
 
-    - CsvParser:
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_fields:                          # <default: None; type: None||string||list; is: optional>
-        compression:                            # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
-        receivers:
-          - NextModule
+    - InflateParser:
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_fields:                   # <default: None; type: None||string||list; is: optional>
+       compression:                     # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
+       receivers:
+        - NextModule
 
 
 JsonParser
@@ -110,13 +110,13 @@ Configuration template:
 ::
 
     - JsonParser:
-        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_field:                           # <default: None; type: None||string; is: optional>
-        keep_original:                          # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
 
 LineParser
@@ -141,12 +141,12 @@ Configuration template:
 ::
 
     - LineParser:
-        source_fields:                        # <default: 'data'; type: string||list; is: optional>
-        seperator:                            # <default: '\n'; type: string; is: optional>
-        target_field:                         # <default: 'data'; type:string; is: optional>
-        keep_original:                        # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       seperator:                       # <default: '\n'; type: string; is: optional>
+       target_field:                    # <default: 'data'; type:string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
 
 MsgPackParser
@@ -163,13 +163,13 @@ Configuration template:
 ::
 
     - MsgPackParser:
-        action:                                 # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        mode:                                   # <default: 'line'; type: string; values: ['line','stream']; is: optional>
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_field:                           # <default: None; type: None||string; is: optional>
-        keep_original:                          # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
 
 NetFlowParser
@@ -187,11 +187,11 @@ Configuration template:
 ::
 
     - NetFlowParser:
-        source_field:                         # <default: 'data'; type: string; is: optional>
-        target_field:                         # <default: 'data'; type: string; is: optional>
-        keep_original:                        # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       target_field:                    # <default: 'data'; type: string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
 
 RegexParser
@@ -216,14 +216,14 @@ Configuration template:
 ::
 
     - RegexParser:
-        source_field:                           # <default: 'data'; type: string; is: optional>
-        mark_unmatched_as:                      # <default: 'Unknown'; type: string; is: optional>
-        break_on_match:                         # <default: True; type: boolean; is: optional>
-        hot_rules_first:                        # <default: True; type: boolean; is: optional>
-        field_extraction_patterns:              # <type: list; is: required>
-          - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       mark_unmatched_as:               # <default: 'Unknown'; type: string; is: optional>
+       break_on_match:                  # <default: True; type: boolean; is: optional>
+       hot_rules_first:                 # <default: True; type: boolean; is: optional>
+       field_extraction_patterns:       # <type: list; is: required>
+        - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+       receivers:
+        - NextModule
 
 
 SyslogPrivalParser
@@ -278,12 +278,12 @@ Configuration template:
 ::
 
     - SyslogPrivalParser:
-        source_field: 'syslog_prival'               # <default: 'syslog_prival'; type: string; is: optional>
-        map_values: False                           # <default: True; type: boolean; is: optional>
-        facility_mappings:  {23: 'Bolton'}          # <default: {}; type: dictionary; is: optional>
-        severity_mappings:  {0: 'DeadParrotAlert'}  # <default: {}; type: dictionary; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'syslog_prival'; type: string; is: optional>
+       map_values: False                # <default: True; type: boolean; is: optional>
+       facility_mappings:               # <default: {}; type: dictionary; is: optional>
+       severity_mappings:               # <default: {}; type: dictionary; is: optional>
+       receivers:
+        - NextModule
 
 
 UrlParser
@@ -303,14 +303,14 @@ Configuration template:
 ::
 
     - UrlParser:
-        action:                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        source_field:             # <type: string; is: required>
-        target_field:             # <default: None; type: None||string; is: optional>
-        parse_querystring:        # <default: False; type: boolean; is: optional>
-        querystring_target_field: # <default: None; type: None||string; is: optional>
-        querystring_prefix:       # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       parse_querystring:               # <default: False; type: boolean; is: optional>
+       querystring_target_field:        # <default: None; type: None||string; is: optional>
+       querystring_prefix:              # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
 
 
 UserAgentParser
@@ -342,11 +342,11 @@ Configuration template:
 
 ::
 
-    - LineParser:
-        source_fields:               # <type: string||list; is: required>
-        target_field:                # <default: 'user_agent_info'; type:string; is: optional>
-        receivers:
-          - NextModule
+    - UserAgentParser:
+       source_fields:                   # <type: string||list; is: required>
+       target_field:                    # <default: 'user_agent_info'; type:string; is: optional>
+       receivers:
+        - NextModule
 
 
 XPathParser
@@ -363,11 +363,11 @@ Configuration template:
 ::
 
     - XPathParser:
-        source_field:                          # <type: string; is: required>
-        target_field:                          # <default: "gambolputty_xpath"; type: string; is: optional>
-        query:                                 # <type: string; is: required>
-        redis_store:                           # <default: None; type: None||string; is: optional>
-        redis_key:                             # <default: None; type: None||string; is: optional if redis_store is None else required>
-        redis_ttl:                             # <default: 60; type: integer; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <default: "gambolputty_xpath"; type: string; is: optional>
+       query:                           # <type: string; is: required>
+       redis_store:                     # <default: None; type: None||string; is: optional>
+       redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
+       redis_ttl:                       # <default: 60; type: integer; is: optional>
+       receivers:
+        - NextModule

@@ -12,10 +12,10 @@ class AddDateTime(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - AddDateTime:
-        target_field:        # <default: '@timestamp'; type: string; is: optional>
-        format:              # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
-        receivers:
-          - NextModule
+       target_field:                    # <default: '@timestamp'; type: string; is: optional>
+       format:                          # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "modifier"

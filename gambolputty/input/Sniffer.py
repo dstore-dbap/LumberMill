@@ -32,12 +32,12 @@ class Sniffer(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Sniffer:
-        interface:              # <default: 'any'; type: None||string; is: optional>
-        packetfilter:           # <default: None; type: None||string; is: optional>
-        promiscous:             # <default: False; type: boolean; is: optional>
-        key_value_store:        # <default: None; type: none||string; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: 'any'; type: None||string; is: optional>
+       packetfilter:                    # <default: None; type: None||string; is: optional>
+       promiscous:                      # <default: False; type: boolean; is: optional>
+       key_value_store:                 # <default: None; type: none||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

@@ -25,9 +25,10 @@ class PackConfiguration(BaseModule.BaseModule):
     Configuration template:
 
     - PackConfiguration:
-        pack:                                   # <default: 'Pack'; type: string; is: optional>
-        ignore_modules: [WebGui,LocalModule]    # <default: []; type: list; is: optional>
-        interval: 10                            # <default: 60; type: integer; is: optional>
+       query:                           #
+       pack:                            # <default: 'Pack'; type: string; is: optional>
+       ignore_modules:                  # <default: []; type: list; is: optional>
+       interval: 10                     # <default: 60; type: integer; is: optional>
     """
 
     module_type = "stand_alone"

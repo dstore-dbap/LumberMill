@@ -24,12 +24,12 @@ class LineParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - LineParser:
-        source_fields:                        # <default: 'data'; type: string||list; is: optional>
-        seperator:                            # <default: '\n'; type: string; is: optional>
-        target_field:                         # <default: 'data'; type:string; is: optional>
-        keep_original:                        # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       seperator:                       # <default: '\n'; type: string; is: optional>
+       target_field:                    # <default: 'data'; type:string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

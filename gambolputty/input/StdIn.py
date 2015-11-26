@@ -15,10 +15,10 @@ class StdIn(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - StdIn:
-        multiline:                     # <default: False; type: boolean; is: optional>
-        stream_end_signal:             # <default: False; type: boolean||string; is: optional>
-        receivers:
-          - NextModule
+       multiline:                       # <default: False; type: boolean; is: optional>
+       stream_end_signal:               # <default: False; type: boolean||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

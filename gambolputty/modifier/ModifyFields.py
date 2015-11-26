@@ -16,178 +16,178 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
 
     # Keep all fields listed in source_fields, discard all others.
     - ModifyFields:
-        action: keep                                # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        receivers:
-          - NextModule
+       action: keep                     # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
+        - NextModule
 
     # Discard all fields listed in source_fields.
     - ModifyFields:
-        action: delete                              # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        receivers:
-          - NextModule
+       action: delete                   # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
+        - NextModule
 
     # Concat all fields listed in source_fields.
     - ModifyFields:
-        action: concat                              # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        target_field:                               # <type: string; is: required>
-        receivers:
-          - NextModule
+       action: concat                   # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       target_field:                    # <type: string; is: required>
+       receivers:
+        - NextModule
 
     # Insert a new field with "target_field" name and "value" as new value.
     - ModifyFields:
-        action: insert                              # <type: string; is: required>
-        target_field:                               # <type: string; is: required>
-        value:                                      # <type: string; is: required>
-        receivers:
-          - NextModule
+       action: insert                   # <type: string; is: required>
+       target_field:                    # <type: string; is: required>
+       value:                           # <type: string; is: required>
+       receivers:
+        - NextModule
 
     # Replace field values matching string "old" in data dictionary with "new".
     - ModifyFields:
-        action: string_replace                      # <type: string; is: required>
-        source_field:                               # <type: string; is: required>
-        old:                                        # <type: string; is: required>
-        new:                                        # <type: string; is: required>
-        max:                                        # <default: -1; type: integer; is: optional>
-        receivers:
-          - NextModule
+       action: string_replace           # <type: string; is: required>
+       source_field:                    # <type: string; is: required>
+       old:                             # <type: string; is: required>
+       new:                             # <type: string; is: required>
+       max:                             # <default: -1; type: integer; is: optional>
+       receivers:
+        - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
     - ModifyFields:
-       action: replace                             # <type: string; is: required>
-       source_field:                               # <type: string; is: required>
+       action: replace                  # <type: string; is: required>
+       source_field:                    # <type: string; is: required>
        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
-       with:                                       # <type: string; is: required>
+       with:                            # <type: string; is: required>
        receivers:
         - NextModule
 
     # Rename a field.
     - ModifyFields:
-       action: rename                               # <type: string; is: required>
-       source_field:                                # <type: string; is: required>
-       target_field:                                # <type: string; is: required>
+       action: rename                   # <type: string; is: required>
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <type: string; is: required>
        receivers:
         - NextModule
 
     # Rename a field by regex.
     - ModifyFields:
-       action: rename_regex                         # <type: string; is: required>
-       regex:                                       # <type: string; is: required>
-       source_field:                                # <default: None; type: None||string; is: optional>
-       target_field_pattern:                        # <type: string; is: required>
-       recursive:                                   # <default: True; type: boolean; is: optional>
+       action: rename_regex             # <type: string; is: required>
+       regex:                           # <type: string; is: required>
+       source_field:                    # <default: None; type: None||string; is: optional>
+       target_field_pattern:            # <type: string; is: required>
+       recursive:                       # <default: True; type: boolean; is: optional>
        receivers:
         - NextModule
 
     # Rename a field by replace.
     - ModifyFields:
-       action: rename_replace                       # <type: string; is: required>
-       old:                                         # <type: string; is: required>
-       new:                                         # <type: string; is: required>
-       source_field:                                # <default: None; type: None||string; is: optional>
-       recursive:                                   # <default: True; type: boolean; is: optional>
+       action: rename_replace           # <type: string; is: required>
+       old:                             # <type: string; is: required>
+       new:                             # <type: string; is: required>
+       source_field:                    # <default: None; type: None||string; is: optional>
+       recursive:                       # <default: True; type: boolean; is: optional>
        receivers:
         - NextModule
 
     # Map a field value.
     - ModifyFields:
-        action: map                                 # <type: string; is: required>
-        source_field:                               # <type: string; is: required>
-        map:                                        # <type: dictionary; is: required>
-        target_field:                               # <default: "$(source_field)_mapped"; type: string; is: optional>
-        keep_unmappable:                            # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       action: map                      # <type: string; is: required>
+       source_field:                    # <type: string; is: required>
+       map:                             # <type: dictionary; is: required>
+       target_field:                    # <default: "$(source_field)_mapped"; type: string; is: optional>
+       keep_unmappable:                 # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
 
     # Split source field to target fields based on key value pairs.
     - ModifyFields:
-        action: key_value                           # <type: string; is: required>
-        line_separator:                             # <type: string; is: required>
-        kv_separator:                               # <type: string; is: required>
-        source_field:                               # <type: list; is: required>
-        target_field:                               # <default: None; type: None||string; is: optional>
-        prefix:                                     # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       action: key_value                # <type: string; is: required>
+       line_separator:                  # <type: string; is: required>
+       kv_separator:                    # <type: string; is: required>
+       source_field:                    # <type: list; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       prefix:                          # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
 
     # Split source field to target fields based on key value pairs using regex.
     - ModifyFields:
-        action: key_value_regex                     # <type: string; is: required>
-        regex:                                      # <type: string; is: required>
-        source_field:                               # <type: list; is: required>
-        target_field:                               # <default: None; type: None||string; is: optional>
-        prefix:                                     # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       action: key_value_regex          # <type: string; is: required>
+       regex:                           # <type: string; is: required>
+       source_field:                    # <type: list; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       prefix:                          # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
 
     # Split source field to array at separator.
     - ModifyFields:
-      action: split                                 # <type: string; is: required>
-      separator:                                    # <type: string; is: required>
-      source_field:                                 # <type: list; is: required>
-      target_field:                                 # <default: None; type: None||string; is: optional>
-      receivers:
+       action: split                    # <type: string; is: required>
+       separator:                       # <type: string; is: required>
+       source_field:                    # <type: list; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       receivers:
         - NextModule
 
     # Merge source fields to target field as list.
     - ModifyFields:
-        action: merge                               # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        target_field:                               # <type: string; is: reuired>
-        receivers:
-          - NextModule
+       action: merge                    # <type: string; is: required>
+       target_field:                    # <type: string; is: reuired>
+       source_fields:                   # <type: list; is: required>
+       receivers:
+        - NextModule
 
     # Merge source field to target field as string.
     - ModifyFields:
-        action: join                                # <type: string; is: required>
-        source_field:                               # <type: string; is: required>
-        target_field:                               # <type: string; is: required>
-        separator:                                  # <default: ","; type: string; is: optional>
-        receivers:
-          - NextModule
+       action: join                     # <type: string; is: required>
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <type: string; is: required>
+       separator:                       # <default: ","; type: string; is: optional>
+       receivers:
+        - NextModule
 
     # Cast field values to integer.
     - ModifyFields:
-        action: cast_to_int                         # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        receivers:
-          - NextModule
+       action: cast_to_int              # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
+        - NextModule
 
     # Cast field values to float.
     - ModifyFields:
-      action: cast_to_float                       # <type: string; is: required>
-      source_fields:                              # <type: list; is: required>
-      receivers:
+       action: cast_to_float            # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
         - NextModule
 
     # Cast field values to string.
     - ModifyFields:
-      action: cast_to_str                         # <type: string; is: required>
-      source_fields:                              # <type: list; is: required>
-      receivers:
+       action: cast_to_str              # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
         - NextModule
 
     # Cast field values to boolean.
     - ModifyFields:
-        action: cast_to_bool                        # <type: string; is: required>
-        source_fields:                              # <type: list; is: required>
-        receivers:
-          - NextModule
+       action: cast_to_bool             # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       receivers:
+        - NextModule
 
     # Create a hash from a field value.
     # If target_fields is provided, it should have the same length as source_fields.
     # If target_fields is not provided, source_fields will be replaced with the hashed value.
     # Hash algorithm can be any of the in hashlib supported algorithms.
     - ModifyFields:
-        action: hash                                # <type: string; is: required>
-        algorithm: sha1                             # <default: "md5"; type: string; is: optional;>
-        salt:                                       # <default: None; type: None||string; is: optional;>
-        source_fields:                              # <type: list; is: required>
-        target_fields:                              # <default: []; type: list; is: optional>
-        receivers:
-          - NextModule
+       action: hash                     # <type: string; is: required>
+       algorithm: sha1                  # <default: "md5"; type: string; is: optional;>
+       salt:                            # <default: None; type: None||string; is: optional;>
+       source_fields:                   # <type: list; is: required>
+       target_fields:                   # <default: []; type: list; is: optional>
+       receivers:
+        - NextModule
 """
 
     module_type = "modifier"
@@ -196,7 +196,7 @@ class ModifyFields(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        # Set defaults
+        # Set defaultså
         self.typecast_switch = { 'int': self.cast_to_int,
                                  'integer': self.cast_to_int,
                                  'float': self.cast_to_float,

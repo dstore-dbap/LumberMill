@@ -20,13 +20,13 @@ class RedisChannel(BaseModule.BaseModule):
     Configuration template:
 
     - RedisChannel:
-        channel:                    # <type: string; is: required>
-        server:                     # <default: 'localhost'; type: string; is: optional>
-        port:                       # <default: 6379; type: integer; is: optional>
-        db:                         # <default: 0; type: integer; is: optional>
-        password:                   # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       channel:                         # <type: string; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

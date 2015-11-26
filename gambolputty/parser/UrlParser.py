@@ -20,14 +20,14 @@ class UrlParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - UrlParser:
-        action:                   # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-        source_field:             # <type: string; is: required>
-        target_field:             # <default: None; type: None||string; is: optional>
-        parse_querystring:        # <default: False; type: boolean; is: optional>
-        querystring_target_field: # <default: None; type: None||string; is: optional>
-        querystring_prefix:       # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       parse_querystring:               # <default: False; type: boolean; is: optional>
+       querystring_target_field:        # <default: None; type: None||string; is: optional>
+       querystring_prefix:              # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

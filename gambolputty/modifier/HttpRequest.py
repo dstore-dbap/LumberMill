@@ -18,14 +18,14 @@ class HttpRequest(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - HttpRequest:
-        url:                                    # <type: string; is: required>
-        socket_timeout:                         # <default: 25; type: integer; is: optional>
-        target_field:                           # <default: "gambolputty_http_request"; type: string; is: optional>
-        redis_store:                            # <default: None; type: None||string; is: optional>
-        redis_key:                              # <default: None; type: None||string; is: optional if redis_store is None else required>
-        redis_ttl:                              # <default: 60; type: integer; is: optional>
-        receivers:
-          - NextModule
+       url:                             # <type: string; is: required>
+       socket_timeout:                  # <default: 25; type: integer; is: optional>
+       target_field:                    # <default: "gambolputty_http_request"; type: string; is: optional>
+       redis_store:                     # <default: None; type: None||string; is: optional>
+       redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
+       redis_ttl:                       # <default: 60; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
     module_type = "modifier"
     """Set module type"""

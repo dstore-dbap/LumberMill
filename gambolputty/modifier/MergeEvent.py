@@ -34,14 +34,14 @@ class MergeEvent(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - MergeEvent:
-        buffer_key:                 # <default: "$(gambolputty.received_from)"; type: string; is: optional>
-        buffer_size:                # <default: 100; type: integer; is: optional>
-        flush_interval_in_secs:     # <default: 1; type: None||integer; is: required if pattern is None else optional>
-        pattern:                    # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
-        match_field:                # <default: "data"; type: string; is: optional>
-        glue:                       # <default: ""; type: string; is: optional>
-        receivers:
-          - NextModule
+       buffer_key:                      # <default: "$(gambolputty.received_from)"; type: string; is: optional>
+       buffer_size:                     # <default: 100; type: integer; is: optional>
+       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
+       pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+       match_field:                     # <default: "data"; type: string; is: optional>
+       glue:                            # <default: ""; type: string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "modifier"

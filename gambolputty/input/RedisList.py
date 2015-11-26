@@ -23,15 +23,15 @@ class RedisList(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - RedisList:
-        lists:                    # <type: string||list; is: required>
-        server:                   # <default: 'localhost'; type: string; is: optional>
-        port:                     # <default: 6379; type: integer; is: optional>
-        batch_size:               # <default: 1; type: integer; is: optional>
-        db:                       # <default: 0; type: integer; is: optional>
-        password:                 # <default: None; type: None||string; is: optional>
-        timeout:                  # <default: 0; type: integer; is: optional>
-        receivers:
-          - NextModule
+       lists:                           # <type: string||list; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       batch_size:                      # <default: 1; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       timeout:                         # <default: 0; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

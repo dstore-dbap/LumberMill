@@ -13,9 +13,7 @@ class DropEvent(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - DropEvent:
-        receivers:
-          - NextModule
+    - DropEvent
     """
 
     module_type = "modifier"

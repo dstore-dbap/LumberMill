@@ -56,22 +56,22 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - ElasticSearchSink:
-        action:                                   # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
-        format:                                   # <default: None; type: None||string; is: optional>
-        nodes:                                    # <type: string||list; is: required>
-        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth:                                # <default: None; type: None||string; is: optional>
-        use_ssl:                                  # <default: False; type: boolean; is: optional>
-        index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
-        routing:                                  # <default: None; type: None||string; is: optional>
-        ttl:                                      # <default: None; type: None||integer||string; is: optional>
-        sniff_on_start:                           # <default: False; type: boolean; is: optional>
-        sniff_on_connection_fail:                 # <default: False; type: boolean; is: optional>
-        consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
-        batch_size:                               # <default: 500; type: integer; is: optional>
-        backlog_size:                             # <default: 1000; type: integer; is: optional>
+       action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
+       format:                          # <default: None; type: None||string; is: optional>
+       nodes:                           # <type: string||list; is: required>
+       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       http_auth:                       # <default: None; type: None||string; is: optional>
+       use_ssl:                         # <default: False; type: boolean; is: optional>
+       index_name:                      # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
+       doc_id:                          # <default: '$(gambolputty.event_id)'; type: string; is: optional>
+       routing:                         # <default: None; type: None||string; is: optional>
+       ttl:                             # <default: None; type: None||integer||string; is: optional>
+       sniff_on_start:                  # <default: False; type: boolean; is: optional>
+       sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
+       consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 1000; type: integer; is: optional>
     """
 
     module_type = "output"

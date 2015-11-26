@@ -24,28 +24,28 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
     ...
 
     - Statistics:
-        interval: 10
-        fields: ['http_status']
+       interval: 10
+       fields: ['http_status']
 
     - GraphiteSink:
-        filter: if $(field_name) == "http_status"
-        server: 127.0.0.1
-        batch_size: 1
-        formats: ['gambolputty.stats.http_200_$(interval)s $(field_counts.200)',
-                  'gambolputty.stats.http_400_$(interval)s $(field_counts.400)',
-                  'gambolputty.stats.http_total_$(interval)s $(total_count)']
+       filter: if $(field_name) == "http_status"
+       server: 127.0.0.1
+       batch_size: 1
+       formats: ['gambolputty.stats.http_200_$(interval)s $(field_counts.200)',
+                 'gambolputty.stats.http_400_$(interval)s $(field_counts.400)',
+                 'gambolputty.stats.http_total_$(interval)s $(total_count)']
 
     ...
 
     Configuration template:
 
     - GraphiteSink:
-        server:                   # <default: 'localhost'; type: string; is: optional>
-        port:                     # <default: 2003; type: integer; is: optional>
-        formats:                  # <type: list; is: required>
-        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
-        batch_size:               # <default: 1; type: integer; is: optional>
-        backlog_size:             # <default: 50; type: integer; is: optional>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 2003; type: integer; is: optional>
+       formats:                         # <type: list; is: required>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 1; type: integer; is: optional>
+       backlog_size:                    # <default: 50; type: integer; is: optional>
     """
 
     module_type = "output"

@@ -24,14 +24,14 @@ class CsvParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - CsvParser:
-        source_field:                           # <default: 'data'; type: string; is: optional>
-        escapechar:                             # <default: '\'; type: string; is: optional>
-        skipinitialspace:                       # <default: False; type: boolean; is: optional>
-        quotechar:                              # <default: '"'; type: string; is: optional>
-        delimiter:                              # <default: '|'; type: string; is: optional>
-        fieldnames:                             # <type: list; is: required>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       escapechar:                      # <default: '\'; type: string; is: optional>
+       skipinitialspace:                # <default: False; type: boolean; is: optional>
+       quotechar:                       # <default: '"'; type: string; is: optional>
+       delimiter:                       # <default: '|'; type: string; is: optional>
+       fieldnames:                      # <type: list; is: required>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

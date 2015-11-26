@@ -14,9 +14,9 @@ class Tarpit(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Tarpit:
-        delay:          # <default: 10; type: integer; is: optional>
-        receivers:
-          - NextModule
+       delay:                           # <default: 10; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "misc"

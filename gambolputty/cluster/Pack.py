@@ -67,13 +67,13 @@ class Pack(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Pack:
-        name:                                 # <type: string; is: required>
-        secret:                               # <type: string; is: required>
-        broadcast:                            # <type: string; is: required>
-        interface:                            # <default: '0.0.0.0'; type: string; is: optional>
-        port:                                 # <default: 5252; type: integer; is: optional>
-        interval:                             # <default: 10; type: integer; is: optional>
-        pack:                                 # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
+       name:                            # <type: string; is: required>
+       secret:                          # <type: string; is: required>
+       broadcast:                       # <type: string; is: required>
+       interface:                       # <default: '0.0.0.0'; type: string; is: optional>
+       port:                            # <default: 5252; type: integer; is: optional>
+       interval:                        # <default: 10; type: integer; is: optional>
+       pack:                            # <default: 'leader'; type: string; values: ['leader', 'follower']; is: optional>
     """
 
     module_type = "stand_alone"

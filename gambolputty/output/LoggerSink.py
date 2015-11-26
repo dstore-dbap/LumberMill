@@ -19,7 +19,7 @@ class LoggerSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - LoggerSink:
-        formats:    # <type: list; is: required>
+       formats:                         # <type: list; is: required>
     """
 
     module_type = "output"

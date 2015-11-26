@@ -39,17 +39,19 @@ Configuration template:
 ::
 
     - ElasticSearch:
-        query:                                    # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
-        search_type:                              # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
-        field_mappings:                           # <default: 'all'; type: string||list||dict; is: optional;>
-        nodes:                                    # <type: string||list; is: required>
-        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth:                                # <default: None; type: None||string; is: optional>
-        use_ssl:                                  # <default: False; type: boolean; is: optional>
-        index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        sniff_on_start:                           # <default: True; type: boolean; is: optional>
-        sniff_on_connection_fail:                 # <default: True; type: boolean; is: optional>
-        query_interval_in_secs:                   # <default: 5; type: integer; is: optional>
+       query:                           # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
+       search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
+       field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
+       nodes:                           # <type: string||list; is: required>
+       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       http_auth:                       # <default: None; type: None||string; is: optional>
+       use_ssl:                         # <default: False; type: boolean; is: optional>
+       index_name:                      # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
+       sniff_on_start:                  # <default: True; type: boolean; is: optional>
+       sniff_on_connection_fail:        # <default: True; type: boolean; is: optional>
+       query_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 Kafka
@@ -63,21 +65,22 @@ Configuration template:
 ::
 
     - Kafka:
-        brokers:                    # <type: list; is: required>
-        topics:                     # <type: string||list; is: required>
-        client_id:                  # <default: 'kafka.consumer.kafka'; type: string; is: optional>
-        group_id:                   # <default: None; type: None||string; is: optional>
-        fetch_message_max_bytes:    # <default: 1048576; type: integer; is: optional>
-        fetch_min_bytes:            # <default: 1; type: integer; is: optional>
-        fetch_wait_max_ms:          # <default: 100; type: integer; is: optional>
-        refresh_leader_backoff_ms:  # <default: 200; type: integer; is: optional>
-        socket_timeout_ms:          # <default: 10000; type: integer; is: optional>
-        auto_offset_reset:          # <default: 'largest'; type: string; is: optional>
-        auto_commit_enable:         # <default: False; type: boolean; is: optional>
-        auto_commit_interval_ms:    # <default: 60000; type: integer; is: optional>
-        consumer_timeout_ms:        # <default: -1; type: integer; is: optional>
-        receivers:
-          - NextModule
+       query:                           #
+       brokers:                         # <type: list; is: required>
+       topics:                          # <type: string||list; is: required>
+       client_id:                       # <default: 'kafka.consumer.kafka'; type: string; is: optional>
+       group_id:                        # <default: None; type: None||string; is: optional>
+       fetch_message_max_bytes:         # <default: 1048576; type: integer; is: optional>
+       fetch_min_bytes:                 # <default: 1; type: integer; is: optional>
+       fetch_wait_max_ms:               # <default: 100; type: integer; is: optional>
+       refresh_leader_backoff_ms:       # <default: 200; type: integer; is: optional>
+       socket_timeout_ms:               # <default: 10000; type: integer; is: optional>
+       auto_offset_reset:               # <default: 'largest'; type: string; is: optional>
+       auto_commit_enable:              # <default: False; type: boolean; is: optional>
+       auto_commit_interval_ms:         # <default: 60000; type: integer; is: optional>
+       consumer_timeout_ms:             # <default: -1; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 NmapScanner
@@ -90,13 +93,13 @@ Configuration template:
 ::
 
     - NmapScanner:
-        network:                    # <type: string; is: required>
-        netmask:                    # <default: '/24'; type: string; is: optional>
-        ports:                      # <default: None; type: None||string; is: optional>
-        arguments:                  # <default: '-O -F --osscan-limit'; type: string; is: optional>
-        interval:                   # <default: 900; type: integer; is: optional>
-        receivers:
-          - NextModule
+       network:                         # <type: string; is: required>
+       netmask:                         # <default: '/24'; type: string; is: optional>
+       ports:                           # <default: None; type: None||string; is: optional>
+       arguments:                       # <default: '-O -F --osscan-limit'; type: string; is: optional>
+       interval:                        # <default: 900; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 RedisChannel
@@ -115,13 +118,13 @@ Configuration template:
 ::
 
     - RedisChannel:
-        channel:                    # <type: string; is: required>
-        server:                     # <default: 'localhost'; type: string; is: optional>
-        port:                       # <default: 6379; type: integer; is: optional>
-        db:                         # <default: 0; type: integer; is: optional>
-        password:                   # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       channel:                         # <type: string; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
 
 
 RedisList
@@ -142,15 +145,48 @@ Configuration template:
 ::
 
     - RedisList:
-        lists:                    # <type: string||list; is: required>
-        server:                   # <default: 'localhost'; type: string; is: optional>
-        port:                     # <default: 6379; type: integer; is: optional>
-        batch_size:               # <default: 1; type: integer; is: optional>
-        db:                       # <default: 0; type: integer; is: optional>
-        password:                 # <default: None; type: None||string; is: optional>
-        timeout:                  # <default: 0; type: integer; is: optional>
-        receivers:
-          - NextModule
+       lists:                           # <type: string||list; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       batch_size:                      # <default: 1; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       timeout:                         # <default: 0; type: integer; is: optional>
+       receivers:
+        - NextModule
+
+
+SQS
+---
+
+Read messages from amazon sqs service.
+
+| **aws_access_key_id**:  Your AWS id.
+| **aws_secret_access_key**:  Your AWS password.
+| **region**:  The region in which to find your sqs service.
+| **queue**:  Queue name.
+| **attribute_names**:  A list of attributes that need to be returned along with each message.
+| **message_attribute_names**:  A list of message attributes that need to be returned.
+| **poll_interval_in_secs**:  How often should the queue be checked for new messages.
+| **batch_size**:  Number of messages to retrieve in one call.
+
+values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']
+
+Configuration template:
+
+::
+
+    - SQS:
+       aws_access_key_id:               # <type: string; is: required>
+       aws_secret_access_key:           # <type: string; is: required>
+       region:                          # <type: string; is: required>
+       queue:                           # <type: string; is: required>
+       attribute_names:                 # <default: ['All']; type: list; is: optional>
+       message_attribute_names:         # <default: ['All']; type: list; is: optional>
+       poll_interval_in_secs:           # <default: 1; type: integer; is: optional>
+       batch_size:                      # <default: 10; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 Sniffer
@@ -172,12 +208,12 @@ Configuration template:
 ::
 
     - Sniffer:
-        interface:              # <default: 'any'; type: None||string; is: optional>
-        packetfilter:           # <default: None; type: None||string; is: optional>
-        promiscous:             # <default: False; type: boolean; is: optional>
-        key_value_store:        # <default: None; type: none||string; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: 'any'; type: None||string; is: optional>
+       packetfilter:                    # <default: None; type: None||string; is: optional>
+       promiscous:                      # <default: False; type: boolean; is: optional>
+       key_value_store:                 # <default: None; type: none||string; is: optional>
+       receivers:
+        - NextModule
 
 
 Spam
@@ -203,42 +239,12 @@ Configuration template:
 ::
 
     - Spam:
-        event:                    # <default: ""; type: string||list||dict; is: optional>
-        sleep:                    # <default: 0; type: int||float; is: optional>
-        events_count:             # <default: 0; type: int; is: optional>
-        receivers:
-          - NextModule
+       event:                           # <default: ""; type: string||list||dict; is: optional>
+       sleep:                           # <default: 0; type: int||float; is: optional>
+       events_count:                    # <default: 0; type: int; is: optional>
+       receivers:
+        - NextModule
 
-
-SQS
-----
-
-Read messages from amazon sqs service.
-
-| **aws_access_key_id**: Your AWS id.
-| **aws_secret_access_key**: Your AWS password.
-| **region**: The region in which to find your sqs service.
-| **queue**: Queue name.
-| **attribute_names**: A list of attributes that need to be returned along with each message.
-| **message_attribute_names**: A list of message attributes that need to be returned.
-| **poll_interval_in_secs**: How often should the queue be checked for new messages.
-| **batch_size**: Number of messages to retrieve in one call.
-
-::
-
-    Configuration template:
-
-    - SQS:
-        aws_access_key_id:        # <type: string; is: required>
-        aws_secret_access_key:    # <type: string; is: required>
-        region:                   # <type: string; is: required>
-        queue:                    # <type: string; is: required>
-        attribute_names:          # <default: ['All']; type: list; is: optional>
-        message_attribute_names:  # <default: ['All']; type: list; is: optional>
-        poll_interval_in_secs:    # <default: 1; type: integer; is: optional>
-        batch_size:               # <default: 10; type: integer; is: optional>
-        receivers:
-          - NextModule
 
 StdIn
 -----
@@ -250,10 +256,10 @@ Configuration template:
 ::
 
     - StdIn:
-        multiline:                     # <default: False; type: boolean; is: optional>
-        stream_end_signal:             # <default: False; type: boolean||string; is: optional>
-        receivers:
-          - NextModule
+       multiline:                       # <default: False; type: boolean; is: optional>
+       stream_end_signal:               # <default: False; type: boolean||string; is: optional>
+       receivers:
+        - NextModule
 
 
 TcpServer
@@ -279,19 +285,19 @@ Configuration template:
 ::
 
     - TcpServer:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-        simple_separator:                # <default: '\n'; type: string; is: optional>
-        regex_separator:                 # <default: None; type: None||string; is: optional>
-        chunksize:                       # <default: 16384; type: integer; is: optional>
-        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: ''; type: string; is: optional>
+       port:                            # <default: 5151; type: integer; is: optional>
+       timeout:                         # <default: None; type: None||integer; is: optional>
+       tls:                             # <default: False; type: boolean; is: optional>
+       key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+       mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
+       simple_separator:                # <default: '\n'; type: string; is: optional>
+       regex_separator:                 # <default: None; type: None||string; is: optional>
+       chunksize:                       # <default: 16384; type: integer; is: optional>
+       max_buffer_size:                 # <default: 10240; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 UdpServer
@@ -308,11 +314,11 @@ Configuration template:
 ::
 
     - UdpServer:
-        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: '0.0.0.0'; type: string; is: optional>
+       port:                            # <default: 5151; type: integer; is: optional>
+       timeout:                         # <default: None; type: None||integer; is: optional>
+       receivers:
+        - NextModule
 
 
 UnixSocket
@@ -325,9 +331,9 @@ Configuration template:
 ::
 
     - UnixSocket:
-        path_to_socket:         # <type: string; is: required>
-        receivers:
-          - NextModule
+       path_to_socket:                  # <type: string; is: required>
+       receivers:
+        - NextModule
 
 
 Zmq
@@ -346,13 +352,13 @@ Configuration template:
 ::
 
     - Zmq:
-        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
-        address:                    # <default: '*:5570'; type: string; is: optional>
-        pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        topic:                      # <default: ''; type: string; is: optional>
-        hwm:                        # <default: None; type: None||integer; is: optional>
-        receivers:
-          - NextModule
+       mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+       address:                         # <default: '*:5570'; type: string; is: optional>
+       pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
+       topic:                           # <default: ''; type: string; is: optional>
+       hwm:                             # <default: None; type: None||integer; is: optional>
+       receivers:
+        - NextModule
 
 
 ZmqTornado
@@ -371,11 +377,11 @@ Configuration template:
 ::
 
     - ZmqTornado:
-        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
-        address:                    # <default: '*:5570'; type: string; is: optional>
-        pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        topic:                      # <default: ''; type: string; is: optional>
-        separator:                  # <default: None; type: None||string; is: optional>
-        hwm:                        # <default: None; type: None||integer; is: optional>
-        receivers:
-          - NextModule
+       mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+       address:                         # <default: '*:5570'; type: string; is: optional>
+       pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
+       topic:                           # <default: ''; type: string; is: optional>
+       separator:                       # <default: None; type: None||string; is: optional>
+       hwm:                             # <default: None; type: None||integer; is: optional>
+       receivers:
+        - NextModule

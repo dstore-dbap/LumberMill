@@ -30,12 +30,12 @@ class Math(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Math:
-        function:                   # <type: string; is: required>
-        results_function:           # <default: None; type: None||string; is: optional if interval is None else required>
-        interval:                   # <default: None; type: None||float||integer; is: optional>
-        target_field:               # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       function:                        # <type: string; is: required>
+       results_function:                # <default: None; type: None||string; is: optional if interval is None else required>
+       interval:                        # <default: None; type: None||float||integer; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "modifier"

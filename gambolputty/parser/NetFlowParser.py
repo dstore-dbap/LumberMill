@@ -20,11 +20,11 @@ class NetFlowParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - NetFlowParser:
-        source_field:                         # <default: 'data'; type: string; is: optional>
-        target_field:                         # <default: 'data'; type: string; is: optional>
-        keep_original:                        # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       target_field:                    # <default: 'data'; type: string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

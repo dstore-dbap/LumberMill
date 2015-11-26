@@ -28,14 +28,14 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - RegexParser:
-        source_field:                           # <default: 'data'; type: string; is: optional>
-        mark_unmatched_as:                      # <default: 'Unknown'; type: string; is: optional>
-        break_on_match:                         # <default: True; type: boolean; is: optional>
-        hot_rules_first:                        # <default: True; type: boolean; is: optional>
-        field_extraction_patterns:              # <type: list; is: required>
-          - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
-        receivers:
-          - NextModule
+       source_field:                    # <default: 'data'; type: string; is: optional>
+       mark_unmatched_as:               # <default: 'Unknown'; type: string; is: optional>
+       break_on_match:                  # <default: True; type: boolean; is: optional>
+       hot_rules_first:                 # <default: True; type: boolean; is: optional>
+       field_extraction_patterns:       # <type: list; is: required>
+        - httpd_access_log: ['(?P<httpd_access_log>.*)', 're.MULTILINE | re.DOTALL', 'findall']
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

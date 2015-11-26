@@ -32,11 +32,11 @@ class UserAgentParser(BaseThreadedModule.BaseThreadedModule):
 
     Configuration template:
 
-    - LineParser:
-        source_fields:               # <type: string||list; is: required>
-        target_field:                # <default: 'user_agent_info'; type:string; is: optional>
-        receivers:
-          - NextModule
+    - UserAgentParser:
+       source_fields:                   # <type: string||list; is: required>
+       target_field:                    # <default: 'user_agent_info'; type:string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

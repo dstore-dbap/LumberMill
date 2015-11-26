@@ -24,12 +24,12 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - FileSink:
-        file_name:                            # <type: string; is: required>
-        format:                               # <default: '$(data)'; type: string; is: optional>
-        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-        batch_size:                           # <default: 500; type: integer; is: optional>
-        backlog_size:                         # <default: 5000; type: integer; is: optional>
-        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
+       file_name:                       # <type: string; is: required>
+       format:                          # <default: '$(data)'; type: string; is: optional>
+       store_interval_in_secs:          # <default: 10; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
     """
 
     module_type = "output"

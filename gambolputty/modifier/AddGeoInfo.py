@@ -36,12 +36,12 @@ class AddGeoInfo(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - AddGeoInfo:
-        geoip_dat_path:           # <type: string; is: required>
-        geo_info_fields:          # <default: None; type: list; is: optional>
-        source_fields:            # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
-        target_field:             # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
+       geoip_dat_path:                  # <type: string; is: required>
+       geo_info_fields:                 # <default: None; type: list; is: optional>
+       source_fields:                   # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "modifier"

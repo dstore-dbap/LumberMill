@@ -23,11 +23,11 @@ class AddDnsLookup(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - AddDnsLookup:
-       action:             # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
-       source_field:       # <default: None; type: string; is: required>
-       target_field:       # <default: None; type: None||string; is: optional>
-       nameservers:        # <default: None; type: None||string||list; is: optional>
-       timeout:            # <default: 1; type: integer; is: optional>
+       action:                          # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
+       source_field:                    # <default: None; type: string; is: required>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       nameservers:                     # <default: None; type: None||string||list; is: optional>
+       timeout:                         # <default: 1; type: integer; is: optional>
        receivers:
           - NextModule
     """

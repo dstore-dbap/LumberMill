@@ -26,20 +26,20 @@ class KeyValueStore(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - KeyValueStore:
-        backend:                                 # <default: 'DictStore'; type: string; is: optional>
-        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
-        cluster:                                 # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
-        port:                                    # <default: 6379; type: integer; is: optional>
-        db:                                      # <default: 0; type: integer; is: optional>
-        password:                                # <default: None; type: None||string; is: optional>
-        socket_timeout:                          # <default: 10; type: integer; is: optional>
-        charset:                                 # <default: 'utf-8'; type: string; is: optional>
-        errors:                                  # <default: 'strict'; type: string; is: optional>
-        decode_responses:                        # <default: False; type: boolean; is: optional>
-        unix_socket_path:                        # <default: None; type: None||string; is: optional>
-        batch_size:                              # <default: None; type: None||integer; is: optional>
-        store_interval_in_secs:                  # <default: None; type: None||integer; is: optional>
-        backlog_size:                            # <default: 5000; type: integer; is: optional>
+       backend:                         # <default: 'DictStore'; type: string; is: optional>
+       server:                          # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
+       cluster:                         # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       socket_timeout:                  # <default: 10; type: integer; is: optional>
+       charset:                         # <default: 'utf-8'; type: string; is: optional>
+       errors:                          # <default: 'strict'; type: string; is: optional>
+       decode_responses:                # <default: False; type: boolean; is: optional>
+       unix_socket_path:                # <default: None; type: None||string; is: optional>
+       batch_size:                      # <default: None; type: None||integer; is: optional>
+       store_interval_in_secs:          # <default: None; type: None||integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
     """
     module_type = "stand_alone"
     """Set module type"""

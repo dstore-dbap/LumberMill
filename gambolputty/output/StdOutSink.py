@@ -17,9 +17,9 @@ class StdOutSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - StdOutSink:
-        pretty_print:           # <default: True; type: boolean; is: optional>
-        format:                 # <default: None; type: None||string; is: optional>
-        parser:                 # <default: None; type: None||string; is: optional>
+       pretty_print:                    # <default: True; type: boolean; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       parser:                          # <default: None; type: None||string; is: optional>
     """
 
     module_type = "output"

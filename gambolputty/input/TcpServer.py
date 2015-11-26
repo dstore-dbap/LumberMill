@@ -115,19 +115,19 @@ class TcpServer(BaseModule.BaseModule):
     Configuration template:
 
     - TcpServer:
-        interface:                       # <default: ''; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        tls:                             # <default: False; type: boolean; is: optional>
-        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
-        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
-        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
-        simple_separator:                # <default: '\n'; type: string; is: optional>
-        regex_separator:                 # <default: None; type: None||string; is: optional>
-        chunksize:                       # <default: 16384; type: integer; is: optional>
-        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: ''; type: string; is: optional>
+       port:                            # <default: 5151; type: integer; is: optional>
+       timeout:                         # <default: None; type: None||integer; is: optional>
+       tls:                             # <default: False; type: boolean; is: optional>
+       key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+       mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
+       simple_separator:                # <default: '\n'; type: string; is: optional>
+       regex_separator:                 # <default: None; type: None||string; is: optional>
+       chunksize:                       # <default: 16384; type: integer; is: optional>
+       max_buffer_size:                 # <default: 10240; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

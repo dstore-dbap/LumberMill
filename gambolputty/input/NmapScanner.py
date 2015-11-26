@@ -14,13 +14,13 @@ class NmapScanner(BaseModule.BaseModule):
     Configuration template:
 
     - NmapScanner:
-        network:                    # <type: string; is: required>
-        netmask:                    # <default: '/24'; type: string; is: optional>
-        ports:                      # <default: None; type: None||string; is: optional>
-        arguments:                  # <default: '-O -F --osscan-limit'; type: string; is: optional>
-        interval:                   # <default: 900; type: integer; is: optional>
-        receivers:
-          - NextModule
+       network:                         # <type: string; is: required>
+       netmask:                         # <default: '/24'; type: string; is: optional>
+       ports:                           # <default: None; type: None||string; is: optional>
+       arguments:                       # <default: '-O -F --osscan-limit'; type: string; is: optional>
+       interval:                        # <default: 900; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

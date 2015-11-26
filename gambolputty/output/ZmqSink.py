@@ -26,15 +26,15 @@ class ZmqSink(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - ZmqSink:
-        server:                     # <default: 'localhost:5570'; type: string; is: optional>
-        pattern:                    # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
-        topic:                      # <default: None; type: None||string; is: optional>
-        hwm:                        # <default: None; type: None||integer; is: optional>
-        format:                     # <default: None; type: None||string; is: optional>
-        store_interval_in_secs:     # <default: 5; type: integer; is: optional>
-        batch_size:                 # <default: 500; type: integer; is: optional>
-        backlog_size:               # <default: 5000; type: integer; is: optional>
+       server:                          # <default: 'localhost:5570'; type: string; is: optional>
+       pattern:                         # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
+       mode:                            # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
+       topic:                           # <default: None; type: None||string; is: optional>
+       hwm:                             # <default: None; type: None||integer; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "input"
@@ -108,6 +108,10 @@ class ZmqSink(BaseThreadedModule.BaseThreadedModule):
         yield None
 
     def shutDown(self):
+        try:
+            self.buffer.flush()
+        except:
+            pass
         try:
             self.client.close()
             self.zmq_context.term()

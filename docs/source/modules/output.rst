@@ -52,22 +52,22 @@ Configuration template:
 ::
 
     - ElasticSearchSink:
-        action:                                   # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
-        format:                                   # <default: None; type: None||string; is: optional>
-        nodes:                                    # <type: string||list; is: required>
-        connection_type:                          # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
-        http_auth:                                # <default: None; type: None||string; is: optional>
-        use_ssl:                                  # <default: False; type: boolean; is: optional>
-        index_name:                               # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
-        doc_id:                                   # <default: '$(gambolputty.event_id)'; type: string; is: optional>
-        routing:                                  # <default: None; type: None||string; is: optional>
-        ttl:                                      # <default: None; type: None||integer||string; is: optional>
-        sniff_on_start:                           # <default: False; type: boolean; is: optional>
-        sniff_on_connection_fail:                 # <default: False; type: boolean; is: optional>
-        consistency:                              # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
-        store_interval_in_secs:                   # <default: 5; type: integer; is: optional>
-        batch_size:                               # <default: 500; type: integer; is: optional>
-        backlog_size:                             # <default: 1000; type: integer; is: optional>
+       action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
+       format:                          # <default: None; type: None||string; is: optional>
+       nodes:                           # <type: string||list; is: required>
+       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       http_auth:                       # <default: None; type: None||string; is: optional>
+       use_ssl:                         # <default: False; type: boolean; is: optional>
+       index_name:                      # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
+       doc_id:                          # <default: '$(gambolputty.event_id)'; type: string; is: optional>
+       routing:                         # <default: None; type: None||string; is: optional>
+       ttl:                             # <default: None; type: None||integer||string; is: optional>
+       sniff_on_start:                  # <default: False; type: boolean; is: optional>
+       sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
+       consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 1000; type: integer; is: optional>
 
 
 FileSink
@@ -87,12 +87,12 @@ Configuration template:
 ::
 
     - FileSink:
-        file_name:                            # <type: string; is: required>
-        format:                               # <default: '$(data)'; type: string; is: optional>
-        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-        batch_size:                           # <default: 500; type: integer; is: optional>
-        backlog_size:                         # <default: 5000; type: integer; is: optional>
-        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
+       file_name:                       # <type: string; is: required>
+       format:                          # <default: '$(data)'; type: string; is: optional>
+       store_interval_in_secs:          # <default: 10; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
 GraphiteSink
@@ -130,12 +130,12 @@ Configuration template:
 ::
 
     - GraphiteSink:
-        server:                   # <default: 'localhost'; type: string; is: optional>
-        port:                     # <default: 2003; type: integer; is: optional>
-        formats:                  # <type: list; is: required>
-        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
-        batch_size:               # <default: 1; type: integer; is: optional>
-        backlog_size:             # <default: 50; type: integer; is: optional>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 2003; type: integer; is: optional>
+       formats:                         # <type: list; is: required>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 1; type: integer; is: optional>
+       backlog_size:                    # <default: 50; type: integer; is: optional>
 
 
 LoggerSink
@@ -154,7 +154,7 @@ Configuration template:
 ::
 
     - LoggerSink:
-        formats:    # <type: list; is: required>
+       formats:                         # <type: list; is: required>
 
 
 RedisChannelSink
@@ -174,15 +174,15 @@ Configuration template:
 ::
 
     - RedisChannelSink:
-        channel:                    # <type: string; is: required>
-        server:                     # <default: 'localhost'; type: string; is: optional>
-        port:                       # <default: 6379; type: integer; is: optional>
-        db:                         # <default: 0; type: integer; is: optional>
-        password:                   # <default: None; type: None||string; is: optional>
-        format:                     # <default: None; type: None||string; is: optional>
-        store_interval_in_secs:     # <default: 5; type: integer; is: optional>
-        batch_size:                 # <default: 500; type: integer; is: optional>
-        backlog_size:               # <default: 5000; type: integer; is: optional>
+       channel:                         # <type: string; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
 
 
 RedisListSink
@@ -205,15 +205,51 @@ Configuration template:
 ::
 
     - RedisListSink:
-        list:                     # <type: String; is: required>
-        server:                   # <default: 'localhost'; type: string; is: optional>
-        port:                     # <default: 6379; type: integer; is: optional>
-        db:                       # <default: 0; type: integer; is: optional>
-        password:                 # <default: None; type: None||string; is: optional>
-        format:                   # <default: None; type: None||string; is: optional>
-        store_interval_in_secs:   # <default: 5; type: integer; is: optional>
-        batch_size:               # <default: 500; type: integer; is: optional>
-        backlog_size:             # <default: 5000; type: integer; is: optional>
+       list:                            # <type: String; is: required>
+       server:                          # <default: 'localhost'; type: string; is: optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+
+
+SQSSink
+-------
+
+Send messages to amazon sqs service.
+
+| **aws_access_key_id**:  Your AWS id.
+| **aws_secret_access_key**:  Your AWS password.
+| **region**:  The region in which to find your sqs service.
+| **queue**:  Queue name.
+| **format**:  Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
+| If not set event.data will be send es MessageBody, all other fields will be send as MessageAttributes.
+| **store_interval_in_secs**:  Send data to redis in x seconds intervals.
+| batch_size: Number of messages to collect before starting to send messages to sqs. This refers to the internal
+| receive buffer of this plugin. When the receive buffer is maxed out, this plugin will always send
+| the maximum of 10 messages in one send_message_batch call.
+| **backlog_size**:  Maximum count of events waiting for transmission. Events above count will be dropped.
+
+values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']
+
+Configuration template:
+
+::
+
+    - SQS:
+       aws_access_key_id:               # <type: string; is: required>
+       aws_secret_access_key:           # <type: string; is: required>
+       region:                          # <type: string; is: required>
+       queue:                           # <type: string; is: required>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 StdOutSink
@@ -229,9 +265,9 @@ Configuration template:
 ::
 
     - StdOutSink:
-        pretty_print:           # <default: True; type: boolean; is: optional>
-        format:                 # <default: None; type: None||string; is: optional>
-        parser:                 # <default: None; type: None||string; is: optional>
+       pretty_print:                    # <default: True; type: boolean; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       parser:                          # <default: None; type: None||string; is: optional>
 
 
 SyslogSink
@@ -249,10 +285,10 @@ Configuration template:
 ::
 
     - SyslogSink:
-        format:               # <type: string; is: required>
-        address:              # <default: 'localhost:514'; type: string; is: required>
-        proto:                # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
-        facility:             # <default: 'user'; type: string; is: optional>
+       format:                          # <type: string; is: required>
+       address:                         # <default: 'localhost:514'; type: string; is: required>
+       proto:                           # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
+       facility:                        # <default: 'user'; type: string; is: optional>
 
 
 WebHdfsSink
@@ -275,15 +311,15 @@ Configuration template:
 ::
 
     - WebHdfsSink:
-        server:                               # <default: 'localhost:14000'; type: string; is: optional>
-        user:                                 # <type: string; is: required>
-        path:                                 # <type: string; is: required>
-        name_pattern:                         # <type: string; is: required>
-        format:                               # <type: string; is: required>
-        store_interval_in_secs:               # <default: 10; type: integer; is: optional>
-        batch_size:                           # <default: 1000; type: integer; is: optional>
-        backlog_size:                         # <default: 5000; type: integer; is: optional>
-        compress:                             # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
+       server:                          # <default: 'localhost:14000'; type: string; is: optional>
+       user:                            # <type: string; is: required>
+       path:                            # <type: string; is: required>
+       name_pattern:                    # <type: string; is: required>
+       format:                          # <type: string; is: required>
+       store_interval_in_secs:          # <default: 10; type: integer; is: optional>
+       batch_size:                      # <default: 1000; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
 ZmqSink
@@ -306,12 +342,12 @@ Configuration template:
 ::
 
     - ZmqSink:
-        server:                     # <default: 'localhost:5570'; type: string; is: optional>
-        pattern:                    # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
-        mode:                       # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
-        topic:                      # <default: None; type: None||string; is: optional>
-        hwm:                        # <default: None; type: None||integer; is: optional>
-        format:                     # <default: None; type: None||string; is: optional>
-        store_interval_in_secs:     # <default: 5; type: integer; is: optional>
-        batch_size:                 # <default: 500; type: integer; is: optional>
-        backlog_size:               # <default: 5000; type: integer; is: optional>
+       server:                          # <default: 'localhost:5570'; type: string; is: optional>
+       pattern:                         # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
+       mode:                            # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>
+       topic:                           # <default: None; type: None||string; is: optional>
+       hwm:                             # <default: None; type: None||integer; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>

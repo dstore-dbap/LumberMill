@@ -26,11 +26,11 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Spam:
-        event:                    # <default: ""; type: string||list||dict; is: optional>
-        sleep:                    # <default: 0; type: int||float; is: optional>
-        events_count:             # <default: 0; type: int; is: optional>
-        receivers:
-          - NextModule
+       event:                           # <default: ""; type: string||list||dict; is: optional>
+       sleep:                           # <default: 0; type: int||float; is: optional>
+       events_count:                    # <default: 0; type: int; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

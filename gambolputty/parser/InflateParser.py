@@ -18,16 +18,16 @@ class InflateParser(BaseThreadedModule.BaseThreadedModule):
     source_fields: Single field or list of fields to decompress.
     target_fields: Single field or list of fields to fill with decompressed data.
                    If not provided, contents of source_fields will be replaced.
-    compression:   Compression lib to use for decompression
+    compression:   Compression lib to use for decompression.
 
     Configuration template:
 
-    - CsvParser:
-        source_fields:                          # <default: 'data'; type: string||list; is: optional>
-        target_fields:                          # <default: None; type: None||string||list; is: optional>
-        compression:                            # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
-        receivers:
-          - NextModule
+    - InflateParser:
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_fields:                   # <default: None; type: None||string||list; is: optional>
+       compression:                     # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
+       receivers:
+        - NextModule
     """
 
     module_type = "parser"

@@ -21,14 +21,14 @@ class Throttle(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Throttle:
-        key:                # <type:string; is: required>
-        timeframe:          # <default: 600; type: integer; is: optional>
-        min_count:          # <default: 1; type: integer; is: optional>
-        max_count:          # <default: 1; type: integer; is: optional>
-        backend:            # <default: None; type: None||string; is: optional>
-        backend_key_prefix: # <default: "gambolputty:throttle"; type: string; is: optional>
-        receivers:
-          - NextModule
+       key:                             # <type:string; is: required>
+       timeframe:                       # <default: 600; type: integer; is: optional>
+       min_count:                       # <default: 1; type: integer; is: optional>
+       max_count:                       # <default: 1; type: integer; is: optional>
+       backend:                         # <default: None; type: None||string; is: optional>
+       backend_key_prefix:              # <default: "gambolputty:throttle"; type: string; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "misc"

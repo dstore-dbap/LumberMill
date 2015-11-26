@@ -28,11 +28,11 @@ class ExecPython(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - ExecPython:
-        imports:              # <default: []; type: list; is: optional>
-        source:               # <type: string; is: required>
-        debug:                # <default: False; type: boolean; is: optional>
-        receivers:
-          - NextModule
+       imports:                         # <default: []; type: list; is: optional>
+       source:                          # <type: string; is: required>
+       debug:                           # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "misc"

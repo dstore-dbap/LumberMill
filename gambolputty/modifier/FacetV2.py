@@ -30,14 +30,14 @@ class FacetV2(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Facet:
-        source_field:               # <type:string; is: required>
-        group_by:                   # <type:string; is: required>
-        add_event_fields:           # <default: []; type: list; is: optional>
-        interval:                   # <default: 5; type: float||integer; is: optional>
-        backend:                    # <default: None; type: None||string; is: optional>
-        backend_ttl:                # <default: 60; type: integer; is: optional>
-        receivers:
-          - NextModule
+       source_field:                    # <type:string; is: required>
+       group_by:                        # <type:string; is: required>
+       add_event_fields:                # <default: []; type: list; is: optional>
+       interval:                        # <default: 5; type: float||integer; is: optional>
+       backend:                         # <default: None; type: None||string; is: optional>
+       backend_ttl:                     # <default: 60; type: integer; is: optional>
+       receivers:
+        - NextModule
     """
     facet_data = {}
     """Holds the facet data for all instances"""

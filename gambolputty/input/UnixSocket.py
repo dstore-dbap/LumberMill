@@ -48,9 +48,9 @@ class UnixSocket(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - UnixSocket:
-        path_to_socket:         # <type: string; is: required>
-        receivers:
-          - NextModule
+       path_to_socket:                  # <type: string; is: required>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

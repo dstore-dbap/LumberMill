@@ -27,9 +27,9 @@ Configuration template:
 ::
 
     - EventBuffer:
-        backend:            # <default: 'RedisStore'; type: string; is: optional>
-        gc_interval:        # <default: 5; type: integer; is: optional>
-        key_prefix:         # <default: "gambolputty:eventbuffer"; type: string; is: optional>
+       backend:                         # <default: 'RedisStore'; type: string; is: optional>
+       gc_interval:                     # <default: 5; type: integer; is: optional>
+       key_prefix:                      # <default: "gambolputty:eventbuffer"; type: string; is: optional>
 
 
 KeyValueStore
@@ -53,20 +53,20 @@ Configuration template:
 ::
 
     - KeyValueStore:
-        backend:                                 # <default: 'DictStore'; type: string; is: optional>
-        server:                                  # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
-        cluster:                                 # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
-        port:                                    # <default: 6379; type: integer; is: optional>
-        db:                                      # <default: 0; type: integer; is: optional>
-        password:                                # <default: None; type: None||string; is: optional>
-        socket_timeout:                          # <default: 10; type: integer; is: optional>
-        charset:                                 # <default: 'utf-8'; type: string; is: optional>
-        errors:                                  # <default: 'strict'; type: string; is: optional>
-        decode_responses:                        # <default: False; type: boolean; is: optional>
-        unix_socket_path:                        # <default: None; type: None||string; is: optional>
-        batch_size:                              # <default: None; type: None||integer; is: optional>
-        store_interval_in_secs:                  # <default: None; type: None||integer; is: optional>
-        backlog_size:                            # <default: 5000; type: integer; is: optional>
+       backend:                         # <default: 'DictStore'; type: string; is: optional>
+       server:                          # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
+       cluster:                         # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
+       port:                            # <default: 6379; type: integer; is: optional>
+       db:                              # <default: 0; type: integer; is: optional>
+       password:                        # <default: None; type: None||string; is: optional>
+       socket_timeout:                  # <default: 10; type: integer; is: optional>
+       charset:                         # <default: 'utf-8'; type: string; is: optional>
+       errors:                          # <default: 'strict'; type: string; is: optional>
+       decode_responses:                # <default: False; type: boolean; is: optional>
+       unix_socket_path:                # <default: None; type: None||string; is: optional>
+       batch_size:                      # <default: None; type: None||integer; is: optional>
+       store_interval_in_secs:          # <default: None; type: None||integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
 
 
 RedisStore
@@ -100,19 +100,19 @@ Configuration template:
 ::
 
     - RedisStore:
-        server:                                  # <default: 'localhost'; type: string; is: optional>
-        cluster:                                 # <default: {}; type: dictionary; is: optional>
-        port:                                    # <default: 6379; type: integer; is: optional>
-        db:                                      # <default: 0; type: integer; is: optional>
-        password:                                # <default: None; type: None||string; is: optional>
-        socket_timeout:                          # <default: 10; type: integer; is: optional>
-        charset:                                 # <default: 'utf-8'; type: string; is: optional>
-        errors:                                  # <default: 'strict'; type: string; is: optional>
-        decode_responses:                        # <default: False; type: boolean; is: optional>
-        unix_socket_path:                        # <default: None; type: None||string; is: optional>
-        batch_size:                              # <default: None; type: None||integer; is: optional>
-        store_interval_in_secs:                  # <default: None; type: None||integer; is: optional>
-        backlog_size:                            # <default: 5000; type: integer; is: optional>
+       server:                         # <default: 'localhost'; type: string; is: optional>
+       cluster:                        # <default: {}; type: dictionary; is: optional>
+       port:                           # <default: 6379; type: integer; is: optional>
+       db:                             # <default: 0; type: integer; is: optional>
+       password:                       # <default: None; type: None||string; is: optional>
+       socket_timeout:                 # <default: 10; type: integer; is: optional>
+       charset:                        # <default: 'utf-8'; type: string; is: optional>
+       errors:                         # <default: 'strict'; type: string; is: optional>
+       decode_responses:               # <default: False; type: boolean; is: optional>
+       unix_socket_path:               # <default: None; type: None||string; is: optional>
+       batch_size:                     # <default: None; type: None||integer; is: optional>
+       store_interval_in_secs:         # <default: None; type: None||integer; is: optional>
+       backlog_size:                   # <default: 5000; type: integer; is: optional>
 
 
 SimpleStats
@@ -132,11 +132,11 @@ Configuration template:
 ::
 
     - SimpleStats:
-        interval:                      # <default: 10; type: integer; is: optional>
-        event_type_statistics:         # <default: True; type: boolean; is: optional>
-        receive_rate_statistics:       # <default: True; type: boolean; is: optional>
-        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
-        emit_as_event:                 # <default: False; type: boolean; is: optional>
+       interval:                        # <default: 10; type: integer; is: optional>
+       event_type_statistics:           # <default: True; type: boolean; is: optional>
+       receive_rate_statistics:         # <default: True; type: boolean; is: optional>
+       waiting_event_statistics:        # <default: False; type: boolean; is: optional>
+       emit_as_event:                   # <default: False; type: boolean; is: optional>
 
 
 SimpleStats
@@ -152,11 +152,11 @@ Configuration template:
 ::
 
     - SimpleStats:
-        interval:                      # <default: 10; type: integer; is: optional>
-        event_type_statistics:         # <default: True; type: boolean; is: optional>
-        receive_rate_statistics:       # <default: True; type: boolean; is: optional>
-        waiting_event_statistics:      # <default: False; type: boolean; is: optional>
-        emit_as_event:                 # <default: False; type: boolean; is: optional>
+       interval:                        # <default: 10; type: integer; is: optional>
+       event_type_statistics:           # <default: True; type: boolean; is: optional>
+       receive_rate_statistics:         # <default: True; type: boolean; is: optional>
+       waiting_event_statistics:        # <default: False; type: boolean; is: optional>
+       emit_as_event:                   # <default: False; type: boolean; is: optional>
 
 
 Statistics
@@ -187,8 +187,8 @@ Configuration template:
 ::
 
     - Statistics:
-        interval:                      # <default: 10; type: integer; is: optional>
-        fields:                        # <default: ['gambolputty.event_type']; type: list; is: optional>
+       interval:                        # <default: 10; type: integer; is: optional>
+       fields:                          # <default: ['gambolputty.event_type']; type: list; is: optional>
 
 
 Tarpit
@@ -203,9 +203,9 @@ Configuration template:
 ::
 
     - Tarpit:
-        delay:          # <default: 10; type: integer; is: optional>
-        receivers:
-          - NextModule
+       delay:                           # <default: 10; type: integer; is: optional>
+       receivers:
+        - NextModule
 
 
 Throttle
@@ -225,11 +225,11 @@ Configuration template:
 ::
 
     - Throttle:
-        key:                # <type:string; is: required>
-        timeframe:          # <default: 600; type: integer; is: optional>
-        min_count:          # <default: 1; type: integer; is: optional>
-        max_count:          # <default: 1; type: integer; is: optional>
-        backend:            # <default: None; type: None||string; is: optional>
-        backend_key_prefix: # <default: "gambolputty:throttle"; type: string; is: optional>
-        receivers:
-          - NextModule
+       key:                             # <type:string; is: required>
+       timeframe:                       # <default: 600; type: integer; is: optional>
+       min_count:                       # <default: 1; type: integer; is: optional>
+       max_count:                       # <default: 1; type: integer; is: optional>
+       backend:                         # <default: None; type: None||string; is: optional>
+       backend_key_prefix:              # <default: "gambolputty:throttle"; type: string; is: optional>
+       receivers:
+        - NextModule

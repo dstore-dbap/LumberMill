@@ -20,13 +20,13 @@ class Zmq(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Zmq:
-        mode:                       # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
-        address:                    # <default: '*:5570'; type: string; is: optional>
-        pattern:                    # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
-        topic:                      # <default: ''; type: string; is: optional>
-        hwm:                        # <default: None; type: None||integer; is: optional>
-        receivers:
-          - NextModule
+       mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
+       address:                         # <default: '*:5570'; type: string; is: optional>
+       pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
+       topic:                           # <default: ''; type: string; is: optional>
+       hwm:                             # <default: None; type: None||integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"

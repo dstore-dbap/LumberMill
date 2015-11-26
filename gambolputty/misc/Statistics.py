@@ -30,8 +30,8 @@ class Statistics(BaseThreadedModule.BaseThreadedModule):
     Configuration template:
 
     - Statistics:
-        interval:                      # <default: 10; type: integer; is: optional>
-        fields:                        # <default: ['gambolputty.event_type']; type: list; is: optional>
+       interval:                        # <default: 10; type: integer; is: optional>
+       fields:                          # <default: ['gambolputty.event_type']; type: list; is: optional>
     """
 
     module_type = "misc"

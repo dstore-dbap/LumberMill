@@ -111,11 +111,11 @@ class UdpServer(BaseModule.BaseModule):
     Configuration template:
 
     - UdpServer:
-        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
-        port:                            # <default: 5151; type: integer; is: optional>
-        timeout:                         # <default: None; type: None||integer; is: optional>
-        receivers:
-          - NextModule
+       interface:                       # <default: '0.0.0.0'; type: string; is: optional>
+       port:                            # <default: 5151; type: integer; is: optional>
+       timeout:                         # <default: None; type: None||integer; is: optional>
+       receivers:
+        - NextModule
     """
 
     module_type = "input"
