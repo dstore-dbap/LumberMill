@@ -460,6 +460,7 @@ Outputs
 -  RedisChannelSink, publish incoming events to redis channel.
 -  RedisListSink, publish incoming events to redis list.
 -  StdOutSink, prints all received data to standard out.
+-  SQSSink, sends events to amazons simple queue service.
 -  SyslogSink, send events to syslog.
 -  WebHdfsSink, store events in hdfs via webhdfs.
 -  ZmqSink, sends incoming event to zeromq.
@@ -686,7 +687,7 @@ Configure the linux syslog-ng service to send data to a tcp address
     destination d_gambolputty { tcp( localhost port(5151) ); };
     filter f_httpd_access { facility(local1); };
     log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
-    ... 
+    ...
 
 Configure GambolPutty to listen on localhost
 5151(./conf/gambolputty.conf):
