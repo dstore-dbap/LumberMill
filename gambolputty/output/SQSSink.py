@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
-import pprint
 import random
-
 import BaseThreadedModule
 import boto3
 import Utils
@@ -112,7 +110,6 @@ class SQSSink(BaseThreadedModule.BaseThreadedModule):
             message['MessageBody'] = event
             batch_messages.append(message)
             if len(batch_messages) % 10:
-                pprint.pprint(batch_messages)
                 self.sqs_queue.send_messages(Entries=batch_messages)
                 batch_messages = []
         if len(batch_messages) > 0:
