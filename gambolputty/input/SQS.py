@@ -68,9 +68,6 @@ class SQS(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not connect to sqs service. Exception: %s, Error: %s." % (etype, evalue))
             self.gp.shutDown()
-
-    def initAfterFork(self):
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         try:
             self.sqs_queue_url = self.sqs_client.get_queue_url(QueueName=self.sqs_queue_name)['QueueUrl']
         except:
