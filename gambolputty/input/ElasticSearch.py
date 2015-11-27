@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import time
 import types
+import requests
 from elasticsearch import Elasticsearch, helpers, connection
 import BaseThreadedModule
 import Utils
 import Decorators
-
+from multiprocessing import Process, Manager, Value, Lock
+from ctypes import c_char_p
 
 # For pypy the default json module is the fastest.
 if Utils.is_pypy:
@@ -74,7 +77,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_forked = False
+    can_run_forked = True
 
     def configure(self, configuration):
         # Call parent configure method.
@@ -101,6 +104,49 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         if not self.es:
             self.gp.shutDown()
             return
+        self.lock = Lock()
+        self.manager = Manager()
+        if self.search_type == 'scan':
+            self.simple_es_client = requests.Session()
+            self.shared_scroll_id = self.manager.Value(c_char_p, self.getInitalialScrollId())
+        elif self.search_type == 'normal':
+            self.total_doc_count = self.getInitalTotalDocumentCount()
+            if self.total_doc_count == 0:
+                self.logger.warning("The configured query does not return any hits. Please check the configuration.")
+                self.gp.shutDown()
+            self.shared_from_counter = Value('i', 0)
+
+    def getInitalialScrollId(self):
+        response = self.simple_es_client.get('http://es-01.dbap.de:9200/%s/_search?search_type=scan&scroll=1m' % self.index_name, data=self.query)
+        results = json.loads(response.text)
+        return results['_scroll_id']
+
+    def getInitalTotalDocumentCount(self):
+        doc_count_query = json.loads(self.query)
+        doc_count_query['size'] = 0
+        total_doc_count = 0
+        try:
+            total_doc_count = self.es.search(index=self.index_name, body=doc_count_query)['hits']['total']
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Elasticsearch query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
+        print(total_doc_count)
+        return total_doc_count
+
+    def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+        """ Calculate doc count for each process. This will allow us to exploit all cores when running multiprocessed."""
+        with self.lock:
+            process_max_events_count = int(self.total_doc_count/self.gp.workers)
+            if self.gp.is_master():
+                remainder = self.total_doc_count % self.gp.workers
+                process_max_events_count += remainder
+            if process_max_events_count == 0:
+                self.shutDown()
+            self.query = json.loads(self.query)
+            self.query['from'] = self.shared_from_counter.value
+            self.query['size'] = process_max_events_count
+            self.shared_from_counter.value = self.shared_from_counter.value + process_max_events_count
 
     def connect(self):
         es = False
@@ -132,26 +178,55 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         return es
 
     def run(self):
-        found_documents = self.executeQuery()
-        for doc in found_documents:
-            # No special fields were selected.
-            # Merge _source field and all other elasticsearch fields to one level.
-            doc.update(doc.pop('_source'))
-            if isinstance(self.field_mappings, types.ListType):
-                doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
-            elif isinstance(self.field_mappings, types.DictType):
-                doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
-            event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
-            self.sendEvent(event)
+        while self.alive:
+            if self.search_type == 'scan':
+                found_documents = self.executeScrollQuery()
+                if not found_documents:
+                    self.alive = False
+                    break
+            elif self.search_type == 'normal':
+                found_documents = self.executeQuery()
+                self.alive = False
+            for doc in found_documents:
+                # No special fields were selected.
+                # Merge _source field and all other elasticsearch fields to one level.
+                doc.update(doc.pop('_source'))
+                if isinstance(self.field_mappings, types.ListType):
+                    doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
+                elif isinstance(self.field_mappings, types.DictType):
+                    doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
+                event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
+                self.sendEvent(event)
         self.gp.shutDown()
+
+    def executeScrollQuery(self):
+        """ We do not use the elasticsearch client here, since we want to exploit all cores when running multiporcessed"""
+        with self.lock:
+            try:
+               scroll_id = self.shared_scroll_id.value
+            except OSError:
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting gambolputty via CTRL+C. Ignore it
+                return []
+            try:
+                response = self.simple_es_client.get('http://es-01.dbap.de:9200/_search/scroll?scroll=1m', data=scroll_id)
+                result = json.loads(response.text)
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Elasticsearch scroll query failed. Exception: %s, Error: %s." % (etype, evalue))
+                return []
+            # When no more hits are returned, we have processed all matching documents.
+            # If an error was returned also exit.
+            if not 'hits' in result or 'error' in result:
+                if 'error' in result:
+                    self.logger.error('Elasticsearch scroll query returned an error: %s.' % (result['error']))
+                return []
+            self.shared_scroll_id.value = result['_scroll_id']
+        return result['hits']['hits']
 
     def executeQuery(self):
         found_documents = []
         try:
-            if self.search_type == 'scan':
-                found_documents = helpers.scan(client=self.es, index=self.index_name, query=self.query, scroll="5m", timeout="5m")
-            else:
-                found_documents = self.es.search(index=self.index_name, body=self.query)['hits']['hits']
+            found_documents = self.es.search(index=self.index_name, body=self.query)['hits']['hits']
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("Elasticsearch query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
