@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import logging
 import sys
 import time
 import types
 import requests
-from elasticsearch import Elasticsearch, helpers, connection
+from elasticsearch import Elasticsearch, connection
 import BaseThreadedModule
 import Utils
 import Decorators
-from multiprocessing import Process, Manager, Value, Lock
+from multiprocessing import Manager, Lock
 from ctypes import c_char_p
 
 # For pypy the default json module is the fastest.
@@ -61,6 +62,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
     - ElasticSearch:
        query:                           # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
        search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
+       batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
        connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
@@ -76,7 +78,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
 
     module_type = "input"
     """Set module type"""
-    can_run_forked = True
+    can_run_forked = False
 
     def configure(self, configuration):
         # Call parent configure method.
@@ -89,63 +91,39 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Parsing json query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
             self.gp.shutDown()
-        self.es_nodes = self.getConfigurationValue("nodes")
+        self.search_type = self.getConfigurationValue('search_type')
+        self.batch_size = self.getConfigurationValue('batch_size')
+        self.field_mappings = self.getConfigurationValue('field_mappings')
+        self.es_nodes = self.getConfigurationValue('nodes')
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
-        self.search_type = self.getConfigurationValue("search_type")
-        self.field_mappings = self.getConfigurationValue("field_mappings")
-        self.index_name_pattern = self.getConfigurationValue("index_name")
+        self.index_name_pattern = self.getConfigurationValue('index_name')
         self.index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         self.connection_class = connection.Urllib3HttpConnection
-        if self.getConfigurationValue("connection_type") == 'thrift':
+        if self.getConfigurationValue('connection_type') == 'thrift':
             self.connection_class = connection.ThriftConnection
-        self.es = self.connect()
-        if not self.es:
-            self.gp.shutDown()
-            return
         self.lock = Lock()
         self.manager = Manager()
         if self.search_type == 'scan':
-            self.simple_es_client = requests.Session()
+            # Set requests log level.
+            logging.getLogger('requests').setLevel(logging.WARNING)
+            self.can_run_forked = True
             self.shared_scroll_id = self.manager.Value(c_char_p, self.getInitalialScrollId())
         elif self.search_type == 'normal':
-            self.total_doc_count = self.getInitalTotalDocumentCount()
-            if self.total_doc_count == 0:
-                self.logger.warning("The configured query does not return any hits. Please check the configuration.")
-                self.gp.shutDown()
-            self.shared_from_counter = Value('i', 0)
+            self.es = self.connect()
+            self.query_from = 0
+            self.query = json.loads(self.query)
+            self.query['size'] = self.batch_size
 
     def getInitalialScrollId(self):
-        response = self.simple_es_client.get('http://%s/%s/_search?search_type=scan&scroll=1m' % (self.es_nodes[0], self.index_name), data=self.query)
+        response = requests.get('http://%s/%s/_search?search_type=scan&scroll=1m&size=%s' % (self.es_nodes[0], self.index_name, self.batch_size), data=self.query)
         results = json.loads(response.text)
         return results['_scroll_id']
 
-    def getInitalTotalDocumentCount(self):
-        doc_count_query = json.loads(self.query)
-        doc_count_query['size'] = 0
-        total_doc_count = 0
-        try:
-            total_doc_count = self.es.search(index=self.index_name, body=doc_count_query)['hits']['total']
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Elasticsearch query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
-        return total_doc_count
-
     def initAfterFork(self):
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
-        if self.search_type == 'normal':
-            """ Calculate doc count for each process. This will allow us to exploit all cores when running multiprocessed."""
-            with self.lock:
-                process_max_events_count = int(self.total_doc_count/self.gp.workers)
-                if self.gp.is_master():
-                    remainder = self.total_doc_count % self.gp.workers
-                    process_max_events_count += remainder
-                if process_max_events_count == 0:
-                    self.shutDown()
-                self.query = json.loads(self.query)
-                self.query['from'] = self.shared_from_counter.value
-                self.query['size'] = process_max_events_count
-                self.shared_from_counter.value = self.shared_from_counter.value + process_max_events_count
+        if self.search_type == 'scan':
+            self.simple_es_client = requests.Session()
 
     def connect(self):
         es = False
@@ -180,12 +158,11 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         while self.alive:
             if self.search_type == 'scan':
                 found_documents = self.executeScrollQuery()
-                if not found_documents:
-                    self.alive = False
-                    break
             elif self.search_type == 'normal':
                 found_documents = self.executeQuery()
+            if not found_documents:
                 self.alive = False
+                break
             for doc in found_documents:
                 # No special fields were selected.
                 # Merge _source field and all other elasticsearch fields to one level.
@@ -227,6 +204,8 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         return result['hits']['hits']
 
     def executeQuery(self):
+        self.query['from'] = self.query_from
+        self.query_from = self.query_from + self.batch_size
         found_documents = []
         try:
             found_documents = self.es.search(index=self.index_name, body=self.query)['hits']['hits']
