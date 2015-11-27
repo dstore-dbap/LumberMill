@@ -116,7 +116,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             self.shared_from_counter = Value('i', 0)
 
     def getInitalialScrollId(self):
-        response = self.simple_es_client.get('http://es-01.dbap.de:9200/%s/_search?search_type=scan&scroll=1m' % self.index_name, data=self.query)
+        response = self.simple_es_client.get('http://%s/%s/_search?search_type=scan&scroll=1m' % (self.es_nodes[0], self.index_name), data=self.query)
         results = json.loads(response.text)
         return results['_scroll_id']
 
@@ -204,10 +204,10 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             try:
                scroll_id = self.shared_scroll_id.value
             except OSError:
-                # OSError: [Errno 32] Broken pipe may be thrown when exiting gambolputty via CTRL+C. Ignore it
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting gambolputty via CTRL+C. Ignore it.
                 return []
             try:
-                response = self.simple_es_client.get('http://es-01.dbap.de:9200/_search/scroll?scroll=1m', data=scroll_id)
+                response = self.simple_es_client.get('http://%s/_search/scroll?scroll=1m' % self.es_nodes[0], data=scroll_id)
                 result = json.loads(response.text)
             except:
                 etype, evalue, etb = sys.exc_info()
@@ -219,7 +219,11 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
                 if 'error' in result:
                     self.logger.error('Elasticsearch scroll query returned an error: %s.' % (result['error']))
                 return []
-            self.shared_scroll_id.value = result['_scroll_id']
+            try:
+                self.shared_scroll_id.value = result['_scroll_id']
+            except OSError:
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting gambolputty via CTRL+C. Ignore it.
+                pass
         return result['hits']['hits']
 
     def executeQuery(self):
