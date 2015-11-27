@@ -133,18 +133,19 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
 
     def initAfterFork(self):
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
-        """ Calculate doc count for each process. This will allow us to exploit all cores when running multiprocessed."""
-        with self.lock:
-            process_max_events_count = int(self.total_doc_count/self.gp.workers)
-            if self.gp.is_master():
-                remainder = self.total_doc_count % self.gp.workers
-                process_max_events_count += remainder
-            if process_max_events_count == 0:
-                self.shutDown()
-            self.query = json.loads(self.query)
-            self.query['from'] = self.shared_from_counter.value
-            self.query['size'] = process_max_events_count
-            self.shared_from_counter.value = self.shared_from_counter.value + process_max_events_count
+        if self.search_type == 'normal':
+            """ Calculate doc count for each process. This will allow us to exploit all cores when running multiprocessed."""
+            with self.lock:
+                process_max_events_count = int(self.total_doc_count/self.gp.workers)
+                if self.gp.is_master():
+                    remainder = self.total_doc_count % self.gp.workers
+                    process_max_events_count += remainder
+                if process_max_events_count == 0:
+                    self.shutDown()
+                self.query = json.loads(self.query)
+                self.query['from'] = self.shared_from_counter.value
+                self.query['size'] = process_max_events_count
+                self.shared_from_counter.value = self.shared_from_counter.value + process_max_events_count
 
     def connect(self):
         es = False
