@@ -3,6 +3,7 @@ import multiprocessing
 from collections import defaultdict
 import Decorators
 
+
 @Decorators.Singleton
 class StatisticCollector:
 
