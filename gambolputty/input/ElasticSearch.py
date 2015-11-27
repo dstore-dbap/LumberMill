@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import time
 import types
@@ -130,7 +129,6 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Elasticsearch query %s failed. Exception: %s, Error: %s." % (self.query, etype, evalue))
-        print(total_doc_count)
         return total_doc_count
 
     def initAfterFork(self):
