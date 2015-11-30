@@ -22,14 +22,12 @@ class SQS(BaseThreadedModule.BaseThreadedModule):
     poll_interval_in_secs: How often should the queue be checked for new messages.
     batch_size: Number of messages to retrieve in one call.
 
-    values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']
-
     Configuration template:
 
     - SQS:
        aws_access_key_id:               # <type: string; is: required>
        aws_secret_access_key:           # <type: string; is: required>
-       region:                          # <type: string; is: required>
+       region:                          # <type: string; is: required; values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']>
        queue:                           # <type: string; is: required>
        attribute_names:                 # <default: ['All']; type: list; is: optional>
        message_attribute_names:         # <default: ['All']; type: list; is: optional>
