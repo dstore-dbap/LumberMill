@@ -64,7 +64,7 @@ class Kafka(BaseThreadedModule.BaseThreadedModule):
     def run(self):
         while self.alive:
             for kafka_event in self.consumer:
-                event = Utils.getDefaultEventDict(dict={"topic":  kafka_event.topic, "data": kafka_event.value}, caller_class_name=self.__class__.__name__)
+                event = Utils.getDefaultEventDict(dict={"topic": kafka_event.topic, "data": kafka_event.value}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
                 if(self.auto_commit_enable):
                     self.consumer.task_done(kafka_event)
