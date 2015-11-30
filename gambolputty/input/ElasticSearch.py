@@ -65,7 +65,7 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
        batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
-       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
@@ -100,8 +100,8 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         self.index_name_pattern = self.getConfigurationValue('index_name')
         self.index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         self.connection_class = connection.Urllib3HttpConnection
-        if self.getConfigurationValue('connection_type') == 'thrift':
-            self.connection_class = connection.ThriftConnection
+        if self.getConfigurationValue('connection_type') == 'requests':
+            self.connection_class = connection.RequestsHttpConnection
         self.lock = Lock()
         self.manager = Manager()
         if self.search_type == 'scan':
@@ -110,7 +110,6 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             self.can_run_forked = True
             self.shared_scroll_id = self.manager.Value(c_char_p, self.getInitalialScrollId())
         elif self.search_type == 'normal':
-            self.es = self.connect()
             self.query_from = 0
             self.query = json.loads(self.query)
             self.query['size'] = self.batch_size
@@ -124,6 +123,8 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         if self.search_type == 'scan':
             self.simple_es_client = requests.Session()
+        elif self.search_type == 'normal':
+            self.es = self.connect()
 
     def connect(self):
         es = False

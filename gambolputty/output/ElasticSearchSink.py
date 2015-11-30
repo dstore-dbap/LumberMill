@@ -59,7 +59,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
        format:                          # <default: None; type: None||string; is: optional>
        nodes:                           # <type: string||list; is: required>
-       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'gambolputty-%Y.%m.%d'; type: string; is: optional>
@@ -91,8 +91,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
         self.connection_class = elasticsearch.connection.Urllib3HttpConnection
-        if self.getConfigurationValue("connection_type") == 'thrift':
-            self.connection_class = elasticsearch.connection.ThriftConnection
+        if self.getConfigurationValue("connection_type") == 'requests':
+            self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def initAfterFork(self):
         # Init es client after fork as mentioned in https://elasticsearch-py.readthedocs.org/en/master/
