@@ -4,7 +4,6 @@ import sys
 import time
 import types
 import requests
-import urllib3
 from elasticsearch import Elasticsearch, connection
 import BaseThreadedModule
 import Utils
