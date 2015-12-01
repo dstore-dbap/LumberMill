@@ -5,6 +5,7 @@ import threading
 import Queue
 import boto3
 
+
 def usage():
     sys.stdout = sys.stderr
     print('Usage: spam_sqs.py -c count region aws_id aws_key queue_name')
