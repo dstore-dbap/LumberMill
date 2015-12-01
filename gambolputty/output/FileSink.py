@@ -28,7 +28,7 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
        format:                          # <default: '$(data)'; type: string; is: optional>
        store_interval_in_secs:          # <default: 10; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
        compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
     """
 
@@ -60,6 +60,15 @@ class FileSink(BaseThreadedModule.BaseThreadedModule):
                 self.gp.shutDown()
         self.buffer = Utils.Buffer(self.batch_size, self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.backlog_size)
         Utils.TimedFunctionManager.startTimedFunction(self.closeStaleFileHandles)
+
+    def getStartMessage(self):
+        return "File: %s. Max buffer size: %d" % (self.file_name, self.getConfigurationValue('backlog_size'))
+
+    def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+        # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
+        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     @Decorators.setInterval(60)
     def closeStaleFileHandles(self):

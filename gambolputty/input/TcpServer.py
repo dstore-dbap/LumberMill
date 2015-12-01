@@ -153,20 +153,17 @@ class TcpServer(BaseModule.BaseModule):
         autoreload.add_reload_hook(self.shutDown)
 
     def getStartMessage(self):
-        """
-        Return the module name.
-        """
         return "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
 
 
     def initAfterFork(self):
+        BaseModule.BaseModule.initAfterFork(self)
         ssl_options = None
         if self.getConfigurationValue("tls"):
             ssl_options = { 'certfile': self.getConfigurationValue("cert"),
                             'keyfile': self.getConfigurationValue("key")}
         self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
         self.server.add_sockets(self.sockets)
-        BaseModule.BaseModule.initAfterFork(self)
 
     def shutDown(self):
         try:

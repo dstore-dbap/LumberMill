@@ -71,7 +71,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
        consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 1000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -94,7 +94,11 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         if self.getConfigurationValue("connection_type") == 'requests':
             self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
+    def getStartMessage(self):
+        return "Idx: %s. Max buffer size: %d" % (self.index_name_pattern, self.getConfigurationValue('backlog_size'))
+
     def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         # Init es client after fork as mentioned in https://elasticsearch-py.readthedocs.org/en/master/
         self.es = self.connect()
         if not self.es:
@@ -102,7 +106,6 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             return
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def connect(self):
         es = False

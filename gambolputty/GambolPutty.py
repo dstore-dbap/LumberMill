@@ -81,6 +81,7 @@ class GambolPutty():
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
+        print('produceQueue: %s' % self)
         queue = None
         if queue_type == 'simple':
             queue =  Utils.BufferedQueue(queue=Queue.Queue(queue_max_size), buffersize=queue_buffer_size)

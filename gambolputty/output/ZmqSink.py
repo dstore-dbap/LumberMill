@@ -34,7 +34,7 @@ class ZmqSink(BaseThreadedModule.BaseThreadedModule):
        format:                          # <default: None; type: None||string; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
     """
 
     module_type = "input"
@@ -77,10 +77,13 @@ class ZmqSink(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("Could not connect to zeromq at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.gp.shutDown()
 
+    def getStartMessage(self):
+        return "%s. Max buffer size: %d" % (self.server, self.getConfigurationValue('backlog_size'))
+
     def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         self.initZmqContext()
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def storeData(self, buffered_data):
         try:

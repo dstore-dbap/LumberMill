@@ -44,7 +44,7 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
        port:                            # <default: 2003; type: integer; is: optional>
        formats:                         # <type: list; is: required>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
-       batch_size:                      # <default: 1; type: integer; is: optional>
+       batch_size:                      # <default: 50; type: integer; is: optional>
        backlog_size:                    # <default: 50; type: integer; is: optional>
     """
 
@@ -69,7 +69,11 @@ class GraphiteSink(BaseThreadedModule.BaseThreadedModule):
             self.logger.error("Failed to connect to %s. Exception: %s, Error: %s." % (self.connection_data, etype, evalue))
             return False
 
+    def getStartMessage(self):
+        return "%s:%s. Max buffer size: %d" % (self.connection_data[0], self.connection_data[1], self.getConfigurationValue('backlog_size'))
+
     def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         self.connection = self.connect()
         if not self.connection:
