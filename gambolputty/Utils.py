@@ -14,6 +14,7 @@ import socket
 import types
 import platform
 import pylru
+from string import Formatter
 from collections import defaultdict
 
 
@@ -175,54 +176,6 @@ class ReplaceVars(ast.NodeTransformer):
         #pprint.pprint(ast.dump(ast.parse(self.mapping % node.id)))
         new_node = ast.parse(self.replacement % node.id).body[0].value
         return new_node
-
-def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
-    # By default this method will return the unchanged value if the mapping key does not exist in the mapping_dict.
-    # With missing_default this can be overwritten. When missing_default_func is passed in, this func will be used
-    # to determine the default value.
-
-    # At the moment, just flat lists and dictionaries are supported.
-    # If need arises, recursive parsing of the lists and dictionaries will be added.
-    if isinstance(value, list):
-        try:
-            if use_strftime:
-                mapped_values = [datetime.datetime.utcnow().strftime(v) % mapping_dict for v in value]
-            else:
-                mapped_values = [v % mapping_dict for v in value]
-            return mapped_values
-        except KeyError:
-            return value
-        except (ValueError, TypeError):
-            etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
-            return False
-    elif isinstance(value, dict):
-        try:
-            if use_strftime:
-                mapped_keys = [datetime.datetime.utcnow().strftime(k) % mapping_dict for k in value.iterkeys()]
-                mapped_values = [datetime.datetime.utcnow().strftime(v) % mapping_dict for v in value.itervalues()]
-            else:
-                mapped_keys = [k % mapping_dict for k in value.iterkeys()]
-                mapped_values = [v % mapping_dict for v in value.itervalues()]
-            return dict(zip(mapped_keys, mapped_values))
-        except KeyError:
-            return value
-        except (ValueError, TypeError):
-            etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (v, mapping_dict, etype, evalue))
-            return False
-    elif isinstance(value, basestring):
-        try:
-            if use_strftime:
-                return datetime.datetime.utcnow().strftime(value) % mapping_dict
-            else:
-                return value % mapping_dict
-        except KeyError:
-            return value
-        except (ValueError, TypeError):
-            etype, evalue, etb = sys.exc_info()
-            logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
-            return False
 
 class Buffer:
     def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):
@@ -433,6 +386,72 @@ class KeyDotNotationDict(dict):
         except KeyError:
             return default
 
+class DotDictFormatter(Formatter):
+    try:  # deal with Py 2 & 3 difference
+        NUMERICS = (int, long)
+    except NameError:
+        NUMERICS = int
+
+    def get_field(self, field_name, args, kwargs):
+        first, rest = field_name._formatter_field_name_split()
+        obj = self.get_value(first, args, kwargs)
+        # loop through the rest of the field_name, doing
+        #  getattr or getitem as needed
+        for is_attr, i in rest:
+            obj = obj[i]
+        return obj, first
+
+def mapDynamicValueInString(value, mapping_dict, use_strftime=False):
+    try:
+        if use_strftime:
+            return datetime.datetime.utcnow().strftime(value) % mapping_dict # datetime.datetime.utcnow().strftime(value).format(**mapping_dict)
+        else:
+            return value % mapping_dict # dot_dict_formatter.format(value, **mapping_dict)
+    except KeyError:
+        return value
+    except (ValueError, TypeError):
+        etype, evalue, etb = sys.exc_info()
+        logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
+        return False
+    #except AttributeError:
+    #    print mapping_dict.__class__.__name__
+
+def mapDynamicValueInList(value_list, mapping_dict, use_strftime=False):
+    for idx, value in enumerate(value_list):
+        if isinstance(value, list):
+            mapDynamicValueInList(value, mapping_dict, use_strftime)
+        elif isinstance(value, dict):
+            mapDynamicValueInDict(value, mapping_dict, use_strftime)
+        elif isinstance(value, basestring):
+            new_value = mapDynamicValueInString(value, mapping_dict, use_strftime)
+            if new_value == value:
+                continue
+            value_list[idx] = new_value
+
+def mapDynamicValueInDict(value_dict, mapping_dict, use_strftime=False):
+    for key, value in value_dict.items():
+        new_key = key
+        if(isinstance(key, basestring)):
+            new_key = mapDynamicValueInString(key, mapping_dict, use_strftime)
+        if isinstance(value, list):
+            mapDynamicValueInList(value, mapping_dict, use_strftime)
+        elif isinstance(value, dict):
+            mapDynamicValueInDict(value, mapping_dict, use_strftime)
+        elif isinstance(value, basestring):
+            new_value = mapDynamicValueInString(value, mapping_dict, use_strftime)
+            if key == new_key and value == new_value:
+                continue
+            value_dict[new_key] = new_value
+
+def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
+        if isinstance(value, basestring):
+            return mapDynamicValueInString(value, mapping_dict, use_strftime)
+        if isinstance(value, list):
+            mapDynamicValueInList(value, mapping_dict, use_strftime)
+        elif isinstance(value, dict):
+            mapDynamicValueInDict(value, mapping_dict, use_strftime)
+        return value
+
 class TimedFunctionManager:
     """
     The decorator setInterval provides a simple way to repeatedly execute a function in intervals.
@@ -569,3 +588,5 @@ class MemoryCache():
 
     def unset(self, key):
         return self.lru_dict.pop(key)
+
+dot_dict_formatter = DotDictFormatter()

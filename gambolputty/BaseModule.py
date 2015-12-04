@@ -42,6 +42,8 @@ class BaseModule:
         self.input_filter = None
         self.output_filters = {}
         self.process_id = os.getpid()
+        self.dynamic_value_regex = re.compile('\$\((.*?)?\)(-?\d*[-\.\*]?\d*[sdf]?)') # '\$\((.*?)(?:\|([sdf]))?\)' #'\$\((.*?)?\)'
+        self.dynamic_value_replace_pattern = r"%(\1)"
 
     def configure(self, configuration=None):
         """
@@ -72,42 +74,69 @@ class BaseModule:
                 self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
 
-    def parseDynamicValuesInConfiguration(self):
-        # Test for dynamic value patterns
-        self.dynamic_var_regex = re.compile('\$\((.*?)\)') # re.compile('\$\((.*?)\)[sdf\.\d+]*')
-        for key, value in self.configuration_data.items():
-            # Make sure that configuration values only get parsed once.
-            if isinstance(value, dict) and 'contains_placeholder' in value:
-                continue
-            contains_placeholder = False
+    def parseDynamicValuesInString(self, configuration_string):
+        matches = self.dynamic_value_regex.search(configuration_string)
+        if not matches:
+            return configuration_string
+        # Get custom format if set.
+        # Defaults to string.
+        if matches.group(2):
+            replace_pattern = self.dynamic_value_replace_pattern + matches.group(2)
+        else:
+            replace_pattern = self.dynamic_value_replace_pattern + "s"
+        return self.dynamic_value_regex.sub(replace_pattern, configuration_string)
+        #return self.dynamic_value_regex.sub(r"{\1}", configuration_string) # r"%(\1)s" r"{\1}"
+
+    def parseDynamicValuesInList(self, configuration_list, contains_dynamic_value):
+        # Copy list since we might change it during iteration.
+        configuration_list_copy = list(configuration_list)
+        for idx, value in enumerate(configuration_list_copy):
             if isinstance(value, list):
-                for i, _value in enumerate(value):
-                    try:
-                        if self.dynamic_var_regex.search(_value):
-                            value[i] = self.dynamic_var_regex.sub(r"%(\1)s", _value)
-                            contains_placeholder = True
-                    except:
-                        pass
-                if contains_placeholder:
-                    self.configuration_data[key] = value
+                self.parseDynamicValuesInList(configuration_list[idx], contains_dynamic_value)
             elif isinstance(value, dict):
-                for _key, _value in value.items():
-                    try:
-                        if self.dynamic_var_regex.search(_key) or self.dynamic_var_regex.search(_value):
-                            new_key = self.dynamic_var_regex.sub(r"%(\1)s", _key)
-                            new_value = self.dynamic_var_regex.sub(r"%(\1)s", _value)
-                            value[new_key] = new_value
-                            del value[_key]
-                            contains_placeholder = True
-                    except:
-                        pass
-                if contains_placeholder:
-                    self.configuration_data[key] = value
+                self.parseDynamicValuesInDict(configuration_list[idx], contains_dynamic_value)
             elif isinstance(value, basestring):
-                if self.dynamic_var_regex.search(value):
-                    value = self.dynamic_var_regex.sub(r"%(\1)s", value)
-                    contains_placeholder = True
-            self.configuration_data[key] = {'value': value, 'contains_placeholder': contains_placeholder}
+                new_value = self.parseDynamicValuesInString(value)
+                if new_value == value:
+                    continue
+                contains_dynamic_value.append(True)
+                configuration_list[idx] = new_value
+
+    def parseDynamicValuesInDict(self, configuration_dict, contains_dynamic_value):
+        # Copy dict since we might change it during iteration.
+        configuration_dict_copy = configuration_dict.copy()
+        for key, value in configuration_dict_copy.items():
+            new_key = key
+            if(isinstance(key, basestring)):
+                new_key = self.parseDynamicValuesInString(key)
+            if isinstance(value, list):
+                self.parseDynamicValuesInList(configuration_dict[key], contains_dynamic_value)
+            elif isinstance(value, dict):
+                self.parseDynamicValuesInDict(configuration_dict[key], contains_dynamic_value)
+            elif isinstance(value, basestring):
+                new_value = self.parseDynamicValuesInString(value)
+                if key == new_key and value == new_value:
+                    continue
+                if new_key != key:
+                    del configuration_dict[key]
+                contains_dynamic_value.append(True)
+                configuration_dict[new_key] = new_value
+
+    def parseDynamicValuesInConfiguration(self):
+        # Copy dict since we might change it during iteration.
+        configuration_data_copy = self.configuration_data.copy()
+        for key, value in configuration_data_copy.iteritems():
+            contains_dynamic_value = []
+            if isinstance(value, list):
+                self.parseDynamicValuesInList(self.configuration_data[key], contains_dynamic_value)
+            elif isinstance(value, dict):
+                self.parseDynamicValuesInDict(self.configuration_data[key], contains_dynamic_value)
+            elif isinstance(value, basestring):
+                new_value = self.parseDynamicValuesInString(value)
+                if value != new_value:
+                    contains_dynamic_value.append(True)
+                    value = new_value
+            self.configuration_data[key] = {'value': value, 'contains_placeholder': bool(contains_dynamic_value)}
 
     def checkConfiguration(self):
         configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleConfiguration(self)
@@ -131,7 +160,6 @@ class BaseModule:
         It will also take care to return a default value if the module doc string provided one.
         """
         # Test if requested key exists.
-        config_setting = False
         config_setting = self.configuration_data[key]
         try:
             config_setting = self.configuration_data[key]
@@ -163,9 +191,36 @@ class BaseModule:
 
     def addOutputFilter(self, receiver_name, filter_string):
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        filter_string_tmp = self.dynamic_var_regex.sub(r"%(\1)s", filter_string)
+        filter_string_tmp = self.dynamic_value_regex.sub(r"%(\1)s", filter_string)
         filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
         filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)[sdf\d+]*", r"event.get('\1', False)", filter_string_tmp)
+        try:
+            filter = eval(filter_string_tmp)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
+            self.gp.shutDown()
+        self.output_filters[receiver_name] = filter
+
+    def ___setInputFilter(self, filter_string):
+        filter_string_tmp = re.sub('^if\s+', "", filter_string)
+        filter_string_tmp = "lambda event : " + re.sub(r"\{(.*?)\}", r"event.get('\1', False)", filter_string_tmp)
+        print filter_string_tmp
+        try:
+            event_filter = eval(filter_string_tmp)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
+            self.gp.shutDown()
+        # Wrap default receiveEvent method with filtered one.
+        self.wrapReceiveEventWithFilter(event_filter, filter_string)
+
+    def ___addOutputFilter(self, receiver_name, filter_string):
+        # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
+        filter_string_tmp = self.dynamic_value_regex.sub(r"{\1}", filter_string)
+        filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + re.sub(r"\{(.*?)\}", r"event.get('\1', False)", filter_string_tmp)
+        print filter_string_tmp
         try:
             filter = eval(filter_string_tmp)
         except:
@@ -205,12 +260,19 @@ class BaseModule:
 
     def commonActions(self, event):
         #if not self.input_filter or self.input_filter_matched:
-        # Delete fields if configured.
-        for field in self.delete_fields:
-            event.pop(field, None)
+        # Add fields if configured.
         if self.add_fields:
             for field_name, field_value in Utils.mapDynamicValue(self.add_fields, event).items():
-                event[field_name] = field_value
+                try:
+                    event[field_name] = field_value
+                except KeyError:
+                    self.logger.warning("KeyError: could not set %s: %s" % (field_name, field_value))
+        # Delete fields if configured.
+        for field in self.delete_fields:
+            try:
+                event.pop(field, None)
+            except KeyError:
+                pass
         if self.event_type:
             event['gambolputty']['event_type'] = Utils.mapDynamicValue(self.event_type, event)
         return event
