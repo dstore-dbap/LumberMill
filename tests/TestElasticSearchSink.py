@@ -14,7 +14,11 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.es_server = 'localhost'
         self.test_index_name = "test_index"
         self.es = self.connect([self.es_server])
-        self.es.indices.create(index=self.test_index_name, ignore=[400, 404])
+        try:
+            self.es.indices.create(index=self.test_index_name) # ignore=[400, 404]
+        except elasticsearch.exceptions.RequestError:
+            self.logger.error("Could not create index %s on %s." % (self.test_index_name, self.es_server))
+            self.fail()
         return
 
     def connect(self, nodes):
@@ -39,22 +43,25 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
                 tries += 1
                 continue
         if not es:
-            print("Connection to %s failed. Shutting down." % (nodes))
+            self.logger.error("Connection to %s failed. Shutting down." % (nodes))
             sys.exit()
         return es
 
     def testDefaultDocId(self):
         self.test_object.configure({'index_name': self.test_index_name,
                                     'nodes': [self.es_server],
-                                    'sniff_on_start': False,
-                                    'store_interval_in_secs': 1})
+                                    'batch_size': 1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
         event = Utils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
         doc_id = event['gambolputty']['event_id']
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
-        result = self.es.get(index=self.test_index_name, id=doc_id)
+        time.sleep(1)
+        try:
+            result = self.es.get(index=self.test_index_name, id=doc_id)
+        except elasticsearch.exceptions.NotFoundError, e:
+            self.fail(e)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
 
@@ -75,7 +82,7 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertDictContainsSubset(event, result['_source'])
 
     def testCustomIndexName(self):
-        self.test_object.configure({'index_name': 'testindex-%Y.%m.%d',
+        self.test_object.configure({'index_name': 'testindex-%Y.%m.%d-$(gambolputty.event_type)',
                                     'nodes': [self.es_server],
                                     'sniff_on_start': False,
                                     'store_interval_in_secs': 1})
@@ -85,7 +92,7 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
         doc_id = event['gambolputty']['event_id']
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
-        index_name = Utils.mapDynamicValue('testindex-%Y.%m.%d', use_strftime=True)
+        index_name = Utils.mapDynamicValueInString('testindex-%Y.%m.%d-%(gambolputty.event_type)s', event, use_strftime=True).lower()
         result = self.es.get(index=index_name, id=doc_id)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
