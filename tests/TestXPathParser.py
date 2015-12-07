@@ -55,7 +55,7 @@ class TestXPathParser(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()'})
         self.checkConfiguration()
         event = Utils.getDefaultEventDict({'agora_product_xml': self.xml_string,
-                                         'category': 'COOKING'})
+                                           'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
             self.assertTrue('gambolputty_xpath' in event and len(event['gambolputty_xpath']) > 0)
 
