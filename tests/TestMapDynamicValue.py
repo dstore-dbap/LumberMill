@@ -1,3 +1,4 @@
+import datetime
 import extendSysPath
 import logging
 import unittest2
@@ -19,6 +20,8 @@ class TestMapDynaimcValue(unittest2.TestCase):
                                 'list': [10, 20, {'hovercraft': 'eels'}]
                   },
                  'http_status': 200,
+                 'longitude': 7.626,
+                 'latitude': 51.960,
                  'identd': '-',
                  'remote_ip': '192.168.2.20',
                  'url': 'GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0',
@@ -36,3 +39,16 @@ class TestMapDynaimcValue(unittest2.TestCase):
 
     def testMapDynamicValueWithMissingKey(self):
         self.assertTrue(Utils.mapDynamicValue('%(missing_key)s', self.event) == '%(missing_key)s')
+
+    def testMapDynamicValueWithTimePattern(self):
+        timestring = datetime.datetime.utcnow().strftime('%Y.%m.%d')
+        self.assertTrue(Utils.mapDynamicValue('test-%Y.%m.%d-%(gambolputty.event_id)s', self.event, use_strftime=True) == 'test-%s-715bd321b1016a442bf046682722c78e' % timestring)
+
+    def testMapDynamicValueWithValueFormat(self):
+        self.assertTrue(Utils.mapDynamicValue('%(longitude)d', self.event) == '7')
+        self.assertTrue(Utils.mapDynamicValue('%(longitude)+d', self.event) == '+7')
+        self.assertTrue(Utils.mapDynamicValue('%(longitude)05.2f', self.event) == '07.63')
+        self.assertTrue(Utils.mapDynamicValue('%(fields.1)10s', self.event) == '   expects')
+        self.assertTrue(Utils.mapDynamicValue('%(fields.1)-10s', self.event) == 'expects   ')
+        self.assertTrue(Utils.mapDynamicValue('%(fields.1).5s', self.event) == 'expec')
+        self.assertTrue(Utils.mapDynamicValue('%(fields.1)-10.5s', self.event) == 'expec     ')
