@@ -3,6 +3,7 @@ import ast
 import datetime
 import copy
 import random
+import re
 import time
 import os
 import sys
@@ -74,6 +75,10 @@ else:
 
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = platform.system()
+GP_DYNAMIC_VAL_REGEX = re.compile('\$\((.*?)\)')
+GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('\$\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)')
+PYTHON_DYNAMIC_VAL_REGEX = re.compile('%\((.*?)\)')
+DYNAMIC_VALUE_REPLACE_PATTERN = r"%(\1)"
 
 def restartMainProcess():
     """
@@ -338,7 +343,6 @@ class KeyDotNotationDict(dict):
     def copy(self):
         new_dict = KeyDotNotationDict(copy.deepcopy(super(KeyDotNotationDict, self)))
         if "event_id" in new_dict.get("gambolputty", {}):
-            #new_dict['gambolputty']['event_id'] = "%s-%02x" % (new_dict['gambolputty']['event_id'], random.getrandbits(8))
             new_dict['gambolputty']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
         return new_dict
 
@@ -401,20 +405,95 @@ class DotDictFormatter(Formatter):
             obj = obj[i]
         return obj, first
 
+def parseDynamicValuesInString(value):
+    """
+    Parse a string and replace the configuration notation for dynamic values with pythons notation.
+    E.g:
+    filter: $(gambolputty.source_module) == 'TcpServer'
+    parsed:
+    filter: %(gambolputty.source_module)s == 'TcpServer'
+    """
+    matches = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.search(value)
+    if not matches:
+        return value
+    # Get custom format if set.
+    # Defaults to string.
+    if matches.group(2):
+        replace_pattern = DYNAMIC_VALUE_REPLACE_PATTERN + matches.group(2)
+    else:
+        replace_pattern = DYNAMIC_VALUE_REPLACE_PATTERN + "s"
+    return GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(replace_pattern, value)
+
+def parseDynamicValuesInList(value_list, contains_dynamic_value):
+    # Copy list since we might change it during iteration.
+    value_list_copy = list(value_list)
+    for idx, value in enumerate(value_list_copy):
+        if isinstance(value, list):
+            parseDynamicValuesInList(value_list[idx], contains_dynamic_value)
+        elif isinstance(value, dict):
+            parseDynamicValuesInDict(value_list[idx], contains_dynamic_value)
+        elif isinstance(value, basestring):
+            new_value = parseDynamicValuesInString(value)
+            if new_value == value:
+                continue
+            contains_dynamic_value.append(True)
+            value_list[idx] = new_value
+
+def parseDynamicValuesInDict(value_dict, contains_dynamic_value):
+    # Copy dict since we might change it during iteration.
+    value_dict_copy = value_dict.copy()
+    for key, value in value_dict_copy.items():
+        new_key = key
+        if(isinstance(key, basestring)):
+            new_key = parseDynamicValuesInString(key)
+        if isinstance(value, list):
+            parseDynamicValuesInList(value_dict[key], contains_dynamic_value)
+        elif isinstance(value, dict):
+            parseDynamicValuesInDict(value_dict[key], contains_dynamic_value)
+        elif isinstance(value, basestring):
+            new_value = parseDynamicValuesInString(value)
+            if key == new_key and value == new_value:
+                continue
+            if new_key != key:
+                del value_dict[key]
+            contains_dynamic_value.append(True)
+            value_dict[new_key] = new_value
+
+def parseDynamicValue(value):
+    contains_dynamic_value = []
+    if isinstance(value, list):
+        mapDynamicValueInList(value, contains_dynamic_value)
+    elif isinstance(value, dict):
+        mapDynamicValueInDict(value, contains_dynamic_value)
+    elif isinstance(value, basestring):
+        new_value = parseDynamicValuesInString(value)
+        if value != new_value:
+            value = new_value
+            contains_dynamic_value.append(True)
+    return {'value': value, 'contains_dynamic_value': bool(contains_dynamic_value)}
+
 def mapDynamicValueInString(value, mapping_dict, use_strftime=False):
     try:
         if use_strftime:
-            return datetime.datetime.utcnow().strftime(value) % mapping_dict # datetime.datetime.utcnow().strftime(value).format(**mapping_dict)
-        else:
-            return value % mapping_dict # dot_dict_formatter.format(value, **mapping_dict)
+            if sys.platform .startswith('linux'):
+                value = datetime.datetime.utcnow().strftime(value) % mapping_dict
+            # On linux strftime will not remove non-supported format characters.
+            # On other platforms this might be different.
+            # So we need to take care that other dynamic value notations, which also use the percent sign syntax,
+            # are renamed prior to using strftime and renamed to original after strftime was applied.
+            # This adds a considerable overhead in parsing.
+            # @see: http://bugs.python.org/issue9811
+            else:
+                value = PYTHON_DYNAMIC_VAL_REGEX.sub(r"$(\1)", value)
+                value = datetime.datetime.utcnow().strftime(value)
+                value = GP_DYNAMIC_VAL_REGEX.sub(r"%(\1)", value)
+        return value % mapping_dict # dot_dict_formatter.format(value, **mapping_dict)
     except KeyError:
         return value
     except (ValueError, TypeError):
         etype, evalue, etb = sys.exc_info()
         logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
         return False
-    #except AttributeError:
-    #    print mapping_dict.__class__.__name__
 
 def mapDynamicValueInList(value_list, mapping_dict, use_strftime=False):
     for idx, value in enumerate(value_list):

@@ -42,8 +42,6 @@ class BaseModule:
         self.input_filter = None
         self.output_filters = {}
         self.process_id = os.getpid()
-        self.dynamic_value_regex = re.compile('\$\((.*?)?\)(-?\d*[-\.\*]?\d*[sdf]?)') # '\$\((.*?)(?:\|([sdf]))?\)' #'\$\((.*?)?\)'
-        self.dynamic_value_replace_pattern = r"%(\1)"
 
     def configure(self, configuration=None):
         """
@@ -74,69 +72,18 @@ class BaseModule:
                 self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
 
-    def parseDynamicValuesInString(self, configuration_string):
-        matches = self.dynamic_value_regex.search(configuration_string)
-        if not matches:
-            return configuration_string
-        # Get custom format if set.
-        # Defaults to string.
-        if matches.group(2):
-            replace_pattern = self.dynamic_value_replace_pattern + matches.group(2)
-        else:
-            replace_pattern = self.dynamic_value_replace_pattern + "s"
-        return self.dynamic_value_regex.sub(replace_pattern, configuration_string)
-        #return self.dynamic_value_regex.sub(r"{\1}", configuration_string) # r"%(\1)s" r"{\1}"
-
-    def parseDynamicValuesInList(self, configuration_list, contains_dynamic_value):
-        # Copy list since we might change it during iteration.
-        configuration_list_copy = list(configuration_list)
-        for idx, value in enumerate(configuration_list_copy):
-            if isinstance(value, list):
-                self.parseDynamicValuesInList(configuration_list[idx], contains_dynamic_value)
-            elif isinstance(value, dict):
-                self.parseDynamicValuesInDict(configuration_list[idx], contains_dynamic_value)
-            elif isinstance(value, basestring):
-                new_value = self.parseDynamicValuesInString(value)
-                if new_value == value:
-                    continue
-                contains_dynamic_value.append(True)
-                configuration_list[idx] = new_value
-
-    def parseDynamicValuesInDict(self, configuration_dict, contains_dynamic_value):
-        # Copy dict since we might change it during iteration.
-        configuration_dict_copy = configuration_dict.copy()
-        for key, value in configuration_dict_copy.items():
-            new_key = key
-            if(isinstance(key, basestring)):
-                new_key = self.parseDynamicValuesInString(key)
-            if isinstance(value, list):
-                self.parseDynamicValuesInList(configuration_dict[key], contains_dynamic_value)
-            elif isinstance(value, dict):
-                self.parseDynamicValuesInDict(configuration_dict[key], contains_dynamic_value)
-            elif isinstance(value, basestring):
-                new_value = self.parseDynamicValuesInString(value)
-                if key == new_key and value == new_value:
-                    continue
-                if new_key != key:
-                    del configuration_dict[key]
-                contains_dynamic_value.append(True)
-                configuration_dict[new_key] = new_value
-
     def parseDynamicValuesInConfiguration(self):
+        """
+        Replace the configuration notation for dynamic values with pythons notation.
+        E.g:
+        filter: $(gambolputty.source_module) == 'TcpServer'
+        parsed:
+        filter: %(gambolputty.source_module)s == 'TcpServer'
+        """
         # Copy dict since we might change it during iteration.
         configuration_data_copy = self.configuration_data.copy()
         for key, value in configuration_data_copy.iteritems():
-            contains_dynamic_value = []
-            if isinstance(value, list):
-                self.parseDynamicValuesInList(self.configuration_data[key], contains_dynamic_value)
-            elif isinstance(value, dict):
-                self.parseDynamicValuesInDict(self.configuration_data[key], contains_dynamic_value)
-            elif isinstance(value, basestring):
-                new_value = self.parseDynamicValuesInString(value)
-                if value != new_value:
-                    contains_dynamic_value.append(True)
-                    value = new_value
-            self.configuration_data[key] = {'value': value, 'contains_placeholder': bool(contains_dynamic_value)}
+            self.configuration_data[key] = Utils.parseDynamicValue(value)
 
     def checkConfiguration(self):
         configuration_errors = ConfigurationValidator.ConfigurationValidator().validateModuleConfiguration(self)
@@ -169,7 +116,7 @@ class BaseModule:
         if not isinstance(config_setting, dict):
             self.logger.debug("Configuration for key: %s is incorrect." % key)
             return False
-        if config_setting['contains_placeholder'] is False or not mapping_dict:
+        if config_setting['contains_dynamic_value'] is False or not mapping_dict:
             return config_setting.get('value')
         return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
@@ -178,8 +125,15 @@ class BaseModule:
             self.receivers[receiver_name] = receiver
 
     def setInputFilter(self, filter_string):
+        """
+        Convert input filter to lamba function.
+        E.g. original filter:
+        filter: $(gambolputty.source_module) == 'TcpServer'
+        converts to:
+        lambda event : event.get('gambolputty.source_module', False) == 'TcpServer'
+        """
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)[sdf\d+]*", r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"event.get('\1', False)", filter_string_tmp)
         try:
             event_filter = eval(filter_string_tmp)
         except:
@@ -190,37 +144,17 @@ class BaseModule:
         self.wrapReceiveEventWithFilter(event_filter, filter_string)
 
     def addOutputFilter(self, receiver_name, filter_string):
+        """
+        Convert output filter to lamba function.
+        E.g. original filter:
+        filter: $(gambolputty.source_module) == 'TcpServer'
+        converts to:
+        lambda event : event.get('gambolputty.source_module', False) == 'TcpServer'
+        """
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        filter_string_tmp = self.dynamic_value_regex.sub(r"%(\1)s", filter_string)
+        filter_string_tmp = Utils.GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string)
         filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
-        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)[sdf\d+]*", r"event.get('\1', False)", filter_string_tmp)
-        try:
-            filter = eval(filter_string_tmp)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
-            self.gp.shutDown()
-        self.output_filters[receiver_name] = filter
-
-    def ___setInputFilter(self, filter_string):
-        filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + re.sub(r"\{(.*?)\}", r"event.get('\1', False)", filter_string_tmp)
-        print filter_string_tmp
-        try:
-            event_filter = eval(filter_string_tmp)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
-            self.gp.shutDown()
-        # Wrap default receiveEvent method with filtered one.
-        self.wrapReceiveEventWithFilter(event_filter, filter_string)
-
-    def ___addOutputFilter(self, receiver_name, filter_string):
-        # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        filter_string_tmp = self.dynamic_value_regex.sub(r"{\1}", filter_string)
-        filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
-        filter_string_tmp = "lambda event : " + re.sub(r"\{(.*?)\}", r"event.get('\1', False)", filter_string_tmp)
-        print filter_string_tmp
+        filter_string_tmp = "lambda event : " + filter_string_tmp
         try:
             filter = eval(filter_string_tmp)
         except:
@@ -249,10 +183,12 @@ class BaseModule:
         return filterd_receivers
 
     def initAfterFork(self):
-        # Call startInterval on receiver buffered queue.
-        # This is done here since the buffer uses a thread to flush buffer in
-        # given intervals. The thread will not survive a fork of the main process.
-        # So we need to start this after the fork was executed.
+        """
+        Call startInterval on receiver buffered queue.
+        This is done here since the buffer uses a thread to flush buffer in
+        given intervals. The thread will not survive a fork of the main process.
+        So we need to start this after the fork was executed.
+        """
         self.process_id = os.getpid()
         for receiver_name, receiver in self.receivers.items():
             if hasattr(receiver, 'put'):
