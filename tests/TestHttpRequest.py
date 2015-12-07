@@ -27,8 +27,7 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'url': '$(schema)://$(host)',
                                     'target_field': 'Johann Gambolputty'})
         self.checkConfiguration()
-        data_dict = Utils.getDefaultEventDict({'TreeNodeID': '1',
-                                              'schema': 'http',
+        data_dict = Utils.getDefaultEventDict({'schema': 'http',
                                               'host': 'www.google.com'})
         for event in self.test_object.handleEvent(data_dict):
             self.assertTrue('Johann Gambolputty' in event and len(event['Johann Gambolputty']) > 0)
