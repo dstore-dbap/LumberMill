@@ -47,14 +47,16 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
         self.max_events_count = self.getConfigurationValue("events_count")
 
     def initAfterFork(self):
+        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
         # Calculate event count when running in multiple processes.
+        if self.max_events_count == 0:
+            return
         self.max_events_count = int(self.getConfigurationValue("events_count")/self.gp.workers)
         if self.gp.is_master():
             remainder = self.getConfigurationValue("events_count") % self.gp.workers
             self.max_events_count += remainder
         if self.max_events_count == 0:
             self.shutDown()
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
 
     def run(self):
         counter = 0
@@ -67,6 +69,8 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
                 self.sendEvent(event)
                 if self.sleep > 0:
                     time.sleep(self.sleep)
+                if self.max_events_count == 0:
+                    continue
                 counter += 1
                 if (counter - self.max_events_count == 0):
                     time.sleep(2)
