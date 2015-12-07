@@ -129,7 +129,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
         self.assert_(queue_emtpy != True)
 
     def testWorksOnOriginal(self, config = {}):
-        config['work_on_copy'] = {'value': False, 'contains_placeholder': False}
+        config['work_on_copy'] = {'value': False, 'contains_dynamic_value': False}
         data_dict = Utils.getDefaultEventDict({})
         self.test_object.configure(config)
         self.test_object.start()
@@ -143,7 +143,7 @@ class ModuleBaseTestCase(unittest2.TestCase):
 
 
     def testWorksOnCopy(self, config = {}):
-        config['work_on_copy'] = {'value': True, 'contains_placeholder': False}
+        config['work_on_copy'] = {'value': True, 'contains_dynamic_value': False}
         data_dict = Utils.getDefaultEventDict({})
         self.test_object.configure(config)
         self.test_object.start()
