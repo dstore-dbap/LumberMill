@@ -87,7 +87,11 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             self.es_nodes = [self.es_nodes]
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
-        self.index_name_pattern = self.getConfigurationValue("index_name")
+        self.index_name = None
+        if not self.configuration_data['index_name']['contains_dynamic_value']:
+            self.index_name = self.getConfigurationValue("index_name")
+        else:
+            self.index_name_pattern = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
         self.connection_class = elasticsearch.connection.Urllib3HttpConnection
@@ -95,7 +99,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
             self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def getStartMessage(self):
-        return "Idx: %s. Max buffer size: %d" % (self.index_name_pattern, self.getConfigurationValue('backlog_size'))
+        index_name = self.index_name if self.index_name else self.index_name_pattern
+        return "Idx: %s. Max buffer size: %d" % (index_name, self.getConfigurationValue('backlog_size'))
 
     def initAfterFork(self):
         BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
@@ -144,12 +149,14 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         self.buffer.append(publish_data)
         yield None
 
-    def dataToElasticSearchJson(self, index_name, events):
+    def dataToElasticSearchJson(self, events, index_name=None):
         """
         Format data for elasticsearch bulk update.
         """
         json_data = []
         for event in events:
+            if not index_name:
+                index_name = Utils.mapDynamicValueInString(self.index_name_pattern, event, use_strftime=True).lower()
             event_type = event['gambolputty']['event_type'] if 'event_type' in event['gambolputty'] else 'Unknown'
             doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
             routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
@@ -174,8 +181,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         return json_data
 
     def storeData(self, events):
-        index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
-        json_data = self.dataToElasticSearchJson(index_name, events)
+        json_data = self.dataToElasticSearchJson(events, self.index_name)
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.

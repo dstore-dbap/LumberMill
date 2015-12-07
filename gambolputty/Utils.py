@@ -75,8 +75,8 @@ else:
 
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = platform.system()
-GP_DYNAMIC_VAL_REGEX = re.compile('\$\((.*?)\)')
-GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('\$\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)')
+GP_DYNAMIC_VAL_REGEX = re.compile('[\$|%]\((.*?)\)')
+GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('[\$|%]\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)')
 PYTHON_DYNAMIC_VAL_REGEX = re.compile('%\((.*?)\)')
 DYNAMIC_VALUE_REPLACE_PATTERN = r"%(\1)"
 
@@ -462,9 +462,9 @@ def parseDynamicValuesInDict(value_dict, contains_dynamic_value):
 def parseDynamicValue(value):
     contains_dynamic_value = []
     if isinstance(value, list):
-        mapDynamicValueInList(value, contains_dynamic_value)
+        parseDynamicValuesInList(value, contains_dynamic_value)
     elif isinstance(value, dict):
-        mapDynamicValueInDict(value, contains_dynamic_value)
+        parseDynamicValuesInDict(value, contains_dynamic_value)
     elif isinstance(value, basestring):
         new_value = parseDynamicValuesInString(value)
         if value != new_value:
@@ -492,7 +492,7 @@ def mapDynamicValueInString(value, mapping_dict, use_strftime=False):
         return value
     except (ValueError, TypeError):
         etype, evalue, etb = sys.exc_info()
-        logging.getLogger("mapDynamicValue").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
+        logging.getLogger("mapDynamicValueInString").error("Mapping failed for %s. Mapping data: %s. Exception: %s, Error: %s." % (value, mapping_dict, etype, evalue))
         return False
 
 def mapDynamicValueInList(value_list, mapping_dict, use_strftime=False):
@@ -523,13 +523,13 @@ def mapDynamicValueInDict(value_dict, mapping_dict, use_strftime=False):
             value_dict[new_key] = new_value
 
 def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
-        if isinstance(value, basestring):
-            return mapDynamicValueInString(value, mapping_dict, use_strftime)
-        if isinstance(value, list):
-            mapDynamicValueInList(value, mapping_dict, use_strftime)
-        elif isinstance(value, dict):
-            mapDynamicValueInDict(value, mapping_dict, use_strftime)
-        return value
+    if isinstance(value, basestring):
+        return mapDynamicValueInString(value, mapping_dict, use_strftime)
+    if isinstance(value, list):
+        mapDynamicValueInList(value, mapping_dict, use_strftime)
+    elif isinstance(value, dict):
+        mapDynamicValueInDict(value, mapping_dict, use_strftime)
+    return value
 
 class TimedFunctionManager:
     """

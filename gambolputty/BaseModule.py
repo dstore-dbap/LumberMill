@@ -107,7 +107,7 @@ class BaseModule:
         It will also take care to return a default value if the module doc string provided one.
         """
         # Test if requested key exists.
-        config_setting = self.configuration_data[key]
+        #config_setting = self.configuration_data[key]
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
@@ -156,12 +156,13 @@ class BaseModule:
         filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
         filter_string_tmp = "lambda event : " + filter_string_tmp
         try:
-            filter = eval(filter_string_tmp)
+            output_filter = eval(filter_string_tmp)
+            self.output_filters[receiver_name] = output_filter
         except:
             etype, evalue, etb = sys.exc_info()
+            print(filter_string_tmp)
             self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
             self.gp.shutDown()
-        self.output_filters[receiver_name] = filter
 
     def getFilteredReceivers(self, event):
         if not self.output_filters:
