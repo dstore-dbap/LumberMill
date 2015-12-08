@@ -1,5 +1,6 @@
 .. image:: https://travis-ci.org/dstore-dbap/GambolPutty.svg?branch=master
    :target: https://travis-ci.org/dstore-dbap/GambolPutty
+.. image:: https://coveralls.io/repos/dstore-dbap/GambolPutty/badge.svg?branch=master&service=github :target: https://coveralls.io/github/dstore-dbap/GambolPutty?branch=master
 
 GambolPutty
 ===========
