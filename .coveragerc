@@ -1,0 +1,6 @@
+[run]
+source = gambolputty
+omit =
+    gambolputty/assets/*
+    gambolputty/cluster/*
+    gambolputty/webserver/*
