@@ -36,7 +36,7 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     connection_type:    One of: 'thrift', 'http'.
     http_auth:  'user:password'.
     use_ssl:    One of: True, False.
-    index_name: Sets the index name. Timepatterns like %Y.%m.%d are allowed here.
+    index_name: Sets the index name. Timepatterns like %Y.%m.%d and dynamic values like $(bar) are allowed here.
     doc_id:     Sets the es document id for the committed event data.
     routing:    Sets a routing value (@see: http://www.elasticsearch.org/blog/customizing-your-document-routing/)
                 Timepatterns like %Y.%m.%d are allowed here.
