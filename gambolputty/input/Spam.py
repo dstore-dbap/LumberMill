@@ -51,9 +51,9 @@ class Spam(BaseThreadedModule.BaseThreadedModule):
         # Calculate event count when running in multiple processes.
         if self.max_events_count == 0:
             return
-        self.max_events_count = int(self.getConfigurationValue("events_count")/self.gp.workers)
+        self.max_events_count = int(self.getConfigurationValue("events_count")/self.gp.getWorkerCount())
         if self.gp.is_master():
-            remainder = self.getConfigurationValue("events_count") % self.gp.workers
+            remainder = self.getConfigurationValue("events_count") % self.gp.getWorkerCount()
             self.max_events_count += remainder
         if self.max_events_count == 0:
             self.shutDown()
