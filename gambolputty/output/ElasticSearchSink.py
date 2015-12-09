@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import sys
 import time
 import elasticsearch
@@ -80,22 +81,36 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        # Set log level for elasticsarch library if configured to other than default.
+        if self.getConfigurationValue('log_level') != 'info':
+            logging.getLogger('elasticsearch').setLevel(self.logger.level)
+        else:
+            logging.getLogger('elasticsearch').setLevel(logging.WARN)
         self.action = self.getConfigurationValue('action')
         self.format = self.getConfigurationValue('format')
-        self.es_nodes = self.getConfigurationValue("nodes")
-        if not isinstance(self.es_nodes, list):
-            self.es_nodes = [self.es_nodes]
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
         self.index_name = None
+        self.routing_pattern = self.getConfigurationValue("routing")
+        self.doc_id_pattern = self.getConfigurationValue("doc_id")
+        self.es_nodes = self.getConfigurationValue("nodes")
+        if not isinstance(self.es_nodes, list):
+            self.es_nodes = [self.es_nodes]
         if not self.configuration_data['index_name']['contains_dynamic_value']:
             self.index_name = self.getConfigurationValue("index_name")
         else:
             self.index_name_pattern = self.getConfigurationValue("index_name")
-        self.routing_pattern = self.getConfigurationValue("routing")
-        self.doc_id_pattern = self.getConfigurationValue("doc_id")
-        self.connection_class = elasticsearch.connection.Urllib3HttpConnection
-        if self.getConfigurationValue("connection_type") == 'requests':
+        if self.getConfigurationValue("connection_type") == 'urllib3':
+            if self.getConfigurationValue('log_level') != 'info':
+                logging.getLogger('urllib3').setLevel(self.logger.level)
+            else:
+                logging.getLogger('urllib3').setLevel(logging.WARN)
+            self.connection_class = elasticsearch.connection.Urllib3HttpConnection
+        elif self.getConfigurationValue("connection_type") == 'requests':
+            if self.getConfigurationValue('log_level') != 'info':
+                logging.getLogger('requests').setLevel(self.logger.level)
+            else:
+                logging.getLogger('requests').setLevel(logging.WARN)
             self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def getStartMessage(self):

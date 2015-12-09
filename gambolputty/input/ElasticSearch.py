@@ -83,6 +83,13 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        # Set log level for elasticsarch library if configured to other than default.
+        if self.getConfigurationValue('log_level') != 'info':
+            logging.getLogger('elasticsearch').setLevel(self.logger.level)
+            logging.getLogger('requests').setLevel(self.logger.level)
+        else:
+            logging.getLogger('elasticsearch').setLevel(logging.WARN)
+            logging.getLogger('requests').setLevel(logging.WARN)
         self.query = self.getConfigurationValue('query')
         # Test if query is valid json.
         try:
@@ -99,14 +106,13 @@ class ElasticSearch(BaseThreadedModule.BaseThreadedModule):
             self.es_nodes = [self.es_nodes]
         self.index_name_pattern = self.getConfigurationValue('index_name')
         self.index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
-        self.connection_class = connection.Urllib3HttpConnection
-        if self.getConfigurationValue('connection_type') == 'requests':
+        if self.getConfigurationValue("connection_type") == 'urllib3':
+            self.connection_class = connection.Urllib3HttpConnection
+        elif self.getConfigurationValue('connection_type') == 'requests':
             self.connection_class = connection.RequestsHttpConnection
         self.lock = Lock()
         self.manager = Manager()
         if self.search_type == 'scan':
-            # Set requests log level.
-            logging.getLogger('requests').setLevel(logging.WARNING)
             self.can_run_forked = True
             scroll_id = self.getInitalialScrollId()
             if not scroll_id:
