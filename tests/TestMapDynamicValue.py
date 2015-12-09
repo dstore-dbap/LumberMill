@@ -1,10 +1,10 @@
 import datetime
 import extendSysPath
 import logging
-import unittest2
+import unittest
 import Utils
 
-class TestMapDynaimcValue(unittest2.TestCase):
+class TestMapDynaimcValue(unittest.TestCase):
 
     def setUp(self):
         logger = logging.getLogger()

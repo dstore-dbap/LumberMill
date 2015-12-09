@@ -5,7 +5,7 @@ import mock
 import redis
 import ModuleBaseTestCase
 import RedisChannel
-import unittest2
+import unittest
 
 
 class TestRedisChannel(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -31,7 +31,7 @@ class TestRedisChannel(ModuleBaseTestCase.ModuleBaseTestCase):
         receivers:
           - NextModule
     """
-    @unittest2.skip('Currently broken.')
+    @unittest.skip('Currently broken.')
     def test(self):
         self.test_object.configure({'channel': 'TestChannel',
                                     'server': 'localhost'})

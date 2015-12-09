@@ -1,7 +1,7 @@
 import sys
 import extendSysPath
 import threading
-import unittest2
+import unittest
 import mock
 import ConfigurationValidator
 import logging
@@ -80,7 +80,7 @@ class MockReceiver(mock.Mock):
     def hasEvents(self):
         return True if len(self.events) > 0 else False
 
-class ModuleBaseTestCase(unittest2.TestCase):
+class ModuleBaseTestCase(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(ModuleBaseTestCase, self).__init__(*args, **kwargs)

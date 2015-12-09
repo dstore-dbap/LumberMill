@@ -1,8 +1,8 @@
 import extendSysPath
-import unittest2
+import unittest
 import Utils
 
-class TestKeyDotNotationDict(unittest2.TestCase):
+class TestKeyDotNotationDict(unittest.TestCase):
 
     def setUp(self):
         event = {'bytes_send': 3395,

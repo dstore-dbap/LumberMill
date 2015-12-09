@@ -1,8 +1,8 @@
 import extendSysPath
-import unittest2
+import unittest
 import Utils
 
-class TestParseDynaimcValue(unittest2.TestCase):
+class TestParseDynaimcValue(unittest.TestCase):
 
     def testParseDynamicValues(self):
         self.assertTrue(Utils.parseDynamicValue('Default type to string: $(bytes_send)')['value'] == 'Default type to string: %(bytes_send)s')

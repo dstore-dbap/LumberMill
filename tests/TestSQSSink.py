@@ -6,7 +6,7 @@ import time
 import ModuleBaseTestCase
 import os
 import sys
-import unittest2
+import unittest
 import mock
 import json
 import boto3
@@ -21,7 +21,7 @@ class TestSQSSink(ModuleBaseTestCase.ModuleBaseTestCase):
             self.aws_access_key_id = os.environ['AWS_ID']
             self.aws_secret_access_key = os.environ['AWS_KEY']
         except KeyError:
-            raise unittest2.SkipTest('Skipping test bescause no aws credentials set. Please set env vars AWS_ID and AWS_KEY.')
+            raise unittest.SkipTest('Skipping test bescause no aws credentials set. Please set env vars AWS_ID and AWS_KEY.')
         self.queue_name = "%032x%s" % (random.getrandbits(128), os.getpid())
         self.connectToSqsQueue()
         super(TestSQSSink, self).setUp(SQSSink.SQSSink(gp=mock.Mock()))
