@@ -21,17 +21,18 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
     Configuration template:
 
     - module: SomeModuleName
-        id:                               # <default: ""; type: string; is: optional>
-        filter:                           # <default: None; type: None||string; is: optional>
-        add_fields:                       # <default: {}; type: dict; is: optional>
-        delete_fields:                    # <default: []; type: list; is: optional>
-        event_type:                       # <default: None; type: None||string; is: optional>
-        pool_size:                        # <default: 2; type: integer; is: optional>
-        queue_size:                       # <default: 50; type: integer; is: optional>
-        queue_buffer_size:                # <default: 250; type: integer; is: optional>
-        receivers:
-          - ModuleName
-          - ModuleAlias
+       id:                               # <default: ""; type: string; is: optional>
+       filter:                           # <default: None; type: None||string; is: optional>
+       add_fields:                       # <default: {}; type: dict; is: optional>
+       delete_fields:                    # <default: []; type: list; is: optional>
+       event_type:                       # <default: None; type: None||string; is: optional>
+       log_level:                        # <default: 'info'; type: string; values: ['info', 'warn', 'error', 'critical', 'fatal', 'debug']; is: optional>
+       pool_size:                        # <default: 2; type: integer; is: optional>
+       queue_size:                       # <default: 50; type: integer; is: optional>
+       queue_buffer_size:                # <default: 250; type: integer; is: optional>
+       receivers:
+        - ModuleName
+        - ModuleAlias
     """
 
     def __init__(self, gp):

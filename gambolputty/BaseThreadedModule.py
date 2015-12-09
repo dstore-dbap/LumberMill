@@ -25,10 +25,11 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
        add_fields:                       # <default: {}; type: dict; is: optional>
        delete_fields:                    # <default: []; type: list; is: optional>
        event_type:                       # <default: None; type: None||string; is: optional>
+       log_level:                        # <default: 'info'; type: string; values: ['info', 'warn', 'error', 'critical', 'fatal', 'debug']; is: optional>
        queue_size:                       # <default: 20; type: integer; is: optional>
        receivers:
-         - ModuleName
-         - ModuleAlias
+        - ModuleName
+        - ModuleAlias
     """
 
     def __init__(self, gp):

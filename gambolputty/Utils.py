@@ -73,6 +73,13 @@ else:
                          'Dictionary': types.DictType,
                          'Dict': types.DictType}
 
+loglevel_string_to_loglevel_int = {'info': logging.INFO,
+                                   'warn': logging.WARN,
+                                   'error': logging.ERROR,
+                                   'critical': logging.CRITICAL,
+                                   'fatal': logging.FATAL,
+                                   'debug': logging.DEBUG}
+
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = platform.system()
 GP_DYNAMIC_VAL_REGEX = re.compile('[\$|%]\((.*?)\)')
@@ -667,5 +674,20 @@ class MemoryCache():
 
     def unset(self, key):
         return self.lru_dict.pop(key)
+
+def mergeNestedDicts(a, b, path=None):
+    "Merges a with b. If b provides same key as a, b takes precendence."
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                mergeNestedDicts(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                continue # same leaf value
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
 
 dot_dict_formatter = DotDictFormatter()

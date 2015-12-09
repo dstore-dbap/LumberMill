@@ -74,6 +74,13 @@ class GambolPutty():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
+        self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
+                                     'queue_size': 20,
+                                     'queue_buffer_size': 50,
+                                     'logging': {'level': 'info',
+                                                 'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                                 'filename': None,
+                                                 'filemode': 'w'}}
         self.logger = logging.getLogger(self.__class__.__name__)
         success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
         if not success:
@@ -81,7 +88,6 @@ class GambolPutty():
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
-        print('produceQueue: %s' % self)
         queue = None
         if queue_type == 'simple':
             queue =  Utils.BufferedQueue(queue=Queue.Queue(queue_max_size), buffersize=queue_buffer_size)
@@ -124,6 +130,9 @@ class GambolPutty():
     def getRawConfiguration(self):
         return self.raw_conf_file
 
+    def getWorkerCount(self):
+        return self.global_configuration['workers']
+
     def setConfiguration(self, configuration, merge=True):
         configuration_errors = ConfigurationValidator.ConfigurationValidator().validateConfiguration(configuration)
         for configuration_error in configuration_errors:
@@ -140,22 +149,24 @@ class GambolPutty():
         return True
 
     def configureGlobal(self):
-        """Set some global configuration values."""
-        # CPU count - 1 as we want to leave at least one cpu for other tasks.
-        self.workers = multiprocessing.cpu_count() - 1
-        self.queue_size = 20
-        self.queue_buffer_size = 50
+        """Merge custom global configuration values to default settings."""
         for idx, configuration in enumerate(self.configuration):
             if 'Global' in configuration:
-                configuration = configuration['Global']
-                if 'workers' in configuration:
-                    self.workers = configuration['workers']
-                if 'queue_size' in configuration:
-                    self.queue_size = configuration['queue_size']
-                if 'queue_buffer_size' in configuration:
-                    self.queue_buffer_size = configuration['queue_buffer_size']
+                self.global_configuration = Utils.mergeNestedDicts(self.global_configuration, configuration['Global'])
                 self.configuration.pop(idx)
-                break
+
+    def configureLogging(self):
+        # Logger configuration.
+        if self.global_configuration['logging']['level'].lower() not in Utils.loglevel_string_to_loglevel_int:
+            print("Loglevel unknown.")
+            self.shutDown()
+        log_level = Utils.loglevel_string_to_loglevel_int[self.global_configuration['logging']['level'].lower()]
+        logging.basicConfig(level=log_level,
+                            format=self.global_configuration['logging']['format'],
+                            filename=self.global_configuration['logging']['filename'],
+                            filemode=self.global_configuration['logging']['filemode'])
+        if not self.global_configuration['logging']['filename']:
+            logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
 
     def initModule(self, module_name):
         """ Initalize a module."""
@@ -273,11 +284,11 @@ class GambolPutty():
                 # If we run multiprocessed and the module is not capable of running parallel, this module will only be
                 # started in the main process. Connect the module via a queue to all receivers that can run forked.
                 for receiver_instance in self.modules[receiver_name]['instances']:
-                    if (self.workers > 1 and sender_instance.can_run_forked != receiver_instance.can_run_forked):
+                    if (self.global_configuration['workers'] > 1 and sender_instance.can_run_forked != receiver_instance.can_run_forked):
                         try:
                             queue = queues[receiver_name]
                         except KeyError:
-                            queue = self.produceQueue('multiprocess', self.queue_size, self.queue_buffer_size)
+                            queue = self.produceQueue('multiprocess', self.global_configuration['queue_size'], self.global_configuration['queue_buffer_size'])
                             queues[receiver_name] = queue
                         receiver_instance.setInputQueue(queue)
                 # Add the receiver to senders. If a corresponding queue exist, use this else use the normal mod instance.
@@ -356,6 +367,7 @@ class GambolPutty():
     def configTest(self):
         self.logger.info("Running configuration test for %s." % self.path_to_config_file)
         self.configureGlobal()
+        self.configureLogging()
         self.initModulesFromConfig()
         self.setDefaultReceivers()
         self.configureModules()
@@ -365,6 +377,7 @@ class GambolPutty():
 
     def start(self):
         self.configureGlobal()
+        self.configureLogging()
         self.initModulesFromConfig()
         self.setDefaultReceivers()
         self.configureModules()
@@ -372,7 +385,7 @@ class GambolPutty():
         self.runWorkers()
 
     def runWorkers(self):
-        for i in range(1, self.workers):
+        for i in range(1, self.global_configuration['workers']):
             worker = multiprocessing.Process(target=self.run)
             worker.start()
             self.child_processes.append(worker)
@@ -472,10 +485,6 @@ def usage():
 if "__main__" == __name__:
     config_pathname = os.path.abspath(sys.argv[0])
     config_pathname = config_pathname[:config_pathname.rfind("/")] + "/../conf"
-    # Logger configuration.
-    logging.config.fileConfig('%s/logger.conf' % config_pathname)
-    logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
-    logger = logging.getLogger("GambolPutty")
     path_to_config_file = ""
     run_configtest = False
     try:

@@ -19,15 +19,16 @@ class BaseModule:
     Configuration template:
 
     - module: SomeModuleName
-        id:                               # <default: ""; type: string; is: optional>
-        filter:                           # <default: None; type: None||string; is: optional>
-        add_fields:                       # <default: {}; type: dict; is: optional>
-        delete_fields:                    # <default: []; type: list; is: optional>
-        event_type:                       # <default: None; type: None||string; is: optional>
-        ...
-        receivers:
-          - ModuleName
-          - ModuleAlias
+       id:                               # <default: ""; type: string; is: optional>
+       filter:                           # <default: None; type: None||string; is: optional>
+       add_fields:                       # <default: {}; type: dict; is: optional>
+       delete_fields:                    # <default: []; type: list; is: optional>
+       event_type:                       # <default: None; type: None||string; is: optional>
+       log_level:                        # <default: 'info'; type: string; values: ['info', 'warn', 'error', 'critical', 'fatal', 'debug']; is: optional>
+       ...
+       receivers:
+        - ModuleName
+        - ModuleAlias
     """
 
     module_type = "generic"
@@ -56,6 +57,8 @@ class BaseModule:
         if configuration:
             self.configuration_data.update(configuration)
         self.parseDynamicValuesInConfiguration()
+        # Set log level.
+        self.logger.setLevel(Utils.loglevel_string_to_loglevel_int[self.getConfigurationValue('log_level').lower()])
         # Set default actions.
         self.delete_fields = self.getConfigurationValue('delete_fields')
         self.add_fields = self.getConfigurationValue('add_fields')
