@@ -592,6 +592,26 @@ class AnsiColors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+def coloredConsoleLogging(fn):
+    # add methods we need to the class
+    def new(*args):
+        levelno = args[1].levelno
+        if(levelno>=50):
+            color = AnsiColors.FAIL
+        elif(levelno>=40):
+            color = AnsiColors.FAIL
+        elif(levelno>=30):
+            color = AnsiColors.WARNING
+        elif(levelno>=20):
+            color = AnsiColors.LIGHTBLUE
+        elif(levelno>=10):
+            color = AnsiColors.OKGREEN
+        else:
+            color = AnsiColors.LIGHTBLUE
+        args[1].msg = color + args[1].msg +  AnsiColors.ENDC # normal
+        return fn(*args)
+    return new
+
 class ZeroMqMpQueue:
     """
     Use ZeroMQ for IPC.
