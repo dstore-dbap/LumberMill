@@ -9,6 +9,7 @@ import logging.config
 import Queue
 import Utils
 
+
 class StoppableThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
@@ -84,10 +85,27 @@ class ModuleBaseTestCase(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(ModuleBaseTestCase, self).__init__(*args, **kwargs)
-        logging.config.fileConfig('../conf/logger.conf')
+        self.global_configuration = {'logging': {'level': 'info',
+                                                 'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                                 'filename': None,
+                                                 'filemode': 'w'}}
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.configureLogging()
         self.conf_validator = ConfigurationValidator.ConfigurationValidator()
         self.receiver = MockReceiver()
+
+    def configureLogging(self):
+        # Logger configuration.
+        if self.global_configuration['logging']['level'].lower() not in Utils.loglevel_string_to_loglevel_int:
+            print("Loglevel unknown.")
+            sys.exit(255)
+        log_level = Utils.loglevel_string_to_loglevel_int[self.global_configuration['logging']['level'].lower()]
+        logging.basicConfig(level=log_level,
+                            format=self.global_configuration['logging']['format'],
+                            filename=self.global_configuration['logging']['filename'],
+                            filemode=self.global_configuration['logging']['filemode'])
+        if not self.global_configuration['logging']['filename']:
+            logging.StreamHandler.emit = Utils.coloredConsoleLogging(logging.StreamHandler.emit)
 
     def setUp(self, test_object):
         test_object.addReceiver('MockReceiver', self.receiver)

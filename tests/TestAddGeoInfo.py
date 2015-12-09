@@ -1,6 +1,9 @@
+import os
+
 import extendSysPath
 import ModuleBaseTestCase
 import mock
+import unittest
 import AddGeoInfo
 import Utils
 
@@ -8,6 +11,9 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         super(TestAddGeoInfo, self).setUp(AddGeoInfo.AddGeoInfo(gp=mock.Mock()))
+        self.path_to_geo_db = './test_data/GeoLiteCity.dat'
+        if not os.path.isfile(self.path_to_geo_db):
+            raise unittest.SkipTest('Could not find GeoCity db file in %s. Skipping test.' % self.path_to_geo_db)
 
     def testAddGeoInfoForFirstField(self):
         self.test_object.configure({'source_fields': ['f1'],
