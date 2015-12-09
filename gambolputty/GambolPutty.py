@@ -166,7 +166,7 @@ class GambolPutty():
                             filename=self.global_configuration['logging']['filename'],
                             filemode=self.global_configuration['logging']['filemode'])
         if not self.global_configuration['logging']['filename']:
-            logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
+            logging.StreamHandler.emit = Utils.coloredConsoleLogging(logging.StreamHandler.emit)
 
     def initModule(self, module_name):
         """ Initalize a module."""
@@ -458,26 +458,6 @@ class GambolPutty():
             for instance in module_info['instances']:
                 if instance.module_type != "input":
                     instance.shutDown()
-
-def coloredConsoleLogging(fn):
-    # add methods we need to the class
-    def new(*args):
-        levelno = args[1].levelno
-        if(levelno>=50):
-            color = Utils.AnsiColors.FAIL
-        elif(levelno>=40):
-            color = Utils.AnsiColors.FAIL
-        elif(levelno>=30):
-            color = Utils.AnsiColors.WARNING
-        elif(levelno>=20):
-            color = Utils.AnsiColors.LIGHTBLUE
-        elif(levelno>=10):
-            color = Utils.AnsiColors.OKGREEN
-        else:
-            color = Utils.AnsiColors.LIGHTBLUE
-        args[1].msg = color + args[1].msg +  Utils.AnsiColors.ENDC # normal
-        return fn(*args)
-    return new
 
 def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')
