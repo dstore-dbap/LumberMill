@@ -23,10 +23,10 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 # Test
-
 import sys
 
-from gambolputty import __version__, __app_name__, __author__, __email__, __url__
+from setuptools import find_packages
+from gambolputty import __version__, __app_name__, __author__, __email__, __url__, __download_url__
 
 try:
     from setuptools import setup
@@ -49,20 +49,22 @@ setup(
     version=__version__,
     author=__author__,
     author_email=__email__,
-    packages=['gambolputty'],
+    packages=find_packages(exclude='tests'),
     url=__url__,
+    download_url=__download_url__,
     license='LICENSE',
     classifiers=[
         'Intended Audience :: System Administrators',
-        'License :: Apache License',
-        'Programming Language :: Python :: 2.6',
+        'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: pypy',
+        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: System :: Logging',
     ],
-    description='',
+    description='A logparser with module support.',
     long_description=open('README.rst').read() + '\n\n',
     tests_require=open('requirements/requirements-test.txt').readlines(),
     test_suite='nose.collector',
-    install_requires=requirements, requires=['six']
+    install_requires=requirements, requires=['six'],
+    include_package_data=True,
+    entry_points = {"console_scripts": ['gambolputty = gambolputty.GambolPutty:main']}
 )
