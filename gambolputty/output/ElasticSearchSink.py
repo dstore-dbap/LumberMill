@@ -81,11 +81,12 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
-        # Set log level for elasticsarch library if configured to other than default.
-        if self.getConfigurationValue('log_level') != 'info':
-            logging.getLogger('elasticsearch').setLevel(self.logger.level)
-        else:
-            logging.getLogger('elasticsearch').setLevel(logging.WARN)
+        for module_name in ['elasticsearch', 'urllib3', 'requests']:
+            if self.getConfigurationValue('log_level') == 'info':
+                logging.getLogger(module_name).setLevel(logging.WARN)
+            else:
+                # Set log level for elasticsarch library if configured to other than default.
+                logging.getLogger(module_name).setLevel(self.logger.level)
         self.action = self.getConfigurationValue('action')
         self.format = self.getConfigurationValue('format')
         self.consistency = self.getConfigurationValue("consistency")
@@ -101,16 +102,8 @@ class ElasticSearchSink(BaseThreadedModule.BaseThreadedModule):
         else:
             self.index_name_pattern = self.getConfigurationValue("index_name")
         if self.getConfigurationValue("connection_type") == 'urllib3':
-            if self.getConfigurationValue('log_level') != 'info':
-                logging.getLogger('urllib3').setLevel(self.logger.level)
-            else:
-                logging.getLogger('urllib3').setLevel(logging.WARN)
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
         elif self.getConfigurationValue("connection_type") == 'requests':
-            if self.getConfigurationValue('log_level') != 'info':
-                logging.getLogger('requests').setLevel(self.logger.level)
-            else:
-                logging.getLogger('requests').setLevel(logging.WARN)
             self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def getStartMessage(self):
