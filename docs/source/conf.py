@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# GambolPutty LogParser documentation build configuration file, created by
+# LumberMill LogParser documentation build configuration file, created by
 # sphinx-quickstart on Tue Feb 24 15:37:22 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'GambolPutty LogParser'
+project = u'LumberMill LogParser'
 copyright = u'2015, Björn Puttmann'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -198,7 +198,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'GambolPuttyLogParser.tex', u'GambolPutty LogParser Documentation',
+  ('index', 'GambolPuttyLogParser.tex', u'LumberMill LogParser Documentation',
    u'Björn Puttmann', 'manual'),
 ]
 
@@ -228,7 +228,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gambolputtylogparser', u'GambolPutty LogParser Documentation',
+    ('index', 'gambolputtylogparser', u'LumberMill LogParser Documentation',
      [u'Björn Puttmann'], 1)
 ]
 
@@ -242,7 +242,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'GambolPuttyLogParser', u'GambolPutty LogParser Documentation',
+  ('index', 'GambolPuttyLogParser', u'LumberMill LogParser Documentation',
    u'Björn Puttmann', 'GambolPuttyLogParser', 'One line description of project.',
    'Miscellaneous'),
 ]

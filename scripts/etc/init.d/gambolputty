@@ -1,18 +1,18 @@
 #!/bin/sh
 #
-# GambolPutty
+# LumberMill
 #
 # chkconfig:   2345 80 20
-# description: Starts and stops a single GambolPutty instance on this system
+# description: Starts and stops a single LumberMill instance on this system
 #
 
 ### BEGIN INIT INFO
-# Provides: GambolPutty
+# Provides: LumberMill
 # Required-Start: $network
 # Required-Stop: $network
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: This service manages the GambolPutty daemon
+# Short-Description: This service manages the LumberMill daemon
 ### END INIT INFO
 
 #
@@ -39,11 +39,11 @@ if [ -f /usr/bin/pypy ]; then
     export PYTHONPATH=$PYTHONPATH:/usr/lib64/pypy-2.2.1/site-packages;
 fi
 
-exec="/opt/GambolPutty/src/gambolputty/GambolPutty.py"
-prog="gambolputty"
-pidfile=/var/run/gambolputty/${prog}.pid
+exec="/opt/LumberMill/src/lumbermill/LumberMill.py"
+prog="lumbermill"
+pidfile=/var/run/lumbermill/${prog}.pid
 lockfile=/var/lock/subsys/$prog
-conffile=/etc/gambolputty/default.conf
+conffile=/etc/lumbermill/default.conf
 
 start() {
     [ -f $interpreter ] || $(echo "Interpreter $interpreter does not exist." && exit 6)

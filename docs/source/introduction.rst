@@ -1,7 +1,7 @@
-.. image:: https://travis-ci.org/dstore-dbap/GambolPutty.svg?branch=master
-   :target: https://travis-ci.org/dstore-dbap/GambolPutty
+.. image:: https://travis-ci.org/dstore-dbap/LumberMill.svg?branch=master
+   :target: https://travis-ci.org/dstore-dbap/LumberMill
 
-GambolPutty
+LumberMill
 ===========
 
 Introduction
@@ -13,25 +13,25 @@ with a smaller memory footprint and faster startup time.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-| To run GambolPutty you will need Python 2.5+. For better performance, I recommend running GambolPutty with pypy.
+| To run LumberMill you will need Python 2.5+. For better performance, I recommend running LumberMill with pypy.
 | Tested with pypy-2.3, pypy-2.4 and pypy-2.5.
-| A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-gambolputty/>`_.
+| A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
 
 
 Installation
 ''''''''''''
 
-Clone the github repository to /opt/GambolPutty (or any other location that fits you better :):
+Clone the github repository to /opt/LumberMill (or any other location that fits you better :):
 
 ::
 
-     git clone https://github.com/dstore-dbap/GambolPutty.git /opt/GambolPutty
+     git clone https://github.com/dstore-dbap/LumberMill.git /opt/LumberMill
 
 Install the dependencies with pip:
 
 ::
 
-     cd /opt/GambolPutty
+     cd /opt/LumberMill
      pip install -r requirements/requirements.txt
 
 If you are using pypy, install alternative packages:
@@ -49,19 +49,19 @@ You may need the MaxMind geo database. Install it with:
     wget "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
     gunzip GeoLiteCity.dat.gz
 
-Now you can give GambolPutty a testdrive with:
+Now you can give LumberMill a testdrive with:
 
 ::
 
-    python /opt/GambolPutty/gambolputty/GambolPutty.py -c /opt/GambolPutty/conf/example-tcp.conf
+    python /opt/LumberMill/lumbermill/LumberMill.py -c /opt/LumberMill/conf/example-tcp.conf
 
-For a how-to running GambolPutty, Elasticsearch and Kibana on CentOS, feel free to visit
-http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
+For a how-to running LumberMill, Elasticsearch and Kibana on CentOS, feel free to visit
+http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
 
 Configuration example (with explanations)
 '''''''''''''''''''''''''''''''''''''''''
 
-To give a short introduction of how GambolPutty works, here is a sample
+To give a short introduction of how LumberMill works, here is a sample
 configuration.
 Its receiving apache and nginx access logs via syslog messages from a
 syslog server and msgpacked events from
@@ -71,7 +71,7 @@ Below, I will explain each section in more detail.
 
 ::
 
-    # Sets number of parallel GambolPutty processes.
+    # Sets number of parallel LumberMill processes.
     - Global:
        workers: 2
 
@@ -101,10 +101,10 @@ Below, I will explain each section in more detail.
         - iptables: '(?P<syslog_prival>\<\d+\>)(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+kernel:.*?\ iptables\ (?P<iptables_action>.*?)\ :\ IN=(?P<iptables_in_int>.*?)\ OUT=(?P<iptables_out_int>.*?)\ SRC=(?P<iptables_src>.*?)\ DST=(?P<iptables_dst>.*?)\ LEN=(?P<iptables_len>.*?)\ .*?PROTO=(?P<iptables_proto>.*?)\ SPT=(?P<iptables_spt>.*?)\ DPT=(?P<iptables_dpt>.*?)\ WINDOW=.*'
        receivers:
         - SimpleStats:
-           filter: $(gambolputty.event_type) != 'Unknown'
+           filter: $(lumbermill.event_type) != 'Unknown'
         # Print out messages that did not match
         - StdOutSink:
-           filter: $(gambolputty.event_type) == 'Unknown'
+           filter: $(lumbermill.event_type) == 'Unknown'
 
     # Print out some stats every 10 seconds.
     - SimpleStats:
@@ -168,14 +168,14 @@ Let me explain it in more detail:
 
 ::
 
-    # Sets number of parallel GambolPutty processes.
+    # Sets number of parallel LumberMill processes.
     - Global:
        workers: 2
 
 The Global section lets you configure some global properties of
-GambolPutty. Here the number of parallel processes is set. In order to
+LumberMill. Here the number of parallel processes is set. In order to
 be able to use multiple cores with python (yay to the
-`GIL <http://www.dabeaz.com/GIL/>`_) GambolPutty can be started with
+`GIL <http://www.dabeaz.com/GIL/>`_) LumberMill can be started with
 multiple parallel processes.
 Default number of workers is CPU\_COUNT - 1.
 
@@ -232,10 +232,10 @@ This can be used to e.g. handle data send via
         - iptables: '(?P<syslog_prival>\<\d+\>)(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+kernel:.*?\ iptables\ (?P<iptables_action>.*?)\ :\ IN=(?P<iptables_in_int>.*?)\ OUT=(?P<iptables_out_int>.*?)\ SRC=(?P<iptables_src>.*?)\ DST=(?P<iptables_dst>.*?)\ LEN=(?P<iptables_len>.*?)\ .*?PROTO=(?P<iptables_proto>.*?)\ SPT=(?P<iptables_spt>.*?)\ DPT=(?P<iptables_dpt>.*?)\ WINDOW=.*'
        receivers:
         - SimpleStats:
-           filter: $(gambolputty.event_type) != 'Unknown'
+           filter: $(lumbermill.event_type) != 'Unknown'
         # Print out messages that did not match
         - StdOutSink:
-           filter: $(gambolputty.event_type) == 'Unknown'
+           filter: $(lumbermill.event_type) == 'Unknown'
 
 Use regular expressions to extract fields from a log event.
 source\_field sets the field to apply the regex to.
@@ -249,13 +249,13 @@ In the receivers section, we can find output filters. These can be used
 to only send selected events to the receiving module.
 As to the notation of event fields in such filters, please refer to the
 "Event field notation" section later in this document.
-In this example the output filter uses the event metadata gambolputty
-field. This data is set by GambolPutty for every event received and
+In this example the output filter uses the event metadata lumbermill
+field. This data is set by LumberMill for every event received and
 would look like this:
 
 ::
 
-       'gambolputty': {'event_id': '90818a85f3aa3af302390bbe77fbc1c87800',
+       'lumbermill': {'event_id': '90818a85f3aa3af302390bbe77fbc1c87800',
                        'event_type': 'Unknown',
                        'pid': 7800,
                        'received_by': 'vagrant-centos65.vagrantup.com',
@@ -387,8 +387,8 @@ module.
 
 The different modules can be combined in any order.
 
-To run GambolPutty you will need Python 2.5+.
-For better performance I recommend running GambolPutty with pypy. Tested
+To run LumberMill you will need Python 2.5+.
+For better performance I recommend running LumberMill with pypy. Tested
 with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.
 For IPC ZeroMq is used instead of the default multiprocessing.Queue.
 This resulted in nearly 3 times of the performance with
@@ -406,7 +406,7 @@ Event inputs
 -  RedisChannel, read events from redis channels.
 -  RedisList, read events from redis lists.
 -  Sniffer, sniff network traffic.
--  Spam, what it says on the can - spams GambolPutty for testing.
+-  Spam, what it says on the can - spams LumberMill for testing.
 -  SQS, read messages from amazons simple queue service.
 -  StdIn, read stream from standard in.
 -  TcpServer, read stream from a tcp socket.
@@ -456,7 +456,7 @@ Outputs
 -  ElasticSearchSink, stores data entries in an elasticsearch index.
 -  FileSink, store events in a file.
 -  GraphiteSink, send metrics to graphite server.
--  LoggerSink, sends data to gambolputty internal logger for output.
+-  LoggerSink, sends data to lumbermill internal logger for output.
 -  RedisChannelSink, publish incoming events to redis channel.
 -  RedisListSink, publish incoming events to redis list.
 -  StdOutSink, prints all received data to standard out.
@@ -489,7 +489,7 @@ Cluster modules
 Webserver modules
 ^^^^^^^^^^^^^^^^^
 
--  WebGui, a web interface to GambolPutty.
+-  WebGui, a web interface to LumberMill.
 -  WebserverTornado, base webserver module. Handles all incoming
    requests.
 
@@ -498,7 +498,7 @@ Event flow basics
 
 -  an input module receives an event.
 -  the event data will be wrapped in a default event dictionary of the
-   following structure: { "data": payload, "gambolputty": { "event\_id":
+   following structure: { "data": payload, "lumbermill": { "event\_id":
    unique event id, "event\_type": "Unknown", "received\_from": ip
    address of sender, "source\_module": caller\_class\_name, } }
 -  the input module sends the new event to its receivers. Either by
@@ -565,7 +565,7 @@ The following examples refer to this event data:
     {'bytes_send': '3395',
      'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0" 200 3395\n',
      'datetime': '28/Jul/2006:10:27:10 -0300',
-     'gambolputty': {
+     'lumbermill': {
                     'event_id': '715bd321b1016a442bf046682722c78e',
                     'event_type': 'httpd_access_log',
                     "received_from": '127.0.0.1',
@@ -640,7 +640,7 @@ Simple example to get you started
 
 ::
 
-    echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python GambolPutty.py -c ./conf/example-stdin.conf
+    echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python LumberMill.py -c ./conf/example-stdin.conf
 
 This should produce the following output:
 
@@ -649,7 +649,7 @@ This should produce the following output:
     {'bytes_send': '3395',
      'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395\n',
      'datetime': '28/Jul/2006:10:27:10 -0300',
-     'gambolputty': {
+     'lumbermill': {
                     'event_id': 'c9f9615a935869ccbaf401108070bfb3',
                     'event_type': 'httpd_access_log',
                     "received_from": '127.0.0.1',
@@ -662,12 +662,12 @@ This should produce the following output:
      'user': '-'}
 
 For a more complex configuration refer to the
-gambolputty.conf.tcp-example configuration file in the conf folder.
+lumbermill.conf.tcp-example configuration file in the conf folder.
 
-For a small how-to running GambolPutty on CentOS, feel free to visit
-http://www.netprojects.de/collect-visualize-your-logs-with-gambolputty-and-elasticsearch-on-centos/.
+For a small how-to running LumberMill on CentOS, feel free to visit
+http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
 
-A rough sketch for using GambolPutty with syslog-ng
+A rough sketch for using LumberMill with syslog-ng
 '''''''''''''''''''''''''''''''''''''''''''''''''''
 
 Send e.g. apache access logs to syslog (/etc/httpd/conf/httpd.conf):
@@ -689,8 +689,8 @@ Configure the linux syslog-ng service to send data to a tcp address
     log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
     ...
 
-Configure GambolPutty to listen on localhost
-5151(./conf/gambolputty.conf):
+Configure LumberMill to listen on localhost
+5151(./conf/lumbermill.conf):
 
 ::
 

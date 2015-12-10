@@ -1,6 +1,6 @@
 [run]
-source = gambolputty
+source = lumbermill
 omit =
-    gambolputty/assets/*
-    gambolputty/cluster/*
-    gambolputty/webserver/*
+    lumbermill/assets/*
+    lumbermill/cluster/*
+    lumbermill/webserver/*

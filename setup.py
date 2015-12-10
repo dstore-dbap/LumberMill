@@ -26,7 +26,7 @@
 import sys
 
 from setuptools import find_packages
-from gambolputty import __version__, __app_name__, __author__, __email__, __url__, __download_url__
+from lumbermill import __version__, __app_name__, __author__, __email__, __url__, __download_url__
 
 try:
     from setuptools import setup
@@ -66,5 +66,5 @@ setup(
     test_suite='nose.collector',
     install_requires=requirements, requires=['six'],
     include_package_data=True,
-    entry_points = {"console_scripts": ['gambolputty = gambolputty.GambolPutty:main']}
+    entry_points = {"console_scripts": ['lumbermill = lumbermill.LumberMill:main']}
 )
