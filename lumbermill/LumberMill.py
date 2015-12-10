@@ -459,9 +459,7 @@ class LumberMill():
 def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')
 
-if "__main__" == __name__:
-    config_pathname = os.path.abspath(sys.argv[0])
-    config_pathname = config_pathname[:config_pathname.rfind("/")] + "/../conf"
+def main():
     path_to_config_file = ""
     run_configtest = False
     try:
@@ -482,6 +480,9 @@ if "__main__" == __name__:
         gp.configTest()
     else:
         gp.start()
+
+if __name__ == '__main__':
+    main()
 
 
 
