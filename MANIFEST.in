@@ -1,4 +1,5 @@
 recursive-include conf *
 recursive-include scripts *
 recursive-include tests *
+recursive-include requirements *
 recursive-include lumbermill/assets *
