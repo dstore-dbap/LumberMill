@@ -2,14 +2,13 @@
 import sys
 import re
 import os
-import BaseThreadedModule
-import Utils
-import Decorators
+import GambolPutty.Utils as Utils
+import GambolPutty.Decorators
 from operator import itemgetter
+from GambolPutty.BaseThreadedModule import BaseThreadedModule
 
-
-@Decorators.ModuleDocstringParser
-class RegexParser(BaseThreadedModule.BaseThreadedModule):
+@GambolPutty.Decorators.ModuleDocstringParser
+class RegexParser(BaseThreadedModule):
     """
     Parse a string by named regular expressions.
 
@@ -43,7 +42,7 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
 
     def configure(self, configuration):
         # Call parent configure method
-        BaseThreadedModule.BaseThreadedModule.configure(self, configuration)
+        BaseThreadedModule.configure(self, configuration)
         # Set defaults
         supported_regex_match_types = ['search', 'findall']
         self.timed_func_handler = None
@@ -96,10 +95,10 @@ class RegexParser(BaseThreadedModule.BaseThreadedModule):
         if self.hot_rules_first:
             resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
             self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
-        BaseThreadedModule.BaseThreadedModule.initAfterFork(self)
+        BaseThreadedModule.initAfterFork(self)
 
     def getResortFieldextractionRegexpressionsFunc(self):
-        @Decorators.setInterval(10)
+        @GambolPutty.Decorators.setInterval(10)
         def resortFieldextractionRegexpressions():
             """Resort the regular expression list, according to hitcount. Might speed up matching"""
             self.fieldextraction_regexpressions = sorted(self.fieldextraction_regexpressions, key=itemgetter('hitcounter'), reverse=True)
