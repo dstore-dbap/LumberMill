@@ -25,6 +25,14 @@ Compatibility and Performance
 Installation
 ''''''''''''
 
+**via pypi**
+
+::
+
+   pip install LumberMill
+
+**manually**
+
 Clone the github repository to /opt/LumberMill (or any other location that fits you better :):
 
 ::

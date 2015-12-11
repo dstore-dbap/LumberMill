@@ -1,5 +1,5 @@
-recursive-include conf *
+include conf
+include conf/example*
 recursive-include scripts *
-recursive-include tests *
 recursive-include requirements *
 recursive-include lumbermill/assets *

@@ -21,12 +21,10 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#
-# Test
-import sys
+import os
 
 from setuptools import find_packages
-from lumbermill import __version__, __app_name__, __author__, __email__, __url__, __download_url__
+from lumbermill import __version__, __app_name__, __author__, __email__, __url__
 
 try:
     from setuptools import setup
@@ -44,14 +42,26 @@ requirements = open('requirements/requirements.txt').readlines()
 if is_pypy:
     requirements.extend(open('requirements/requirements-pypy.txt').readlines())
 
+# Strip comments and newlines from requirements.
+parsed_requirements = []
+for req in requirements:
+    req = req.strip()
+    if not req or req.startswith('#'):
+        continue
+    parsed_requirements.append(req)
+
 setup(
     name=__app_name__,
     version=__version__,
     author=__author__,
     author_email=__email__,
-    packages=find_packages(exclude='tests'),
+    packages=find_packages(exclude=['tests']),
     url=__url__,
-    download_url=__download_url__,
+    #data_files=[('conf', [os.path.join('conf', _) for _ in os.listdir('conf') if _.startswith('example-')]),
+    #            ('scripts', [os.path.join('scripts', _) for _ in os.listdir('scripts') if _.startswith('spam')]),
+    #            ('init.d', ['scripts/etc/init.d/lumbermill'])],
+    include_package_data=True,
+    install_requires=parsed_requirements,
     license='LICENSE',
     classifiers=[
         'Intended Audience :: System Administrators',
@@ -62,9 +72,5 @@ setup(
     ],
     description='A logparser with module support.',
     long_description=open('README.rst').read() + '\n\n',
-    tests_require=open('requirements/requirements-test.txt').readlines(),
-    test_suite='nose.collector',
-    install_requires=requirements, requires=['six'],
-    include_package_data=True,
-    entry_points = {"console_scripts": ['lumbermill = lumbermill.LumberMill:main']}
+    entry_points={"console_scripts": ['lumbermill = lumbermill.LumberMill:main']}
 )
