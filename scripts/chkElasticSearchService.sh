@@ -4,8 +4,8 @@
 # five minutes. If this times out or the entry count is below 
 # MIN_REQUIERED_QUERY_HITS both services will be (re)started.
 MIN_REQUIERED_QUERY_HITS=1
-ES_HOST=es-01.dbap.de
-IDXS_TO_CHECK="lumbermill* agora-access*"
+ES_HOST=
+IDXS_TO_CHECK="lumbermill*"
 
 function logMessage {
 	echo $(date)": "$1
@@ -22,7 +22,6 @@ for IDX in $IDXS_TO_CHECK; do
     if [ $QUERY_HITS -lt $MIN_REQUIERED_QUERY_HITS ]; then
         logMessage "ElasticSearch query hits of $QUERY_HITS below threshold of $MIN_REQUIERED_QUERY_HITS. Restarting logparsing services."
         /etc/init.d/lumbermill restart
-        /etc/init.d/logstash restart
         exit 255
     fi
 done
