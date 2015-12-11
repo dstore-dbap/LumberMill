@@ -1,3 +1,6 @@
+.. image:: https://readthedocs.org/projects/lumbermill/badge/?version=latest
+   :target: http://lumbermill.readthedocs.org/en/latest/?badge=latest
+   :alt: Documentation Status
 .. image:: https://travis-ci.org/dstore-dbap/LumberMill.svg?branch=master
    :target: https://travis-ci.org/dstore-dbap/LumberMill
 .. image:: https://coveralls.io/repos/dstore-dbap/LumberMill/badge.svg?branch=master&service=github :target: https://coveralls.io/github/dstore-dbap/LumberMill?branch=master
