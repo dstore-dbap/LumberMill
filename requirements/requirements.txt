@@ -1,4 +1,5 @@
 # Global requirements
+importlib
 crypto>=1.0.0
 pylru>=1.0.0
 PyYAML>=2.0.0
