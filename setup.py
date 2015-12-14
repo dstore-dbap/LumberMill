@@ -21,7 +21,7 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-import os
+import sys
 
 from setuptools import find_packages
 from lumbermill import __version__, __app_name__, __author__, __email__, __url__
@@ -72,5 +72,8 @@ setup(
     ],
     description='A logparser with module support.',
     long_description=open('README.rst').read() + '\n\n',
-    entry_points={"console_scripts": ['lumbermill = lumbermill.LumberMill:main']}
+    entry_points={"console_scripts": ['lumbermill = lumbermill.LumberMill:main']},
+    options={'build_scripts': {
+                'executable': sys.executable},
+    }
 )
