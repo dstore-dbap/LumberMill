@@ -17,10 +17,11 @@ with a smaller memory footprint and faster startup time.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-| To run LumberMill you will need Python 2.5+. For better performance, I recommend running LumberMill with pypy.
-| Tested with pypy-2.3, pypy-2.4 and pypy-2.5.
+| To run LumberMill you will need Python 2.7+.
+| For better performance, I heartly recommend running LumberMill with pypy.
+| The performance gain can be up to 5-6 times events/s throughput running single processed.
+| Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
 | A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
-
 
 Installation
 ''''''''''''
@@ -62,6 +63,10 @@ Now you can give LumberMill a testdrive with:
 ::
     wget https://raw.githubusercontent.com/dstore-dbap/LumberMill/master/conf/example-stdin.conf
     echo "I'm a lumberjack, and I'm okay" | lumbermill -c ./example-stdin.conf
+
+If you get a "command not found" please check your pythonpath setting. Depending on how you installed LumberMill,
+the executable can either be found in the bin dir of your python environment (e.g. /usr/lib64/pypy-2.4.0/bin/lumbermill)
+or in your default path (e.g. /usr/local/bin/lumbermill).
 
 Other basic configuration examples can be found `here <https://github.com/dstore-dbap/LumberMill/tree/master/conf>`_.
 
