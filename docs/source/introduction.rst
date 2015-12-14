@@ -21,6 +21,14 @@ Compatibility and Performance
 Installation
 ''''''''''''
 
+**via pypi**
+
+::
+
+   pip install LumberMill
+
+**manually**
+
 Clone the github repository to /opt/LumberMill (or any other location that fits you better :):
 
 ::
@@ -32,13 +40,9 @@ Install the dependencies with pip:
 ::
 
      cd /opt/LumberMill
-     pip install -r requirements/requirements.txt
+     python setup.py install
 
-If you are using pypy, install alternative packages:
 
-::
-
-    pip install -r requirements/requirements-pypy.txt
 
 You may need the MaxMind geo database. Install it with:
 
@@ -52,8 +56,10 @@ You may need the MaxMind geo database. Install it with:
 Now you can give LumberMill a testdrive with:
 
 ::
+    wget https://raw.githubusercontent.com/dstore-dbap/LumberMill/master/conf/example-stdin.conf
+    echo "I'm a lumberjack, and I'm okay" | lumbermill -c ./example-stdin.conf
 
-    python /opt/LumberMill/lumbermill/LumberMill.py -c /opt/LumberMill/conf/example-tcp.conf
+Other basic configuration examples can be found `here <https://github.com/dstore-dbap/LumberMill/tree/master/conf>`_.
 
 For a how-to running LumberMill, Elasticsearch and Kibana on CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
