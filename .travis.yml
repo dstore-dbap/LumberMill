@@ -1,22 +1,19 @@
 language: python
-# Use travis container infrastructure.
 sudo: false
 python:
-  - 2.7
-# Currently deactivated, since travis pypy support seems to be broken.
-#  - pypy
+- 2.7
 before_install:
-  # Get the GeoIP database needed for the tests
-  - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
-  - gunzip GeoLiteCity.dat.gz
-  - mv GeoLiteCity.dat tests/test_data/
-  # Install dependencies for lxml
-  #- sudo apt-get install -qq libxml2-dev libxslt-dev
-install: "pip install -r requirements/requirements-test.txt --use-mirrors"
+- wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+- gunzip GeoLiteCity.dat.gz
+- mv GeoLiteCity.dat tests/test_data/
+install: pip install -r requirements/requirements-test.txt --use-mirrors
 services:
-  - ElasticSearch
-  - Redis
+- ElasticSearch
+- Redis
 before_script:
-  # Get master branch of rediscluster
-  - git clone https://github.com/salimane/rediscluster-py.git && cd rediscluster-py && python setup.py install && cd ..
+- git clone https://github.com/salimane/rediscluster-py.git && cd rediscluster-py && python setup.py install && cd ..
 script: python tests/run_tests.py --include "Test*.py"
+env:
+  global:
+  - secure: m/f4i97S9kqhyjfBWHLaXWNIceyLHFVAHd8Q7HqtsmW3WKMKzJCIrOupgRHyxwARah1lGq3Vlo+XTl6bzolWePhqY0x4+sXuVjZoYEWBYXzADgyP/dA1zbZ9SpcYnr7J4QCt0EXFH1PXPnuAebVMGBsmceVwJGXOoSS3kG8MmSw=
+  - secure: DgAf0qXM0+eKywhdet5EIqLrTJlA40yjAAL8vQglySxohtZOGAa2rH40Gm1dtyh5b7cVdzPjJIRXsIxrfzcEI+Rib/c9nVaDfLWq4A9v93FAQa7LsyHWmXfW2G2QvkZgo0Pr7ilvfAHkMLYuXxAlFQ+xMc74Hnj9iirM4ipxffA=
