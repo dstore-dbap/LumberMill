@@ -2,5 +2,5 @@
 __author__ = 'Björn Puttmann'
 __email__ = 'nospam@poitin.de'
 __app_name__ = 'LumberMill'
-__version__ = '0.8.9'
+__version__ = '0.9.0'
 __url__ = 'https://github.com/dstore-dbap/LumberMill/'
