@@ -17,11 +17,11 @@ with a smaller memory footprint and faster startup time.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-| To run LumberMill you will need Python 2.7+.
-| For better performance, I heartly recommend running LumberMill with pypy.
-| The performance gain can be up to 5-6 times events/s throughput running single processed.
-| Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
-| A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
+To run LumberMill you will need Python 2.7+.
+For better performance, I heartly recommend running LumberMill with pypy.
+The performance gain can be up to 5-6 times events/s throughput running single processed.
+Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
+A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
 
 Installation
 ''''''''''''
@@ -47,8 +47,6 @@ Install the dependencies with pip:
      cd /opt/LumberMill
      python setup.py install
 
-
-
 You may need the MaxMind geo database. Install it with:
 
 ::
@@ -69,7 +67,7 @@ If you get a "command not found" please check your pythonpath setting. Depending
 the executable can either be found in the bin dir of your python environment (e.g. /usr/lib64/pypy-2.4.0/bin/lumbermill)
 or in your default path (e.g. /usr/local/bin/lumbermill).
 
-Other basic configuration examples can be found `here <https://github.com/dstore-dbap/LumberMill/tree/master/conf>`_.
+Other basic configuration examples: https://github.com/dstore-dbap/LumberMill/tree/master/conf/.
 
 For a how-to running LumberMill, Elasticsearch and Kibana on CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
