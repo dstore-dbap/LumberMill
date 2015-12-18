@@ -14,12 +14,12 @@ import tornado.ioloop
 import yaml
 
 # Make sure we are called as module. Otherwise imports will fail.
-import inspect
-enty_point = inspect.stack()[-1][3]
-if enty_point != '_run_module_as_main':
-    print('This file needs to be called as module.')
-    print('Usage: %s -m %s -c <path/to/config.conf>' % (sys.executable, os.path.splitext(sys.argv[0])[0]))
-    sys.exit()
+#import inspect
+#enty_point = inspect.stack()[-1][3]
+#if enty_point != '_run_module_as_main':
+#    print('This file needs to be called as module.')
+#    print('Usage: %s -m %s -c <path/to/config.conf>' % (sys.executable, os.path.splitext(sys.argv[0])[0]))
+#    sys.exit()
 
 from lumbermill.constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
 from lumbermill.utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
