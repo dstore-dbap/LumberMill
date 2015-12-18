@@ -650,37 +650,7 @@ Modules can have an output filter:
           - StdOutSink:
               filter: if $(remote_ip) == '192.168.2.20' and re.match('^GET', $(url))
 
-Simple example to get you started
-'''''''''''''''''''''''''''''''''
 
-::
-
-    echo '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395' | python LumberMill.py -c ./conf/example-stdin.conf
-
-This should produce the following output:
-
-::
-
-    {'bytes_send': '3395',
-     'data': '192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395\n',
-     'datetime': '28/Jul/2006:10:27:10 -0300',
-     'lumbermill': {
-                    'event_id': 'c9f9615a935869ccbaf401108070bfb3',
-                    'event_type': 'httpd_access_log',
-                    "received_from": '127.0.0.1',
-                    "source_module": 'StdIn',
-      },
-     'http_status': '200',
-     'identd': '-',
-     'message_type': 'httpd_access_log',
-     'url': 'GET /cgi-bin/try/ HTTP/1.0',
-     'user': '-'}
-
-For a more complex configuration refer to the
-lumbermill.conf.tcp-example configuration file in the conf folder.
-
-For a small how-to running LumberMill on CentOS, feel free to visit
-http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
 
 A rough sketch for using LumberMill with syslog-ng
 '''''''''''''''''''''''''''''''''''''''''''''''''''
