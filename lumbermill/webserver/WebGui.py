@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import tornado.web
+
 import handler.ActionHandler
 import handler.HtmlHandler
 import handler.WebsocketHandler
 import uimodules.WebGui.ServerInfo
-
-import lumbermill.Utils as Utils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

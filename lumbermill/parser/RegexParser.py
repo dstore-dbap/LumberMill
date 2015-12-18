@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import sys
-import re
 import os
+import re
+import sys
 from operator import itemgetter
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -96,7 +96,7 @@ class RegexParser(BaseThreadedModule):
     def initAfterFork(self):
         if self.hot_rules_first:
             resort_fieldextraction_regexpressions_func = self.getResortFieldextractionRegexpressionsFunc()
-            self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
+            self.timed_func_handler = TimedFunctionManager.startTimedFunction(resort_fieldextraction_regexpressions_func)
         BaseThreadedModule.initAfterFork(self)
 
     def getResortFieldextractionRegexpressionsFunc(self):
@@ -147,6 +147,10 @@ class RegexParser(BaseThreadedModule):
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
         if self.source_field not in event:
+            yield event
+            return
+        if not isinstance(event[self.source_field], basestring):
+            self.logger.warning("Data in event[%s] not of type string. Skipping." % self.source_field)
             yield event
             return
         string_to_match = event[self.source_field]

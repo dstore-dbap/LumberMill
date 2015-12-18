@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import sys
+
 import nmap
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -69,11 +71,11 @@ class NmapScanner(BaseModule):
         # Drop some fields.
         if 'osclass' in scan_result:
             scan_result.pop('osclass')
-        event = Utils.getDefaultEventDict(scan_result, caller_class_name=self.__class__.__name__)
+        event = DictUtils.getDefaultEventDict(scan_result, caller_class_name=self.__class__.__name__)
         event['lumbermill']['event_type'] = 'nmap_scan'
         self.sendEvent(event)
 
     def start(self):
         self.scanner = nmap.PortScanner()
         timed_func = self.getScannerFunc()
-        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(timed_func)
+        self.timed_func_handler = TimedFunctionManager.startTimedFunction(timed_func)

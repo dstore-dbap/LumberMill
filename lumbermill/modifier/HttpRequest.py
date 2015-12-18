@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+import socket
 import sys
 import urllib2
-import socket
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import types
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

@@ -2,11 +2,12 @@
 import logging
 import sys
 import time
+
 import boto3
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -85,7 +86,7 @@ class SQS(BaseThreadedModule):
                 time.sleep(self.poll_interval)
                 continue
             for message in response['Messages']:
-                event = Utils.getDefaultEventDict({"data": message['Body']}, caller_class_name="Sqs")
+                event = DictUtils.getDefaultEventDict({"data": message['Body']}, caller_class_name="Sqs")
                 event['sqs'] = {'attributes': message['Attributes'],
                                 'id': message['MessageId'],
                                 'md5_of_body': message['MD5OfBody'],

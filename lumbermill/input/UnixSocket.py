@@ -1,13 +1,14 @@
 #coding:utf-8
-import sys
 import os
 import socket
-from tornado import netutil,ioloop
+import sys
+
+from tornado import netutil
 from tornado.tcpserver import TCPServer
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 class SocketServer(TCPServer):
@@ -34,7 +35,7 @@ class ConnectionHandler(object):
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 
     def _on_read_line(self, data):
-        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name='UnixSocket', received_from=self.address))
+        self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name='UnixSocket', received_from=self.address))
         if not self.stream.closed():
             self.stream.read_until_regex(b'\r?\n', self._on_read_line)
 

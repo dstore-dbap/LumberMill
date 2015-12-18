@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
 import re
-import sys
-import struct
 import socket
+import struct
+import sys
+
 import pcapy
 from impacket.ImpactDecoder import EthDecoder
-from impacket.ImpactPacket import IP, TCP, UDP, ICMP
+from impacket.ImpactPacket import IP
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 PROTOCOL_TO_NAMES = {'eth': 'Ethernet',
                      '0x8': 'IPv4'}
@@ -95,7 +96,7 @@ class Sniffer(BaseThreadedModule):
             if not packet:
                 continue
             p = self.decodePacket(packet, 'eth')
-            decoded_packet = Utils.getDefaultEventDict({'protocols': ['ethernet'], 'data': packet, 'packet_size': pcap_header.getlen()}, caller_class_name=self.__class__.__name__)
+            decoded_packet = DictUtils.getDefaultEventDict({'protocols': ['ethernet'], 'data': packet, 'packet_size': pcap_header.getlen()}, caller_class_name=self.__class__.__name__)
             decoded_packet['lumbermill']['event_type'] = 'PcapSniffer'
             dest_mac, source_mac, proto_type = struct.unpack("!6s6sH", packet[:14])
             decoded_packet['source_mac'] = ':'.join('%02x' % ord(byte) for byte in source_mac)

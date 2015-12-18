@@ -2,9 +2,11 @@
 import re
 import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
+
 
 @ModuleDocstringParser
 class Math(BaseThreadedModule):
@@ -72,7 +74,7 @@ class Math(BaseThreadedModule):
     def initAfterFork(self):
         if self.interval:
             self.evaluate_facet_data_func = self.getEvaluateFunc()
-            self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
+            self.timed_func_handler = TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
         BaseThreadedModule.initAfterFork(self)
 
     def evaluateResults(self):
@@ -88,7 +90,7 @@ class Math(BaseThreadedModule):
             event_dict = {self.target_field: result}
         else:
             event_dict = {'math_result': result}
-        event = Utils.getDefaultEventDict(event_dict, caller_class_name=self.__class__.__name__, event_type='math')
+        event = DictUtils.getDefaultEventDict(event_dict, caller_class_name=self.__class__.__name__, event_type='math')
         self.sendEvent(event)
 
     def handleEvent(self, event):

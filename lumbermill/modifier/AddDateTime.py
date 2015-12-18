@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-import lumbermill.Utils as Utils
+import time
+
+import datetime
+
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -28,5 +31,5 @@ class AddDateTime(BaseThreadedModule):
         self.target_field = self.getConfigurationValue('target_field')
 
     def handleEvent(self, event):
-        event[self.target_field] = Utils.mapDynamicValue(self.format, event, use_strftime=True)
+        event[self.target_field] = datetime.datetime.utcnow().strftime(self.format)
         yield event

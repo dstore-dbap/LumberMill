@@ -4,12 +4,12 @@ import sys
 import types
 from json import JSONDecoder
 
-import lumbermill.Utils as Utils
+from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 # For pypy the default json module is the fastest.
-if Utils.is_pypy:
+if IS_PYPY:
     import json
 else:
     json = False

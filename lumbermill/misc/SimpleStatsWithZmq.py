@@ -1,9 +1,10 @@
 import os
 
-import lumbermill.Utils as Utils
-from lumbermill.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+from lumbermill.utils.misc import AnsiColors, TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -71,9 +72,9 @@ class SimpleStats(BaseThreadedModule):
             if not event_type.startswith('event_type_'):
                 continue
             event_name = event_type.replace('event_type_', '')
-            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (Utils.AnsiColors.YELLOW, event_name, Utils.AnsiColors.ENDC, Utils.AnsiColors.YELLOW, count, Utils.AnsiColors.ENDC))
+            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(DictUtils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
             MultiProcessStatisticCollector().resetCounter(event_type)
 
     def receiveRateStatistics(self):
@@ -82,18 +83,18 @@ class SimpleStats(BaseThreadedModule):
         if not events_received:
             events_received = 0
         MultiProcessStatisticCollector().resetCounter('events_received')
-        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), Utils.AnsiColors.YELLOW, events_received, (events_received/self.interval), Utils.AnsiColors.ENDC))
+        self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), AnsiColors.YELLOW, events_received, (events_received/self.interval), AnsiColors.ENDC))
         if self.emit_as_event:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(DictUtils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
             return
         self.logger.info(">> Queue stats")
         for module_name, queue in sorted(self.module_queues.items()):
-            self.logger.info("Events in %s queue: %s%s%s" % (module_name, Utils.AnsiColors.YELLOW, queue.qsize(), Utils.AnsiColors.ENDC))
+            self.logger.info("Events in %s queue: %s%s%s" % (module_name, AnsiColors.YELLOW, queue.qsize(), AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(Utils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(DictUtils.getDefaultEventDict({"queue_count": queue.qsize(),  "field_name": "queue_counts", "interval": self.interval }, caller_class_name="Statistics", event_type="statistic"))
 
     def initAfterFork(self):
         # Get all configured queues for waiting event stats.
@@ -102,7 +103,7 @@ class SimpleStats(BaseThreadedModule):
             if not hasattr(instance, 'getInputQueue') or not instance.getInputQueue():
                 continue
             self.module_queues[module_name] = instance.getInputQueue()
-        Utils.TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
+        TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
         BaseThreadedModule.initAfterFork()
 
 

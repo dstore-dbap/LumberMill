@@ -3,7 +3,7 @@ import sys
 import types
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -94,7 +94,6 @@ class CollectdParser(BaseThreadedModule):
 Collectd network protocol implementation.
 """
 
-import socket
 import struct
 
 from datetime import datetime

@@ -4,9 +4,9 @@ import logging.handlers
 import os
 import socket
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 
 @ModuleDocstringParser
@@ -56,7 +56,7 @@ class SyslogSink(BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.format:
-            self.syslogger.info(Utils.mapDynamicValue(self.format, event))
+            self.syslogger.info(mapDynamicValue(self.format, event))
         else:
             self.syslogger.info(event)
         yield None

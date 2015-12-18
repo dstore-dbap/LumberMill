@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
-import re
-import os
-import sys
 import collections
+import os
+import re
+import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -96,7 +97,7 @@ class MergeEvent(BaseThreadedModule):
 
     def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
-        self.buffers = collections.defaultdict(lambda: Utils.Buffer(flush_size=self.buffer_size,
+        self.buffers = collections.defaultdict(lambda: Buffer(flush_size=self.buffer_size,
                                                                     callback=self.sendMergedEvent,
                                                                     interval=self.flush_interval_in_secs,
                                                                     maxsize=self.buffer_size))
@@ -133,6 +134,6 @@ class MergeEvent(BaseThreadedModule):
             parent_event['data'] = self.glue.join([event["data"] for event in events])
             caller_class_name = parent_event["lumbermill"].get("source_module", None)
             received_from = parent_event["lumbermill"].get("received_from", None)
-            merged_event = Utils.getDefaultEventDict(parent_event, caller_class_name=caller_class_name, received_from=received_from)
+            merged_event = DictUtils.getDefaultEventDict(parent_event, caller_class_name=caller_class_name, received_from=received_from)
             self.sendEvent(merged_event)
             return True

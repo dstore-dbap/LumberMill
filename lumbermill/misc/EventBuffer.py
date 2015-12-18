@@ -4,9 +4,11 @@ import gc
 import random
 import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
+
 
 @ModuleDocstringParser
 class EventBuffer(BaseThreadedModule):
@@ -52,41 +54,41 @@ class EventBuffer(BaseThreadedModule):
             self.lumbermill.shutDown()
             return
         self.persistence_backend = backend_info['instances'][0]
-        Utils.KeyDotNotationDict.persistence_backend = self.persistence_backend
-        Utils.KeyDotNotationDict.key_prefix = self.key_prefix
+        DictUtils.KeyDotNotationDict.persistence_backend = self.persistence_backend
+        DictUtils.KeyDotNotationDict.key_prefix = self.key_prefix
         # Monkeypatch Utils.KeyDotNotationDict to add/delete event to persistence backend.
         def removeFromPersistenceBackendOnGarbageCollect(self):
-            Utils.KeyDotNotationDict.___del___(self)
+            DictUtils.KeyDotNotationDict.___del___(self)
             # Only act if we hold an event.
             if "event_id" not in self.get("lumbermill", {}):
                 return
             #print "Removing from backend"
             try:
-                key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['lumbermill']['event_id'])
-                Utils.KeyDotNotationDict.persistence_backend.delete(key)
+                key = "%s:%s" % (DictUtils.KeyDotNotationDict.key_prefix, self['lumbermill']['event_id'])
+                DictUtils.KeyDotNotationDict.persistence_backend.delete(key)
             except:
                 pass
-        Utils.KeyDotNotationDict.___del___ = Utils.KeyDotNotationDict.__del__
-        Utils.KeyDotNotationDict.__del__ = removeFromPersistenceBackendOnGarbageCollect
+        DictUtils.KeyDotNotationDict.___del___ = DictUtils.KeyDotNotationDict.__del__
+        DictUtils.KeyDotNotationDict.__del__ = removeFromPersistenceBackendOnGarbageCollect
 
         def addToPersistenceBackendOnInit(self, *args):
-            Utils.KeyDotNotationDict.___init___(self, *args)
+            DictUtils.KeyDotNotationDict.___init___(self, *args)
             # Only act if we hold an event.
             if "event_id" not in self.get("lumbermill", {}):
                 return
             try:
-                key = "%s:%s" % (Utils.KeyDotNotationDict.key_prefix, self['lumbermill']['event_id'])
+                key = "%s:%s" % (DictUtils.KeyDotNotationDict.key_prefix, self['lumbermill']['event_id'])
                 # Store a simple dict in backend, not a KeyDotNotationDict.
                 # Also, store a copy, as the dict might get buffered in persistence_backend and we do not
                 # want any changes made to new_dict to propagate to persistence_backend.
-                Utils.KeyDotNotationDict.persistence_backend.set(key, dict.copy(self), False)
+                DictUtils.KeyDotNotationDict.persistence_backend.set(key, dict.copy(self), False)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store event in persistance backend. Exception: %s, Error: %s." % (etype, evalue))
                 pass
             print "Added to backend"
-        Utils.KeyDotNotationDict.___init___ = Utils.KeyDotNotationDict.__init__
-        Utils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit
+        DictUtils.KeyDotNotationDict.___init___ = DictUtils.KeyDotNotationDict.__init__
+        DictUtils.KeyDotNotationDict.__init__ = addToPersistenceBackendOnInit
 
         def returnSimpleKeyDotDictOnCopy(self):
             """
@@ -96,14 +98,14 @@ class EventBuffer(BaseThreadedModule):
             A removeFromPersistenceBackendOnGarbageCollect would fail anyways, since the new key is unknown to the
             backend. Still we can skip removing for speedups.
             """
-            new_dict = Utils.KeyDotNotationDict()
-            new_dict.__init__ = Utils.KeyDotNotationDict.___init___
-            new_dict.__del__ = Utils.KeyDotNotationDict.__del__
-            new_dict.update(copy.deepcopy(super(Utils.KeyDotNotationDict, self)))
+            new_dict = DictUtils.KeyDotNotationDict()
+            new_dict.__init__ = DictUtils.KeyDotNotationDict.___init___
+            new_dict.__del__ = DictUtils.KeyDotNotationDict.__del__
+            new_dict.update(copy.deepcopy(super(DictUtils.KeyDotNotationDict, self)))
             if "event_id" in new_dict.get("lumbermill", {}):
                 new_dict['lumbermill']['event_id'] = "%032x" % random.getrandbits(128)
             return new_dict
-        Utils.KeyDotNotationDict.copy = returnSimpleKeyDotDictOnCopy
+        DictUtils.KeyDotNotationDict.copy = returnSimpleKeyDotDictOnCopy
 
     def getTimedGarbageCollectFunc(self):
         @setInterval(self.flush_interval, call_on_init=True)
@@ -137,10 +139,10 @@ class EventBuffer(BaseThreadedModule):
                     self.logger.error("Could not requeue event. Module %s not found." % (source_module))
                     continue
                 requeue_counter += 1
-                input_modules[source_module].sendEvent(Utils.KeyDotNotationDict(event))
+                input_modules[source_module].sendEvent(DictUtils.KeyDotNotationDict(event))
             self.logger.warning("Done. Requeued %s of %s events." % (requeue_counter, len(keys)))
             self.logger.warning("Note: If more than one gp instance is running, requeued events count may differ from total events.")
             event = None
 
     def start(self):
-        self.timedFuncHandle = Utils.TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())
+        self.timedFuncHandle = TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())

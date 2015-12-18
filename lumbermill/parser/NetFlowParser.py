@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+import os
+import re
 import struct
 import sys
 from socket import inet_ntoa
-import re
-import os
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

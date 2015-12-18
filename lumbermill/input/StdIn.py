@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import socket
+import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -42,15 +42,15 @@ class StdIn(BaseThreadedModule):
             data = sys.stdin.readline()
             if data.__len__() > 0:
                 if not self.multiline:
-                    self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": data}, caller_class_name=self.__class__.__name__))
+                    self.sendEvent(DictUtils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": data}, caller_class_name=self.__class__.__name__))
                 else:
                     if self.stream_end_signal and self.stream_end_signal == data:
-                        self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}, caller_class_name=self.__class__.__name__))
+                        self.sendEvent(DictUtils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}, caller_class_name=self.__class__.__name__))
                         multiline_data = ""
                         continue
                     multiline_data += data
             else: # an empty line means stdin has been closed
                 if multiline_data.__len__() > 0:
-                    self.sendEvent(Utils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}, caller_class_name=self.__class__.__name__))
+                    self.sendEvent(DictUtils.getDefaultEventDict({"received_from": 'stdin://%s' % hostname, "data": multiline_data}, caller_class_name=self.__class__.__name__))
                 self.lumbermill.shutDown()
                 self.alive = False

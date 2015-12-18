@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
+import gzip
 import sys
 import types
-from cStringIO import StringIO
-import gzip
 import zlib
+from cStringIO import StringIO
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

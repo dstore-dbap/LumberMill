@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+import os.path
+import socket
 import sys
 import time
-import tornado.web
-import tornado.httpserver
+
 import tornado.autoreload
+import tornado.httpserver
 import tornado.ioloop
-import socket
-import os.path
+import tornado.web
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

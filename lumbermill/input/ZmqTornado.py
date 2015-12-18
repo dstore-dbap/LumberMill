@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 import socket
 import sys
+
 import zmq
 from zmq.eventloop import ioloop, zmqstream
+
 ioloop.install()
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -96,7 +98,7 @@ class ZmqTornado(BaseModule):
         data = data[0]
         if self.separator:
             topic, data = data.split(self.separator)
-        event = Utils.getDefaultEventDict({"data": data}, caller_class_name="ZmqTornado")
+        event = DictUtils.getDefaultEventDict({"data": data}, caller_class_name="ZmqTornado")
         self.sendEvent(event)
 
     def shutDown(self):

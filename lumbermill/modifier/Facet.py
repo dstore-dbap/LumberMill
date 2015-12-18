@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -91,7 +92,7 @@ class Facet(BaseThreadedModule):
         self._setFacetInfoInternal(key, facet_info)
 
     def sendFacetEventToReceivers(self, facet_data):
-        event = Utils.getDefaultEventDict({'facet_field': self.source_field,
+        event = DictUtils.getDefaultEventDict({'facet_field': self.source_field,
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets']},
                                           caller_class_name=self.__class__.__name__,
@@ -118,7 +119,7 @@ class Facet(BaseThreadedModule):
 
     def initAfterFork(self):
         self.evaluate_facet_data_func = self.getEvaluateFunc()
-        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
+        self.timed_func_handler = TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
         BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):

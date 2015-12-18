@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -64,9 +64,9 @@ class Spam(BaseThreadedModule):
         while self.alive:
             for event_data in self.events:
                 if isinstance(event_data, str):
-                    event = Utils.getDefaultEventDict({'data': event_data}, caller_class_name=self.__class__.__name__)
+                    event = DictUtils.getDefaultEventDict({'data': event_data}, caller_class_name=self.__class__.__name__)
                 elif isinstance(event_data, dict):
-                    event = Utils.getDefaultEventDict(event_data, caller_class_name=self.__class__.__name__) # self.getConfigurationValue("event")
+                    event = DictUtils.getDefaultEventDict(event_data, caller_class_name=self.__class__.__name__) # self.getConfigurationValue("event")
                 self.sendEvent(event)
                 if self.sleep > 0:
                     time.sleep(self.sleep)

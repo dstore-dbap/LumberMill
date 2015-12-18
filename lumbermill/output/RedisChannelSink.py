@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
+
 import redis
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 
 @ModuleDocstringParser
@@ -56,7 +57,7 @@ class RedisChannelSink(BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.format:
-            publish_data = Utils.mapDynamicValue(self.format, event)
+            publish_data = mapDynamicValue(self.format, event)
         else:
             publish_data = event
         try:
@@ -68,7 +69,7 @@ class RedisChannelSink(BaseThreadedModule):
 
     def __handleEvent(self, event):
         if self.format:
-            publish_data = Utils.mapDynamicValue(self.format, event)
+            publish_data = mapDynamicValue(self.format, event)
         else:
             publish_data = event
         self.buffer.append(publish_data)

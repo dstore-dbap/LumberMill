@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-import sys
 import cPickle
+import sys
+
 import redis
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -66,9 +67,9 @@ class KeyValueStore(BaseThreadedModule):
         self.set_buffer = None
         if self.getConfigurationValue('store_interval_in_secs') or self.getConfigurationValue('batch_size'):
             if backend == 'RedisStore':
-                self.set_buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.setRedisBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+                self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self.setRedisBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
             else:
-                 self.set_buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+                 self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self.setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
             self._set = self.set
             self.set = self.setBuffered
             self._get = self.get

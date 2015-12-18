@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-import sys
 import logging
-import time
 import socket
-from tornado.iostream import StreamClosedError
-from tornado.tcpserver import TCPServer
-from tornado.netutil import bind_sockets
-from tornado import autoreload
+import sys
+import time
 
-import lumbermill.Utils as Utils
+from tornado import autoreload
+from tornado.iostream import StreamClosedError
+from tornado.netutil import bind_sockets
+from tornado.tcpserver import TCPServer
+
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 class TornadoTcpServer(TCPServer):
@@ -93,7 +94,7 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        self.gp_module.sendEvent(Utils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
+        self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @ModuleDocstringParser
 class TcpServer(BaseModule):

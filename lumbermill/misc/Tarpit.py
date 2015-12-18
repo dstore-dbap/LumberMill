@@ -2,7 +2,8 @@
 import time
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
+
 
 @ModuleDocstringParser
 class Tarpit(BaseThreadedModule):

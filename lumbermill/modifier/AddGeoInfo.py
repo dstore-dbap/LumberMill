@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import socket
 import sys
+
 import pygeoip
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, memoize
+from lumbermill.utils.Decorators import ModuleDocstringParser, memoize
 
 
 @ModuleDocstringParser
@@ -37,9 +38,9 @@ class AddGeoInfo(BaseThreadedModule):
 
     - AddGeoInfo:
        geoip_dat_path:                  # <type: string; is: required>
-       geo_info_fields:                 # <default: None; type: list; is: optional>
+       geo_info_fields:                 # <default: None; type: None||list; is: optional>
        source_fields:                   # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
-       target_field:                    # <default: None; type: None||string; is: optional>
+       target_field:                    # <default: "geo_info"; type: string; is: optional>
        receivers:
         - NextModule
     """

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -100,7 +101,7 @@ class FacetV2(BaseThreadedModule):
         FacetV2.facet_data[key] = facet_info
 
     def sendFacetEventToReceivers(self, facet_data):
-        event = Utils.getDefaultEventDict({'facet_field': self.source_field,
+        event = DictUtils.getDefaultEventDict({'facet_field': self.source_field,
                                           'facet_count': len(facet_data['facets']),
                                           'facets': facet_data['facets']},
                                           caller_class_name=self.__class__.__name__,
@@ -165,10 +166,10 @@ class FacetV2(BaseThreadedModule):
 
     def initAfterFork(self):
         self.evaluate_facet_data_func = self.getEvaluateFunc()
-        self.timed_func_handler_a = Utils.TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
+        self.timed_func_handler_a = TimedFunctionManager.startTimedFunction(self.evaluate_facet_data_func)
         if self.persistence_backend:
             self.store_facets_in_backend_func = self.getStoreFunc()
-            self.timed_func_handler_b = Utils.TimedFunctionManager.startTimedFunction(self.store_facets_in_backend_func)
+            self.timed_func_handler_b = TimedFunctionManager.startTimedFunction(self.store_facets_in_backend_func)
         BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):

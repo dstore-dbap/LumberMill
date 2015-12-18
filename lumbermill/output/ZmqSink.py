@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import sys
-import zmq
 import socket
-import msgpack
+import sys
 
-import lumbermill.Utils as Utils
+import msgpack
+import zmq
+
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 
 @ModuleDocstringParser
@@ -84,7 +86,7 @@ class ZmqSink(BaseThreadedModule):
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
         self.initZmqContext()
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
 
     def storeData(self, buffered_data):
         try:
@@ -103,7 +105,7 @@ class ZmqSink(BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.format:
-            publish_data = Utils.mapDynamicValue(self.format, event)
+            publish_data = mapDynamicValue(self.format, event)
         else:
             publish_data = msgpack.packb(event)
         if self.topic:

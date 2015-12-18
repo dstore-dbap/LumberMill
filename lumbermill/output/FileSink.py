@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
-from cStringIO import StringIO
 import collections
+import os
 import sys
 import time
+from cStringIO import StringIO
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.DynamicValues import mapDynamicValue
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -59,8 +61,8 @@ class FileSink(BaseThreadedModule):
             except ImportError:
                 self.logger.error('Snappy compression selected but snappy module could not be loaded.')
                 self.lumbermill.shutDown()
-        self.buffer = Utils.Buffer(self.batch_size, self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.backlog_size)
-        Utils.TimedFunctionManager.startTimedFunction(self.closeStaleFileHandles)
+        self.buffer = Buffer(self.batch_size, self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.backlog_size)
+        TimedFunctionManager.startTimedFunction(self.closeStaleFileHandles)
 
     def getStartMessage(self):
         return "File: %s. Max buffer size: %d" % (self.file_name, self.getConfigurationValue('backlog_size'))
@@ -68,7 +70,7 @@ class FileSink(BaseThreadedModule):
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseThreadedModule.initAfterFork(self)
 
     @setInterval(60)
@@ -116,8 +118,8 @@ class FileSink(BaseThreadedModule):
     def storeData(self, events):
         write_data = collections.defaultdict(str)
         for event in events:
-            path = Utils.mapDynamicValue(self.file_name, mapping_dict=event, use_strftime=True)
-            line = Utils.mapDynamicValue(self.format, mapping_dict=event)
+            path = mapDynamicValue(self.file_name, mapping_dict=event, use_strftime=True)
+            line = mapDynamicValue(self.format, mapping_dict=event)
             write_data["%s" % path] += line + "\n"
         for path, lines in write_data.items():
             try:

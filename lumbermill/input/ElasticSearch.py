@@ -5,16 +5,17 @@ import time
 import types
 import requests
 from elasticsearch import Elasticsearch, connection
-from multiprocessing import Manager, Lock
 from ctypes import c_char_p
+from multiprocessing import Manager, Lock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
-
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 # For pypy the default json module is the fastest.
-if Utils.is_pypy:
+if IS_PYPY:
     import json
 else:
     json = False
@@ -107,7 +108,7 @@ class ElasticSearch(BaseThreadedModule):
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
         self.index_name_pattern = self.getConfigurationValue('index_name')
-        self.index_name = Utils.mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
+        self.index_name = mapDynamicValue(self.index_name_pattern, use_strftime=True).lower()
         if self.getConfigurationValue("connection_type") == 'urllib3':
             self.connection_class = connection.Urllib3HttpConnection
         elif self.getConfigurationValue('connection_type') == 'requests':
@@ -196,7 +197,7 @@ class ElasticSearch(BaseThreadedModule):
                     doc = self.extractFieldsFromResultDocument(self.field_mappings, doc)
                 elif isinstance(self.field_mappings, types.DictType):
                     doc = self.extractFieldsFromResultDocumentWithMapping(self.field_mappings, doc)
-                event = Utils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
+                event = DictUtils.getDefaultEventDict(dict=doc, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
         self.lumbermill.shutDown()
 
@@ -240,8 +241,8 @@ class ElasticSearch(BaseThreadedModule):
         return found_documents
 
     def extractFieldsFromResultDocument(self, fields, document):
-        document = Utils.KeyDotNotationDict(document)
-        new_document = Utils.KeyDotNotationDict()
+        document = DictUtils.KeyDotNotationDict(document)
+        new_document = DictUtils.KeyDotNotationDict()
         for field in fields:
             if field not in document:
                 continue
@@ -249,8 +250,8 @@ class ElasticSearch(BaseThreadedModule):
         return new_document
 
     def extractFieldsFromResultDocumentWithMapping(self, field_mapping, document):
-        document = Utils.KeyDotNotationDict(document)
-        new_document = Utils.KeyDotNotationDict()
+        document = DictUtils.KeyDotNotationDict(document)
+        new_document = DictUtils.KeyDotNotationDict()
         for source_field, target_field in field_mapping.iteritems():
             if source_field not in document:
                 continue

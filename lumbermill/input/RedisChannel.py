@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser
-from lumbermill.RedisAsyncClient import AsyncRedisClient
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.RedisAsyncClient import AsyncRedisClient
+
 
 @ModuleDocstringParser
 class RedisChannel(BaseModule):
@@ -68,4 +69,4 @@ class RedisChannel(BaseModule):
     def handleEvent(self, event):
         if event[0] != 'message':
             return
-        yield Utils.getDefaultEventDict(dict={"received_from": '%s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)
+        yield DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)

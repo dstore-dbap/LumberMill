@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import sys
-import re
 import hashlib
+import re
+import sys
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
+
 
 @ModuleDocstringParser
 class ModifyFields(BaseThreadedModule):

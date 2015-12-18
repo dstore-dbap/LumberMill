@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import lumbermill.Utils as Utils
-from lumbermill.StatisticCollector import StatisticCollector
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.StatisticCollector import StatisticCollector
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -66,7 +67,7 @@ class Statistics(BaseThreadedModule):
             if not last_field_name:
                 last_field_name = field_name
             if field_name != last_field_name:
-                self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count,  "field_name": last_field_name, "field_counts": field_counts, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(DictUtils.getDefaultEventDict({"total_count": total_count,  "field_name": last_field_name, "field_counts": field_counts, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
                 last_field_name = field_name
                 field_counts = {}
                 total_count = 0
@@ -74,11 +75,11 @@ class Statistics(BaseThreadedModule):
             total_count += field_count
         # Send remaining.
         if last_field_name:
-            self.sendEvent(Utils.getDefaultEventDict({"total_count": total_count, "field_name": field_name, "field_counts": field_counts, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(DictUtils.getDefaultEventDict({"total_count": total_count, "field_name": field_name, "field_counts": field_counts, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
 
     def initAfterFork(self):
         timed_func = self.getRunTimedFunctionsFunc()
-        Utils.TimedFunctionManager.startTimedFunction(timed_func)
+        TimedFunctionManager.startTimedFunction(timed_func)
         BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):

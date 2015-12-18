@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
-import re
 import abc
 import logging
+import os
+import re
 import sys
-import Utils
 from functools import wraps
-from ConfigurationValidator import ConfigurationValidator
+
+from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from utils.ConfigurationValidator import ConfigurationValidator
+from utils.DynamicValues import parseDynamicValue, mapDynamicValue, GP_DYNAMIC_VAL_REGEX_WITH_TYPES
+
 
 class BaseModule:
     """
@@ -57,7 +60,7 @@ class BaseModule:
             self.configuration_data.update(configuration)
         self.parseDynamicValuesInConfiguration()
         # Set log level.
-        self.logger.setLevel(Utils.loglevel_string_to_loglevel_int[self.getConfigurationValue('log_level').lower()])
+        self.logger.setLevel(LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.getConfigurationValue('log_level').lower()])
         # Set default actions.
         self.delete_fields = self.getConfigurationValue('delete_fields')
         self.add_fields = self.getConfigurationValue('add_fields')
@@ -85,7 +88,7 @@ class BaseModule:
         # Copy dict since we might change it during iteration.
         configuration_data_copy = self.configuration_data.copy()
         for key, value in configuration_data_copy.iteritems():
-            self.configuration_data[key] = Utils.parseDynamicValue(value)
+            self.configuration_data[key] = parseDynamicValue(value)
 
     def checkConfiguration(self):
         configuration_errors = ConfigurationValidator().validateModuleConfiguration(self)
@@ -120,7 +123,7 @@ class BaseModule:
             return False
         if config_setting['contains_dynamic_value'] is False or not mapping_dict:
             return config_setting.get('value')
-        return Utils.mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
+        return mapDynamicValue(config_setting.get('value'), mapping_dict, use_strftime)
 
     def addReceiver(self, receiver_name, receiver):
         if self.module_type != "output":
@@ -154,7 +157,7 @@ class BaseModule:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        filter_string_tmp = Utils.GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string)
+        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string)
         filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
         filter_string_tmp = "lambda event : " + filter_string_tmp
         try:
@@ -201,7 +204,7 @@ class BaseModule:
         #if not self.input_filter or self.input_filter_matched:
         # Add fields if configured.
         if self.add_fields:
-            for field_name, field_value in Utils.mapDynamicValue(self.add_fields, event).items():
+            for field_name, field_value in mapDynamicValue(self.add_fields, event).items():
                 try:
                     event[field_name] = field_value
                 except KeyError:
@@ -213,7 +216,7 @@ class BaseModule:
             except KeyError:
                 pass
         if self.event_type:
-            event['lumbermill']['event_type'] = Utils.mapDynamicValue(self.event_type, event)
+            event['lumbermill']['event_type'] = mapDynamicValue(self.event_type, event)
         return event
 
     def sendEvent(self, event, apply_common_actions=True):

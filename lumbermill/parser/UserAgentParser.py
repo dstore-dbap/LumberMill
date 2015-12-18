@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from ua_parser import user_agent_parser
 import types
 
-import lumbermill.Utils as Utils
+from ua_parser import user_agent_parser
+
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import MemoryCache
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -52,7 +53,7 @@ class UserAgentParser(BaseThreadedModule):
         if isinstance(self.source_fields, types.StringTypes):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
-        self.in_mem_cache = Utils.MemoryCache(size=1000)
+        self.in_mem_cache = MemoryCache(size=1000)
 
     def handleEvent(self, event):
         for source_field in self.source_fields:

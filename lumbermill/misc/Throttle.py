@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
 import time
+from collections import defaultdict
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.DynamicValues import mapDynamicValue
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -96,11 +97,11 @@ class Throttle(BaseThreadedModule):
 
     def initAfterFork(self):
         self.gc_throttled_events_info = self.getGcThrottledEventsInfoFunc()
-        self.timed_func_handler = Utils.TimedFunctionManager.startTimedFunction(self.gc_throttled_events_info)
+        self.timed_func_handler = TimedFunctionManager.startTimedFunction(self.gc_throttled_events_info)
         BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
-        throttled_event_key = Utils.mapDynamicValue(self.key, event)
+        throttled_event_key = mapDynamicValue(self.key, event)
         throttled_event_count = self.setAndGetEventCountByKey(throttled_event_key)
         if self.min_count <= throttled_event_count <= self.max_count:
             yield event

@@ -4,12 +4,14 @@ import sys
 import time
 import elasticsearch
 
-import lumbermill.Utils as Utils
+from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue, mapDynamicValueInString
 
 # For pypy the default json module is the fastest.
-if Utils.is_pypy:
+if IS_PYPY:
     import json
 else:
     json = False
@@ -92,24 +94,19 @@ class ElasticSearchSink(BaseThreadedModule):
         self.format = self.getConfigurationValue('format')
         self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
-        self.index_name = None
+        self.index_name = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
         self.es_nodes = self.getConfigurationValue("nodes")
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
-        if not self.configuration_data['index_name']['contains_dynamic_value']:
-            self.index_name = self.getConfigurationValue("index_name")
-        else:
-            self.index_name_pattern = self.getConfigurationValue("index_name")
         if self.getConfigurationValue("connection_type") == 'urllib3':
             self.connection_class = elasticsearch.connection.Urllib3HttpConnection
         elif self.getConfigurationValue("connection_type") == 'requests':
             self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def getStartMessage(self):
-        index_name = self.index_name if self.index_name else self.index_name_pattern
-        return "Idx: %s. Max buffer size: %d" % (index_name, self.getConfigurationValue('backlog_size'))
+        return "Idx: %s. Max buffer size: %d" % (self.index_name, self.getConfigurationValue('backlog_size'))
 
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
@@ -119,7 +116,7 @@ class ElasticSearchSink(BaseThreadedModule):
             self.lumbermill.shutDown()
             return
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
 
     def connect(self):
         es = False
@@ -158,17 +155,16 @@ class ElasticSearchSink(BaseThreadedModule):
         self.buffer.append(publish_data)
         yield None
 
-    def dataToElasticSearchJson(self, events, index_name=None):
+    def dataToElasticSearchJson(self, events):
         """
         Format data for elasticsearch bulk update.
         """
         json_data = []
         for event in events:
-            if not index_name:
-                index_name = Utils.mapDynamicValueInString(self.index_name_pattern, event, use_strftime=True).lower()
+            index_name = mapDynamicValueInString(self.index_name, event, use_strftime=True).lower()
             event_type = event['lumbermill']['event_type'] if 'event_type' in event['lumbermill'] else 'Unknown'
-            doc_id = Utils.mapDynamicValue(self.doc_id_pattern, event)
-            routing = Utils.mapDynamicValue(self.routing_pattern, use_strftime=True)
+            doc_id = mapDynamicValue(self.doc_id_pattern, event)
+            routing = mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
                 self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
@@ -190,7 +186,7 @@ class ElasticSearchSink(BaseThreadedModule):
         return json_data
 
     def storeData(self, events):
-        json_data = self.dataToElasticSearchJson(events, self.index_name)
+        json_data = self.dataToElasticSearchJson(events)
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.

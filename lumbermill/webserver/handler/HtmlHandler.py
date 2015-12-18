@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-import pprint
 import tornado.web
 import tornado.escape
 import socket
-import json
-import yaml
 from pygments import highlight
 from pygments.lexers import YamlLexer
 from pygments.formatters import HtmlFormatter

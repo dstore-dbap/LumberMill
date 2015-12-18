@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from lxml import etree
 import sys
 
+from lxml import etree
+
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

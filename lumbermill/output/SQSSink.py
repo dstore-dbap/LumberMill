@@ -2,15 +2,17 @@
 import logging
 import os
 import random
-import boto3
 import sys
+import boto3
 
-import lumbermill.Utils as Utils
+from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 # For pypy the default json module is the fastest.
-if Utils.is_pypy:
+if IS_PYPY:
     import json
 else:
     json = False
@@ -22,6 +24,7 @@ else:
             pass
     if not json:
         raise ImportError
+
 
 @ModuleDocstringParser
 class SQSSink(BaseThreadedModule):
@@ -77,7 +80,7 @@ class SQSSink(BaseThreadedModule):
 
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         try:
             self.sqs_resource = boto3.resource('sqs',
                                                 region_name=self.getConfigurationValue('region'),
@@ -108,7 +111,7 @@ class SQSSink(BaseThreadedModule):
                 id = "%032x%s" % (random.getrandbits(128), os.getpid())
             message = {'Id': id}
             if self.format:
-                event = Utils.mapDynamicValue(self.format, event)
+                event = mapDynamicValue(self.format, event)
             else:
                 try:
                     event = json.dumps(event)

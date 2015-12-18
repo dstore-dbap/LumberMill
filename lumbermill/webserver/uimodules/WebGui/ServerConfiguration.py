@@ -5,6 +5,7 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 import collections
 
+
 class ServerConfiguration(UIModule):
     def render(self, webserver_module, render_type="text"):
         print self.__dict__

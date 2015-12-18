@@ -2,9 +2,10 @@
 import pprint
 import time
 
-import lumbermill.Utils as Utils
-from lumbermill.Decorators import ModuleDocstringParser
 from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
+
 
 @ModuleDocstringParser
 class StdOutSink(BaseThreadedModule):
@@ -37,7 +38,7 @@ class StdOutSink(BaseThreadedModule):
             time.sleep(.0001)
         self.printing = True
         if self.format:
-            output = Utils.mapDynamicValue(self.format, event)
+            output = mapDynamicValue(self.format, event)
         else:
             output = event
         if self.pretty_print and not self.format:

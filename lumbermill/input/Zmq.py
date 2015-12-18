@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import socket
 import sys
+
 import zmq
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -103,7 +104,7 @@ class Zmq(BaseThreadedModule):
             return
         while self.alive:
             for event in self.getEventFromZmq():
-                event = Utils.getDefaultEventDict({"data": event}, caller_class_name="Zmq")
+                event = DictUtils.getDefaultEventDict({"data": event}, caller_class_name="Zmq")
                 if self.pattern == 'sub':
                     topic, event['data'] = event['data'].split(' ', 1)
                     event['topic'] = topic

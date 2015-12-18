@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 import collections
 import logging
+import multiprocessing
+import sys
+import time
 from cStringIO import StringIO
+
 import pywebhdfs
 from pywebhdfs.webhdfs import PyWebHdfsClient
-import multiprocessing
-import time
-import sys
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.DynamicValues import mapDynamicValue
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -133,7 +135,7 @@ class WebHdfsSink(BaseThreadedModule):
 
     def initAfterFork(self):
         self.hdfs = self.getHdfsClient()
-        Utils.TimedFunctionManager.startTimedFunction(self.timed_store_func)
+        TimedFunctionManager.startTimedFunction(self.timed_store_func)
         # Call parent run method
         BaseThreadedModule.initAfterFork(self)
 
@@ -164,7 +166,7 @@ class WebHdfsSink(BaseThreadedModule):
         for event in events:
             filename = time.strftime(self.getConfigurationValue('name_pattern'))
             filename = filename % event
-            line = Utils.mapDynamicValue(self.format, event)
+            line = mapDynamicValue(self.format, event)
             write_data[filename] += line
         write_tries = 0
         retry_sleep_time = .4

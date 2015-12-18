@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-import os
-import re
-import sys
-import socket
-import time
 import collections
 import hashlib
+import os
+import re
+import socket
+import sys
 import threading
+import time
+
 import msgpack
 from Crypto import Random
 from Crypto.Cipher import AES
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 class PackMember:
@@ -84,7 +85,6 @@ class Pack(BaseThreadedModule):
     can_run_forked = False
 
     def configure(self, configuration):
-        import logging
         # self.logger.setLevel(logging.DEBUG)
         # Call parent configure method.
         BaseThreadedModule.configure(self, configuration)
@@ -193,11 +193,11 @@ class Pack(BaseThreadedModule):
 
     def run(self):
         if self.is_leader:
-            Utils.TimedFunctionManager.startTimedFunction(self.sendAliveRequests)
-            Utils.TimedFunctionManager.startTimedFunction(self.sendDiscoverBroadcast)
-            Utils.TimedFunctionManager.startTimedFunction(self.dropDeadPackFollowers)
+            TimedFunctionManager.startTimedFunction(self.sendAliveRequests)
+            TimedFunctionManager.startTimedFunction(self.sendDiscoverBroadcast)
+            TimedFunctionManager.startTimedFunction(self.dropDeadPackFollowers)
         else:
-            Utils.TimedFunctionManager.startTimedFunction(self.dropDeadPackLeader)
+            TimedFunctionManager.startTimedFunction(self.dropDeadPackLeader)
         self.logger.info("Running as pack %s." % self.getConfigurationValue('pack'))
         while self.alive:
             try:

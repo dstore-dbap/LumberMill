@@ -2,11 +2,12 @@
 import Queue
 import threading
 import types
+
 from dns import resolver, reversename
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import MemoryCache
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -39,7 +40,7 @@ class AddDnsLookup(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
-        self.in_mem_cache = Utils.MemoryCache(size=5000)
+        self.in_mem_cache = MemoryCache(size=5000)
         self.lookup_type = self.getConfigurationValue('action')
         self.source_field = self.getConfigurationValue('source_field')
         self.target_field = self.getConfigurationValue('target_field')

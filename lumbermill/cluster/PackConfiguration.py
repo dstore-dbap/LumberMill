@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import signal
-import yaml
 import sys
 
-import lumbermill.Utils as Utils
+import yaml
+
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -134,5 +135,5 @@ class PackConfiguration(BaseModule.BaseModule):
         # Get currently running configuration.
         self.filtered_startup_config = self.filterIgnoredModules(self.lumbermill.getConfiguration())
         if self.pack.is_leader:
-            Utils.TimedFunctionManager.startTimedFunction(self.update_config_func)
+            TimedFunctionManager.startTimedFunction(self.update_config_func)
 

@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
+
 import redis
 
-import lumbermill.Utils as Utils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
+
 
 @ModuleDocstringParser
 class RedisListSink(BaseThreadedModule):
@@ -64,7 +67,7 @@ class RedisListSink(BaseThreadedModule):
 
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
-        self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
 
     def storeData(self, buffered_data):
         try:
@@ -77,7 +80,7 @@ class RedisListSink(BaseThreadedModule):
 
     def handleEvent(self, event):
         if self.format:
-            publish_data = Utils.mapDynamicValue(self.format, event)
+            publish_data = mapDynamicValue(self.format, event)
         else:
             publish_data = event
         self.buffer.append(publish_data)

@@ -1,18 +1,31 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import multiprocessing
-import sys
-import os
-import signal
-import time
 import getopt
 import logging.config
-import yaml
-import tornado.ioloop
+import multiprocessing
+import os
+import signal
+import sys
+import time
 import importlib
 from collections import OrderedDict
-import lumbermill.Utils as Utils
-from lumbermill.ConfigurationValidator import ConfigurationValidator
+
+import tornado.ioloop
+import yaml
+
+# Make sure we are called as module. Otherwise imports will fail.
+import inspect
+enty_point = inspect.stack()[-1][3]
+if enty_point != '_run_module_as_main':
+    print('This file needs to be called as module.')
+    print('Usage: %s -m %s -c <path/to/config.conf>' % (sys.executable, os.path.splitext(sys.argv[0])[0]))
+    sys.exit()
+
+from lumbermill.constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
+from lumbermill.utils.Buffers import BufferedQueue, ZeroMqMpQueue
+from lumbermill.utils.DictUtils import mergeNestedDicts
+from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
 
 # Conditional imports for python2/3
 try:
@@ -33,24 +46,6 @@ module_dirs = ['input',
 pathname = os.path.abspath(__file__)
 pathname = pathname[:pathname.rfind("/")]
 [sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
-
-class Node:
-    def __init__(self, module):
-        self.children = []
-        self.module = module
-
-    def addChild(self, node):
-        self.children.append(node)
-
-def hasLoop(node, stack=[]):
-    if not stack:
-        stack.append(node)
-    for current_node in node.children:
-        if current_node in stack:
-            return [current_node]
-        stack.append(current_node)
-        return hasLoop(current_node, stack)
-    return []
 
 class LumberMill():
     """
@@ -77,6 +72,7 @@ class LumberMill():
                                                  'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                                                  'filename': None,
                                                  'filemode': 'w'}}
+        logging.basicConfig(handlers=logging.StreamHandler())
         self.logger = logging.getLogger(self.__class__.__name__)
         success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
         if not success:
@@ -86,7 +82,7 @@ class LumberMill():
         """Returns a queue with queue_max_size"""
         queue = None
         if queue_type == 'simple':
-            queue =  Utils.BufferedQueue(queue=Queue.Queue(queue_max_size), buffersize=queue_buffer_size)
+            queue =  BufferedQueue(queue=Queue.Queue(queue_max_size), buffersize=queue_buffer_size)
         if queue_type == 'multiprocess':
             # At the moment I ran into a problem with zmq.
             # This problem causes the performance to be comparable with the normal python multiprocessing.Queue.
@@ -94,11 +90,11 @@ class LumberMill():
             # Update 28.04.2015: With pypy-2.5 and normal python, the load balancing problem seems to be gone. ZMQ is
             # still a bit faster (ca. ~15%).
             # TODO: Analyze this problem more thoroughly.
-            if False and Utils.zmq_avaiable and Utils.msgpack_avaiable:
-                  queue = Utils.ZeroMqMpQueue(queue_max_size)
+            if False and ZMQ_AVAILABLE and MSGPACK_AVAILABLE:
+                  queue = ZeroMqMpQueue(queue_max_size)
             else:
                 queue = multiprocessing.Queue(queue_max_size)
-            queue = Utils.BufferedQueue(queue=queue, buffersize=queue_buffer_size)
+            queue = BufferedQueue(queue=queue, buffersize=queue_buffer_size)
         if not queue:
             self.logger.error("Could not produce requested queue %s." % (queue_type))
             self.shutDown()
@@ -148,26 +144,35 @@ class LumberMill():
         """Merge custom global configuration values to default settings."""
         for idx, configuration in enumerate(self.configuration):
             if 'Global' in configuration:
-                self.global_configuration = Utils.mergeNestedDicts(self.global_configuration, configuration['Global'])
+                self.global_configuration = mergeNestedDicts(self.global_configuration, configuration['Global'])
                 self.configuration.pop(idx)
 
     def configureLogging(self):
-        # Logger configuration.
-        if self.global_configuration['logging']['level'].lower() not in Utils.loglevel_string_to_loglevel_int:
+        # Reinit logger configuration.
+        if self.global_configuration['logging']['level'].lower() not in LOGLEVEL_STRING_TO_LOGLEVEL_INT:
             print("Loglevel unknown.")
             self.shutDown()
-        log_level = Utils.loglevel_string_to_loglevel_int[self.global_configuration['logging']['level'].lower()]
+        # Remove all handlers associated with the root logger object.
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        log_level = LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.global_configuration['logging']['level'].lower()]
         logging.basicConfig(level=log_level,
-                            format=self.global_configuration['logging']['format'],
-                            filename=self.global_configuration['logging']['filename'],
-                            filemode=self.global_configuration['logging']['filemode'])
+                                format=self.global_configuration['logging']['format'],
+                                filename=self.global_configuration['logging']['filename'],
+                                filemode=self.global_configuration['logging']['filemode'])
         if not self.global_configuration['logging']['filename']:
-            logging.StreamHandler.emit = Utils.coloredConsoleLogging(logging.StreamHandler.emit)
+            logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def initModule(self, module_name):
         """ Initalize a module."""
         self.logger.debug("Initializing module %s." % (module_name))
         instance = None
+        #module = importlib.import_module(module_name, 'LumberMill')
+        module = __import__(module_name, globals(), locals(), module_name, -1)
+        module_class = getattr(module, module_name)
+        instance = module_class(self)
+        """
         try:
             module = importlib.import_module(module_name, 'LumberMill')
             #module = __import__(module_name, globals(), locals(), class_name, -1)
@@ -177,6 +182,7 @@ class LumberMill():
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
             self.shutDown()
+        """
         return instance
 
     def initModulesFromConfig(self):
@@ -412,18 +418,19 @@ class LumberMill():
         self.logger.info("Restarting LumberMill.")
         self.shutDown()
         time.sleep(5)
-        Utils.restartMainProcess()
+        restartMainProcess()
 
     def shutDown(self, signum=False, frame=False):
-        # If a module started a subprocess, the whole lumbermill parent process gets forked.
-        # As a result, the forked lumbermill process will also catch SIGINT||SIGALARM.
         if self.is_master():
             self.logger.info("Shutting down LumberMill.")
+            # Send SIGINT to workers for good measure.
+            for worker in list(self.child_processes):
+                os.kill(worker.pid, signal.SIGINT)
         if not self.alive:
             sys.exit(0)
         self.alive = False
         self.shutDownModules()
-        Utils.TimedFunctionManager.stopTimedFunctions()
+        TimedFunctionManager.stopTimedFunctions()
         tornado.ioloop.IOLoop.instance().stop()
         if self.is_master():
             self.logger.info("Shutdown complete.")

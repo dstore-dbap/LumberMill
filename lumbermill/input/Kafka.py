@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
+
 from kafka import KafkaConsumer
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -66,7 +67,7 @@ class Kafka(BaseThreadedModule):
     def run(self):
         while self.alive:
             for kafka_event in self.consumer:
-                event = Utils.getDefaultEventDict(dict={"topic": kafka_event.topic, "data": kafka_event.value}, caller_class_name=self.__class__.__name__)
+                event = DictUtils.getDefaultEventDict(dict={"topic": kafka_event.topic, "data": kafka_event.value}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
                 if(self.auto_commit_enable):
                     self.consumer.task_done(kafka_event)

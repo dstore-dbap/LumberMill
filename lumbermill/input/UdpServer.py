@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-import logging
-import threading
+import Queue
 import SocketServer
+import logging
 import socket
 import sys
-import Queue
+import threading
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
-from lumbermill.Decorators import ModuleDocstringParser
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 class ThreadPoolMixIn(SocketServer.ThreadingMixIn):
@@ -78,7 +78,7 @@ class ThreadedUdpRequestHandler(SocketServer.BaseRequestHandler):
                 return
             host = self.client_address[0]
             port = self.client_address[1]
-            event = Utils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port),caller_class_name='UdpServer')
+            event = DictUtils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port),caller_class_name='UdpServer')
             self.udp_server_instance.sendEvent(event)
         except socket.error, e:
            self.logger.warning("Error occurred while reading from socket. Error: %s" % (e))
