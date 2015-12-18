@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import multiprocessing
 from collections import defaultdict
-import Decorators
+
+from lumbermill.utils import Decorators
 
 
 @Decorators.Singleton

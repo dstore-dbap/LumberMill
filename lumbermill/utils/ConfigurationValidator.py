@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
-import Utils
 
+from lumbermill.constants import TYPENAMES_TO_TYPE
+from lumbermill.utils.DynamicValues import replaceVarsAndCompileString
 
 if sys.hexversion > 0x03000000:
-    import Py3Compat as PythonCompatFunctions
+    pass
 else:
-    import Py2Compat as PythonCompatFunctions
+    pass
 
 yaml_valid_config_template = {
     'Global': {'types': [dict],
@@ -123,7 +124,7 @@ class ConfigurationValidator():
                     dependency = dependency.replace(search, replace)
                 try:
                     # TODO: Think of a better and more secure way to evaluate the dependencies.
-                    exec(Utils.replaceVarsAndCompileString("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
+                    exec(replaceVarsAndCompileString("dependency = %s" % dependency, 'moduleInstance.getConfigurationValue("%s")'))
                 except TypeError:
                     etype, evalue, etb = sys.exc_info()
                     error_msg = "%s: Could not parse dependency %s in '%s'. Exception: %s, Error: %s." % (dependency, moduleInstance.__class__.__name__, etype, evalue, configuration_key)
@@ -137,9 +138,9 @@ class ConfigurationValidator():
             if 'type' in configuration_metadata:
                 for allowed_datatypes_as_string in configuration_metadata['type']:
                     try:
-                        allowed_datatypes.append(Utils.typenames_to_type[allowed_datatypes_as_string.title()])
+                        allowed_datatypes.append(TYPENAMES_TO_TYPE[allowed_datatypes_as_string.title()])
                     except KeyError:
-                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), Utils.typenames_to_type.keys())
+                        error_msg = "%s: Docstring config setting for '%s' has unknown datatype '%s'. Supported datatypes: %s" % (moduleInstance.__class__.__name__, configuration_key, allowed_datatypes_as_string.title(), TYPENAMES_TO_TYPE.keys())
                         result.append(error_msg)
                 if config_value_datatype not in allowed_datatypes:
                     error_msg = "%s: '%s' not of correct datatype. Is: %s, should be: %s" % (moduleInstance.__class__.__name__, configuration_key, config_value_datatype, allowed_datatypes)
