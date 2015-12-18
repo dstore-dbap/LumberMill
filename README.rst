@@ -61,6 +61,7 @@ You may need the MaxMind geo database. Install it with:
 Now you can give LumberMill a testdrive with:
 
 ::
+
     wget https://raw.githubusercontent.com/dstore-dbap/LumberMill/master/conf/example-stdin.conf
     echo "I'm a lumberjack, and I'm okay" | lumbermill -c ./example-stdin.conf
 
