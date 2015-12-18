@@ -3,7 +3,7 @@ import time
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import MergeEvent
 
 
@@ -41,7 +41,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         self.checkConfiguration()
         self.test_object.initAfterFork()
         for input_line in example_input_data.split("\n"):
-            event = Utils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
+            event = DictUtils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
             self.test_object.receiveEvent(event)
         time.sleep(1)
         event = False
@@ -60,7 +60,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         self.checkConfiguration()
         self.test_object.initAfterFork()
         for input_line in example_input_data.split("\n"):
-            event = Utils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
+            event = DictUtils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
             self.test_object.receiveEvent(event)
         time.sleep(1)
         event = False

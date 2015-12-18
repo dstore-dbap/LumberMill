@@ -1,8 +1,9 @@
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.parser import SyslogPrivalParser
+
 
 class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -14,7 +15,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'map_values': False}
         self.test_object.configure(config)
         self.checkConfiguration()
-        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
+        data = DictUtils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == 5 )
@@ -26,7 +27,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'map_values': True}
         self.test_object.configure(config)
         self.checkConfiguration()
-        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
+        data = DictUtils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == "Notice" )
@@ -40,7 +41,7 @@ class TestSyslogPrivalParser(ModuleBaseTestCase.ModuleBaseTestCase):
                   'severity_mappings': {5: 'DeadParrotException'}}
         self.test_object.configure(config)
         self.checkConfiguration()
-        data = Utils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
+        data = DictUtils.getDefaultEventDict({'syslog_prival': '13', 'data': 'This is an ex parrot!'})
         event = False
         for event in self.test_object.handleEvent(data):
             self.assertTrue('syslog_severity' in event and event['syslog_severity'] == "DeadParrotException" )

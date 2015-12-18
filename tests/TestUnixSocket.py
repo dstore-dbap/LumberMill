@@ -4,7 +4,7 @@ import mock
 import socket
 import ModuleBaseTestCase
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.input import UnixSocket
 
 class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -31,7 +31,7 @@ class TestUnixSocket(ModuleBaseTestCase.ModuleBaseTestCase):
             self.fail("Could not connect to unix socket.")
         for _ in range(0,5000):
             unix_socket.send(b"http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n")
-        expected_ret_val = Utils.getDefaultEventDict({'data': "http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n"})
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': "http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty\r\n"})
         expected_ret_val.pop('lumbermill')
         time.sleep(.5)
         event = False

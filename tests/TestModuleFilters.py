@@ -1,7 +1,7 @@
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import Math
 
 
@@ -26,7 +26,7 @@ class TestModuleFilters(ModuleBaseTestCase.ModuleBaseTestCase):
                  'fields': ['nobody', 'expects', 'the'],
                  'params':  { u'spanish': [u'inquisition']},
                  'user': '-'}
-        self.event = Utils.getDefaultEventDict(event)
+        self.event = DictUtils.getDefaultEventDict(event)
         super(TestModuleFilters, self).setUp(Math.Math(mock.Mock()))
 
     def testInputFilterMatch(self):

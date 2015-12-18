@@ -7,8 +7,9 @@ import zmq
 import os
 import unittest
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.input import Zmq
+
 
 class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -29,7 +30,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
         for _ in range(0, 1000):
             sender.send(message)
         sender.close()
-        expected_ret_val = Utils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!'})
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!'})
         expected_ret_val.pop('lumbermill')
         event = False
         time.sleep(.1)
@@ -52,7 +53,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
         for _ in range(0, 5000):
             sender.send(message)
         sender.close()
-        expected_ret_val = Utils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
                                                       'topic': 'Test'})
         expected_ret_val.pop('lumbermill')
         event = False
@@ -73,7 +74,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
         for _ in range(0, 10000):
             sender.send(message)
         sender.close()
-        expected_ret_val = Utils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
                                                       'topic': 'Test'})
         expected_ret_val.pop('lumbermill')
         self.assertTrue(self.receiver.hasEvents() is True)
@@ -90,7 +91,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
         for _ in range(0, 10000):
             sender.send(message)
         sender.close()
-        expected_ret_val = Utils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': 'A comfy chair is not an effective method of torture!',
                                                       'topic': 'Test'})
         expected_ret_val.pop('lumbermill')
         self.assertTrue(self.receiver.hasEvents() is False)

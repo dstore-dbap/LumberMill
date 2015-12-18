@@ -3,8 +3,9 @@ import time
 import mock
 import socket
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.input import UdpServer
+
 
 class TestUdpServer(ModuleBaseTestCase.ModuleBaseTestCase):
 
@@ -34,7 +35,7 @@ class TestUdpServer(ModuleBaseTestCase.ModuleBaseTestCase):
         for _ in range(0, 100):
             s.sendto("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.", ('127.0.0.1', self.test_object.getConfigurationValue('port')))
         s.close()
-        expected_ret_val = Utils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('lumbermill')
         event = False
         time.sleep(2)

@@ -3,6 +3,7 @@ import time
 
 from lumbermill.input import Spam
 
+
 class TestSpam(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):

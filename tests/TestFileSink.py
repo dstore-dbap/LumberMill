@@ -6,7 +6,7 @@ import ModuleBaseTestCase
 import mock
 import tempfile
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.output import FileSink
 
 
@@ -43,7 +43,7 @@ class TestFileSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'file_name': temp_file_name,
                                     'store_interval_in_secs': 1})
         self.checkConfiguration()
-        event = Utils.getDefaultEventDict({'data': 'One thing is for sure; a sheep is not a creature of the air.'})
+        event = DictUtils.getDefaultEventDict({'data': 'One thing is for sure; a sheep is not a creature of the air.'})
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
         with open(temp_file_name) as temp_file:
@@ -57,7 +57,7 @@ class TestFileSink(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'store_interval_in_secs': 1,
                                     'compress': 'gzip'})
         self.checkConfiguration()
-        event = Utils.getDefaultEventDict({'data': 'One thing is for sure; a sheep is not a creature of the air.'})
+        event = DictUtils.getDefaultEventDict({'data': 'One thing is for sure; a sheep is not a creature of the air.'})
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
         with open("%s.gz" % temp_file_name) as temp_file:

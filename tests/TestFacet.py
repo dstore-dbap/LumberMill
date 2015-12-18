@@ -2,7 +2,7 @@ import ModuleBaseTestCase
 import mock
 import time
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import Facet
 from lumbermill.misc import RedisStore
 
@@ -19,13 +19,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'interval': .1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.lumbermill.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.lumbermill.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
         events = []
@@ -50,13 +50,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'redis_ttl': 5})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.google.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.johann.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.johann.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Graham'}))
-        self.test_object.receiveEvent(Utils.getDefaultEventDict({'url': 'http://www.lumbermill.com',
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.lumbermill.com',
                                                               'remote_ip': '127.0.0.2',
                                                               'user_agent': 'John'}))
         events = []

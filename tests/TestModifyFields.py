@@ -1,7 +1,7 @@
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import ModifyFields
 
 
@@ -9,7 +9,7 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         super(TestModifyFields, self).setUp(ModifyFields.ModifyFields(mock.Mock()))
-        self.default_dict = Utils.getDefaultEventDict({})
+        self.default_dict = DictUtils.getDefaultEventDict({})
 
     def testDelete(self):
         self.default_dict['delme'] = 1
@@ -133,16 +133,16 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
     def testReplaceFieldValueWithMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me']})
-        expected = Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testMd5Hash(self):
         self.test_object.configure({'action': 'hash',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testSha1Hash(self):
@@ -150,16 +150,16 @@ class TestModifyFields(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'algorithm': 'sha1',
                                     'source_fields': ['hash_me'],
                                     'target_fields': ['hash_me_hashed']})
-        expected = Utils.getDefaultEventDict({'lumbermill': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'lumbermill': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
+        expected = DictUtils.getDefaultEventDict({'lumbermill': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition', 'hash_me_hashed': '531b07a0f5b66477a21742d2827176264f4bbfe2'})
+        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
     def testAnonymizeMd5(self):
         self.test_object.configure({'action': 'anonymize',
                                     'source_fields': ['anon_me'],
                                     'algorithm': 'md5'})
-        expected = Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(Utils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
+        expected = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
+        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
 

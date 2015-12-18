@@ -1,13 +1,15 @@
+import Queue
+import logging
+import logging.config
 import sys
 import threading
 import unittest
-import mock
-import logging
-import logging.config
-import Queue
 
-from lumbermill.ConfigurationValidator import ConfigurationValidator
-import lumbermill.Utils as Utils
+import mock
+
+from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
+from lumbermill.utils.misc import AnsiColors, coloredConsoleLogging
 
 
 class StoppableThread(threading.Thread):
@@ -32,7 +34,7 @@ class MockGambolPutty(mock.Mock):
         try:
             return self.modules[module_name]
         except KeyError:
-            self.logger.error("Get module by name %s failed. No such module." % (module_name, Utils.AnsiColors.ENDC))
+            self.logger.error("Get module by name %s failed. No such module." % (module_name, AnsiColors.ENDC))
             return None
 
     def initModule(self, module_name):
@@ -96,16 +98,16 @@ class ModuleBaseTestCase(unittest.TestCase):
 
     def configureLogging(self):
         # Logger configuration.
-        if self.global_configuration['logging']['level'].lower() not in Utils.loglevel_string_to_loglevel_int:
+        if self.global_configuration['logging']['level'].lower() not in LOGLEVEL_STRING_TO_LOGLEVEL_INT:
             print("Loglevel unknown.")
             sys.exit(255)
-        log_level = Utils.loglevel_string_to_loglevel_int[self.global_configuration['logging']['level'].lower()]
+        log_level = LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.global_configuration['logging']['level'].lower()]
         logging.basicConfig(level=log_level,
                             format=self.global_configuration['logging']['format'],
                             filename=self.global_configuration['logging']['filename'],
                             filemode=self.global_configuration['logging']['filemode'])
         if not self.global_configuration['logging']['filename']:
-            logging.StreamHandler.emit = Utils.coloredConsoleLogging(logging.StreamHandler.emit)
+            logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
 
     def setUp(self, test_object):
         test_object.addReceiver('MockReceiver', self.receiver)

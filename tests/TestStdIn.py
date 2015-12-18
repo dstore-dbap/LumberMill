@@ -5,6 +5,7 @@ import sys
 
 from lumbermill.input import StdIn
 
+
 class TestStdIn(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):

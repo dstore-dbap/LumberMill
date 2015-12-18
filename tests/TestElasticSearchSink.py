@@ -1,10 +1,14 @@
 import sys
 import time
+
+import datetime
+
 import ModuleBaseTestCase
 import mock
 import elasticsearch
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.utils.DynamicValues import mapDynamicValueInString
 from lumbermill.output import ElasticSearchSink
 
 
@@ -48,13 +52,34 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
             sys.exit()
         return es
 
+    def testDefaultIndex(self):
+        self.test_object.configure({'nodes': [self.es_server],
+                                    'batch_size': 1})
+        self.checkConfiguration()
+        self.test_object.initAfterFork()
+        timestring = datetime.datetime.utcnow().strftime('%Y.%m.%d')
+        index_name = 'lumbermill-%s' % timestring
+        self.es.indices.create(index=index_name)
+        event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
+        doc_id = event['lumbermill']['event_id']
+        self.test_object.receiveEvent(event)
+        self.test_object.shutDown()
+        time.sleep(1)
+        try:
+            result = self.es.get(index=index_name, id=doc_id)
+        except elasticsearch.exceptions.NotFoundError, e:
+            self.fail(e)
+        self.assertEqual(type(result), dict)
+        self.assertDictContainsSubset(event, result['_source'])
+        self.es.indices.delete(index=index_name, ignore=[400, 404])
+
     def testDefaultDocId(self):
         self.test_object.configure({'index_name': self.test_index_name,
                                     'nodes': [self.es_server],
                                     'batch_size': 1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        event = Utils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
+        event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
         doc_id = event['lumbermill']['event_id']
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
@@ -74,7 +99,7 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'store_interval_in_secs': 1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        event = Utils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered.",
+        event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered.",
                                            'event_doc_id': 'Ewan'})
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
@@ -89,11 +114,11 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'store_interval_in_secs': 1})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        event = Utils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
+        event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
         doc_id = event['lumbermill']['event_id']
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
-        index_name = Utils.mapDynamicValueInString('testindex-%Y.%m.%d-%(lumbermill.event_type)s', event, use_strftime=True).lower()
+        index_name = mapDynamicValueInString('testindex-%Y.%m.%d-%(lumbermill.event_type)s', event, use_strftime=True).lower()
         result = self.es.get(index=index_name, id=doc_id)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
@@ -118,7 +143,7 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.es.indices.put_settings(index=self.test_index_name, body='{"ttl": {"interval" : "1s"}}')
         self.es.indices.open(index=self.test_index_name)
         self.es.indices.put_mapping(index=self.test_index_name, doc_type='Unknown', body='{"_ttl" : { "enabled" : true }}')
-        event = Utils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
+        event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
         doc_id = event['lumbermill']['event_id']
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()

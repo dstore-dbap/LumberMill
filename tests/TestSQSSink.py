@@ -8,7 +8,7 @@ import mock
 import json
 import boto3
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.output import SQSSink
 
 class TestSQSSink(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -57,7 +57,7 @@ class TestSQSSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.initAfterFork()
         # Send some messages to the test queue.
         for _ in range(0, 100):
-            event = Utils.getDefaultEventDict({u'data': u"You get 'Gone with the Wind', 'Les Miserables' by Victor Hugo, "
+            event = DictUtils.getDefaultEventDict({u'data': u"You get 'Gone with the Wind', 'Les Miserables' by Victor Hugo, "
                                                         u"'The French Lieutenant's Woman' and with every third book you get dung."})
             self.test_object.receiveEvent(event)
         self.test_object.shutDown()

@@ -2,7 +2,7 @@ import time
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import AddDnsLookup
 
 
@@ -16,7 +16,7 @@ class TestAddDnsLookup(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = Utils.getDefaultEventDict({'host': 'www.dbap.de'})
+        data = DictUtils.getDefaultEventDict({'host': 'www.dbap.de'})
         self.test_object.receiveEvent(data)
         event = None
         # Wait for interval.
@@ -31,7 +31,7 @@ class TestAddDnsLookup(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = Utils.getDefaultEventDict({'host': 'www.dbap.de'})
+        data = DictUtils.getDefaultEventDict({'host': 'www.dbap.de'})
         self.test_object.receiveEvent(data)
         event = None
         # Wait for interval.
@@ -46,7 +46,7 @@ class TestAddDnsLookup(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = Utils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
+        data = DictUtils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
         self.test_object.receiveEvent(data)
         event = None
         # Wait for interval.
@@ -63,7 +63,7 @@ class TestAddDnsLookup(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = Utils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
+        data = DictUtils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
         self.test_object.receiveEvent(data)
         event = None
         # Wait for interval.

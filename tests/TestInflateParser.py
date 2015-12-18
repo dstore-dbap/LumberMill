@@ -4,7 +4,7 @@ import gzip
 import ModuleBaseTestCase
 import mock
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.parser import InflateParser
 
 
@@ -21,7 +21,7 @@ class TestInflateParser(ModuleBaseTestCase.ModuleBaseTestCase):
         with gzip.GzipFile(fileobj=out, mode="w") as f:
             f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
-        data = Utils.getDefaultEventDict({'gzip-compressed': payload})
+        data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['gzip-compressed'] == "Spam! Spam! Spam! Lovely Spam! Spam! Spam!" )
 
@@ -34,7 +34,7 @@ class TestInflateParser(ModuleBaseTestCase.ModuleBaseTestCase):
         with gzip.GzipFile(fileobj=out, mode="w") as f:
             f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
-        data = Utils.getDefaultEventDict({'gzip-compressed': payload})
+        data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['gzip-compressed'] == payload)
             self.assertTrue(event['gzip-inflated'] == "Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
@@ -52,7 +52,7 @@ class TestInflateParser(ModuleBaseTestCase.ModuleBaseTestCase):
         with gzip.GzipFile(fileobj=out, mode="w") as f:
             f.write("Well, there's spam egg sausage and spam, that's not got much spam in it.")
         payload2 = out.getvalue()
-        data = Utils.getDefaultEventDict({'gzip-compressed1': payload1, 'gzip-compressed2': payload2})
+        data = DictUtils.getDefaultEventDict({'gzip-compressed1': payload1, 'gzip-compressed2': payload2})
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['gzip-compressed1'] == payload1)
             self.assertTrue(event['gzip-compressed2'] == payload2)
@@ -68,7 +68,7 @@ class TestInflateParser(ModuleBaseTestCase.ModuleBaseTestCase):
         with gzip.GzipFile(fileobj=out, mode="w") as f:
             f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
-        data = Utils.getDefaultEventDict({'gzip-compressed': payload})
+        data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['gzip-compressed'] == "Spam! Spam! Spam! Lovely Spam! Spam! Spam!" )
 

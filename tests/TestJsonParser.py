@@ -5,7 +5,7 @@ import json
 import sys
 import time
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.input import TcpServer
 from lumbermill.parser import JsonParser
 
@@ -75,7 +75,7 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'source_fields': ['json_data']})
         result = self.conf_validator.validateModuleInstance(self.test_object)
         self.assertFalse(result)
-        data = Utils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})
+        data = DictUtils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})
         for event in self.test_object.handleEvent(data):
             self.assertTrue('South African' in event and event['South African'] == "Fast" )
 

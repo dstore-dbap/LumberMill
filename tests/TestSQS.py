@@ -7,7 +7,6 @@ import unittest
 import mock
 import boto3
 
-import lumbermill.Utils as Utils
 from lumbermill.input import SQS
 
 class TestSQS(ModuleBaseTestCase.ModuleBaseTestCase):

@@ -8,7 +8,6 @@ import mock
 import Sniffer
 import unittest
 
-import lumbermill.Utils as Utils
 from lumbermill.modifier import AddDateTime
 
 @unittest.skip("Module is dead at the moment...")

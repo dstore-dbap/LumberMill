@@ -3,7 +3,7 @@ import ModuleBaseTestCase
 import mock
 import unittest
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import AddGeoInfo
 
 
@@ -21,7 +21,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'target_field': 'geoip',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
-        dict = Utils.getDefaultEventDict({'f1': '99.124.167.129'})
+        dict = DictUtils.getDefaultEventDict({'f1': '99.124.167.129'})
         for event in self.test_object.handleEvent(dict):
             self.assertEqual(event['geoip']['country_code'], 'US')
         
@@ -31,7 +31,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'target_field': 'geoip',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
-        dict = Utils.getDefaultEventDict({'f2': '99.124.167.129'})
+        dict = DictUtils.getDefaultEventDict({'f2': '99.124.167.129'})
         for event in self.test_object.handleEvent(dict):
             self.assertEqual(event['geoip']['country_code'], 'US')
 
@@ -39,7 +39,7 @@ class TestAddGeoInfo(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.configure({'geoip_dat_path': './test_data/GeoLiteCity.dat',
                                     'geo_info_fields': ['country_code']})
         self.checkConfiguration()
-        dict = Utils.getDefaultEventDict({'x_forwarded_for': '99.124.167.129'})
+        dict = DictUtils.getDefaultEventDict({'x_forwarded_for': '99.124.167.129'})
         for event in self.test_object.handleEvent(dict):
             self.assertEqual(event['country_code'], 'US')
 

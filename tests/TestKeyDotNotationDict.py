@@ -1,6 +1,6 @@
 import unittest
 
-import lumbermill.Utils as Utils
+import lumbermill.utils.DictUtils as DictUtils
 
 
 class TestKeyDotNotationDict(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestKeyDotNotationDict(unittest.TestCase):
                  'fields': ['nobody', 'expects', 'the'],
                  'params':  { u'spanish': [u'inquisition']},
                  'user': '-'}
-        self.event = Utils.getDefaultEventDict(event)
+        self.event = DictUtils.getDefaultEventDict(event)
 
     def testDotAccessToDict(self):
         self.assertTrue(self.event['bytes_send'] == 3395)
