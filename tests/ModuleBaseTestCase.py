@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+import sys
 import Queue
 import logging
 import logging.config
-import sys
 import threading
 import unittest
 
 import mock
+
+sys.path.append('../')
 
 from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
 from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
