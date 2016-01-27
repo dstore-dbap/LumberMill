@@ -20,7 +20,6 @@ class AddDateTime(BaseThreadedModule):
        receivers:
         - NextModule
     """
-
     module_type = "modifier"
     """Set module type"""
 
