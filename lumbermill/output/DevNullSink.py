@@ -6,7 +6,7 @@ from lumbermill.utils.Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class DevNullSink(BaseThreadedModule):
     """
-    Just discard messeages send to this module.
+    Just discard messages send to this module.
 
     Configuration template:
 
