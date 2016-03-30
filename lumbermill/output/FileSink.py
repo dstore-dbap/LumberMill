@@ -67,12 +67,6 @@ class FileSink(BaseThreadedModule):
     def getStartMessage(self):
         return "File: %s. Max buffer size: %d" % (self.file_name, self.getConfigurationValue('backlog_size'))
 
-    def initAfterFork(self):
-        BaseThreadedModule.initAfterFork(self)
-        # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
-        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-        BaseThreadedModule.initAfterFork(self)
-
     @setInterval(60)
     def closeStaleFileHandles(self):
         """
@@ -140,6 +134,7 @@ class FileSink(BaseThreadedModule):
             try:
                 fh = self.getOrCreateFileHandle(path, mode)
                 fh.write(lines)
+                fh.flush()
                 return True
             except:
                 etype, evalue, etb = sys.exc_info()
