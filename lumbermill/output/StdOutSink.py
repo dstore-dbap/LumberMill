@@ -20,7 +20,6 @@ class StdOutSink(BaseThreadedModule):
     - StdOutSink:
        pretty_print:                    # <default: True; type: boolean; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
-       parser:                          # <default: None; type: None||string; is: optional>
     """
 
     module_type = "output"
