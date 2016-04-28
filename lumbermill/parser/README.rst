@@ -3,6 +3,26 @@
 Parser modules
 ==============
 
+Base64Parser
+------------
+
+This module will let you en/decode base64 data.
+
+| **action**:         Either decode or encode data.
+| **source_field**:   Field that contains the data to en/decode.
+| **target_field**:   Event field to be filled with the new data.
+| **keep_original**:  Switch to keep or drop the original fields used in de/encoding from the event dict.
+
+    Configuration template:
+
+    - LineParser:
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       source_field:                    # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: 'data'; type:string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
+
 CollectdParser
 --------------
 
@@ -135,6 +155,7 @@ The original event will be discarded.
 | **source_fields**:   Input fields to split. Can be a single field or a list of fields.
 | **seperator**:       Char used as line seperator.
 | **target_field**:    event field to be filled with the new data.
+| **keep_original**:   Switch to keep or drop the original fields used in de/encoding from the event dict.
 
 Configuration template:
 
