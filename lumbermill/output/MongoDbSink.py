@@ -16,8 +16,9 @@ class MongoDbSink(BaseThreadedModule):
     """
     Store incoming events in a mongodb.
 
-    collection: Mongodb collection name.
+    host: Mongodb server.
     database: Mongodb database name.
+    collection: Mongodb collection name. Timepatterns like %Y.%m.%d and dynamic values like $(bar) are allowed here.
     optinonal_connection_params: Other optional parameters as documented in https://api.mongodb.org/python/current/api/pymongo/mongo_client.html
     format:     Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
                 If not set the whole event dict is send.
