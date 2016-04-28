@@ -77,9 +77,9 @@ Configuration template:
 
     - AddGeoInfo:
        geoip_dat_path:                  # <type: string; is: required>
-       geo_info_fields:                 # <default: None; type: list; is: optional>
+       geo_info_fields:                 # <default: None; type: None||list; is: optional>
        source_fields:                   # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
-       target_field:                    # <default: None; type: None||string; is: optional>
+       target_field:                    # <default: "geo_info"; type: string; is: optional>
        receivers:
         - NextModule
 
@@ -96,6 +96,7 @@ Configuration template:
 ::
 
     - DropEvent
+       filter
 
 
 ExecPython
@@ -202,9 +203,21 @@ HttpRequest
 
 Issue an arbitrary http request and store the response in a configured field.
 
+If the <interval> value is set, this module will execute the configured request
+every <interval> seconds and emits the result in a new event.
+
 This module supports the storage of the responses in an redis db. If redis_store is set,
 it will first try to retrieve the response from redis via the key setting.
 If that fails, it will execute the http request and store the result in redis.
+
+| **url**:  The url to grab. Can also contain templated values for dynamic replacement with event data.
+| **socket_timeout**:  The socket timeout in seconds after which a request is considered failed.
+| **get_metadata**:  Also get metadata like headers, encoding etc.
+| **target_field**:  Specifies the name of the field to store the retrieved data in.
+| **interval**:  Number of seconds to wait before calling <url> again.
+| **redis_store**:  Redis address to cache crawling results.
+| **redis_key**:  The key to use for storage in redis.
+| **redis_ttl**:  TTL for data in redis.
 
 Configuration template:
 
@@ -213,7 +226,9 @@ Configuration template:
     - HttpRequest:
        url:                             # <type: string; is: required>
        socket_timeout:                  # <default: 25; type: integer; is: optional>
+       get_metadata:                    # <default: False; type: boolean; is: optional>
        target_field:                    # <default: "gambolputty_http_request"; type: string; is: optional>
+       interval:                        # <default: None; type: None||float||integer; is: optional>
        redis_store:                     # <default: None; type: None||string; is: optional>
        redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
        redis_ttl:                       # <default: 60; type: integer; is: optional>
@@ -292,9 +307,9 @@ Configuration template:
        receivers:
         - NextModule
 
-
 ModifyFields
 ------------
+
 Simple module to insert/delete/change field values.
 
 Configuration templates:
@@ -475,7 +490,6 @@ Configuration templates:
        target_fields:                   # <default: []; type: list; is: optional>
        receivers:
         - NextModule
-
 
 Permutate
 ---------

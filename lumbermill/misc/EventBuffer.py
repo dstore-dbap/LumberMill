@@ -122,27 +122,25 @@ class EventBuffer(BaseThreadedModule):
             instance = module_info['instances'][0]
             if instance.module_type == "input":
                 input_modules[instance.__class__.__name__] = instance
+        self.logger.warning("Found unfinished events. Requeing...")
         for key in self.persistence_backend.iterKeys():
             if not key.startswith("%s" % self.key_prefix):
                 continue
-            self.logger.warning("Found %s unfinished events. Requeing..." % (len(keys)))
             requeue_counter = 0
-            for key in keys:
-                event = self.persistence_backend.pop(key)
-                if not event:
-                    continue
-                if "source_module" not in event.get("lumbermill", {}):
-                    self.logger.warning("Could not requeue event. Source module info not found in event data.")
-                    continue
-                source_module = event["lumbermill"]["source_module"]
-                if source_module not in input_modules:
-                    self.logger.error("Could not requeue event. Module %s not found." % (source_module))
-                    continue
-                requeue_counter += 1
-                input_modules[source_module].sendEvent(DictUtils.KeyDotNotationDict(event))
-            self.logger.warning("Done. Requeued %s of %s events." % (requeue_counter, len(keys)))
-            self.logger.warning("Note: If more than one gp instance is running, requeued events count may differ from total events.")
-            event = None
+            event = self.persistence_backend.pop(key)
+            if not event:
+                continue
+            if "source_module" not in event.get("lumbermill", {}):
+                self.logger.warning("Could not requeue event. Source module info not found in event data.")
+                continue
+            source_module = event["lumbermill"]["source_module"]
+            if source_module not in input_modules:
+                self.logger.error("Could not requeue event. Module %s not found." % (source_module))
+                continue
+            requeue_counter += 1
+            input_modules[source_module].sendEvent(DictUtils.KeyDotNotationDict(event))
+        self.logger.warning("Done. Requeued %s events." % (requeue_counter))
+        self.logger.warning("Note: If more than one gp instance is running, requeued events count may differ from total events.")
 
     def start(self):
         self.timedFuncHandle = TimedFunctionManager.startTimedFunction(self.getTimedGarbageCollectFunc())

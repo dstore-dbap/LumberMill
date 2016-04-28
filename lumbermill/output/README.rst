@@ -6,7 +6,7 @@ Output modules
 DevNullSink
 -----------
 
-Just discard messeages send to this module.
+Just discard messages send to this module.
 
 Configuration template:
 
@@ -55,7 +55,7 @@ Configuration template:
        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
        format:                          # <default: None; type: None||string; is: optional>
        nodes:                           # <type: string||list; is: required>
-       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
@@ -67,7 +67,7 @@ Configuration template:
        consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 1000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
 
 
 FileSink
@@ -91,7 +91,7 @@ Configuration template:
        format:                          # <default: '$(data)'; type: string; is: optional>
        store_interval_in_secs:          # <default: 10; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
        compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
@@ -134,7 +134,7 @@ Configuration template:
        port:                            # <default: 2003; type: integer; is: optional>
        formats:                         # <type: list; is: required>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
-       batch_size:                      # <default: 1; type: integer; is: optional>
+       batch_size:                      # <default: 50; type: integer; is: optional>
        backlog_size:                    # <default: 50; type: integer; is: optional>
 
 
@@ -213,7 +213,7 @@ Configuration template:
        format:                          # <default: None; type: None||string; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
 
 
 SQSSink
@@ -247,7 +247,7 @@ Configuration template:
        format:                          # <default: None; type: None||string; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
        receivers:
         - NextModule
 
@@ -267,7 +267,6 @@ Configuration template:
     - StdOutSink:
        pretty_print:                    # <default: True; type: boolean; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
-       parser:                          # <default: None; type: None||string; is: optional>
 
 
 SyslogSink
@@ -350,4 +349,4 @@ Configuration template:
        format:                          # <default: None; type: None||string; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>

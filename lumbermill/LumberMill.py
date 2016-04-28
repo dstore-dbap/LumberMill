@@ -65,6 +65,7 @@ class LumberMill():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
+        self.internal_datastore = {}
         self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
                                      'queue_size': 20,
                                      'queue_buffer_size': 50,
@@ -363,6 +364,19 @@ class LumberMill():
                 continue
             module_queues[module_name] = instance.getInputQueue()
         return module_queues
+
+    def setInInternalDataStore(self, key, value):
+        # TODO: Come up with a better way of sharing data between modules and filters.
+        # This way of sharing data between modules and filters does not seem to be as flexible as one could wish for.
+        # A better idea might be to give access to module data via a dynamic value like:
+        # module.<module_name>.get.<key> instead of e.g. internal.<key>
+        self.internal_datastore[key] = value
+
+    def getFromInternalDataStore(self, key, default=None):
+        try:
+            return self.internal_datastore[key]
+        except KeyError:
+            return default
 
     def is_master(self):
         return os.getpid() == self.main_process_pid

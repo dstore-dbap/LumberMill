@@ -3,6 +3,27 @@
 Parser modules
 ==============
 
+Base64Parser
+------------
+
+This module will let you en/decode base64 data.
+
+| **source_fields**:   Input fields to split. Can be a single field or a list of fields.
+| **target_fields**:    event field to be filled with the new data.
+
+Configuration template:
+
+::
+
+    - LineParser:
+       action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
+       source_field:                    # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: 'data'; type:string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
+
+
 CollectdParser
 --------------
 
@@ -55,6 +76,36 @@ Configuration template:
        quotechar:                       # <default: '"'; type: string; is: optional>
        delimiter:                       # <default: '|'; type: string; is: optional>
        fieldnames:                      # <type: list; is: required>
+       receivers:
+        - NextModule
+
+
+DomainNameParser
+----------------
+
+Parse fqdn to top level domain and subdomain parts.
+
+A string like:
+
+"http://some.subdomain.google.co.uk"
+
+will produce this dictionary:
+
+'domain_name_info': {  'tld': 'google.co.uk',
+'domain': 'google',
+'suffix': 'co.uk',
+'subdomain': 'some.subdomain' }
+
+| **source_field**:  Input field to parse.
+| **target_field**:  Field to update with parsed info fields.
+
+Configuration template:
+
+::
+
+    - UserAgentParser:
+       source_field:                    # <type: string||list; is: required>
+       target_field:                    # <default: 'domain_name_info'; type:string; is: optional>
        receivers:
         - NextModule
 
@@ -132,7 +183,7 @@ payload.
 
 The original event will be discarded.
 
-| **source_fields**:   Input fields to split. Can be a single field or a list of fields.
+| **source_field**:    Input field to split.
 | **seperator**:       Char used as line seperator.
 | **target_field**:    event field to be filled with the new data.
 
@@ -141,7 +192,7 @@ Configuration template:
 ::
 
     - LineParser:
-       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       source_field:                    # <default: 'data'; type: string||list; is: optional>
        seperator:                       # <default: '\n'; type: string; is: optional>
        target_field:                    # <default: 'data'; type:string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
@@ -189,6 +240,32 @@ Configuration template:
     - NetFlowParser:
        source_field:                    # <default: 'data'; type: string; is: optional>
        target_field:                    # <default: 'data'; type: string; is: optional>
+       keep_original:                   # <default: False; type: boolean; is: optional>
+       receivers:
+        - NextModule
+
+
+OCRParser
+---------
+
+OCR parser.
+
+This parser will takes base64 encoded binary data, convert that to an image and runs an ocr over that image.
+
+It uses the python bindings to tesseract (https://github.com/tesseract-ocr).
+On centos this can be installed with:
+yum install tasseract tesseract-devel
+
+| **source_fields**:   Input fields to split. Can be a single field or a list of fields.
+| **target_field**:    event field to be filled with extraced texts.
+
+Configuration template:
+
+::
+
+    - OCRParser:
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_field:                    # <default: 'data'; type:string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
        receivers:
         - NextModule

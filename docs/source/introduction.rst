@@ -1,5 +1,9 @@
+.. image:: https://readthedocs.org/projects/lumbermill/badge/?version=latest
+   :target: http://lumbermill.readthedocs.org/en/latest/?badge=latest
+   :alt: Documentation Status
 .. image:: https://travis-ci.org/dstore-dbap/LumberMill.svg?branch=master
    :target: https://travis-ci.org/dstore-dbap/LumberMill
+.. image:: https://coveralls.io/repos/dstore-dbap/LumberMill/badge.svg?branch=master&service=github :target: https://coveralls.io/github/dstore-dbap/LumberMill?branch=master
 
 LumberMill
 ===========
@@ -13,11 +17,11 @@ with a smaller memory footprint and faster startup time.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-| To run LumberMill you will need Python 2.7+.
-| For better performance, I heartly recommend running LumberMill with pypy.
-| The performance gain can be up to 5-6 times events/s throughput running single processed.
-| Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
-| A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
+To run LumberMill you will need Python 2.7+.
+For better performance, I heartly recommend running LumberMill with pypy.
+The performance gain can be up to 5-6 times events/s throughput running single processed.
+Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
+A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
 
 Installation
 ''''''''''''
@@ -43,7 +47,6 @@ Install the dependencies with pip:
      cd /opt/LumberMill
      python setup.py install
 
-
 You may need the MaxMind geo database. Install it with:
 
 ::
@@ -64,7 +67,7 @@ If you get a "command not found" please check your pythonpath setting. Depending
 the executable can either be found in the bin dir of your python environment (e.g. /usr/lib64/pypy-2.4.0/bin/lumbermill)
 or in your default path (e.g. /usr/local/bin/lumbermill).
 
-Other basic configuration examples can be found `here <https://github.com/dstore-dbap/LumberMill/tree/master/conf>`_.
+Other basic configuration examples: https://github.com/dstore-dbap/LumberMill/tree/master/conf/.
 
 For a how-to running LumberMill, Elasticsearch and Kibana on CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
@@ -428,8 +431,10 @@ Event inputs
 Event parsers
 ^^^^^^^^^^^^^
 
+-  Base64Parser, parse base64 data.
 -  CollectdParser, parse collectd binary protocol data.
 -  CSVParser, parse a char separated string.
+-  DomainNameParser, parse a domain name or url to tld, subdomain etc. parts.
 -  InflateParser, inflates any fields with supported compression codecs.
 -  JsonParser, parse a json formatted string.
 -  LineParser, split lines at a seperator and emit each line as new
@@ -647,6 +652,7 @@ Modules can have an output filter:
               filter: if $(remote_ip) == '192.168.2.20' and re.match('^GET', $(url))
 
 
+
 A rough sketch for using LumberMill with syslog-ng
 '''''''''''''''''''''''''''''''''''''''''''''''''''
 
@@ -667,7 +673,7 @@ Configure the linux syslog-ng service to send data to a tcp address
     destination d_gambolputty { tcp( localhost port(5151) ); };
     filter f_httpd_access { facility(local1); };
     log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
-    ...
+    ... 
 
 Configure LumberMill to listen on localhost
 5151(./conf/lumbermill.conf):

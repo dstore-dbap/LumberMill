@@ -41,9 +41,10 @@ Configuration template:
     - ElasticSearch:
        query:                           # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
        search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
+       batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
-       connection_type:                 # <default: 'http'; type: string; values: ['thrift', 'http']; is: optional>
+       connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
@@ -169,8 +170,6 @@ Read messages from amazon sqs service.
 | **poll_interval_in_secs**:  How often should the queue be checked for new messages.
 | **batch_size**:  Number of messages to retrieve in one call.
 
-values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']
-
 Configuration template:
 
 ::
@@ -178,7 +177,7 @@ Configuration template:
     - SQS:
        aws_access_key_id:               # <type: string; is: required>
        aws_secret_access_key:           # <type: string; is: required>
-       region:                          # <type: string; is: required>
+       region:                          # <type: string; is: required; values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']>
        queue:                           # <type: string; is: required>
        attribute_names:                 # <default: ['All']; type: list; is: optional>
        message_attribute_names:         # <default: ['All']; type: list; is: optional>

@@ -24,6 +24,3 @@ try:
     print "%s" % matches.groupdict()
 except Exception, e:
     print "Could not test regex. Exception: %s, Error: %s" % (Exception ,e)
-
-
-

@@ -26,6 +26,7 @@ class BaseModule:
        add_fields:                       # <default: {}; type: dict; is: optional>
        delete_fields:                    # <default: []; type: list; is: optional>
        event_type:                       # <default: None; type: None||string; is: optional>
+       set_internal:                     # <default: {}; type: dict; is: optional>
        log_level:                        # <default: 'info'; type: string; values: ['info', 'warn', 'error', 'critical', 'fatal', 'debug']; is: optional>
        ...
        receivers:
@@ -65,6 +66,7 @@ class BaseModule:
         self.delete_fields = self.getConfigurationValue('delete_fields')
         self.add_fields = self.getConfigurationValue('add_fields')
         self.event_type = self.getConfigurationValue('event_type')
+        self.set_internal = self.getConfigurationValue('set_internal')
         # Set input filter.
         if self.getConfigurationValue('filter'):
             self.setInputFilter(self.getConfigurationValue('filter'))
@@ -81,6 +83,7 @@ class BaseModule:
         """
         Replace the configuration notation for dynamic values with pythons notation.
         E.g:
+        filter: $(lumbermill.source_module) == 'TcpServer'
         filter: $(lumbermill.source_module) == 'TcpServer'
         parsed:
         filter: %(lumbermill.source_module)s == 'TcpServer'
@@ -138,7 +141,11 @@ class BaseModule:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        filter_string_tmp = "lambda event : " + re.sub(r"%\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"event.get('\1', False)", filter_string_tmp)
+        # Check if we have a reference to the internal LumberMill datastore.
+        if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
+            filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+        # Replace all remaining dynamic references.
+        filter_string_tmp = "lambda lumbermill, event: " + re.sub(r"%\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"event.get('\1', False)", filter_string_tmp)
         try:
             event_filter = eval(filter_string_tmp)
         except:
@@ -156,16 +163,19 @@ class BaseModule:
         converts to:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
+        filter_string_tmp = re.sub('^if\s+', "", filter_string)
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string)
-        filter_string_tmp = re.sub('^if\s+', "", filter_string_tmp)
-        filter_string_tmp = "lambda event : " + filter_string_tmp
+        # Check if we have a reference to the internal LumberMill datastore.
+        if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string):
+            filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+        # Replace all remaining dynamic references.
+        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
             output_filter = eval(filter_string_tmp)
             self.output_filters[receiver_name] = output_filter
         except:
             etype, evalue, etb = sys.exc_info()
-            print(filter_string_tmp)
             self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
             self.lumbermill.shutDown()
 
@@ -178,10 +188,11 @@ class BaseModule:
                 filterd_receivers[receiver_name] = receiver
                 continue
             try:
-                matched = self.output_filters[receiver_name](event)
+                matched = self.output_filters[receiver_name](self.lumbermill, event)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Output filter for %s failed. Exception: %s, Error: %s." % (receiver_name, etype, evalue))
+                print(event)
                 continue
             # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
             if matched:
@@ -217,6 +228,8 @@ class BaseModule:
                 pass
         if self.event_type:
             event['lumbermill']['event_type'] = mapDynamicValue(self.event_type, event)
+        if self.set_internal:
+            self.lumbermill.setInInternalDataStore(self.set_internal['key'], mapDynamicValue(self.set_internal['value'], event))
         return event
 
     def sendEvent(self, event, apply_common_actions=True):
@@ -246,7 +259,7 @@ class BaseModule:
         @wraps(wrapped_func)
         def receiveEventFiltered(event):
             try:
-                if event_filter(event):
+                if event_filter(self.lumbermill, event):
                     wrapped_func(event)
                 else:
                     self.sendEvent(event, apply_common_actions=False)
