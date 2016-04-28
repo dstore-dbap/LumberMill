@@ -39,6 +39,9 @@ dnspython
 # DomainNameParser
 tld>=0.5.0
 
+# MongoDbSink
+pymongo>=3.0.0
+
 # AWS Services
 boto3
 
