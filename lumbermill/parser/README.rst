@@ -13,7 +13,9 @@ This module will let you en/decode base64 data.
 | **target_field**:   Event field to be filled with the new data.
 | **keep_original**:  Switch to keep or drop the original fields used in de/encoding from the event dict.
 
-    Configuration template:
+Configuration template:
+
+::
 
     - LineParser:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
@@ -78,6 +80,32 @@ Configuration template:
        receivers:
         - NextModule
 
+DomainNameParser
+----------------
+
+Parse fqdn to top level domain and subdomain parts.
+
+A string like: "http://some.subdomain.google.co.uk"
+
+will produce this dictionary:
+
+'domain_name_info': {  'tld': 'google.co.uk',
+                       'domain': 'google',
+                       'suffix': 'co.uk',
+                       'subdomain': 'some.subdomain' }
+
+| **source_field**:  Input field to parse.
+| **target_field**:  Field to update with parsed info fields.
+
+Configuration template:
+
+::
+
+    - UserAgentParser:
+       source_field:                    # <type: string||list; is: required>
+       target_field:                    # <default: 'domain_name_info'; type:string; is: optional>
+       receivers:
+        - NextModule
 
 InflateParser
 -------------
