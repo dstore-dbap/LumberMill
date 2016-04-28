@@ -18,6 +18,7 @@ yaml_valid_config_template = {
                           'add_fields': {'types': [dict]},
                           'delete_fields': {'types': [list]},
                           'event_type': {'types': [str]},
+                          'set_internal': {'types': [dict]},
                           'receivers': {'types': [list]}}
                }
 }
@@ -41,7 +42,7 @@ class ConfigurationValidator():
     - values (optional): sets a list of allowed values.
     """
 
-    default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl', 'add_fields', 'delete_fields', 'event_type')
+    default_module_config_keys = ('module', 'id', 'filter', 'receivers', 'pool_size', 'queue_size', 'mp_queue_buffer_size','redis_store', 'redis_key', 'redis_ttl', 'add_fields', 'delete_fields', 'event_type', 'set_internal')
 
     @classmethod
     def validateConfiguration(self, configuration_data):
