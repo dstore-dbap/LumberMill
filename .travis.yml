@@ -10,6 +10,7 @@ install: pip install -r requirements/requirements-test.txt --use-mirrors
 services:
 - ElasticSearch
 - Redis
+- mongodb
 before_script:
 - git clone https://github.com/salimane/rediscluster-py.git && cd rediscluster-py && python setup.py install && cd ..
 script: python tests/run_tests.py --include "Test*.py"
