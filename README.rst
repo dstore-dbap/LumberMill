@@ -473,6 +473,7 @@ Outputs
 -  FileSink, store events in a file.
 -  GraphiteSink, send metrics to graphite server.
 -  LoggerSink, sends data to lumbermill internal logger for output.
+-  MongoDbSink, stores data entries in a mongodb index.
 -  RedisChannelSink, publish incoming events to redis channel.
 -  RedisListSink, publish incoming events to redis list.
 -  StdOutSink, prints all received data to standard out.
