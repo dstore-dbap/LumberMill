@@ -8,7 +8,7 @@ from lumbermill.utils.Decorators import ModuleDocstringParser
 @ModuleDocstringParser
 class Base64Parser(BaseThreadedModule):
     r"""
-    Base64 parser.
+    This module will let you en/decode base64 data.
 
     source_fields:  Input fields to split. Can be a single field or a list of fields.
     target_fields:   event field to be filled with the new data.
