@@ -18,14 +18,14 @@ class LineParser(BaseThreadedModule):
 
     The original event will be discarded.
 
-    source_fields:  Input fields to split. Can be a single field or a list of fields.
+    source_field:   Input field to split.
     seperator:      Char used as line seperator.
     target_field:   event field to be filled with the new data.
 
     Configuration template:
 
     - LineParser:
-       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       source_field:                    # <default: 'data'; type: string||list; is: optional>
        seperator:                       # <default: '\n'; type: string; is: optional>
        target_field:                    # <default: 'data'; type:string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
@@ -39,26 +39,16 @@ class LineParser(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
-        self.source_fields = self.getConfigurationValue('source_fields')
-        # Allow single string as well.
-        if isinstance(self.source_fields, types.StringTypes):
-            self.source_fields = [self.source_fields]
+        self.source_field = self.getConfigurationValue('source_field')
         self.seperator = self.getConfigurationValue('seperator')
         self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')
 
     def handleEvent(self, event):
-        for source_field in self.source_fields:
-            if source_field not in event:
-                continue
-            decoded_datasets = event[source_field].split(self.seperator)
-            copy_event = False
-            for decoded_data in decoded_datasets:
-                if copy_event:
-                    event = event.copy()
-                copy_event = True
-                if self.drop_original:
-                    event.pop(source_field, None)
-                event.update({self.target_field: decoded_data})
-                yield event
+        if self.source_field in event:
+            decoded_datasets = event[self.source_field].split(self.seperator)
+            if self.drop_original:
+                event.pop(self.source_field, None)
+            event.update({self.target_field: decoded_datasets})
+        yield event
 
