@@ -58,7 +58,16 @@ class UrlParser(BaseThreadedModule):
             #    decoded_field = urllib.unquote(unicode(event[self.source_field]))
             decoded_field = urllib.unquote(unicode(event[self.source_field]))
             parsed_result = urlparse.urlparse('%s' % decoded_field)
-            parsed_url = {'scheme': parsed_result.scheme, 'path': parsed_result.path, 'params': parsed_result.params, 'query': parsed_result.query}
+            parsed_url = {'scheme': parsed_result.scheme,
+                          'netloc': parsed_result.netloc,
+                          'path': parsed_result.path,
+                          'params': parsed_result.params,
+                          'query': parsed_result.query,
+                          'fragment': parsed_result.fragment,
+                          'username': parsed_result.username,
+                          'password': parsed_result.password,
+                          'hostname': parsed_result.hostname,
+                          'port': parsed_result.port}
             event[self.target_field] = parsed_url
             if self.parse_querystring:
                 query_params_dict = urlparse.parse_qs(parsed_result.query)
