@@ -157,6 +157,37 @@ Configuration template:
        formats:                         # <type: list; is: required>
 
 
+MongoDbSink
+-----------
+
+Store incoming events in a mongodb.
+
+| **collection**:  Mongodb collection name.
+| **database**:  Mongodb database name.
+| optinonal_connection_params: Other optional parameters as documented in https://api.mongodb.org/python/current/api/pymongo/mongo_client.html
+| **format**:      Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
+| If not set the whole event dict is send.
+| **doc_id**:      Sets the document id for the committed event data.
+| **store_interval_in_secs**:      Send data to es in x seconds intervals.
+| **batch_size**:  Sending data to es if event count is above, even if store_interval_in_secs is not reached.
+| **backlog_size**:    Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
+
+Configuration template:
+
+::
+
+    - MongoDbSink:
+       host:                            # <default: 'localhost:27017'; type: string; is: optional>
+       database:                        # <default: 'lumbermill'; type: string; is: optional>
+       collection:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
+       optinonal_connection_params:     # <default: {'serverSelectionTimeoutMS': 5}; type: dictionary; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
+       doc_id:                          # <default: '$(lumbermill.event_id)'; type: string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 5000; type: integer; is: optional>
+
+
 RedisChannelSink
 ----------------
 

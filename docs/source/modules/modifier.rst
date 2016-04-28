@@ -96,7 +96,6 @@ Configuration template:
 ::
 
     - DropEvent
-       filter
 
 
 ExecPython
