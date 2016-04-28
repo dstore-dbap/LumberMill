@@ -78,6 +78,62 @@ class Buffer:
     def bufsize(self):
         return len(self.buffer)
 
+class RedisBuffer:
+    def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.flush_size = flush_size
+        self.buffer = []
+        self.maxsize = maxsize
+        self.append = self.put
+        self.flush_interval = interval
+        self.flush_callback = callback
+        self.flush_timed_func = self.getTimedFlushMethod()
+        self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
+        self.is_flushing = False
+
+    def stopInterval(self):
+        TimedFunctionManager.stopTimedFunctions(self.timed_func_handle)
+        self.timed_func_handle = False
+
+    def startInterval(self):
+        if self.timed_func_handle:
+            self.stopInterval()
+        self.timed_func_handle = TimedFunctionManager.startTimedFunction(self.flush_timed_func)
+
+    def getTimedFlushMethod(self):
+        @setInterval(self.flush_interval)
+        def timedFlush():
+            self.flush()
+        return timedFlush
+
+    def append(self, item):
+        self.put(item)
+
+    def put(self, item):
+        # Wait till a running store is finished to avoid strange race conditions when using this buffer with multiprocessing.
+        while self.is_flushing:
+            time.sleep(.00001)
+        while len(self.buffer) > self.maxsize:
+            self.logger.warning("Maximum number of items (%s) in buffer reached. Waiting for flush." % self.maxsize)
+            time.sleep(1)
+        self.buffer.append(item)
+        if self.flush_size and len(self.buffer) == self.flush_size:
+            self.flush()
+
+    def flush(self):
+        if self.bufsize() == 0 or self.is_flushing:
+            return
+        self.is_flushing = True
+        self.stopInterval()
+        success = self.flush_callback(self.buffer)
+        if success:
+            self.buffer = []
+        self.startInterval()
+        self.is_flushing = False
+
+    def bufsize(self):
+        return len(self.buffer)
+
 class BufferedQueue:
     def __init__(self, queue, buffersize=500):
         self.logger = logging.getLogger(self.__class__.__name__)
