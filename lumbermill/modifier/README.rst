@@ -96,7 +96,6 @@ Configuration template:
 ::
 
     - DropEvent
-       filter
 
 
 ExecPython
@@ -143,45 +142,16 @@ The "add_event_fields" configuration will copy the configured event fields into 
 The event emitted by this module will be of type: "facet" and will have "facet_field",
 "facet_count", "facets" and "other_event_fields" fields set.
 
-This module supports the storage of the facet info in an redis db. If redis_store is set,
-it will first try to retrieve the facet info from redis via the key setting.
-
-Configuration template:
-
-::
-
-    - Facet:
-       source_field:                    # <type:string; is: required>
-       group_by:                        # <type:string; is: required>
-       add_event_fields:                # <default: []; type: list; is: optional>
-       interval:                        # <default: 5; type: float||integer; is: optional>
-       redis_store:                     # <default: None; type: None||string; is: optional>
-       redis_ttl:                       # <default: 60; type: integer; is: optional>
-       receivers:
-        - NextModule
-
-
-FacetV2
--------
-
-Collect different values of one field over a defined period of time and pass all
-encountered variations on as new event after period is expired.
-
-The "add_event_fields" configuration will copy the configured event fields into the "other_event_fields" list.
-
-The event emitted by this module will be of type: "facet" and will have "facet_field",
-"facet_count", "facets" and "other_event_fields" fields set.
-
 This module supports the storage of the facet info in an backend db (At the moment this only works for a redis backend.
 This offers the possibility of using this module across multiple instances of LumberMill.
 
 | **source_field**:  Field to be scanned for unique values.
 | **group_by**:  Field to relate the variations to, e.g. ip address.
-| **add_event_fields**:  Fields to add from the original event to the facet event.
-| **interval**:  Number of seconds to until all encountered values of source_field will be send as new facet event.
-| backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
+| **backend**: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
 | synchronize events across multiple instances.
 | **backend_ttl**:  Time to live for backend entries. Should be greater than interval.
+| **add_event_fields**:  Fields to add from the original event to the facet event.
+| **interval**:  Number of seconds to until all encountered values of source_field will be send as new facet event.
 
 Configuration template:
 
@@ -190,10 +160,10 @@ Configuration template:
     - Facet:
        source_field:                    # <type:string; is: required>
        group_by:                        # <type:string; is: required>
+       backend:                         # <default: None; type: None||string; is: required>
+       backend_ttl:                     # <default: 60; type: integer; is: optional>
        add_event_fields:                # <default: []; type: list; is: optional>
        interval:                        # <default: 5; type: float||integer; is: optional>
-       backend:                         # <default: None; type: None||string; is: optional>
-       backend_ttl:                     # <default: 60; type: integer; is: optional>
        receivers:
         - NextModule
 
@@ -269,43 +239,6 @@ Configuration template:
        receivers:
         - NextModule
 
-
-MergeEvent
-----------
-
-Merge multiple event into a single one.
-
-In most cases, inputs will split an incoming stream at some kind of delimiter to produce events.
-Sometimes, the delimiter also occurs in the event data itself and splitting here is not desired.
-To mitigate this problem, this module can merge these fragmented events based on some configurable rules.
-
-Each incoming event will be buffered in a queue identified by <buffer_key>.
-If a new event arrives and <pattern> does not match for this event, the event will be appended to the buffer.
-If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior to appending the event.
-After <flush_interval_in_secs> the buffer will also be flushed.
-Flushing the buffer will concatenate all contained event data to form one single new event.
-
-buffer_key: key to distinguish between different input streams
-
-| **buffer_key**:  A key to correctly group events.
-| **buffer_size**:  Maximum size of events in buffer. If size is exceeded a flush will be executed.
-| **flush_interval_in_secs**:  If interval is reached, buffer will be flushed.
-| **pattern**:  Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
-| **glue**:  Join event data with glue as separator.
-
-Configuration template:
-
-::
-
-    - MergeEvent:
-       buffer_key:                      # <default: "$(lumbermill.received_from)"; type: string; is: optional>
-       buffer_size:                     # <default: 100; type: integer; is: optional>
-       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
-       pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
-       match_field:                     # <default: "data"; type: string; is: optional>
-       glue:                            # <default: ""; type: string; is: optional>
-       receivers:
-        - NextModule
 
 ModifyFields
 ------------
@@ -490,6 +423,45 @@ Configuration templates:
        target_fields:                   # <default: []; type: list; is: optional>
        receivers:
         - NextModule
+
+
+MergeEvent
+----------
+
+Merge multiple event into a single one.
+
+In most cases, inputs will split an incoming stream at some kind of delimiter to produce events.
+Sometimes, the delimiter also occurs in the event data itself and splitting here is not desired.
+To mitigate this problem, this module can merge these fragmented events based on some configurable rules.
+
+Each incoming event will be buffered in a queue identified by <buffer_key>.
+If a new event arrives and <pattern> does not match for this event, the event will be appended to the buffer.
+If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior to appending the event.
+After <flush_interval_in_secs> the buffer will also be flushed.
+Flushing the buffer will concatenate all contained event data to form one single new event.
+
+buffer_key: key to distinguish between different input streams
+
+| **buffer_key**:  A key to correctly group events.
+| **buffer_size**:  Maximum size of events in buffer. If size is exceeded a flush will be executed.
+| **flush_interval_in_secs**:  If interval is reached, buffer will be flushed.
+| **pattern**:  Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+| **glue**:  Join event data with glue as separator.
+
+Configuration template:
+
+::
+
+    - MergeEvent:
+       buffer_key:                      # <default: "$(lumbermill.received_from)"; type: string; is: optional>
+       buffer_size:                     # <default: 100; type: integer; is: optional>
+       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
+       pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+       match_field:                     # <default: "data"; type: string; is: optional>
+       glue:                            # <default: ""; type: string; is: optional>
+       receivers:
+        - NextModule
+
 
 Permutate
 ---------

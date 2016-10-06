@@ -24,11 +24,11 @@ class Facet(BaseThreadedModule):
 
     source_field: Field to be scanned for unique values.
     group_by: Field to relate the variations to, e.g. ip address.
-    add_event_fields: Fields to add from the original event to the facet event.
-    interval: Number of seconds to until all encountered values of source_field will be send as new facet event.
     backend: Name of a key::value store plugin. When running multiple instances of gp this backend can be used to
              synchronize events across multiple instances.
     backend_ttl: Time to live for backend entries. Should be greater than interval.
+    add_event_fields: Fields to add from the original event to the facet event.
+    interval: Number of seconds to until all encountered values of source_field will be send as new facet event.
 
     Configuration template:
 
