@@ -12,33 +12,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
     def setUp(self):
         super(TestFacet, self).setUp(Facet.Facet(ModuleBaseTestCase.MockGambolPutty()))
 
-    def testInternalFacet(self):
-        self.test_object.configure({'source_field': 'url',
-                                    'group_by': '$(remote_ip)',
-                                    'add_event_fields': ['remote_ip','user_agent'],
-                                    'interval': .1})
-        self.checkConfiguration()
-        self.test_object.initAfterFork()
-        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
-                                                              'remote_ip': '127.0.0.1',
-                                                              'user_agent': 'Eric'}))
-        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.lumbermill.com',
-                                                              'remote_ip': '127.0.0.2',
-                                                              'user_agent': 'John'}))
-        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.johann.com',
-                                                              'remote_ip': '127.0.0.1',
-                                                              'user_agent': 'Graham'}))
-        events = []
-        # Wait for interval.
-        time.sleep(.3)
-        for event in self.receiver.getEvent():
-            if event['lumbermill']['event_type'] != 'facet':
-                continue
-            events.append(event)
-        self.assertEquals(len(events), 2)
-        self.assertEquals(events[0]['facets'], ['http://www.lumbermill.com'])
-
-    def testRedisFacet(self):
+    def testFacet(self):
         rc = RedisStore.RedisStore(mock.Mock())
         rc.configure({'server': 'localhost'})
         self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
@@ -46,10 +20,13 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'group_by': '$(remote_ip)',
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1,
-                                    'redis_store': 'RedisStore',
-                                    'redis_ttl': 5})
+                                    'backend': 'RedisStore',
+                                    'backend_ttl': 30})
         self.checkConfiguration()
         self.test_object.initAfterFork()
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
+                                                              'remote_ip': '127.0.0.1',
+                                                              'user_agent': 'Eric'}))
         self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
                                                               'remote_ip': '127.0.0.1',
                                                               'user_agent': 'Eric'}))
@@ -61,13 +38,15 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                                               'user_agent': 'John'}))
         events = []
         # Wait for interval.
-        time.sleep(.3)
+        time.sleep(1)
         for event in self.receiver.getEvent():
             if event['lumbermill']['event_type'] != 'facet':
                 continue
             events.append(event)
         self.assertEquals(len(events), 2)
-        self.assertEquals(events[1]['facets'], ['http://www.lumbermill.com'])
+        self.assertEquals(events[0]['facets'], ['http://www.lumbermill.com'])
+        self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.johann.com'])
+        self.assertEquals(events[0]['other_event_fields']['http://www.lumbermill.com'], {'user_agent': 'John', 'remote_ip': '127.0.0.2'})
 
     def tearDown(self):
         pass
