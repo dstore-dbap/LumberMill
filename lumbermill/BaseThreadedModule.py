@@ -34,8 +34,8 @@ class BaseThreadedModule(BaseModule.BaseModule, threading.Thread):
         - ModuleAlias
     """
 
-    def __init__(self, gp):
-        BaseModule.BaseModule.__init__(self, gp)
+    def __init__(self, lumbermill):
+        BaseModule.BaseModule.__init__(self, lumbermill)
         threading.Thread.__init__(self)
         self.input_queue = False
         self.alive = True

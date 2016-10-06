@@ -99,6 +99,9 @@ class BaseModule:
             self.logger.error("Could not configure module %s. Problems: %s." % (self.__class__.__name__, configuration_errors))
             self.lumbermill.shutDown()
 
+    def getLumberMillInstance(self):
+        return self.lumbermill
+
     def getStartMessage(self):
         """
         Return a start message for the module. Can be overwritten to customize the message, e.g. to include port a server is
