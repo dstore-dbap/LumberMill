@@ -80,8 +80,7 @@ class Facet(BaseThreadedModule):
                                           'facets': facet_data['facets']},
                                           caller_class_name=self.__class__.__name__,
                                           event_type='facet')
-        if facet_data['other_event_fields']:
-            event['other_event_fields'] = facet_data['other_event_fields']
+        event['other_event_fields'] = facet_data['other_event_fields']
         self.sendEvent(event)
 
     def evaluateFacets(self):
@@ -175,7 +174,11 @@ class Facet(BaseThreadedModule):
                 except KeyError:
                     pass
             if keep_fields:
-                facet_data['other_event_fields'][facet_value] = keep_fields
+                try:
+                    facet_data['other_event_fields'][str(facet_value)] = keep_fields
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("Exception: %s, Error: %s." % (etype, evalue))
             facet_data['facets'].append(facet_value)
             Facet.facet_data[key] = facet_data
         yield event
