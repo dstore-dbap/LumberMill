@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import hashlib
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -52,8 +53,9 @@ class Facet(BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
-        self.group_by_field = self.getConfigurationValue('group_by')
         self.add_event_fields = self.getConfigurationValue('add_event_fields')
+        self.backend_lock_name = "Lumbermill:Facet:FacetLock-%s" % self.process_id
+        self.backend_key_name = "Lumbermill:Facet:FacetKeys-%s" % self.process_id
         self.backend_ttl = self.getConfigurationValue('backend_ttl')
         if(self.backend_ttl < self.getConfigurationValue('interval')):
             self.logger.error('backend_ttl setting is smaller then interval setting. Please check.')
@@ -89,51 +91,66 @@ class Facet(BaseThreadedModule):
         this as well and it needs to be executed directly.
         """
         self.storeFacetsInRedis()
-        backend_lock = self.persistence_backend.getLock("FacetLock", timeout=10)
+        backend_lock = self.persistence_backend.getLock(self.backend_lock_name, timeout=10)
         if not backend_lock:
             return
         lock_acquired = backend_lock.acquire(blocking=True)
         if not lock_acquired:
             return
-        backend_facet_keys = self.persistence_backend.get('FacetKeys')
-        if not backend_facet_keys:
-            return
-        for key in backend_facet_keys:
-            facet_data = self.persistence_backend.get(key)
-            if not facet_data:
-                continue
-            self.sendFacetEventToReceivers(facet_data)
-            self.persistence_backend.client.delete(key)
-        self.persistence_backend.client.delete('FacetKeys')
-        backend_lock.release()
+        backend_facet_keys = self.persistence_backend.get(self.backend_key_name)
+        if backend_facet_keys:
+            for key in backend_facet_keys:
+                facet_data = self.persistence_backend.get(key)
+                if not facet_data:
+                    continue
+                self.sendFacetEventToReceivers(facet_data)
+                self.persistence_backend.client.delete(key)
+        self.persistence_backend.client.delete(self.backend_key_name)
+        try:
+            backend_lock.release()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            if str(evalue) == "Cannot release a lock that's no longer owned":
+                pass
+            else:
+                raise
 
     def storeFacetsInRedis(self):
         if not Facet.facet_data:
             return
-        backend_lock = self.persistence_backend.getLock("FacetLock", timeout=10)
+        backend_lock = self.persistence_backend.getLock(self.backend_lock_name, timeout=10)
         if not backend_lock:
             return
         lock_acquired = backend_lock.acquire(blocking=True)
         if not lock_acquired:
             return
         update_backend_facet_keys = False
-        backend_facet_keys = self.persistence_backend.get('FacetKeys')
+        backend_facet_keys = self.persistence_backend.get(self.backend_key_name)
         if not backend_facet_keys:
             backend_facet_keys = []
         for key, facet_data in Facet.facet_data.items():
+            current_facet_data = None
             if key in backend_facet_keys:
                 current_facet_data = self.persistence_backend.get(key)
             else:
                 update_backend_facet_keys = True
                 backend_facet_keys.append(key)
+            if not current_facet_data:
                 current_facet_data = {'other_event_fields': {}, 'facets': []}
             current_facet_data['other_event_fields'].update(facet_data['other_event_fields'])
             current_facet_data['facets'] += facet_data['facets']
             self.setFacetDataInRedis(key, current_facet_data)
         if update_backend_facet_keys:
-            self.setFacetDataInRedis('FacetKeys', backend_facet_keys)
+            self.setFacetDataInRedis(self.backend_key_name, backend_facet_keys)
         Facet.facet_data = {}
-        backend_lock.release()
+        try:
+            backend_lock.release()
+        except:
+            etype, evalue, etb = sys.exc_info()
+            if str(evalue) == "Cannot release a lock that's no longer owned":
+                pass
+            else:
+                raise
 
     def initAfterFork(self):
         self.evaluate_facet_data_func = setInterval(self.getConfigurationValue('interval'))(self.evaluateFacets) #self.getEvaluateFunc()
@@ -156,12 +173,13 @@ class Facet(BaseThreadedModule):
         except KeyError:
             yield event
             return
+        #key = hashlib.md5(self.getConfigurationValue('group_by', event)).hexdigest()
         key = self.getConfigurationValue('group_by', event)
         if not key:
             self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event
             return
-        key = "FacetValues:%s" % key
+        key = "Lumbermill:Facet:FacetValues:%s" % key
         if key not in Facet.facet_data or facet_value not in Facet.facet_data[key]['facets']:
             if key in Facet.facet_data:
                 facet_data = Facet.facet_data[key]
