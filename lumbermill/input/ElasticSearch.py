@@ -50,6 +50,7 @@ class ElasticSearch(BaseThreadedModule):
                         For nested values use the dot syntax as described in:
                         http://lumbermill.readthedocs.org/en/latest/introduction.html#event-field-notation
     nodes:              Configures the elasticsearch nodes.
+    read_timeout:       Set number of seconds to wait until requests to elasticsearch will time out.
     connection_type:    One of: 'thrift', 'http'.
     http_auth:          'user:password'.
     use_ssl:            One of: True, False.
@@ -68,12 +69,13 @@ class ElasticSearch(BaseThreadedModule):
        batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
+       read_timeout:                    # <default: 10; type: integer; is: optional>
        connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
-       sniff_on_start:                  # <default: True; type: boolean; is: optional>
-       sniff_on_connection_fail:        # <default: True; type: boolean; is: optional>
+       sniff_on_start:                  # <default: False; type: boolean; is: optional>
+       sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
        query_interval_in_secs:          # <default: 5; type: integer; is: optional>
        receivers:
         - NextModule
@@ -105,6 +107,7 @@ class ElasticSearch(BaseThreadedModule):
         self.batch_size = self.getConfigurationValue('batch_size')
         self.field_mappings = self.getConfigurationValue('field_mappings')
         self.es_nodes = self.getConfigurationValue('nodes')
+        self.read_timeout = self.getConfigurationValue("read_timeout")
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
         self.index_name_pattern = self.getConfigurationValue('index_name')
@@ -125,6 +128,7 @@ class ElasticSearch(BaseThreadedModule):
             self.query_from = 0
             self.query = json.loads(self.query)
             self.query['size'] = self.batch_size
+            self.es = self.connect()
 
     def getInitalialScrollId(self):
         scroll_id = None
@@ -146,10 +150,8 @@ class ElasticSearch(BaseThreadedModule):
 
     def initAfterFork(self):
         BaseThreadedModule.initAfterFork(self)
-        if self.search_type == 'scan':
-            self.simple_es_client = requests.Session()
-        elif self.search_type == 'normal':
-            self.es = self.connect()
+        self.simple_es_client = requests.Session()
+
 
     def connect(self):
         es = False
@@ -159,6 +161,7 @@ class ElasticSearch(BaseThreadedModule):
                 # Connect to es node and round-robin between them.
                 self.logger.debug("Connecting to %s." % self.es_nodes)
                 es = Elasticsearch(self.es_nodes,
+                                     timeout=self.read_timeout,
                                      connection_class=self.connection_class,
                                      sniff_on_start=self.getConfigurationValue('sniff_on_start'),
                                      sniff_on_connection_fail=self.getConfigurationValue('sniff_on_connection_fail'),
