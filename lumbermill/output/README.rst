@@ -27,6 +27,7 @@ Requests will the be loadbalanced via round robin.
 | **format**:      Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
 | If not set the whole event dict is send.
 | **nodes**:       Configures the elasticsearch nodes.
+| **read_timeout**: Set number of seconds to wait until requests to elasticsearch will time out.
 | **connection_type**:     One of: 'thrift', 'http'.
 | **http_auth**:   'user:password'.
 | **use_ssl**:     One of: True, False.
@@ -55,6 +56,7 @@ Configuration template:
        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
        format:                          # <default: None; type: None||string; is: optional>
        nodes:                           # <type: string||list; is: required>
+       read_timeout:                    # <default: 10; type: integer; is: optional>
        connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
