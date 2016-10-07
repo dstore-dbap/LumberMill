@@ -45,8 +45,8 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
             events.append(event)
         self.assertEquals(len(events), 2)
         self.assertEquals(events[0]['facets'], ['http://www.lumbermill.com'])
-        self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.johann.com'])
         self.assertEquals(events[0]['other_event_fields']['http://www.lumbermill.com'], {'user_agent': 'John', 'remote_ip': '127.0.0.2'})
+        self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.johann.com'])
 
     def tearDown(self):
         pass
