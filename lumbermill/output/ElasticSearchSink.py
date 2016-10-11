@@ -166,7 +166,7 @@ class ElasticSearchSink(BaseThreadedModule):
         json_data = []
         for event in events:
             index_name = mapDynamicValueInString(self.index_name, event, use_strftime=True).lower()
-            event_type = event['lumbermill']['event_type'] if 'event_type' in event['lumbermill'] else 'Unknown'
+            event_type = event['lumbermill']['event_type'] if 'lumbermill' in event and 'event_type' in event['lumbermill'] else 'Unknown'
             doc_id = mapDynamicValue(self.doc_id_pattern, event)
             routing = mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
