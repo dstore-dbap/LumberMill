@@ -2,7 +2,6 @@ import unittest
 
 from lumbermill.utils.DynamicValues import parseDynamicValue
 
-
 class TestParseDynaimcValue(unittest.TestCase):
 
     def testParseDynamicValues(self):
