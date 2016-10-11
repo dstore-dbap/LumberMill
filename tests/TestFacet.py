@@ -21,7 +21,7 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
                                     'add_event_fields': ['remote_ip','user_agent'],
                                     'interval': .1,
                                     'backend': 'RedisStore',
-                                    'backend_ttl': 30})
+                                    'backend_ttl': 10})
         self.checkConfiguration()
         self.test_object.initAfterFork()
         self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
@@ -47,6 +47,40 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertEquals(events[0]['facets'], ['http://www.lumbermill.com'])
         self.assertEquals(events[0]['other_event_fields']['http://www.lumbermill.com'], {'user_agent': 'John', 'remote_ip': '127.0.0.2'})
         self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.johann.com'])
+
+    def testFacetValuesMustBeUnique(self):
+        rc = RedisStore.RedisStore(mock.Mock())
+        rc.configure({'server': 'localhost'})
+        self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
+        self.test_object.configure({'source_field': 'url',
+                                    'group_by': '$(remote_ip)',
+                                    'interval': 4,
+                                    'backend': 'RedisStore',
+                                    'backend_ttl': 10})
+        self.checkConfiguration()
+        self.test_object.initAfterFork()
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
+                                                              'remote_ip': '127.0.0.1',
+                                                              'user_agent': 'Eric'}))
+
+        time.sleep(1)
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
+                                                              'remote_ip': '127.0.0.1',
+                                                              'user_agent': 'Eric'}))
+        time.sleep(1)
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
+                                                              'remote_ip': '127.0.0.1',
+                                                              'user_agent': 'Eric'}))
+        time.sleep(1)
+        self.test_object.shutDown();
+        events = []
+        for event in self.receiver.getEvent():
+            if event['lumbermill']['event_type'] != 'facet':
+                continue
+            events.append(event)
+        self.assertEquals(len(events), 1)
+        self.assertEquals(len(events[0]['facets']), 1)
+        self.assertEquals(events[0]['facets'][0], 'http://www.google.com')
 
     def tearDown(self):
         pass
