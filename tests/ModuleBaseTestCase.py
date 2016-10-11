@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import Queue
 import logging
 import logging.config
@@ -39,6 +40,9 @@ class MockGambolPutty(mock.Mock):
         except KeyError:
             self.logger.error("Get module by name %s failed. No such module." % (module_name, AnsiColors.ENDC))
             return None
+
+    def getMainProcessId(self):
+        return os.getpid()
 
     def initModule(self, module_name):
         instance = None

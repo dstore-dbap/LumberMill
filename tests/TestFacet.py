@@ -43,10 +43,11 @@ class TestFacet(ModuleBaseTestCase.ModuleBaseTestCase):
             if event['lumbermill']['event_type'] != 'facet':
                 continue
             events.append(event)
+        events = sorted(events, key=lambda k: k['facet_count'])
         self.assertEquals(len(events), 2)
         self.assertEquals(events[0]['facets'], ['http://www.lumbermill.com'])
-        self.assertEquals(events[0]['other_event_fields']['http://www.lumbermill.com'], {'user_agent': 'John', 'remote_ip': '127.0.0.2'})
         self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.johann.com'])
+        self.assertEquals(events[0]['other_event_fields'][0], {'facet': 'http://www.lumbermill.com', 'user_agent': 'John', 'remote_ip': '127.0.0.2'})
 
     def testFacetValuesMustBeUnique(self):
         rc = RedisStore.RedisStore(mock.Mock())
