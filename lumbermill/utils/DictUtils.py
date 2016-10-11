@@ -144,7 +144,7 @@ def mergeNestedDicts(a, b, path=None):
             a[key] = b[key]
     return a
 
-def getDefaultEventDict(dict={}, caller_class_name='', received_from=False, event_type="Unknown"):
+def getDefaultEventDict(dict={}, caller_class_name='', received_from="Unknown", event_type="Unknown"):
     default_dict = { "data": "",
                      "lumbermill": {
                          'pid': os.getpid(),
