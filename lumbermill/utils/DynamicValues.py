@@ -183,11 +183,14 @@ def mapDynamicValueInDict(value_dict, mapping_dict, use_strftime=False):
 def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
     if isinstance(value, basestring):
         return mapDynamicValueInString(value, mapping_dict, use_strftime)
-    # If value is of type list or dict, the next operations might have some nice recursion.
-    # To keep this as simple as possible, we will work on a copy of the original value.
-    value = value.copy()
     if isinstance(value, list):
+        # If value is of type list or dict, the next operations might have some nice recursion.
+        # To keep this as simple as possible, we will work on a copy of the original value.
+        value = list(value)
         mapDynamicValueInList(value, mapping_dict, use_strftime)
     elif isinstance(value, dict):
+        # If value is of type list or dict, the next operations might have some nice recursion.
+        # To keep this as simple as possible, we will work on a copy of the original value.
+        value = value.copy()
         mapDynamicValueInDict(value, mapping_dict, use_strftime)
     return value
