@@ -54,9 +54,12 @@ class TestMapDynaimcValue(unittest.TestCase):
         self.assertTrue(mapDynamicValue('%(fields.1).5s', self.event) == 'expec')
         self.assertTrue(mapDynamicValue('%(fields.1)-10.5s', self.event) == 'expec     ')
 
-    def testMapDynamicValueWithDict(self):
+    def testMapDynamicValueWithDictType(self):
         # Make sure that mapDynamicValue will work on a copy of value when passing in a list or a dict.
         mapping_dict = {'event_id': '%(lumbermill.event_id)s'}
         mapped_values = mapDynamicValue(mapping_dict, self.event)
         self.assertEquals(mapped_values['event_id'], '715bd321b1016a442bf046682722c78e')
         self.assertEquals(mapping_dict, {'event_id': '%(lumbermill.event_id)s'})
+
+    def testMapDynamicValueWithNoneType(self):
+        self.assertEquals(mapDynamicValue(None, self.event), None)
