@@ -378,6 +378,9 @@ class LumberMill():
         except KeyError:
             return default
 
+    def getMainProcessId(self):
+        return self.main_process_pid
+
     def is_master(self):
         return os.getpid() == self.main_process_pid
 
