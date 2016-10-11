@@ -54,8 +54,8 @@ class Facet(BaseThreadedModule):
         BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
         self.add_event_fields = self.getConfigurationValue('add_event_fields')
-        self.backend_lock_name = "Lumbermill:Facet:FacetLock-%s" % self.process_id
-        self.backend_key_name = "Lumbermill:Facet:FacetKeys-%s" % self.process_id
+        self.backend_lock_name = "Lumbermill:Facet:FacetLock-%s" % self.lumbermill.getMainProcessId()
+        self.backend_key_name = "Lumbermill:Facet:FacetKeys-%s" % self.lumbermill.getMainProcessId()
         self.backend_ttl = self.getConfigurationValue('backend_ttl')
         if(self.backend_ttl < self.getConfigurationValue('interval')):
             self.logger.error('backend_ttl setting is smaller then interval setting. Please check.')
