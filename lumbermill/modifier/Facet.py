@@ -138,7 +138,10 @@ class Facet(BaseThreadedModule):
             if not current_facet_data:
                 current_facet_data = {'other_event_fields': {}, 'facets': []}
             current_facet_data['other_event_fields'].update(facet_data['other_event_fields'])
-            current_facet_data['facets'] += facet_data['facets']
+            for facet_value in facet_data['facets']:
+                if facet_value in current_facet_data['facets']:
+                    continue
+                current_facet_data['facets'].append(facet_value)
             self.setFacetDataInRedis(key, current_facet_data)
         if update_backend_facet_keys:
             self.setFacetDataInRedis(self.backend_key_name, backend_facet_keys)
@@ -173,8 +176,7 @@ class Facet(BaseThreadedModule):
         except KeyError:
             yield event
             return
-        #key = hashlib.md5(self.getConfigurationValue('group_by', event)).hexdigest()
-        key = self.getConfigurationValue('group_by', event)
+        key = hashlib.md5(self.getConfigurationValue('group_by', event)).hexdigest()
         if not key:
             self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event
