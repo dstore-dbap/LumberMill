@@ -265,11 +265,13 @@ class BaseModule:
                 if event_filter(self.lumbermill, event):
                     wrapped_func(event)
                 else:
+                    # Common actions will only be applied if the filter for the module matched.
                     self.sendEvent(event, apply_common_actions=False)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Filter <%s> failed. Exception: %s, Error: %s." % (filter_string, etype, evalue))
                 # Pass event to next module.
+                # Common actions will only be applied if the filter for the module matched.
                 self.sendEvent(event, apply_common_actions=False)
         self.receiveEvent = receiveEventFiltered
 
