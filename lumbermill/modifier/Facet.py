@@ -136,8 +136,8 @@ class Facet(BaseThreadedModule):
                 update_backend_facet_keys = True
                 backend_facet_keys.append(key)
             if not current_facet_data:
-                current_facet_data = {'other_event_fields': {}, 'facets': []}
-            current_facet_data['other_event_fields'].update(facet_data['other_event_fields'])
+                current_facet_data = {'other_event_fields': [], 'facets': []}
+            current_facet_data['other_event_fields'].extend(facet_data['other_event_fields'])
             for facet_value in facet_data['facets']:
                 if facet_value in current_facet_data['facets']:
                     continue
@@ -186,7 +186,7 @@ class Facet(BaseThreadedModule):
             if key in Facet.facet_data:
                 facet_data = Facet.facet_data[key]
             else:
-                facet_data = {'other_event_fields': {}, 'facets': []}
+                facet_data = {'other_event_fields': [], 'facets': []}
             keep_fields = {}
             for field_name in self.add_event_fields:
                 try:
@@ -194,8 +194,9 @@ class Facet(BaseThreadedModule):
                 except KeyError:
                     pass
             if keep_fields:
+                keep_fields['facet'] = str(facet_value)
                 try:
-                    facet_data['other_event_fields'][str(facet_value)] = keep_fields
+                    facet_data['other_event_fields'].append(keep_fields)
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("Exception: %s, Error: %s." % (etype, evalue))
