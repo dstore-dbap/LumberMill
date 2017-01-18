@@ -132,6 +132,7 @@ class ElasticSearch(BaseThreadedModule):
 
     def getInitalialScrollId(self):
         scroll_id = None
+        results = None
         try:
             response = requests.get('http://%s/%s/_search?search_type=scan&scroll=1m&size=%s' % (self.es_nodes[0], self.index_name, self.batch_size), data=self.query)
         except:
@@ -142,6 +143,7 @@ class ElasticSearch(BaseThreadedModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not parse query response. Exception: %s, Error: %s." % (etype, evalue))
+            self.lumbermill.shutDown()
         if '_scroll_id' in results:
             scroll_id = results['_scroll_id']
         else:
