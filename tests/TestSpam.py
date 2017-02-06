@@ -8,7 +8,7 @@ class TestSpam(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         test_object = Spam.Spam(ModuleBaseTestCase.MockGambolPutty())
-        test_object.lumbermill.addModule('Spam',test_object)
+        test_object.lumbermill.addModule('Spam', test_object)
         super(TestSpam, self).setUp(test_object)
 
     def testSpamWithSingleDict(self):
