@@ -14,7 +14,7 @@ sys.path.append('../')
 from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
 from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
 from lumbermill.utils.misc import AnsiColors, coloredConsoleLogging
-
+from lumbermill.utils.MultiProcessDataStore import MultiProcessDataStore
 
 class StoppableThread(threading.Thread):
 
@@ -33,6 +33,8 @@ class MockGambolPutty(mock.Mock):
     def __init__(self):
         mock.Mock.__init__(self)
         self.modules = {}
+        self.internal_datastore = MultiProcessDataStore()
+        self.worker_count = 1
 
     def getModuleInfoById(self, module_name):
         try:
@@ -43,6 +45,24 @@ class MockGambolPutty(mock.Mock):
 
     def getMainProcessId(self):
         return os.getpid()
+
+    def setWorkerCount(self, count):
+        self.worker_count = count
+
+    def getWorkerCount(self):
+        return self.worker_count
+
+    def getInternalDataStore(self):
+        return self.internal_datastore;
+
+    def setInInternalDataStore(self, key, value):
+        self.internal_datastore.setValue(key, value)
+
+    def getFromInternalDataStore(self, key, default=None):
+        try:
+            return self.internal_datastore.getValue(key)
+        except KeyError:
+            return default
 
     def initModule(self, module_name):
         instance = None
