@@ -26,6 +26,7 @@ from lumbermill.utils.misc import TimedFunctionManager, coloredConsoleLogging, r
 from lumbermill.utils.Buffers import BufferedQueue, ZeroMqMpQueue
 from lumbermill.utils.DictUtils import mergeNestedDicts
 from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
+from lumbermill.utils.MultiProcessDataStore import MultiProcessDataStore
 
 # Conditional imports for python2/3
 try:
@@ -65,7 +66,7 @@ class LumberMill():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
-        self.internal_datastore = {}
+        self.internal_datastore = MultiProcessDataStore()
         self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
                                      'queue_size': 20,
                                      'queue_buffer_size': 50,
@@ -365,16 +366,21 @@ class LumberMill():
             module_queues[module_name] = instance.getInputQueue()
         return module_queues
 
+    def getInternalDataStore(self):
+        return self.internal_datastore;
+
     def setInInternalDataStore(self, key, value):
         # TODO: Come up with a better way of sharing data between modules and filters.
         # This way of sharing data between modules and filters does not seem to be as flexible as one could wish for.
         # A better idea might be to give access to module data via a dynamic value like:
         # module.<module_name>.get.<key> instead of e.g. internal.<key>
-        self.internal_datastore[key] = value
+        # This datastore is based on multiprocessing.Manager(), using multiprocessing.Lock() for mp synchronization.
+        # So frequent usage of this store might impact performance.
+        self.internal_datastore.setValue(key, value)
 
     def getFromInternalDataStore(self, key, default=None):
         try:
-            return self.internal_datastore[key]
+            return self.internal_datastore.getValue(key)
         except KeyError:
             return default
 
