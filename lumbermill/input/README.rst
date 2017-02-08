@@ -70,8 +70,8 @@ This module supports two modes:
 | **pattern**:            Pattern the filenames need to match. E.g. '*.pdf', 'article*.xml' etc.
 | **recursive**:          If set to true, scan paths recursively else only scan current dir.
 | **line_by_line**:       If set to true, each line in a file will be emitted as single event.
-If set to false, the whole file will be send as single event.
-Only relevant for <cat> mode.
+|If set to false, the whole file will be send as single event.
+|Only relevant for <cat> mode.
 | **separator**:          Line separator.
 | **mode**:               Mode <cat> will just dump out the current content of a file, <tail> will follow file changes.
 | **sincedb_path**:       Path to a sqlite3 db file which stores the file position data since last poll.
