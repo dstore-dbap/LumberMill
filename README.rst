@@ -415,6 +415,7 @@ Event inputs
 ^^^^^^^^^^^^
 
 -  ElasticSearch, get documents from elasticsearch.
+-  File, read data from files.
 -  Kafka, receive events from apache kafka.
 -  NmapScanner, scan network with nmap and emit result as new event.
 -  RedisChannel, read events from redis channels.
