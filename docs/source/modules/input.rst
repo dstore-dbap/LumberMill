@@ -62,11 +62,25 @@ File
 
 Read data from files.
 
-| **paths**:              An array of paths to scan for files.
-| **pattern**:            Pattern the filenames need to match. E.g. '*.pdf', 'article*.xml' etc.
-| **recursive**:          If set to true, scan paths recursively else only scan current dir.
-| **line_by_line**:       If set to true, each line in a file will be emitted as single event.
-| If set to false, the whole file will be send as single event.
+This module supports two modes:
+ - cat: Just cat existing files.
+ - tail: Follow changes in given files.
+
+| **paths:              An array of paths to scan for files. Can also point to a file directly.
+| **pattern:            Pattern the filenames need to match. E.g. '*.pdf', 'article*.xml' etc.
+| **recursive:          If set to true, scan paths recursively else only scan current dir.
+| **line_by_line:       If set to true, each line in a file will be emitted as single event.
+If set to false, the whole file will be send as single event.
+Only relevant for <cat> mode.
+| **separator:          Line separator.
+| **mode:               Mode <cat> will just dump out the current content of a file, <tail> will follow file changes.
+| **sincedb_path:       Path to a sqlite3 db file which stores the file position data since last poll.
+| **ignore_empty:       If True ignore empty files.
+| **ignore_truncate:    If True ignore truncation of files.
+| **sincedb_write_interval: Number of seconds to pass between update of sincedb data.
+| **start_position:     Where to start in the file when tailing.
+| **stat_interval:      Number of seconds to pass before checking for file changes.
+| **size_limit:         Set maximum file size for files to watch. Files exeeding this limit will be ignored. TOOD!!!
 
 Configuration template:
 
@@ -77,6 +91,19 @@ Configuration template:
        pattern:                         # <default: '*'; type: string; is: optional>
        recursive:                       # <default: False; type: boolean; is: optional>
        line_by_line:                    # <default: False; type: boolean; is: optional>
+       separator:                       # <default: "\\n"; type: string; is: optional>
+       mode:                            # <default: 'cat'; type: string; is: optional; values: ['cat', 'tail']>
+       sincedb_path:                    # <default: '/tmp/lumbermill_file_input_sqlite.db'; type: string; is: optional;>
+       ignore_empty:                    # <default: False; type: boolean; is: optional;>
+       ignore_truncate:                 # <default: False; type: boolean; is: optional;>
+       sincedb_write_interval:          # <default: 15; type: integer; is: optional;>
+       start_position:                  # <default: 'end'; type: string; is: optional; values: ['beginning', 'end']>
+       stat_interval:                   # <default: 1; type: integer||float; is: optional;>
+       tail_lines:                      # <default: False; type: boolean; is: optional;>
+       size_limit:                      # <default: None; type: None||integer; is: optional;>
+       multiline_regex_before:          # <default: None; type: None||integer; is: optional;>
+       multiline_regex_after:           # <default: None; type: None||integer; is: optional;>
+       encoding:                        # <default: 'utf_8'; type: string; is: optional;>
        receivers:
         - NextModule
 

@@ -1,1 +1,1 @@
-Venezuelan beaver cheese?
+msg = "Venezuelan beaver cheese?"
