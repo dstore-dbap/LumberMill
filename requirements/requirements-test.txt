@@ -1,40 +1,41 @@
 # Global requirements
-crypto
-pylru
-PyYAML
-redis
-simplekv
-tornado
-# Temporary disabled.
-pyzmq
+importlib
+crypto>=1.0.0
+pylru>=1.0.0
+PyYAML>=2.0.0
+redis>=1.0.0
+simplekv>=0.5.0
+tornado>=3.0.0
+pyzmq>=10.0.0
 
 # ElasticSearchSink
-elasticsearch
+elasticsearch>=2.1.0
 
 # ModifyFields
-mmh3
+mmh3>=2.0.0
 
 # MsgPackParser
-msgpack-python
+msgpack-python>=0.4.0
 
 # AddGeoInfo
-pygeoip
+pygeoip>=0.3.0
 
 # UserAgentParser
-ua-parser
+ua-parser>=0.5.0
 
 # XPathParser
-lxml
+# Need to switch to another parser, lxml seems to be incompatible with pypy4.
+#lxml
 
 # Kafka input/output
-kafka-python
+kafka-python>=0.8.0
 
 # Sniffer, disabled.
 # pcapy
 # netifaces
 
 # AddDnsLookup
-dnspython
+dnspython>=1.0.0
 
 # DomainNameParser
 tld>=0.5.0
@@ -43,10 +44,13 @@ tld>=0.5.0
 pymongo>=3.0.0
 
 # AWS Services
-boto3
+boto3>=1.1.0
+
+# File
+glob2>=0.3
 
 # WebGui
-Pygments
+Pygments>=2.0.0
 
 # Tests requirements.
 unittest2

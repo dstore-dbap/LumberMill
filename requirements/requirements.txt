@@ -46,5 +46,8 @@ pymongo>=3.0.0
 # AWS Services
 boto3>=1.1.0
 
+# File
+glob2>=0.3
+
 # WebGui
 Pygments>=2.0.0
