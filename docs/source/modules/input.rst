@@ -12,7 +12,7 @@ The elasticsearch module takes care of discovering all nodes of the elasticsearc
 Requests will the be loadbalanced via round robin.
 
 | **query**:               The query to be executed, in json format.
-| search_type:        The default search type just will return all found documents. If set to 'scan' it will return
+| **search_type**:        The default search type just will return all found documents. If set to 'scan' it will return
 | 'batch_size' number of found documents, emit these as new events and then continue until all
 | documents have been sent.
 | **field_mappings**:      Which fields from the result document to add to the new event.
@@ -24,6 +24,7 @@ Requests will the be loadbalanced via round robin.
 | For nested values use the dot syntax as described in:
 | http://lumbermill.readthedocs.org/en/latest/introduction.html#event-field-notation
 | **nodes**:               Configures the elasticsearch nodes.
+| **read_timeout**:        Set number of seconds to wait until requests to elasticsearch will time out.
 | **connection_type**:     One of: 'thrift', 'http'.
 | **http_auth**:           'user:password'.
 | **use_ssl**:             One of: True, False.
@@ -32,7 +33,7 @@ Requests will the be loadbalanced via round robin.
 | Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
 | **sniff_on_connection_fail**:  The client can be configured to inspect the cluster state to get a list of nodes upon failure.
 | Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-| query_interval_in_secs:   Get data to es in x seconds intervals. NOT YET IMPLEMENTED!!
+| **query_interval_in_secs**:   Get data to es in x seconds intervals. NOT YET IMPLEMENTED!!
 
 Configuration template:
 
@@ -44,6 +45,7 @@ Configuration template:
        batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
+       read_timeout:                    # <default: 10; type: integer; is: optional>
        connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
        http_auth:                       # <default: None; type: None||string; is: optional>
        use_ssl:                         # <default: False; type: boolean; is: optional>
@@ -51,6 +53,30 @@ Configuration template:
        sniff_on_start:                  # <default: True; type: boolean; is: optional>
        sniff_on_connection_fail:        # <default: True; type: boolean; is: optional>
        query_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       receivers:
+        - NextModule
+
+
+File
+----
+
+Read data from files.
+
+| **paths**:              An array of paths to scan for files.
+| **pattern**:            Pattern the filenames need to match. E.g. '*.pdf', 'article*.xml' etc.
+| **recursive**:          If set to true, scan paths recursively else only scan current dir.
+| **line_by_line**:       If set to true, each line in a file will be emitted as single event.
+| If set to false, the whole file will be send as single event.
+
+Configuration template:
+
+::
+
+    - File:
+       paths:                           # <type: string||list; is: required>
+       pattern:                         # <default: '*'; type: string; is: optional>
+       recursive:                       # <default: False; type: boolean; is: optional>
+       line_by_line:                    # <default: False; type: boolean; is: optional>
        receivers:
         - NextModule
 
@@ -225,7 +251,7 @@ The event field can either be a simple string. This string will be used to creat
 If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
 should your raw event string.
 
-events: Send custom event data. For single events, use a string or a dict. If a string is provided, the contents will
+| **event**: Send custom event data. For single events, use a string or a dict. If a string is provided, the contents will
 be put into the events data field.
 if a dict is provided, the event will be populated with the dict fields.
 For multiple events, provide a list of stings or dicts.
