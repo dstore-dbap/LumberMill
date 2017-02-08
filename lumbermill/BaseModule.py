@@ -119,6 +119,7 @@ class BaseModule:
         """
         # Test if requested key exists.
         #config_setting = self.configuration_data[key]
+        config_setting = None
         try:
             config_setting = self.configuration_data[key]
         except KeyError:
