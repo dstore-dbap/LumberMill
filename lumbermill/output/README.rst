@@ -43,7 +43,6 @@ Requests will the be loadbalanced via round robin.
 | Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
 | **sniff_on_connection_fail**:  The client can be configured to inspect the cluster state to get a list of nodes upon failure.
 | Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-| **consistency**:     One of: 'one', 'quorum', 'all'.
 | **store_interval_in_secs**:      Send data to es in x seconds intervals.
 | **batch_size**:  Sending data to es if event count is above, even if store_interval_in_secs is not reached.
 | **backlog_size**:    Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
@@ -66,7 +65,6 @@ Configuration template:
        ttl:                             # <default: None; type: None||integer||string; is: optional>
        sniff_on_start:                  # <default: False; type: boolean; is: optional>
        sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
-       consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
        backlog_size:                    # <default: 500; type: integer; is: optional>

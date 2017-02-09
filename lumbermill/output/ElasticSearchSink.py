@@ -53,7 +53,6 @@ class ElasticSearchSink(BaseThreadedModule):
                     Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
     sniff_on_connection_fail: The client can be configured to inspect the cluster state to get a list of nodes upon failure.
                               Might cause problems on hosts with multiple interfaces. If connections fail, try to deactivate this.
-    consistency:    One of: 'one', 'quorum', 'all'.
     store_interval_in_secs:     Send data to es in x seconds intervals.
     batch_size: Sending data to es if event count is above, even if store_interval_in_secs is not reached.
     backlog_size:   Maximum count of events waiting for transmission. If backlog size is exceeded no new events will be processed.
@@ -74,7 +73,6 @@ class ElasticSearchSink(BaseThreadedModule):
        ttl:                             # <default: None; type: None||integer||string; is: optional>
        sniff_on_start:                  # <default: False; type: boolean; is: optional>
        sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
-       consistency:                     # <default: 'quorum'; type: string; values: ['one', 'quorum', 'all']; is: optional>
        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
        batch_size:                      # <default: 500; type: integer; is: optional>
        backlog_size:                    # <default: 500; type: integer; is: optional>
@@ -94,7 +92,6 @@ class ElasticSearchSink(BaseThreadedModule):
                 logging.getLogger(module_name).setLevel(self.logger.level)
         self.action = self.getConfigurationValue('action')
         self.format = self.getConfigurationValue('format')
-        self.consistency = self.getConfigurationValue("consistency")
         self.ttl = self.getConfigurationValue("ttl")
         self.index_name = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
@@ -194,12 +191,12 @@ class ElasticSearchSink(BaseThreadedModule):
         try:
             #started = time.time()
             # Bulk update of 500 events took 0.139621019363.
-            self.es.bulk(body=json_data, consistency=self.consistency)
+            self.es.bulk(body=json_data)
             #print("Bulk update of %s events took %s." % (len(events), time.time() - started))
             return True
         except elasticsearch.exceptions.ConnectionError:
             try:
-                self.logger.warning("Lost connection to %s. Trying to reconnect." % (self.es_nodes, index_name))
+                self.logger.warning("Lost connection to %s. Trying to reconnect." % (self.es_nodes, self.index_name))
                 self.es = self.connect()
             except:
                 time.sleep(.5)
