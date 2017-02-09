@@ -245,32 +245,6 @@ Configuration template:
         - NextModule
 
 
-OCRParser
----------
-
-OCR parser.
-
-This parser will takes base64 encoded binary data, convert that to an image and runs an ocr over that image.
-
-It uses the python bindings to tesseract (https://github.com/tesseract-ocr).
-On centos this can be installed with:
-yum install tasseract tesseract-devel
-
-| **source_fields**:   Input fields to split. Can be a single field or a list of fields.
-| **target_field**:    event field to be filled with extraced texts.
-
-Configuration template:
-
-::
-
-    - OCRParser:
-       source_fields:                   # <default: 'data'; type: string||list; is: optional>
-       target_field:                    # <default: 'data'; type:string; is: optional>
-       keep_original:                   # <default: False; type: boolean; is: optional>
-       receivers:
-        - NextModule
-
-
 RegexParser
 -----------
 
