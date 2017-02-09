@@ -3,6 +3,8 @@ import os
 import re
 import sys
 import argparse
+import coverage
+
 
 def compileRegExPattern(pattern):
     regex = None
@@ -37,5 +39,12 @@ if __name__ == "__main__":
                 test_suite.addTest(filename)
     """
     os.chdir(test_dir)
+    cov = coverage.coverage(config_file='../.coveragerc')
+    cov.start()
     all_tests = unittest.TestLoader().discover('.', pattern=include_test_filename_pattern)
-    unittest.TextTestRunner(verbosity=2).run(all_tests)
+    runner = unittest.TextTestRunner(verbosity=2)
+    runner.run(all_tests)
+    cov.stop()
+    cov.annotate(directory='./coverage')
+    cov.html_report(directory='./coverage')
+    cov.report()
