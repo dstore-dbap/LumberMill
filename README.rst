@@ -3,7 +3,8 @@
    :alt: Documentation Status
 .. image:: https://travis-ci.org/dstore-dbap/LumberMill.svg?branch=master
    :target: https://travis-ci.org/dstore-dbap/LumberMill
-.. image:: https://coveralls.io/repos/dstore-dbap/LumberMill/badge.svg?branch=master&service=github :target: https://coveralls.io/github/dstore-dbap/LumberMill?branch=master
+.. image:: https://coveralls.io/repos/github/dstore-dbap/GambolPutty/badge.svg?branch=master
+   :target: https://coveralls.io/github/dstore-dbap/GambolPutty?branch=master
 
 LumberMill
 ===========
