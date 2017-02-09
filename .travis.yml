@@ -18,3 +18,5 @@ env:
   global:
   - secure: m/f4i97S9kqhyjfBWHLaXWNIceyLHFVAHd8Q7HqtsmW3WKMKzJCIrOupgRHyxwARah1lGq3Vlo+XTl6bzolWePhqY0x4+sXuVjZoYEWBYXzADgyP/dA1zbZ9SpcYnr7J4QCt0EXFH1PXPnuAebVMGBsmceVwJGXOoSS3kG8MmSw=
   - secure: DgAf0qXM0+eKywhdet5EIqLrTJlA40yjAAL8vQglySxohtZOGAa2rH40Gm1dtyh5b7cVdzPjJIRXsIxrfzcEI+Rib/c9nVaDfLWq4A9v93FAQa7LsyHWmXfW2G2QvkZgo0Pr7ilvfAHkMLYuXxAlFQ+xMc74Hnj9iirM4ipxffA=
+after_success:
+  coveralls
