@@ -1,6 +1,6 @@
 [run]
 source = lumbermill
+[report]
 omit =
-    lumbermill/assets/*
     lumbermill/cluster/*
     lumbermill/webserver/*
