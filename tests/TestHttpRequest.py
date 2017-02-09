@@ -34,13 +34,13 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertTrue('Johann Gambolputty' in event and len(event['Johann Gambolputty']) > 0)
 
     def testHttpsQuery(self):
-        self.test_object.configure({'url': 'https://www.google.com'})
+        self.test_object.configure({'url': 'https://www.python.org/'})
         self.checkConfiguration()
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'TreeNodeID': '1'})):
             self.assertTrue('gambolputty_http_request' in event and len(event['gambolputty_http_request']) > 0)
 
     def testHttpsQueryDynamicTargetField(self):
-        self.test_object.configure({'url': 'https://www.google.com',
+        self.test_object.configure({'url': 'http://www.google.com',
                                     'target_field': '$(surname) Gambolputty'})
         self.checkConfiguration()
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})):
@@ -50,7 +50,7 @@ class TestHttpRequest(ModuleBaseTestCase.ModuleBaseTestCase):
         rc = RedisStore.RedisStore(mock.Mock())
         rc.configure({'server': 'localhost'})
         self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
-        self.test_object.configure({'url': 'https://www.google.com',
+        self.test_object.configure({'url': 'http://www.google.com',
                                     'target_field': '$(surname) Gambolputty',
                                     'redis_store': 'RedisStore',
                                     'redis_key': '$(surname)',

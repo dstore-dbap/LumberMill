@@ -83,21 +83,23 @@ class HttpRequest(BaseThreadedModule):
         if response is None:
             try:
                 response = self.execRequest(request_url)
+                # Copy data to a dict, since the response object can not be pickled to be stored in redis.
+                response_dict = {'content': response.read(),
+                                 'status_code': response.getcode(),
+                                 'url': response.geturl()}
+                if self.get_metadata:
+                    response_dict.update({'headers': response.info().headers,
+                                          'parameter_list': response.info().getplist(),
+                                          'encoding': response.info().getencoding(),
+                                          'type': response.info().gettype(),
+                                          'maintype': response.info().getmaintype(),
+                                          'subtype': response.info().getsubtype()})
                 if response and self.redis_store:
-                    self.redis_store.set(redis_key, response, self.getConfigurationValue('redis_ttl'))
+                    self.redis_store.set(redis_key, response_dict, self.getConfigurationValue('redis_ttl'))
             except:
                 yield event
                 return
-        event[target_field_name] = {'content': response.read(),
-                                    'status_code': response.getcode(),
-                                    'url': response.geturl()}
-        if self.get_metadata:
-            event[target_field_name]['metadata'] = {'headers': response.info().headers,
-                                                    'parameter_list': response.info().getplist(),
-                                                    'encoding': response.info().getencoding(),
-                                                    'type': response.info().gettype(),
-                                                    'maintype': response.info().getmaintype(),
-                                                    'subtype': response.info().getsubtype()}
+        event[target_field_name] = response_dict
         yield event
 
     def execRequest(self, url):
