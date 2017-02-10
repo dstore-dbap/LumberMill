@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import os
 import sys
 import types
 import logging
@@ -64,3 +65,4 @@ LOGLEVEL_STRING_TO_LOGLEVEL_INT = {'info': logging.INFO,
 
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = platform.system()
+LUMBERMILL_BASEPATH = os.path.dirname(os.path.realpath(__file__))
