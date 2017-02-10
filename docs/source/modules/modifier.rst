@@ -53,30 +53,34 @@ Add country_code and longitude-latitude fields based  on a geoip lookup for a gi
 Here an example of fields that the module provides:
 {'city': 'Hanover', 'region_name': '06', 'area_code': 0, 'time_zone': 'Europe/Berlin', 'dma_code': 0, 'metro_code': None, 'country_code3': 'DEU', 'latitude': 52.36670000000001, 'postal_code': '', 'longitude': 9.716700000000003, 'country_code': 'DE', 'country_name': 'Germany', 'continent': 'EU'}
 
-| **geoip_dat_path**:  path to maxmind geoip database file.
-| **source_fields**:  list of fields to use for lookup. The first list entry that produces a hit is used.
-| **target**:  field to populate with the geoip data. If none is provided, the field will be added directly to the event.
-| geo_info_fields: fields to add. Available field names:
-| - area_code
-| - city
-| - continent
-| - country_code
-| - country_code3
-| - country_name
-| - dma_code
-| - metro_code
-| - postal_code
-| - region_name
-| - time_zone
-| - latitude
-| - longitude
+| **geoip_dat_path**: path to maxmind geoip2 database file.
+| **geoip_locals**: List of locale codes. See: https://github.com/maxmind/GeoIP2-python/blob/master/geoip2/database.py#L59
+| **geoip_mode**: See: https://github.com/maxmind/GeoIP2-python/blob/master/geoip2/database.py#L71
+| **source_fields**: list of fields to use for lookup. The first list entry that produces a hit is used.
+| **target**: field to populate with the geoip data. If none is provided, the field will be added directly to the event.
+| **geo_info_fields**: fields to add. Available fields:
+|  - city
+|  - postal_code
+|  - country_name
+|  - country_code
+|  - continent_code
+|  - continent
+|  - area_code
+|  - region_name
+|  - longitude
+|  - latitude
+|  - longlat
+|  - time_zone
+|  - metro_code
 
 Configuration template:
 
 ::
 
     - AddGeoInfo:
-       geoip_dat_path:                  # <type: string; is: required>
+       geoip_dat_path:                  # <default: './assets/maxmind/GeoLite2-City.mmdb'; type: string; is: optional>
+       geoip_locals:                    # <default: ['en']; type: list; is: optional>
+       geoip_mode:                      # <default: 'MODE_AUTO'; type: string; is: optional; values: ['MODE_MMAP_EXT', 'MODE_MMAP', 'MODE_FILE', 'MODE_MEMORY', 'MODE_AUTO']>
        geo_info_fields:                 # <default: None; type: None||list; is: optional>
        source_fields:                   # <default: ["x_forwarded_for", "remote_ip"]; type: list; is: optional>
        target_field:                    # <default: "geo_info"; type: string; is: optional>
