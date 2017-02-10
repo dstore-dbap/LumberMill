@@ -59,6 +59,10 @@ class TestElasticSearchSink(ModuleBaseTestCase.ModuleBaseTestCase):
         self.test_object.initAfterFork()
         timestring = datetime.datetime.utcnow().strftime('%Y.%m.%d')
         index_name = 'lumbermill-%s' % timestring
+        try:
+            self.es.indices.delete(index=index_name, ignore=[400, 404])
+        except:
+            pass
         self.es.indices.create(index=index_name)
         event = DictUtils.getDefaultEventDict({'McTeagle': "But it was with more simple, homespun verses that McTeagle's unique style first flowered."})
         doc_id = event['lumbermill']['event_id']
