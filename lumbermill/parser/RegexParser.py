@@ -4,6 +4,7 @@ import re
 import sys
 from operator import itemgetter
 
+from lumbermill.constants import LUMBERMILL_BASEPATH
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
 from lumbermill.utils.misc import TimedFunctionManager
@@ -110,7 +111,7 @@ class RegexParser(BaseThreadedModule):
         return resortFieldextractionRegexpressions
 
     def readLogstashPatterns(self):
-        path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
+        path = "%s/assets/grok_patterns" % LUMBERMILL_BASEPATH
         for (dirpath, dirnames, filenames) in os.walk(path):
             for filename in filenames:
                 lines = [line.strip() for line in open('%s%s%s' % (dirpath, os.sep, filename))]
