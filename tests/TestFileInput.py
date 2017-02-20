@@ -1,10 +1,10 @@
+import pprint
 import time
-
 import sys
-
 import ModuleBaseTestCase
 import tempfile
 
+from lumbermill.constants import LUMBERMILL_BASEPATH
 from lumbermill.input import File
 
 
@@ -17,37 +17,39 @@ class TestFileInput(ModuleBaseTestCase.ModuleBaseTestCase):
         self.temp_file = None
 
     def testAbsoluteFilePath(self):
-        self.test_object.configure({'paths': './test_data/file_input/cheese.py'})
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/cheese.py'})
         self.test_object.checkConfiguration()
-        self.assertEquals(self.test_object.files, ['./test_data/file_input/cheese.py'])
+        pprint.pprint(self.test_object.files)
+        self.assertEquals(self.test_object.files, [LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/cheese.py'])
 
     def testMultipleFilePaths(self):
-        self.test_object.configure({'paths': ['./test_data/file_input/',
-                                              './test_data/file_input/second_level']})
-        self.test_object.checkConfiguration()
-        self.assertEquals(len(self.test_object.files), 5)
-
-    def testFindFilesNotRecursive(self):
-        self.test_object.configure({'paths': './test_data/file_input/'})
-        self.test_object.checkConfiguration()
-        self.assertEquals(len(self.test_object.files), 3)
-
-    def testFindFilesRecursive(self):
-        self.test_object.configure({'paths': './test_data/file_input',
-                                    'recursive': True})
+        self.test_object.configure({'paths': [LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/',
+                                              LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/second_level']})
         self.test_object.checkConfiguration()
         self.assertEquals(len(self.test_object.files), 6)
 
+    def testFindFilesNotRecursive(self):
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/'})
+        self.test_object.checkConfiguration()
+        pprint.pprint(self.test_object.files)
+        self.assertEquals(len(self.test_object.files), 4)
+
+    def testFindFilesRecursive(self):
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input',
+                                    'recursive': True})
+        self.test_object.checkConfiguration()
+        self.assertEquals(len(self.test_object.files), 7)
+
     def testFindFilesWithPattern(self):
-        self.test_object.configure({'paths': './test_data/file_input',
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input',
                                     'recursive': True,
                                     'pattern': '*.info'})
         self.test_object.checkConfiguration()
         self.assertEquals(len(self.test_object.files), 2)
-        self.assertEquals(self.test_object.files[1], './test_data/file_input/second_level_2/spam.info')
+        self.assertEquals(self.test_object.files[1], LUMBERMILL_BASEPATH + '/../tests/test_data/file_input/second_level_2/spam.info')
 
     def testReadFileComplete(self):
-        self.test_object.configure({'paths': './test_data/file_input',
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input',
                                     'recursive': True,
                                     'pattern': 'spam.info'})
         self.test_object.checkConfiguration()
@@ -57,7 +59,7 @@ class TestFileInput(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertEquals(event['data'], 'Spam!\nSpam! Spam!\nSpam! Spam! Spam!')
 
     def testReadFileLineByLine(self):
-        self.test_object.configure({'paths': './test_data/file_input',
+        self.test_object.configure({'paths': LUMBERMILL_BASEPATH + '/../tests/test_data/file_input',
                                     'recursive': True,
                                     'pattern': 'spam.info',
                                     'line_by_line': True})
