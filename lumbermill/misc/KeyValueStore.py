@@ -51,6 +51,7 @@ class KeyValueStore(BaseThreadedModule):
         BaseThreadedModule.configure(self, configuration)
         backend = self.getConfigurationValue('backend')
         self.backend_client = None
+        self.kv_store = None
         if backend == 'DictStore':
             import simplekv.memory
             self.backend_client = None
@@ -63,6 +64,9 @@ class KeyValueStore(BaseThreadedModule):
             import simplekv.memory.memcachestore
             self.backend_client = self.getMemcacheClient()
             self.kv_store = simplekv.memory.memcachestore.MemcacheStore(self.backend_client)
+        else:
+            self.logger("Unknown backend type %s. Please check." % backend)
+            self.lumbermill.shutDown();
 
         self.set_buffer = None
         if self.getConfigurationValue('store_interval_in_secs') or self.getConfigurationValue('batch_size'):
