@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import cPickle
 import sys
-
 import redis
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -189,32 +188,26 @@ class KeyValueStore(BaseThreadedModule):
             self.kv_store.put(key, value)
 
     def setBuffered(self, key, value, ttl=0, pickle=True):
-        if pickle is True:
-            try:
-                value = cPickle.dumps(value)
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
-                raise
-        if ttl:
-            self.set_buffer.append({'key':key, 'ttl': ttl, 'value': value})
-        else:
-            self.set_buffer.append({'key':key, 'value': value})
+        self.set_buffer.append({'key': key, 'value': value, 'ttl': ttl, 'pickle': pickle})
 
     def setBufferedCallback(self, values):
         for value in values:
-            if 'ttl' in value:
-                self._set(value['key'], value['value'], value['ttl'])
-            else:
-                self._set(value['key'], value['value'])
+            self._set(value['key'], value['value'], value['ttl'], value['pickle'])
 
     def setRedisBufferedCallback(self, values):
         pipe = self.backend_client.pipeline()
         for value in values:
-            if 'ttl' in value:
-                pipe.setex(value['key'], value['ttl'], value['value'])
-            else:
+            if value['pickle'] is True:
+                try:
+                    value['value'] = cPickle.dumps(value['value'])
+                except:
+                    etype, evalue, etb = sys.exc_info()
+                    self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (value['key'], value['value'], etype, evalue))
+                    raise
+            if(value['ttl'] == 0):
                 pipe.set(value['key'], value['value'])
+            else:
+                pipe.setex(value['key'], value['ttl'], value['value'])
         try:
             pipe.execute()
             return True
@@ -236,7 +229,7 @@ class KeyValueStore(BaseThreadedModule):
     def getBuffered(self, key, unpickle=True):
         try:
             value_idx = next(index for (index, entry) in enumerate(self.set_buffer.buffer) if entry["key"] == key)
-            return self.set_buffer.buffer[value_idx]
+            return self.set_buffer.buffer[value_idx]['value']
         except:
             return self._get(key, unpickle)
 
@@ -260,7 +253,7 @@ class KeyValueStore(BaseThreadedModule):
     def popBuffered(self, key, unpickle=True):
         try:
             value_idx = next(index for (index, entry) in enumerate(self.set_buffer.buffer) if entry["key"] == key)
-            return self.set_buffer.buffer.pop(value_idx)
+            return self.set_buffer.buffer.pop(value_idx)['value']
         except:
             return self._pop(key, unpickle)
 
