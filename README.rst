@@ -428,7 +428,7 @@ Event inputs
 -  TcpServer, read stream from a tcp socket.
 -  UdpServer, read data from udp socket.
 -  UnixSocket, read stream from a named socket on unix like systems.
--  Zmq, read events from a zeromq.
+-  ZeroMQ, read events from a zeromq.
 
 Event parsers
 ^^^^^^^^^^^^^

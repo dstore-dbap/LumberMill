@@ -8,7 +8,7 @@ import os
 import unittest
 
 import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.input import Zmq
+from lumbermill.input import ZeroMQ
 
 
 class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
@@ -16,7 +16,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
     def setUp(self):
         if 'TRAVIS' in os.environ and os.environ['TRAVIS'] == 'true':
             raise unittest.SkipTest('ZMQ module seems to be broken in travis docker container. Skipping test. <Assertion failed: pfd.revents & POLLIN (bundled/zeromq/src/signaler.cpp:239)>')
-        super(TestZmqInput, self).setUp(Zmq.Zmq(mock.Mock()))
+        super(TestZmqInput, self).setUp(ZeroMQ.ZeroMQ(mock.Mock()))
 
     def testZmqPull(self):
         ipaddr, port = self.getFreePortoOnLocalhost()
@@ -42,7 +42,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
         self.assertDictEqual(event, expected_ret_val)
         self.assertEqual(counter, 1000)
 
-    def _testZmqSubWithoutTopicFilter(self):
+    def testZmqSubWithoutTopicFilter(self):
         ipaddr, port = self.getFreePortoOnLocalhost()
         self.test_object.configure({'address': '%s:%s' % (ipaddr, port),
                                     'pattern': 'sub'})
@@ -62,7 +62,7 @@ class TestZmqInput(ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertDictEqual(event, expected_ret_val)
         self.assertTrue(event is not False)
 
-    def _testZmqSubWithTopicFilter(self):
+    def testZmqSubWithTopicFilter(self):
         ipaddr, port = self.getFreePortoOnLocalhost()
         self.test_object.configure({'address': '%s:%s' % (ipaddr, port),
                                     'pattern': 'sub',

@@ -387,7 +387,7 @@ Configuration template:
         - NextModule
 
 
-Zmq
+ZeroMQ
 ---
 
 Read events from a zeromq.
@@ -402,7 +402,7 @@ Configuration template:
 
 ::
 
-    - Zmq:
+    - ZeroMQ:
        mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
        address:                         # <default: '*:5570'; type: string; is: optional>
        pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
