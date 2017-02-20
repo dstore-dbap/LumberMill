@@ -3,7 +3,6 @@ import time
 import mock
 import redis
 import ModuleBaseTestCase
-import unittest
 
 from lumbermill.input import RedisChannel
 
@@ -21,30 +20,18 @@ class TestRedisChannel(ModuleBaseTestCase.ModuleBaseTestCase):
             self.logger.error('Could no connect to redis server at %s:%s. Exception: %s, Error: %s.' % (self.redis_host, self.redis_port, etype, evalue))
             sys.exit(255)
 
-    """
-    - RedisChannel:
-        channel:                    # <type: string; is: required>
-        server:                     # <default: 'localhost'; type: string; is: optional>
-        port:                       # <default: 6379; type: integer; is: optional>
-        db:                         # <default: 0; type: integer; is: optional>
-        password:                   # <default: None; type: None||string; is: optional>
-        receivers:
-          - NextModule
-    """
-    @unittest.skip('Currently broken.')
-    def test(self):
-        self.test_object.configure({'channel': 'TestChannel',
-                                    'server': 'localhost'})
+    def testDefaultvalues(self):
+        self.test_object.configure({'channel': 'TestChannel'})
         self.checkConfiguration()
         self.startTornadoEventLoop()
         data = "It's my belief that these sheep are laborin' under the misapprehension that they're birds."
-        for _ in range(0, 500):
+        for _ in range(0, 100):
             self.client.publish('TestChannel', data)
-        event = False
+        event = None
         time.sleep(1)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
-        self.assertTrue(event != False)
-        self.assertEqual(counter, 500)
+        self.assertIsNotNone(event)
+        self.assertEqual(counter, 100)
         self.assertEqual(event['data'], data)
