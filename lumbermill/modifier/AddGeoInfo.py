@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-import pprint
 import socket
 import sys
 import geoip2.database
