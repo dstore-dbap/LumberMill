@@ -64,9 +64,12 @@ To high eternal gain."""
         self.assertIsNotNone(event)
 
     def testLogstashPattern(self):
+        self.test_object.configure({'field_extraction_patterns': [{'dame_irene': '.*'}]})
+        self.checkConfiguration()
+        self.test_object.readLogstashPatterns()
         logstash_regex_pattern = '(?P<virtual_host_name>%{HOST}) (?P<remote_ip>%{IP})'
         parsed_regex_pattern = self.test_object.replaceLogstashPatterns(logstash_regex_pattern)
-        print(parsed_regex_pattern)
+        self.assertNotEquals(logstash_regex_pattern, parsed_regex_pattern)
 
     def tearDown(self):
         pass
