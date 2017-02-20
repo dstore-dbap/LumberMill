@@ -25,6 +25,7 @@ class RegexParser(BaseThreadedModule):
     mark_unmatched_as: Set <lumbermill.event_type> to this value if regex did not match.
     break_on_match: Stop applying regex patterns after first match.
     hot_rules_first: Apply regex patterns based on their hit count.
+    field_extraction_patterns: List of regex patterns to apply to source field.
 
     Configuration template:
 
@@ -76,7 +77,7 @@ class RegexParser(BaseThreadedModule):
                 # Regex match type the third (optional)
                 try:
                     regex_match_type = i.next()
-                except:
+                except StopIteration:
                     pass
             # Make sure regex_match_type is valid
             # At the moment only search and findall are supported
