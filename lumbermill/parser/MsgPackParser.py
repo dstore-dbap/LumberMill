@@ -23,7 +23,7 @@ class MsgPackParser(BaseThreadedModule):
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
-       target_field:                    # <default: None; type: None||string; is: optional>
+       target_field:                    # <default: None; type: None||string; is: required if action is 'encode' else optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
        receivers:
         - NextModule
@@ -101,11 +101,11 @@ class MsgPackParser(BaseThreadedModule):
         if self.source_fields == ['all']:
             encode_data = event
         else:
-            encode_data = []
+            encode_data = {}
             for source_field in self.source_fields:
                 if source_field not in event:
                     continue
-                encode_data.append({source_field: event[source_field]})
+                encode_data[source_field] = event[source_field]
                 if self.drop_original:
                     event.pop(source_field, None)
         try:
