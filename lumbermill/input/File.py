@@ -11,6 +11,7 @@ from lumbermill.utils import DictUtils
 from lumbermill.utils.Decorators import ModuleDocstringParser
 from lumbermill.misc.beaver.worker.tail import Tail
 
+
 @ModuleDocstringParser
 class File(BaseThreadedModule):
     """
@@ -79,6 +80,7 @@ class File(BaseThreadedModule):
     def scanPaths(self):
         found_files = []
         paths = self.getConfigurationValue('paths')
+        print(paths)
         if isinstance(paths, types.StringType):
             paths = [paths]
         for path in paths:
@@ -136,11 +138,10 @@ class File(BaseThreadedModule):
                 with open(found_file, 'r') as data_file:
                     if self.line_by_line:
                         for line in data_file:
-                            # Remove newline.
+                            # Remove possible last newline.
                             self.sendEvent(DictUtils.getDefaultEventDict(dict={"filename": found_file, "data": line.rsplit('\n')[0]}, caller_class_name=self.__class__.__name__))
                     else:
-                        # Remove last newline added by .read method.
-                        self.sendEvent(DictUtils.getDefaultEventDict(dict={"filename": found_file, "data": data_file.read()[:-1]}, caller_class_name=self.__class__.__name__))
+                        self.sendEvent(DictUtils.getDefaultEventDict(dict={"filename": found_file, "data": data_file.read()}, caller_class_name=self.__class__.__name__))
             self.lumbermill.shutDown()
         elif self.mode == 'tail':
             self.startFileTailer()
