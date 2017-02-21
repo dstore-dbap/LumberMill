@@ -32,9 +32,6 @@ class StdIn(BaseThreadedModule):
         self.stream_end_signal = self.getConfigurationValue('stream_end_signal')
 
     def run(self):
-        if not self.receivers:
-            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
-            return
         self.pid = os.getpid()
         hostname = socket.gethostname()
         multiline_data = ""
