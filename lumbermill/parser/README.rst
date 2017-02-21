@@ -147,14 +147,10 @@ the corresponding json fields.
 Encode:
 It will build a new list of source fields and create json of this list.
 
-At the moment only flat json files can be processed correctly.
-
-| **action**:          Either encode or decode data.
-| **source_fields**:   Input fields for de/encode.
-| If encoding, you can set this field to 'all' to encode the complete event dict.
-| **target_field**:    Target field for de/encode result.
-| If decoding and target is not set, the event dict itself will be updated with decoded fields.
-| **keep_original**:   Switch to keep or drop the original fields used in de/encoding from the event dict.
+|**action**:         Either encode or decode data.
+|**source_fields**:  Input fields for de/encode. If encoding, you can set this field to 'all' to encode the complete event dict.
+|**target_field**:   Target field for de/encode result.  If decoding and target is not set, the event dict itself will be updated with decoded fields.
+|**keep_original**:  Switch to keep or drop the original fields used in de/encoding from the event dict.
 
 Configuration template:
 
@@ -162,7 +158,6 @@ Configuration template:
 
     - JsonParser:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-       mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
        target_field:                    # <default: None; type: None||string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>

@@ -1,12 +1,9 @@
 import ModuleBaseTestCase
 import mock
-import socket
 import json
-import sys
-import time
+
 
 import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.input import TcpServer
 from lumbermill.parser import JsonParser
 
 
@@ -14,72 +11,24 @@ class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         super(TestJsonParser, self).setUp(JsonParser.JsonParser(mock.Mock()))
-        self.tcp_server = TcpServer.TcpServer(mock.Mock())
-        self.tcp_server.addReceiver("JsonParser", self.test_object)
 
-    def testLineMode(self):
-        self.tcp_server.configure({'mode': 'line'})
-        self.tcp_server.initAfterFork()
-        self.startTornadoEventLoop()
-        self.test_object.configure({})
-        self.checkConfiguration()
-        orig_event = {'json_data': {'South African': 'Fast',
-                                    'unladen': 'swallow'}}
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1)
-        try:
-            s.connect(('localhost', self.tcp_server.getConfigurationValue('port')))
-            connection_succeeded = True
-        except:
-            etype, evalue, etb = sys.exc_info()
-            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
-            connection_succeeded = False
-        self.assertTrue(connection_succeeded)
-        s.sendall(json.dumps(orig_event) + "\n")
-        s.close()
-        received_event = False
-        time.sleep(.1)
-        for received_event in self.receiver.getEvent():
-            received_event.pop('lumbermill')
-            self.assertDictEqual(received_event, orig_event)
-        self.assertTrue(received_event is not False)
-
-    def __testStreamMode(self):
-        self.tcp_server.configure({'mode': 'stream'})
-        self.tcp_server.initAfterFork()
-        self.startTornadoEventLoop()
-        self.test_object.configure({})
-        self.checkConfiguration()
-        orig_event = {'json_data': {'South African': 'Fast' * 8192,
-                                    'unladen': 'swallow'}}
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1)
-        try:
-            s.connect(('localhost', self.tcp_server.getConfigurationValue('port')))
-            connection_succeeded = True
-        except:
-            etype, evalue, etb = sys.exc_info()
-            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
-            connection_succeeded = False
-        self.assertTrue(connection_succeeded)
-        s.sendall(json.dumps(orig_event))
-        s.close()
-        received_event = False
-        time.sleep(.1)
-        for received_event in self.receiver.getEvent():
-            received_event.pop('lumbermill')
-            self.assertDictEqual(received_event, orig_event)
-        self.assertTrue(received_event is not False)
-
-    def __testSimpleJson(self):
+    def testDecode(self):
         self.test_object.configure({'source_fields': ['json_data']})
-        result = self.conf_validator.validateModuleInstance(self.test_object)
-        self.assertFalse(result)
-        data = DictUtils.getDefaultEventDict({'json_data': '{\'South African\': \'Fast\', \'unladen\': \'swallow\'}'})
+        self.checkConfiguration()
+        data = DictUtils.getDefaultEventDict({'json_data': '{"South African": "Fast", "unladen": "swallow"}'})
+        event = None
         for event in self.test_object.handleEvent(data):
-            self.assertTrue('South African' in event and event['South African'] == "Fast" )
+            self.assertTrue('South African' in event and event['South African'] == "Fast")
+        self.assertIsNotNone(event)
 
-    def tearDown(self):
-        self.tcp_server.shutDown()
-        ModuleBaseTestCase.ModuleBaseTestCase.tearDown(self)
-        pass
+    def testEncode(self):
+        self.test_object.configure({'action': 'encode',
+                                    'source_fields': 'all',
+                                    'target_field': 'json_data'})
+        self.checkConfiguration()
+        data = DictUtils.getDefaultEventDict({"South African": "Fast", "unladen": "swallow"})
+        event = None
+        for event in self.test_object.handleEvent(data):
+            json_str = event.pop('json_data')
+            self.assertDictEqual(json.loads(json_str), data)
+        self.assertIsNotNone(event)
