@@ -5,6 +5,12 @@ import sys
 import argparse
 import coverage
 
+"""
+To run coverage and submit data to coveralls:
+coverage run --source=lumbermill /usr/lib64/pypy-4.0/bin/nosetests --verbosity=3 Test*.py
+coverage html -d coverage/
+/usr/lib64/pypy-4.0/bin/coveralls
+"""
 
 def compileRegExPattern(pattern):
     regex = None
@@ -39,11 +45,12 @@ if __name__ == "__main__":
                 test_suite.addTest(filename)
     """
     os.chdir(test_dir)
-    #cov = coverage.coverage(config_file='../.coveragerc')
-    #cov.start()
+    cov = coverage.coverage(config_file='../.coveragerc')
+    cov.erase()
+    cov.start()
     all_tests = unittest.TestLoader().discover('.', pattern=include_test_filename_pattern)
     unittest.TextTestRunner(verbosity=2).run(all_tests)
-    #cov.stop()
+    cov.stop()
     #cov.annotate(directory='./coverage')
-    #cov.html_report(directory='./coverage')
-    #cov.report()
+    cov.html_report(directory='./coverage')
+    cov.report()

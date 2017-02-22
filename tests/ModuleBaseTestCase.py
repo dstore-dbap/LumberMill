@@ -28,13 +28,17 @@ class StoppableThread(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-class MockGambolPutty(mock.Mock):
+class MockLumberMill(mock.Mock):
 
     def __init__(self):
         mock.Mock.__init__(self)
         self.modules = {}
         self.internal_datastore = MultiProcessDataStore()
         self.worker_count = 1
+        self.is_master_process = True
+
+    def is_master(self):
+        return self.is_master_process
 
     def getModuleInfoById(self, module_name):
         try:
