@@ -108,7 +108,7 @@ class SyslogPrivalParser(BaseThreadedModule):
     def handleEvent(self, event):
         try:
             prival = int(event[self.source_field])
-        except:
+        except KeyError:
             yield event
             return
         # Calculate facility and priority from PRIVAL (@see: http://tools.ietf.org/html/rfc5424#section-6.2.1)
