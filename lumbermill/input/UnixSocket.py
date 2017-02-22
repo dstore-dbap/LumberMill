@@ -64,9 +64,6 @@ class UnixSocket(BaseThreadedModule):
         self.running = False
 
     def start(self):
-        if not self.receivers:
-            self.logger.error("Will not start module %s since no receivers are set." % (self.__class__.__name__))
-            return
         try:
             self.unix_socket = netutil.bind_unix_socket(self.getConfigurationValue('path_to_socket'))
         except:
