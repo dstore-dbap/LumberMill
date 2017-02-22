@@ -327,7 +327,7 @@ Should be the best choice perfomancewise if you are on Linux and are running wit
 | **cert**:        Path to tls cert file.
 | **mode**:        Receive mode, line or stream.
 | **simple_separator**:   If mode is line, set separator between lines.
-| **regex_separator**:    If mode is line, set separator between lines. Here regex can be used.
+| **regex_separator**:    If mode is line, set separator between lines. Here regex can be used. The result includes the data that matches the regex.
 | **chunksize**:   If mode is stream, set chunksize in bytes to read from stream.
 | **max_buffer_size**:  Max kilobytes to in receiving buffer.
 
