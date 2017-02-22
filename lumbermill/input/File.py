@@ -9,7 +9,7 @@ import time
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils import DictUtils
 from lumbermill.utils.Decorators import ModuleDocstringParser
-from lumbermill.misc.beaver.worker.tail import Tail
+from lumbermill.utils.beaver.worker.tail import Tail
 
 
 @ModuleDocstringParser
@@ -55,8 +55,8 @@ class File(BaseThreadedModule):
        stat_interval:                   # <default: 1; type: integer||float; is: optional;>
        tail_lines:                      # <default: False; type: boolean; is: optional;>
        size_limit:                      # <default: None; type: None||integer; is: optional;>
-       multiline_regex_before:          # <default: None; type: None||integer; is: optional;>
-       multiline_regex_after:           # <default: None; type: None||integer; is: optional;>
+       multiline_regex_before:          # <default: None; type: None||string; is: optional;>
+       multiline_regex_after:           # <default: None; type: None||string; is: optional;>
        encoding:                        # <default: 'utf_8'; type: string; is: optional;>
        receivers:
         - NextModule

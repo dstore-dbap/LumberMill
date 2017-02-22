@@ -126,7 +126,7 @@ class TcpServer(BaseModule):
        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
        simple_separator:                # <default: '\n'; type: string; is: optional>
        regex_separator:                 # <default: None; type: None||string; is: optional>
-       chunksize:                       # <default: 16384; type: integer; is: optional>
+       chunksize:                       # <default: 16384; type: integer; is: required if mode is 'stream' else optional>
        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
        receivers:
         - NextModule
