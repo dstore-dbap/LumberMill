@@ -53,6 +53,9 @@ class Throttle(BaseThreadedModule):
                 self.lumbermill.shutDown()
                 return
             self.persistence_backend = backend_info['instances'][0]
+        if(self.max_count < self.min_count):
+            self.logger.error("max_count setting may not be smaller than min_count setting. Please check.")
+            self.lumbermill.shutDown()
 
     def setAndGetEventCountByKey(self, key):
         now = time.time()
