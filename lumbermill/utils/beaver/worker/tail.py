@@ -33,7 +33,7 @@ import logging
 import threading
 
 from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from utils import IS_GZIPPED_FILE, REOPEN_FILES, multiline_merge
+from utils import IS_GZIPPED_FILE, REOPEN_FILES
 from utils import ENCODINGS
 
 
@@ -83,8 +83,8 @@ class Tail(threading.Thread):
         # Attribute for multi-line events
         self._current_event = collections.deque([])
         self._last_activity = time.time()
-        self._multiline_regex_after = lumbermill_module.getConfigurationValue('multiline_regex_after')
-        self._multiline_regex_before = lumbermill_module.getConfigurationValue('multiline_regex_before')
+        self._multiline_regex_after = False #lumbermill_module.getConfigurationValue('multiline_regex_after')
+        self._multiline_regex_before = False #lumbermill_module.getConfigurationValue('multiline_regex_before')
 
         self._update_file()
         if self.active:

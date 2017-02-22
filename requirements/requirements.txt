@@ -18,7 +18,7 @@ mmh3>=2.0.0
 msgpack-python>=0.4.0
 
 # AddGeoInfo
-pygeoip>=0.3.0
+geoip2>=2.3.0
 
 # UserAgentParser
 ua-parser>=0.5.0
