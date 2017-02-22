@@ -14,6 +14,8 @@ from lumbermill.output import SQSSink
 class TestSQSSink(ModuleBaseTestCase):
 
     def setUp(self):
+        if 'TRAVIS' in os.environ and os.environ['TRAVIS'] == 'true':
+            raise unittest.SkipTest('At the moment testing sqs services seems to be broken. Checking it.')
         try:
             self.aws_access_key_id = os.environ['AWS_ID']
             self.aws_secret_access_key = os.environ['AWS_KEY']
