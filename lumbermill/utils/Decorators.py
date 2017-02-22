@@ -40,21 +40,6 @@ def setInterval(interval, max_run_count=0, call_on_init=False):
         return wrapper
     return decorator
 
-def setProcessInterval(interval):
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            stopped = multiprocessing.Event()
-            def loop(): # executed in another thread
-                while not stopped.wait(interval): # until stopped
-                    function(*args, **kwargs)
-            t = multiprocessing.Process(target=loop)
-            t.daemon = True # stop if the program exits
-            t.start()
-            return stopped
-        return wrapper
-    return decorator
-
-
 def ModuleDocstringParser(cls):
     @functools.wraps(cls)
     def wrapper(*args, **kwargs):
@@ -103,16 +88,6 @@ def ModuleDocstringParser(cls):
 
     return wrapper
 
-def memoize(obj):
-    cache = obj.cache = {}
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        key = str(args) + str(kwargs)
-        if key not in cache:
-            cache[key] = obj(*args, **kwargs)
-        return cache[key]
-    return memoizer
-
 class BoundedOrderedDict(collections.OrderedDict):
     def __init__(self, *args, **kwds):
         self.maxlen = kwds.pop("maxlen", None)
@@ -134,6 +109,7 @@ def memoize(func=None, maxlen=None):
     """
     if func:
         cache = BoundedOrderedDict(maxlen=maxlen)
+
         @functools.wraps(func)
         def memo_target(*args):
             lookup_value = args

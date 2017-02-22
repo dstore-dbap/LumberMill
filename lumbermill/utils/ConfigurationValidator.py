@@ -59,7 +59,7 @@ class ConfigurationValidator():
                 # Simple modules names are ok.
                 continue
             elif type(configuration_item) is list:
-                # List items in root configuraion are not allowed.
+                # List items in root configuration are not allowed.
                 error_msg = "'%s'(list) is not allowed here. Please check your configuration." % configuration_item
                 configuration_errors.append(error_msg)
                 continue
@@ -87,9 +87,10 @@ class ConfigurationValidator():
                 for field_key, field_value in item_value.items():
                     field_path = "%s.%s" % (path, field_key)
                     try:
-                        field_configuration_errors = self.validateConfigurationItem(field_key, field_value, field_path, template=item_template['types'])
+                        field_configuration_errors = self.validateConfigurationItem(field_key, field_value, field_path, template=item_template['fields'])
                     except KeyError:
-                        sys.exit()
+                        # Field name is unknown.
+                        field_configuration_errors = []
                     for field_configuration_error in field_configuration_errors:
                         configuration_errors.append(field_configuration_error)
         return configuration_errors
