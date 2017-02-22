@@ -35,7 +35,7 @@ class HttpRequest(BaseThreadedModule):
        url:                             # <type: string; is: required>
        socket_timeout:                  # <default: 25; type: integer; is: optional>
        get_metadata:                    # <default: False; type: boolean; is: optional>
-       target_field:                    # <default: "gambolputty_http_request"; type: string; is: optional>
+       target_field:                    # <default: "http_request_result"; type: string; is: optional>
        interval:                        # <default: None; type: None||float||integer; is: optional>
        redis_store:                     # <default: None; type: None||string; is: optional>
        redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
@@ -61,7 +61,7 @@ class HttpRequest(BaseThreadedModule):
     def getRunTimedFunctionsFunc(self):
         @setInterval(self.interval, call_on_init=True)
         def runTimedFunctionsFunc():
-            event = DictUtils.getDefaultEventDict({"data": ''}, caller_class_name="HttpRequest")
+            event = DictUtils.getDefaultEventDict({}, caller_class_name="HttpRequest")
             self.receiveEvent(event)
         return runTimedFunctionsFunc
 
@@ -96,7 +96,7 @@ class HttpRequest(BaseThreadedModule):
                                           'subtype': response.info().getsubtype()})
                 if response and self.redis_store:
                     self.redis_store.set(redis_key, response_dict, self.getConfigurationValue('redis_ttl'))
-            except:
+            except KeyError:
                 yield event
                 return
         event[target_field_name] = response_dict
