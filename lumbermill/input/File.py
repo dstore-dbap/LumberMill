@@ -80,7 +80,6 @@ class File(BaseThreadedModule):
     def scanPaths(self):
         found_files = []
         paths = self.getConfigurationValue('paths')
-        print(paths)
         if isinstance(paths, types.StringType):
             paths = [paths]
         for path in paths:
