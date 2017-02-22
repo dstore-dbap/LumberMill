@@ -92,7 +92,7 @@ class LookupThread(threading.Thread):
     def run(self):
         while self.alive:
             try:
-                payload = self.queue.get()
+                payload = self.queue.get(block=False, timeout=.2)
             except Queue.Empty:
                 continue
             source_field = payload['source_field']
