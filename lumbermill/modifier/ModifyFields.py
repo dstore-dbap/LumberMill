@@ -71,12 +71,13 @@ class ModifyFields(BaseThreadedModule):
        receivers:
         - NextModule
 
-    # Rename a field by regex.
+    # Rename a field by regex. Pythons re.sub method is used.
     - ModifyFields:
        action: rename_regex             # <type: string; is: required>
        regex:                           # <type: string; is: required>
        source_field:                    # <default: None; type: None||string; is: optional>
-       target_field_pattern:            # <type: string; is: required>
+       regex:                           # <type: string; is: required>
+       replace:                         # <type: string; is: required>
        recursive:                       # <default: True; type: boolean; is: optional>
        receivers:
         - NextModule
@@ -249,7 +250,8 @@ class ModifyFields(BaseThreadedModule):
 
     def configure_rename_regex_action(self):
         self.recursive = self.getConfigurationValue('recursive')
-        self.target_field_pattern = self.getConfigurationValue('target_field_pattern')
+        self.regex = re.compile(self.getConfigurationValue('regex'))
+        self.replace = self.getConfigurationValue('replace')
 
     def configure_split_action(self):
         self.separator = self.getConfigurationValue('separator')
@@ -422,7 +424,7 @@ class ModifyFields(BaseThreadedModule):
     def _rename_regex_recursive(self, dict_to_scan):
         fields_to_rename = {}
         for field_name, field_value in dict_to_scan.iteritems():
-            new_field_name = self.regex.sub(self.target_field_pattern, field_name)
+            new_field_name = self.regex.sub(self.replace, field_name)
             if field_name != new_field_name:
                 fields_to_rename[field_name] = new_field_name
             if self.recursive and isinstance(field_value, dict):
