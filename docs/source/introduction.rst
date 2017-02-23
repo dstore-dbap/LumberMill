@@ -489,8 +489,7 @@ Misc modules
 
 -  EventBuffer, store received events in a persistent backend until the
    event was successfully handled.
--  KeyValueStore, simple wrapper around the python simplekv module.
--  RedisStore, use redis to store and retrieve values, e.g. to store the
+-  Cache, use cache to store and retrieve values, e.g. to store the
    result of the XPathParser modul.
 -  SimpleStats, simple statistic module just for event rates etc.
 -  Statistics, more versatile. Configurable fields for collecting
