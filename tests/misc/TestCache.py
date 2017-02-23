@@ -1,16 +1,16 @@
 import time
 import mock
 
-from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
-from lumbermill.misc import KeyValueStore
+from tests.ModuleBaseTestCase import ModuleBaseTestCase
+from lumbermill.misc import Cache
 
 
-class TestKeyValueStore(ModuleBaseTestCase):
+class TestCache(ModuleBaseTestCase):
 
     key = 'Gambol'
 
     def setUp(self):
-        super(TestKeyValueStore, self).setUp(KeyValueStore.KeyValueStore(mock.Mock()))
+        super(TestCache, self).setUp(Cache.Cache(mock.Mock()))
         try:
             self.test_object.kv_store.delete(self.key)
         except AttributeError:

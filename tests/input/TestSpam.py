@@ -7,9 +7,7 @@ from lumbermill.input import Spam
 class TestSpam(ModuleBaseTestCase):
 
     def setUp(self):
-        test_object = Spam.Spam(MockLumberMill())
-        test_object.lumbermill.addModule('Spam', test_object)
-        super(TestSpam, self).setUp(test_object)
+        super(TestSpam, self).setUp(Spam.Spam(MockLumberMill()))
 
     def testSpamWithSingleDict(self):
         self.test_object.configure({'event': {'Lobster': 'Thermidor', 'Truffle': 'Pate'},
