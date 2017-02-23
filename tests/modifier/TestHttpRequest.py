@@ -5,8 +5,7 @@ import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
 from lumbermill.modifier import HttpRequest
-from lumbermill.misc import RedisStore
-
+from lumbermill.misc import Cache
 
 class TestHttpRequest(ModuleBaseTestCase):
 
@@ -48,20 +47,6 @@ class TestHttpRequest(ModuleBaseTestCase):
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})):
             self.assertTrue('Johann Gambolputty' in event and len(event['Johann Gambolputty']) > 0)
 
-    def testRedis(self):
-        rc = RedisStore.RedisStore(mock.Mock())
-        rc.configure({'server': 'localhost'})
-        self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
-        self.test_object.configure({'url': 'http://www.google.com',
-                                    'target_field': '$(surname) Gambolputty',
-                                    'redis_store': 'RedisStore',
-                                    'redis_key': '$(surname)',
-                                    'redis_ttl': 5})
-        self.checkConfiguration()
-        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})):
-            redis_entry = rc.get('Johann')
-            self.assertEquals(event['Johann Gambolputty'], redis_entry)
-
     def testInterval(self):
         self.test_object.configure({'url': 'http://www.google.com',
                                     'interval': 1})
@@ -83,3 +68,18 @@ class TestHttpRequest(ModuleBaseTestCase):
             self.assertTrue('http_request_result' in event and len(event['http_request_result']) > 0)
         self.assertIsNotNone(event)
         self.assertTrue(len(event['http_request_result']['headers']) > 0)
+
+    def testCache(self):
+        cache = Cache.Cache(mock.Mock())
+        cache.configure({})
+        self.test_object.lumbermill.addModule('Cache', cache)
+        self.test_object.configure({'url': 'http://www.google.com',
+                                    'target_field': '$(surname) Gambolputty',
+                                    'cache': 'Cache',
+                                    'cache_key': '$(surname)',
+                                    'cache_ttl': 5})
+        self.checkConfiguration()
+        data = DictUtils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})
+        self.test_object.handleEvent(data).next()
+        for event in self.test_object.handleEvent(data):
+            self.assertTrue(event['lumbermill']['cache_hit'])

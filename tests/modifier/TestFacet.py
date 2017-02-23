@@ -3,7 +3,7 @@ import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
 from lumbermill.modifier import Facet
-from lumbermill.misc import RedisStore
+from lumbermill.misc import Cache
 
 
 class TestFacet(ModuleBaseTestCase):
@@ -12,15 +12,16 @@ class TestFacet(ModuleBaseTestCase):
         super(TestFacet, self).setUp(Facet.Facet(MockLumberMill()))
 
     def testFacet(self):
-        rc = RedisStore.RedisStore(mock.Mock())
-        rc.configure({'server': 'localhost'})
-        self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
+        cache = Cache.Cache(mock.Mock())
+        cache.configure({})
+        self.test_object.lumbermill.addModule('Cache', cache)
         self.test_object.configure({'source_field': 'url',
                                     'group_by': '$(remote_ip)',
-                                    'add_event_fields': ['remote_ip','user_agent'],
+                                    'add_event_fields': ['remote_ip', 'user_agent'],
                                     'interval': 1,
-                                    'backend': 'RedisStore',
-                                    'backend_ttl': 10})
+                                    'cache': 'Cache',
+                                    'cache_key': 'testFacet',
+                                    'cache_ttl': 10})
         self.checkConfiguration()
         self.test_object.initAfterFork()
         self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.google.com',
@@ -30,6 +31,9 @@ class TestFacet(ModuleBaseTestCase):
                                                                      'remote_ip': '127.0.0.1',
                                                                      'user_agent': 'Eric'}))
         self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.blackknight.com',
+                                                                     'remote_ip': '127.0.0.1',
+                                                                     'user_agent': 'Idle'}))
+        self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.blank.com',
                                                                      'remote_ip': '127.0.0.1',
                                                                      'user_agent': 'Idle'}))
         self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'url': 'http://www.johann.com',
@@ -46,7 +50,7 @@ class TestFacet(ModuleBaseTestCase):
             events.append(event)
         events = sorted(events, key=lambda k: k['facet_count'])
         self.assertEquals(len(events), 2)
-        self.assertEquals(events[0]['facets'], ['http://www.google.com', 'http://www.blackknight.com'])
-        self.assertEquals(events[0]['other_event_fields'][0], {'facet': 'http://www.google.com', 'user_agent': 'Eric', 'remote_ip': '127.0.0.1'})
-        self.assertEquals(events[1]['facets'], ['http://www.johann.com', 'http://www.lumbermill.com'])
-        self.assertEquals(events[1]['other_event_fields'][0], {'facet': 'http://www.johann.com', 'user_agent': 'Graham', 'remote_ip': '127.0.0.2'})
+        self.assertEquals(events[0]['facets'], ['http://www.johann.com', 'http://www.lumbermill.com'])
+        self.assertEquals(events[0]['other_event_fields'][0], {'facet': 'http://www.johann.com', 'user_agent': 'Graham', 'remote_ip': '127.0.0.2'})
+        self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.blackknight.com', 'http://www.blank.com'])
+        self.assertEquals(events[1]['other_event_fields'][0], {'facet': 'http://www.google.com', 'user_agent': 'Eric', 'remote_ip': '127.0.0.1'})

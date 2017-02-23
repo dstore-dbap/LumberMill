@@ -3,7 +3,7 @@ import mock
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
-from lumbermill.misc import RedisStore
+from lumbermill.misc import Cache
 from lumbermill.parser import XPathParser
 
 class TestXPathParser(ModuleBaseTestCase):
@@ -54,9 +54,9 @@ class TestXPathParser(ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()'})
         self.checkConfiguration()
         event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
-                                           'category': 'COOKING'})
+                                               'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
-            self.assertTrue('gambolputty_xpath' in event and len(event['gambolputty_xpath']) > 0)
+            self.assertEquals(event['xpath_result'], ['Everyday Italian'])
 
     def testHandleDataWithTargetField(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
@@ -64,23 +64,22 @@ class TestXPathParser(ModuleBaseTestCase):
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()'})
         self.checkConfiguration()
         event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
-                                         'category': 'COOKING'})
+                                               'category': 'COOKING'})
         for event in self.test_object.handleEvent(event):
-            self.assertTrue('book_title' in event and len(event['book_title']) > 0)
+            self.assertEquals(event['book_title'], ['Everyday Italian'])
 
-    def testRedis(self):
-        rc = RedisStore.RedisStore(mock.Mock())
-        rc.configure({'server': 'localhost'})
-        self.test_object.lumbermill.modules = {'RedisStore': {'instances': [rc]}}
+    def testCache(self):
+        cache = Cache.Cache(mock.Mock())
+        cache.configure({})
+        self.test_object.lumbermill.addModule('Cache', cache)
         self.test_object.configure({'source_field': 'agora_product_xml',
-                                    'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()',
-                                    'redis_store': 'RedisStore',
-                                    'redis_key': '$(category)',
-                                    'redis_ttl': 60})
+                                    'cache': 'Cache',
+                                    'cache_key': '$(category)'})
         self.checkConfiguration()
         event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
-                                         'category': 'COOKING'})
+                                               'category': 'COOKING'})
+        self.test_object.handleEvent(event).next()
         for event in self.test_object.handleEvent(event):
-            redis_entry = rc.get('COOKING')
-            self.assertEquals(event['book_title'], redis_entry)
+            self.assertEquals(event['xpath_result'], ['Everyday Italian'])
+            self.assertTrue(event['lumbermill']['cache_hit'])
