@@ -1,5 +1,6 @@
 import time
 import mock
+import unittest
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
 from lumbermill.misc import Cache
@@ -65,14 +66,10 @@ class TestCache(ModuleBaseTestCase):
         time.sleep(1)
         self.assertRaises(KeyError, self.test_object.get, self.key)
 
+    @unittest.skip("Rediscluster module seems to be broken at the moment. @See: https://github.com/salimane/rediscluster-py/issues/3")
     def testRedisClusterBackendSimpleValue(self):
-        try:
-            import rediscluster
-        except ImportError:
-            self.skipTest("Could not test redis cluster client. Module rediscluster not installed.")
-            return
         self.test_object.configure({'backend': 'RedisStore',
-                                    'cluster': {'localhost': {'localhost'}}})
+                                    'cluster': {'localhost': 'localhost'}})
         self.checkConfiguration()
         value = 'Putty'
         self.test_object.set(self.key, value)
