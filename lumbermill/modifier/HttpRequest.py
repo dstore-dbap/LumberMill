@@ -5,29 +5,33 @@ import urllib2
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
 from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
 from lumbermill.utils.misc import TimedFunctionManager
 
+
 @ModuleDocstringParser
-class HttpRequest(BaseThreadedModule):
+class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
     """
     Issue an arbitrary http request and store the response in a configured field.
 
     If the <interval> value is set, this module will execute the configured request
     every <interval> seconds and emits the result in a new event.
 
-    This module supports the storage of the responses in an redis db. If redis_store is set,
-    it will first try to retrieve the response from redis via the key setting.
-    If that fails, it will execute the http request and store the result in redis.
+    This module supports the storage of the results in a cache. If cache is set,
+    it will first try to retrieve the result from cache via the key setting.
+    If that fails, it will execute the xpath query and store the result in cache.
 
     url: The url to grab. Can also contain templated values for dynamic replacement with event data.
     socket_timeout: The socket timeout in seconds after which a request is considered failed.
     get_metadata: Also get metadata like headers, encoding etc.
     target_field: Specifies the name of the field to store the retrieved data in.
     interval: Number of seconds to wait before calling <url> again.
-    redis_store: Redis address to cache crawling results.
-    redis_key: The key to use for storage in redis.
-    redis_ttl: TTL for data in redis.
+    cache: Name of the cache plugin. When running multiple instances of lumbermill this cache can be used to
+           synchronize events across multiple instances.
+    cache_key: Keyname to use to store the facet data in cache.
+    cache_lock: Lockname to use if multiple instances of Lumbermill work on the same data.
+    cache_ttl: Time to live for cached entries. Should be greater than interval.
 
     Configuration template:
 
@@ -37,9 +41,10 @@ class HttpRequest(BaseThreadedModule):
        get_metadata:                    # <default: False; type: boolean; is: optional>
        target_field:                    # <default: "http_request_result"; type: string; is: optional>
        interval:                        # <default: None; type: None||float||integer; is: optional>
-       redis_store:                     # <default: None; type: None||string; is: optional>
-       redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
-       redis_ttl:                       # <default: 60; type: integer; is: optional>
+       cache:                           # <default: None; type: None||string; is: optional>
+       cache_key:                       # <default: None; type: None||string; is: optional if cache is None else required>
+       cache_ttl:                       # <default: 60; type: integer; is: optional>
+       cache_lock:                      # <default: 'Lumbermill:HttpRequest:HttpRequestLock'; type: string; is: optional>
        receivers:
         - NextModule
     """
@@ -48,15 +53,10 @@ class HttpRequest(BaseThreadedModule):
 
     def configure(self, configuration):
         BaseThreadedModule.configure(self, configuration)
+        ModuleCacheMixin.configure(self)
         socket.setdefaulttimeout(self.getConfigurationValue('socket_timeout'))
         self.get_metadata = self.getConfigurationValue('get_metadata')
         self.interval = self.getConfigurationValue('interval')
-        # Get redis client module.
-        if self.getConfigurationValue('redis_store'):
-            mod_info = self.lumbermill.getModuleInfoById(self.getConfigurationValue('redis_store'))
-            self.redis_store = mod_info['instances'][0]
-        else:
-            self.redis_store = None
 
     def getRunTimedFunctionsFunc(self):
         @setInterval(self.interval, call_on_init=True)
@@ -76,14 +76,14 @@ class HttpRequest(BaseThreadedModule):
         if not request_url or not target_field_name:
             yield event
             return
-        response = None
-        if self.redis_store:
-            redis_key = self.getConfigurationValue('redis_key', event)
-            response = self.redis_store.get(redis_key)
-        if response is None:
+        response_dict = None
+        if self.cache:
+            cache_key = self.getConfigurationValue('cache_key', event)
+            response_dict = self._getFromCache(cache_key, event)
+        if response_dict is None:
             try:
                 response = self.execRequest(request_url)
-                # Copy data to a dict, since the response object can not be pickled to be stored in redis.
+                # Copy data to a dict, since the response object can not be pickled to be stored in cache.
                 response_dict = {'content': response.read(),
                                  'status_code': response.getcode(),
                                  'url': response.geturl()}
@@ -94,8 +94,8 @@ class HttpRequest(BaseThreadedModule):
                                           'type': response.info().gettype(),
                                           'maintype': response.info().getmaintype(),
                                           'subtype': response.info().getsubtype()})
-                if response and self.redis_store:
-                    self.redis_store.set(redis_key, response_dict, self.getConfigurationValue('redis_ttl'))
+                if response and self.cache:
+                    self.cache.set(cache_key, response_dict, self.cache_ttl)
             except KeyError:
                 yield event
                 return

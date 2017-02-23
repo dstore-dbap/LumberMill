@@ -4,27 +4,29 @@ import sys
 from lxml import etree
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
 from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
-class XPathParser(BaseThreadedModule):
+class XPathParser(BaseThreadedModule, ModuleCacheMixin):
     """
     Parse an xml string via xpath.
 
-    This module supports the storage of the results in an redis db. If redis-client is set,
-    it will first try to retrieve the result from redis via the key setting.
-    If that fails, it will execute the xpath query and store the result in redis.
+    This module supports the storage of the results in a cache. If cache is set,
+    it will first try to retrieve the result from cache via the key setting.
+    If that fails, it will execute the xpath query and store the result in cache.
 
     Configuration template:
 
     - XPathParser:
        source_field:                    # <type: string; is: required>
-       target_field:                    # <default: "gambolputty_xpath"; type: string; is: optional>
+       target_field:                    # <default: "xpath_result"; type: string; is: optional>
        query:                           # <type: string; is: required>
-       redis_store:                     # <default: None; type: None||string; is: optional>
-       redis_key:                       # <default: None; type: None||string; is: optional if redis_store is None else required>
-       redis_ttl:                       # <default: 60; type: integer; is: optional>
+       cache:                           # <default: None; type: None||string; is: optional>
+       cache_key:                       # <default: None; type: None||string; is: optional if cache is None else required>
+       cache_lock:                      # <default: 'Lumbermill:XPathParser:XPathParserLock'; type: string; is: optional>
+       cache_ttl:                       # <default: 60; type: integer; is: optional>
        receivers:
         - NextModule
     """
@@ -34,15 +36,9 @@ class XPathParser(BaseThreadedModule):
 
     def configure(self, configuration):
         BaseThreadedModule.configure(self, configuration)
-        self.redis_ttl = self.getConfigurationValue('redis_ttl')
-        # Get redis client module.
-        if self.getConfigurationValue('redis_store'):
-            mod_info = self.lumbermill.getModuleInfoById(self.getConfigurationValue('redis_store'))
-            self.redis_store = mod_info['instances'][0]
-        else:
-            self.redis_store = None
+        ModuleCacheMixin.configure(self)
 
-    def castToList(self, value):
+    def _castToList(self, value):
         list = []
         for x in value:
             try:
@@ -63,23 +59,23 @@ class XPathParser(BaseThreadedModule):
             yield event
             return
         result = None
-        if self.redis_store:
-            redis_key = self.getConfigurationValue('redis_key', event)
-            result = self.redis_store.get(redis_key)
+        if self.cache:
+            cache_key = self.getConfigurationValue('cache_key', event)
+            result = self._getFromCache(cache_key, event)
         if result is None:
             xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
             try:
                 xml_root = etree.fromstring(xml_string)
                 xml_tree = etree.ElementTree(xml_root)
-                result =  xml_tree.xpath(self.getConfigurationValue('query', event))
-                if(type(result) == list):
-                    result = self.castToList(result)
-                if self.redis_store:
-                    self.redis_store.set(redis_key, result, self.redis_ttl)
+                result = xml_tree.xpath(self.getConfigurationValue('query', event))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Could not parse xml doc %s Exception: %s, Error: %s." % (xml_string, etype, evalue))
         if result:
+            if type(result) == list:
+                result = self._castToList(result)
+            if self.cache and not event['lumbermill']['cache_hit']:
+                self.cache.set(cache_key, result, self.cache_ttl)
             target_field_name = self.getConfigurationValue('target_field', event)
             event[target_field_name] = result
         yield event
