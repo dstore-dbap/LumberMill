@@ -40,11 +40,12 @@ class MockLumberMill(mock.Mock):
     def is_master(self):
         return self.is_master_process
 
-    def getModuleInfoById(self, module_name):
+    def getModuleInfoById(self, module_id, silent=True):
         try:
-            return self.modules[module_name]
+            return self.modules[module_id]
         except KeyError:
-            self.logger.error("Get module by name %s failed. No such module." % (module_name, AnsiColors.ENDC))
+            if not silent:
+                self.logger.error("Get module by id %s failed. No such module." % module_id)
             return None
 
     def getMainProcessId(self):
@@ -79,9 +80,15 @@ class MockLumberMill(mock.Mock):
             self.logger.error("Could not init module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
         return instance
 
-    def addModule(self, module_name, mod):
-        if module_name not in self.modules:
-            self.modules[module_name] = mod
+    def addModule(self, module_name, module_instances):
+        if module_name in self.modules:
+            return
+        if not type(module_instances) is list:
+            module_instances = [module_instances]
+        self.modules[module_name] = {'idx': len(self.modules),
+                                     'instances': module_instances,
+                                     'type': module_instances[0].module_type,
+                                     'configuration': module_instances[0].configuration_data}
 
     def shutDown(self):
         for module_name, mod in self.modules.iteritems():
