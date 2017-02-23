@@ -9,7 +9,7 @@ from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
-class KeyValueStore(BaseThreadedModule):
+class Cache(BaseThreadedModule):
     """
     A simple wrapper around the python simplekv module.
 
@@ -26,7 +26,7 @@ class KeyValueStore(BaseThreadedModule):
 
     Configuration template:
 
-    - KeyValueStore:
+    - Cache:
        backend:                         # <default: 'DictStore'; type: string; values:['DictStore', 'RedisStore', 'MemcacheStore']; is: optional>
        server:                          # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
        cluster:                         # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
@@ -48,47 +48,46 @@ class KeyValueStore(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
-        backend = self.getConfigurationValue('backend')
+        self.backend = self.getConfigurationValue('backend')
         self.backend_client = None
         self.kv_store = None
-        if backend == 'DictStore':
+        self.set_buffer = None
+        if self.backend == 'DictStore':
             import simplekv.memory
-            self.backend_client = None
             self.kv_store = simplekv.memory.DictStore()
-        elif backend == 'RedisStore':
+        elif self.backend == 'RedisStore':
             import simplekv.memory.redisstore
-            self.backend_client = self.getRedisClient()
+            self.backend_client = self._getRedisClient()
             self.kv_store = simplekv.memory.redisstore.RedisStore(self.backend_client)
-        elif backend == 'MemcacheStore':
+        elif self.backend == 'MemcacheStore':
             import simplekv.memory.memcachestore
-            self.backend_client = self.getMemcacheClient()
+            self.backend_client = self._getMemcacheClient()
             self.kv_store = simplekv.memory.memcachestore.MemcacheStore(self.backend_client)
         else:
             self.logger("Unknown backend type %s. Please check." % backend)
             self.lumbermill.shutDown();
 
-        self.set_buffer = None
         if self.getConfigurationValue('store_interval_in_secs') or self.getConfigurationValue('batch_size'):
-            if backend == 'RedisStore':
-                self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self.setRedisBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+            if self.backend == 'RedisStore':
+                self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self._setRedisBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
             else:
-                 self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self.setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
+                self.set_buffer = Buffer(self.getConfigurationValue('batch_size'), self._setBufferedCallback, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
             self._set = self.set
-            self.set = self.setBuffered
+            self.set = self._setBuffered
             self._get = self.get
-            self.get = self.getBuffered
+            self.get = self._getBuffered
             self._delete = self.delete
-            self.delete = self.deleteBuffered
+            self.delete = self._deleteBuffered
             self._pop = self.pop
-            self.pop = self.popBuffered
+            self.pop = self._popBuffered
 
-    def getRedisClient(self):
+    def _getRedisClient(self):
         if not self.getConfigurationValue('cluster') or len(self.getConfigurationValue('cluster')) == 0:
             redis_store = self.getConfigurationValue('server')
-            client = self.getSimpleRedisClient()
+            client = self._getSimpleRedisClient()
         else:
             redis_store = self.getConfigurationValue('cluster')
-            client = self.getClusterRedisClient()
+            client = self._getClusterRedisClient()
         try:
             client.ping()
         except:
@@ -97,12 +96,12 @@ class KeyValueStore(BaseThreadedModule):
             self.lumbermill.shutDown()
         return client
 
-    def getMemcacheClient(self):
+    def _getMemcacheClient(self):
         client = None
         # TODO: implement memcache client
         return client
 
-    def getSimpleRedisClient(self):
+    def _getSimpleRedisClient(self):
         try:
             client = redis.StrictRedis(host=self.getConfigurationValue('server'),
                                        port=self.getConfigurationValue('port'),
@@ -119,7 +118,7 @@ class KeyValueStore(BaseThreadedModule):
             self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue['server'], etype, evalue))
             self.lumbermill.shutDown()
 
-    def getClusterRedisClient(self):
+    def _getClusterRedisClient(self):
         try:
             import rediscluster
         except ImportError:
@@ -159,6 +158,9 @@ class KeyValueStore(BaseThreadedModule):
             node_port = self.getConfigurationValue('port')
         return (node_name_or_ip, node_port)
 
+    def getBackendName(self):
+        return self.backend
+
     def iterKeys(self):
         for key in self.kv_store.iter_keys():
             yield key
@@ -170,7 +172,7 @@ class KeyValueStore(BaseThreadedModule):
         lock = False
         try:
             lock = self.backend_client.lock(name, timeout, sleep)
-        except:
+        except AttributeError:
             pass
         return lock
 
@@ -182,19 +184,20 @@ class KeyValueStore(BaseThreadedModule):
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
                 raise
-        if ttl:
+        # Only backend clients support ttl.
+        if self.backend_client and ttl:
             self.kv_store.put(key, value, ttl_secs=ttl)
         else:
             self.kv_store.put(key, value)
 
-    def setBuffered(self, key, value, ttl=0, pickle=True):
+    def _setBuffered(self, key, value, ttl=0, pickle=True):
         self.set_buffer.append({'key': key, 'value': value, 'ttl': ttl, 'pickle': pickle})
 
-    def setBufferedCallback(self, values):
+    def _setBufferedCallback(self, values):
         for value in values:
             self._set(value['key'], value['value'], value['ttl'], value['pickle'])
 
-    def setRedisBufferedCallback(self, values):
+    def _setRedisBufferedCallback(self, values):
         pipe = self.backend_client.pipeline()
         for value in values:
             if value['pickle'] is True:
@@ -226,7 +229,7 @@ class KeyValueStore(BaseThreadedModule):
                 raise
         return value
 
-    def getBuffered(self, key, unpickle=True):
+    def _getBuffered(self, key, unpickle=True):
         try:
             value_idx = next(index for (index, entry) in enumerate(self.set_buffer.buffer) if entry["key"] == key)
             return self.set_buffer.buffer[value_idx]['value']
@@ -236,7 +239,7 @@ class KeyValueStore(BaseThreadedModule):
     def delete(self, key):
         self.kv_store.delete(key)
 
-    def deleteBuffered(self, key):
+    def _deleteBuffered(self, key):
         try:
             value_idx = next(index for (index, entry) in enumerate(self.set_buffer.buffer) if entry["key"] == key)
             self.set_buffer.buffer.pop(value_idx)
@@ -250,7 +253,7 @@ class KeyValueStore(BaseThreadedModule):
             self.delete(key)
         return value
 
-    def popBuffered(self, key, unpickle=True):
+    def _popBuffered(self, key, unpickle=True):
         try:
             value_idx = next(index for (index, entry) in enumerate(self.set_buffer.buffer) if entry["key"] == key)
             return self.set_buffer.buffer.pop(value_idx)['value']
