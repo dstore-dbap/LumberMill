@@ -190,6 +190,20 @@ class TestModifyFields(ModuleBaseTestCase):
             self.assertEquals(event['Gambolputty Johann de von Ausfern Schlingern Schlendern'], 3)
         self.assertIsNotNone(event)
 
+    def testKeyValue(self):
+        self.test_object.configure({'action': 'key_value',
+                                    'kv_separator': '-',
+                                    'line_separator': '/',
+                                    'source_field': 'url'})
+        data = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'url': 'Johann-Gambolputty/Schlingern-Schlendern/nobody-/spammish-repetition/'})
+        event = None
+        for event in self.test_object.handleEvent(data):
+            self.assertEquals(event['Johann'], 'Gambolputty')
+            self.assertEquals(event['Schlingern'], 'Schlendern')
+            self.assertEquals(event['nobody'], '')
+            self.assertEquals(event['spammish'], 'repetition')
+        self.assertIsNotNone(event)
+
     def __testQueueCommunication(self):
         config = {'source_fields': ['data'],
                   'action': 'keep'  }
