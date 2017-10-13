@@ -436,6 +436,7 @@ Event parsers
 -  Base64Parser, parse base64 data.
 -  CollectdParser, parse collectd binary protocol data.
 -  CSVParser, parse a char separated string.
+-  DateTimeParser, parse a string to a dateobject and convert it to different date pattern.
 -  DomainNameParser, parse a domain name or url to tld, subdomain etc. parts.
 -  InflateParser, inflates any fields with supported compression codecs.
 -  JsonParser, parse a json formatted string.

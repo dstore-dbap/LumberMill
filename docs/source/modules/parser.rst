@@ -80,6 +80,26 @@ Configuration template:
         - NextModule
 
 
+DateTimeParser
+--------------
+
+Parse a string to a time object an back again.
+
+Configuration template:
+
+::
+
+    - DateTimeParser:
+       source_field:                    # <type: string; is: required>
+       source_date_pattern:             # <type: string; is: required>
+       source_timezone:                 # <default: 'utc'; type: string; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       target_date_pattern:             # <type: string; is: required>
+       target_timezone:                 # <default: 'utc'; type: string; is: optional>
+       receivers:
+        - NextModule
+
+
 DomainNameParser
 ----------------
 
