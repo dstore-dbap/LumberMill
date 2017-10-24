@@ -8,7 +8,7 @@ from functools import wraps
 
 from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
 from utils.ConfigurationValidator import ConfigurationValidator
-from utils.DynamicValues import parseDynamicValue, mapDynamicValue, GP_DYNAMIC_VAL_REGEX
+from utils.DynamicValues import parseDynamicValue, mapDynamicValue, GP_DYNAMIC_VAL_REGEX_WITH_TYPES
 
 
 class BaseModule:
@@ -149,7 +149,7 @@ class BaseModule:
         if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
             filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
         # Replace all remaining dynamic references.
-        filter_string_tmp = GP_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
         filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
             event_filter = eval(filter_string_tmp)
@@ -174,7 +174,7 @@ class BaseModule:
         if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string):
             filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
         # Replace all remaining dynamic references.
-        filter_string_tmp = GP_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
         filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
             output_filter = eval(filter_string_tmp)

@@ -47,6 +47,8 @@ class ModifyFields(BaseThreadedModule):
     # Slice field values.
     - ModifyFields:
        action: slice                    # <type: string; is: required>
+       start:                           # <default: 0; type: None||integer; is: optional>
+       end:                             # <default: None; type: None||integer; is: optional>
        source_field:                    # <type: string; is: required>
        target_field:                    # <type: string; is: required>
        receivers:

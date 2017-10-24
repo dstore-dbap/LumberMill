@@ -13,6 +13,21 @@ from collections import OrderedDict
 import tornado.ioloop
 import yaml
 
+module_dirs = ['input',
+               'parser',
+               'modifier',
+               'misc',
+               'output',
+               'webserver',
+               'cluster']
+
+# Expand the include path to our libs and modules.
+# TODO: Check for problems with similar named modules in different module directories.
+pathname = os.path.abspath(__file__)
+pathname = pathname[:pathname.rfind("/")]
+sys.path.append(pathname[:pathname.rfind("/")])
+[sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
+
 # Make sure we are called as module. Otherwise imports will fail.
 #import inspect
 #enty_point = inspect.stack()[-1][3]
@@ -34,19 +49,6 @@ try:
 except ImportError:
     import queue as Queue
 
-module_dirs = ['input',
-               'parser',
-               'modifier',
-               'misc',
-               'output',
-               'webserver',
-               'cluster']
-
-# Expand the include path to our libs and modules.
-# TODO: Check for problems with similar named modules in different module directories.
-pathname = os.path.abspath(__file__)
-pathname = pathname[:pathname.rfind("/")]
-[sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
 
 class LumberMill():
     """
