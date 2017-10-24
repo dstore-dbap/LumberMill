@@ -85,6 +85,8 @@ DateTimeParser
 
 Parse a string to a time object an back again.
 
+For date patterns see: https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
+
 Configuration template:
 
 ::
