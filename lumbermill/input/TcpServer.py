@@ -155,8 +155,10 @@ class TcpServer(BaseModule):
         autoreload.add_reload_hook(self.shutDown)
 
     def getStartMessage(self):
-        return "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
-
+        start_msg = "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
+        if self.getConfigurationValue("tls"):
+            start_msg += " (with TLS)"
+        return start_msg
 
     def initAfterFork(self):
         BaseModule.initAfterFork(self)
