@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import logging
-import socket
 import sys
+import ssl
 import time
+import socket
+import logging
 
 from tornado import autoreload
 from tornado.iostream import StreamClosedError
@@ -108,6 +109,8 @@ class TcpServer(BaseModule):
     tls:        Use tls or not.
     key:        Path to tls key file.
     cert:       Path to tls cert file.
+    cacert:     Path to ca cert file.
+    tls_proto:  Set TLS protocol version.
     mode:       Receive mode, line or stream.
     simple_separator:  If mode is line, set separator between lines.
     regex_separator:   If mode is line, set separator between lines. Here regex can be used. The result includes the data that matches the regex.
@@ -123,6 +126,8 @@ class TcpServer(BaseModule):
        tls:                             # <default: False; type: boolean; is: optional>
        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cacert:                          # <default: False; type: boolean||string; is: optional>
+       tls_proto:                       # <default: 'TLSv1'; type: string; values: ['TLSv1', 'TLSv1_1', 'TLSv1_2']; is: optional>
        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
        simple_separator:                # <default: '\n'; type: string; is: optional>
        regex_separator:                 # <default: None; type: None||string; is: optional>
@@ -157,15 +162,16 @@ class TcpServer(BaseModule):
     def getStartMessage(self):
         start_msg = "listening on %s:%s" % (self.getConfigurationValue("interface"), self.getConfigurationValue("port"))
         if self.getConfigurationValue("tls"):
-            start_msg += " (with TLS)"
+            start_msg += " (with %s)" % self.getConfigurationValue("tls_proto")
         return start_msg
 
     def initAfterFork(self):
         BaseModule.initAfterFork(self)
         ssl_options = None
         if self.getConfigurationValue("tls"):
-            ssl_options = { 'certfile': self.getConfigurationValue("cert"),
-                            'keyfile': self.getConfigurationValue("key")}
+            ssl_options = {'ssl_version': getattr(ssl, "PROTOCOL_%s" % self.getConfigurationValue("tls_proto")),
+                           'certfile': self.getConfigurationValue("cert"),
+                           'keyfile': self.getConfigurationValue("key")}
         self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
         self.server.add_sockets(self.sockets)
 
