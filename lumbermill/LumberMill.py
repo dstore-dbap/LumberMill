@@ -351,7 +351,7 @@ class LumberMill():
                 if not self.is_master() and not instance.can_run_forked:
                     continue
                 # The default 'start' method of threading.Thread/mp will call the 'run' method of the module.
-                # The module itself can then decide if it wants to be run as thread. If not, it has to return False to let Gambolputty know.
+                # The module itself can then decide if it wants to be run as thread. If not, it has to return False to let LumberMill know.
                 if getattr(instance, "start", None): # and (instance.getInputQueue() or instance.module_type in ['stand_alone', 'input'])
                     started = instance.start()
                     if started:

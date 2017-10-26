@@ -63,5 +63,5 @@ LOGLEVEL_STRING_TO_LOGLEVEL_INT = {'info': logging.INFO,
                                    'debug': logging.DEBUG}
 
 MY_HOSTNAME = socket.gethostname()
-MY_SYSTEM_NAME = sys.platform()
+MY_SYSTEM_NAME = sys.platform
 LUMBERMILL_BASEPATH = os.path.dirname(os.path.realpath(__file__))
