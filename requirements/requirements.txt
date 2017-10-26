@@ -52,5 +52,8 @@ glob2>=0.3
 # DateTimeParser
 pytz
 
+# ZabbixSink
+py-zabbix>=1.1.1
+
 # WebGui
 Pygments>=2.0.0
