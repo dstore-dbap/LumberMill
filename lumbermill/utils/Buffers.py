@@ -173,7 +173,10 @@ class BufferedQueue:
             pass
 
     def qsize(self):
-        return self.buffer.bufsize() + self.queue.qsize()
+        try:
+            return self.buffer.bufsize() + self.queue.qsize()
+        except NotImplementedError:
+            return 0
 
     def __getattr__(self, name):
         return getattr(self.queue, name)
