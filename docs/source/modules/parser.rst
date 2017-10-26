@@ -357,6 +357,8 @@ UrlParser
 
 Urlencode or decode an event field and extract url parameters.
 
+If no target field is supplied, it will overrite the source field with the parsed date dictionary.
+
 | **action**:  Either encode or decode data.
 | **source_field**:  Event field to en/decode.
 | **target_field**:  Event field to update with en/decode result. If not set source will be replaced.
