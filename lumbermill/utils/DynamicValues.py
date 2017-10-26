@@ -5,8 +5,8 @@ import logging
 import datetime
 import re
 
-GP_DYNAMIC_VAL_REGEX = re.compile('[\$|%]\((.*?)\)')
-GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('[\$|%]\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)')
+GP_DYNAMIC_VAL_REGEX = re.compile('[\$|%]\(([^\)]*)\)')
+GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('[\$|%]\(([^\)]*)\)(-?\d*[-\.\*]?\d*[sdf]?)')
 PYTHON_DYNAMIC_VAL_REGEX = re.compile('%\((.*?)\)')
 DYNAMIC_VALUE_REPLACE_PATTERN = r"%(\1)"
 

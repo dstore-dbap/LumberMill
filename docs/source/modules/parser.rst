@@ -80,6 +80,26 @@ Configuration template:
         - NextModule
 
 
+DateTimeParser
+--------------
+
+Parse a string to a time object an back again.
+
+Configuration template:
+
+::
+
+    - DateTimeParser:
+       source_field:                    # <type: string; is: required>
+       source_date_pattern:             # <type: string; is: required>
+       source_timezone:                 # <default: 'utc'; type: string; is: optional>
+       target_field:                    # <default: None; type: None||string; is: optional>
+       target_date_pattern:             # <type: string; is: required>
+       target_timezone:                 # <default: 'utc'; type: string; is: optional>
+       receivers:
+        - NextModule
+
+
 DomainNameParser
 ----------------
 
@@ -336,6 +356,8 @@ UrlParser
 ---------
 
 Urlencode or decode an event field and extract url parameters.
+
+If no target field is supplied, it will overrite the source field with the parsed date dictionary.
 
 | **action**:  Either encode or decode data.
 | **source_field**:  Event field to en/decode.

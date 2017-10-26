@@ -149,7 +149,8 @@ class BaseModule:
         if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
             filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
         # Replace all remaining dynamic references.
-        filter_string_tmp = "lambda lumbermill, event: " + re.sub(r"%\((.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
             event_filter = eval(filter_string_tmp)
         except:
@@ -225,11 +226,11 @@ class BaseModule:
                 except KeyError:
                     self.logger.warning("KeyError: could not set %s: %s" % (field_name, field_value))
         # Delete fields if configured.
-        for field in self.delete_fields:
+        for field_name in self.delete_fields:
             try:
-                event.pop(field, None)
-            except KeyError:
-                pass
+                event.pop(field_name, None)
+            except (KeyError, AttributeError) as e:
+                self.logger.warning("KeyError: could not delete %s." % field_name)
         if self.event_type:
             event['lumbermill']['event_type'] = mapDynamicValue(self.event_type, event)
         if self.set_internal:

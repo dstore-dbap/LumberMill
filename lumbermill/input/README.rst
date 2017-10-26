@@ -325,6 +325,8 @@ Should be the best choice perfomancewise if you are on Linux and are running wit
 | **tls**:         Use tls or not.
 | **key**:         Path to tls key file.
 | **cert**:        Path to tls cert file.
+| **cacert**:      Path to ca cert file.
+| **tls_proto**:   Set TLS protocol version.
 | **mode**:        Receive mode, line or stream.
 | **simple_separator**:   If mode is line, set separator between lines.
 | **regex_separator**:    If mode is line, set separator between lines. Here regex can be used. The result includes the data that matches the regex.
@@ -342,6 +344,8 @@ Configuration template:
        tls:                             # <default: False; type: boolean; is: optional>
        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cacert:                          # <default: False; type: boolean||string; is: optional>
+       tls_proto:                       # <default: 'TLSv1'; type: string; values: ['TLSv1', 'TLSv1_1', 'TLSv1_2']; is: optional>
        mode:                            # <default: 'line'; type: string; values: ['line', 'stream']; is: optional>
        simple_separator:                # <default: '\n'; type: string; is: optional>
        regex_separator:                 # <default: None; type: None||string; is: optional>
