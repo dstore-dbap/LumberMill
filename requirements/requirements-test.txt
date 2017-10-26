@@ -7,6 +7,7 @@ redis>=1.0.0
 simplekv>=0.5.0
 tornado>=3.0.0
 pyzmq>=10.0.0
+psutil
 
 # ElasticSearchSink
 elasticsearch>=2.1.0
@@ -48,6 +49,12 @@ boto3>=1.1.0
 
 # File
 glob2>=0.3
+
+# DateTimeParser
+pytz
+
+# ZabbixSink
+py-zabbix>=1.1.1
 
 # WebGui
 Pygments>=2.0.0
