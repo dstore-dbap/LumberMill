@@ -350,6 +350,37 @@ Configuration template:
        compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
+ZabbixSink
+----------
+
+Send events to zabbix.
+
+hostname: Hostname for which the metrics should be stored.
+fields: Event fields to send.
+field_prefix: Prefix to prepend to field names. For e.g. cpu_count field with default lumbermill_ prefix, the Zabbix key is lumbermill_cpu_count.
+timestamp_field: Field to provide timestamp. If not provided, current timestamp is used.
+agent_conf: Path to zabbix_agent configuration file. If set to True defaults to /etc/zabbix/zabbix_agentd.conf.
+server: Address of zabbix server. If port differs from default it can be set by appending it, e.g. 127.0.0.1:10052.
+store_interval_in_secs: sending data to es in x seconds intervals.
+batch_size: sending data to es if event count is above, even if store_interval_in_secs is not reached.
+backlog_size: maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration template:
+
+::
+
+    - ZabbixSink:
+       hostname:                        # <type: string; is: required>
+       fields:                          # <type: list; is: required>
+       field_prefix:                    # <default: "lumbermill_"; type: string; is: optional>
+       timestamp_field:                 # <default: "timestamp"; type: string; is: optional>
+       agent_conf:                      # <default: True; type: boolean||string; is: optional>
+       server:                          # <default: False; type: boolean||string; is: required if agent_conf is False else optional>
+       store_interval_in_secs:          # <default: 10; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
+
+
 ZmqSink
 -------
 

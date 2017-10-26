@@ -44,6 +44,16 @@ class ModifyFields(BaseThreadedModule):
        receivers:
         - NextModule
 
+    # Slice field values.
+    - ModifyFields:
+       action: slice                    # <type: string; is: required>
+       start:                           # <default: 0; type: None||integer; is: optional>
+       end:                             # <default: None; type: None||integer; is: optional>
+       source_field:                    # <type: string; is: required>
+       target_field:                    # <type: string; is: required>
+       receivers:
+        - NextModule
+
     # Replace field values matching string "old" in data dictionary with "new".
     - ModifyFields:
        action: string_replace           # <type: string; is: required>
@@ -243,6 +253,10 @@ class ModifyFields(BaseThreadedModule):
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.lumbermill.shutDown()
 
+    def configure_slice_action(self):
+        self.slice_start = self.getConfigurationValue('start')
+        self.slice_end = self.getConfigurationValue('end')
+
     def configure_rename_replace_action(self):
         self.recursive = self.getConfigurationValue('recursive')
         self.old = self.getConfigurationValue('old')
@@ -365,8 +379,6 @@ class ModifyFields(BaseThreadedModule):
         event[self.target_field] = self.getConfigurationValue('value', event)
         return event
 
-
-
     def concat(self, event):
         """
         Field names listed in ['source_fields'] will be concatenated to a new string.
@@ -382,6 +394,19 @@ class ModifyFields(BaseThreadedModule):
             except KeyError:
                 pass
         event[self.target_field] = concat_str
+        return event
+
+    def slice(self, event):
+        """
+        Slice a field value to given parameters.
+
+        :param event: dictionary
+        :return: event: dictionary
+        """
+        try:
+            event[self.target_field] = event[self.source_field][self.slice_start:self.slice_end]
+        except KeyError:
+            pass
         return event
 
     def replace(self, event):
@@ -505,13 +530,15 @@ class ModifyFields(BaseThreadedModule):
         @param event: dictionary
         @return: event: dictionary
         """
-        try:
-            if self.line_separator:
-                kv_dict = dict(kv.split(self.kv_separator) for kv in event[self.source_field].split(self.line_separator))
-            else:
-                kv_dict = event[self.source_field].split(self.kv_separator)
-        except:
-            return event
+        if self.line_separator:
+            kv_dict = {}
+            for kv in event[self.source_field].split(self.line_separator):
+                try:
+                    kv_dict.update(dict([tuple(kv.split(self.kv_separator))]))
+                except ValueError:
+                    pass
+        else:
+            kv_dict = event[self.source_field].split(self.kv_separator)
         if self.prefix:
             kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:

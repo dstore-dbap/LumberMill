@@ -1,11 +1,11 @@
-import ModuleBaseTestCase
+import tests.ModuleBaseTestCase
 import mock
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.modifier import Math
 
 
-class TestModuleFilters(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestModuleFilters(tests.ModuleBaseTestCase.ModuleBaseTestCase):
 
     def setUp(self):
         event = {'bytes_send': 3395,
@@ -31,6 +31,15 @@ class TestModuleFilters(ModuleBaseTestCase.ModuleBaseTestCase):
 
     def testInputFilterMatch(self):
         self.test_object.configure({'filter': 'if $(lumbermill.source_module) == "StdIn" and $(lumbermill.list.2.hovercraft) == "eels"',
+                                    'target_field': 'test',
+                                    'function': 'int($(cache_hits)) * 2'})
+        self.checkConfiguration()
+        self.test_object.receiveEvent(self.event)
+        for event in self.receiver.getEvent():
+            self.assertTrue(event['test'] == 10)
+
+    def testInputFilterMatchWithMethodCall(self):
+        self.test_object.configure({'filter': 'if $(url).startswith("GET")',
                                     'target_field': 'test',
                                     'function': 'int($(cache_hits)) * 2'})
         self.checkConfiguration()
@@ -70,3 +79,15 @@ class TestModuleFilters(ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             received_event = event
         self.assertTrue(received_event == None)
+
+    def testOutputFilterMatchWithMethodCall(self):
+        self.test_object.configure({'target_field': 'test',
+                                    'function': 'int($(cache_hits)) * 2',
+                                    'receivers': [{'MockReceiver': {
+                                                      'filter': 'if $(url).startswith("GET")'}}]})
+        self.checkConfiguration()
+        self.test_object.receiveEvent(self.event)
+        received_event = None
+        for event in self.receiver.getEvent():
+            received_event = event
+        self.assertTrue(received_event != None)
