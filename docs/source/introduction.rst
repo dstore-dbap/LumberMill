@@ -483,6 +483,7 @@ Outputs
 -  SQSSink, sends events to amazons simple queue service.
 -  SyslogSink, send events to syslog.
 -  WebHdfsSink, store events in hdfs via webhdfs.
+-  ZabbixSink, send metrics to zabbix.
 -  ZmqSink, sends incoming event to zeromq.
 
 Misc modules
