@@ -226,11 +226,11 @@ class BaseModule:
                 except KeyError:
                     self.logger.warning("KeyError: could not set %s: %s" % (field_name, field_value))
         # Delete fields if configured.
-        for field in self.delete_fields:
+        for field_name in self.delete_fields:
             try:
-                event.pop(field, None)
-            except KeyError:
-                pass
+                event.pop(field_name, None)
+            except (KeyError, AttributeError) as e:
+                self.logger.warning("KeyError: could not delete %s." % field_name)
         if self.event_type:
             event['lumbermill']['event_type'] = mapDynamicValue(self.event_type, event)
         if self.set_internal:
