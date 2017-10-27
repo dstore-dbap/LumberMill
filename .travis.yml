@@ -6,7 +6,7 @@ before_install:
 - wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
 - gunzip GeoLiteCity.dat.gz
 - mv GeoLiteCity.dat tests/test_data/
-install: pip install -r requirements/requirements-test.txt --use-mirrors
+install: pip install -r requirements/requirements-test.txt
 services:
 - ElasticSearch
 - Redis
