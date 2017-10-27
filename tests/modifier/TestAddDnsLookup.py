@@ -11,16 +11,17 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         super(TestAddDnsLookup, self).setUp(AddDnsLookup.AddDnsLookup(mock.Mock()))
 
     def testDnsLookup(self):
-        config = {'source_field': 'host'}
+        config = {'nameservers': '8.8.8.8', 'source_field': 'host'}
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = DictUtils.getDefaultEventDict({'host': 'www.dbap.de'})
+        data = DictUtils.getDefaultEventDict({'host': 'www.poitin.de'})
         self.test_object.receiveEvent(data)
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            self.assertTrue(event['host'] == '195.137.224.39')
+            print(event)
+            self.assertTrue(event['host'] == '85.214.142.46')
         self.assertIsNotNone(event)
 
     def testDnsLookupWithTargetField(self):
@@ -30,12 +31,12 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = DictUtils.getDefaultEventDict({'host': 'www.dbap.de'})
+        data = DictUtils.getDefaultEventDict({'host': 'www.poitin.de'})
         self.test_object.receiveEvent(data)
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            self.assertTrue(event['host_ip_address'] == '195.137.224.39')
+            self.assertTrue(event['host_ip_address'] == '85.214.142.46')
         self.assertIsNotNone(event)
 
     def testReverseDnsLookup(self):
