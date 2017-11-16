@@ -193,13 +193,14 @@ class BaseModule:
                 filterd_receivers[receiver_name] = receiver
                 continue
             try:
+                # The filter needs the event variable to work correctly.
                 matched = self.output_filters[receiver_name](self.lumbermill, event)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Output filter for %s failed. Exception: %s, Error: %s." % (receiver_name, etype, evalue))
                 print(event)
                 continue
-            # If the filter succeeds, the data will be send to the receiver. The filter needs the event variable to work correctly.
+            # If the filter succeeds, the data will be send to the receiver.
             if matched:
                 filterd_receivers[receiver_name] = receiver
         return filterd_receivers
