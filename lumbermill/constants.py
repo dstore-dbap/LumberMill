@@ -55,12 +55,12 @@ else:
                          'Dict': types.DictType}
 
 # loglevel_string_to_loglevel_int
-LOGLEVEL_STRING_TO_LOGLEVEL_INT = {'info': logging.INFO,
+LOGLEVEL_STRING_TO_LOGLEVEL_INT = {'debug': logging.DEBUG,
+                                   'info': logging.INFO,
                                    'warn': logging.WARN,
                                    'error': logging.ERROR,
                                    'critical': logging.CRITICAL,
-                                   'fatal': logging.FATAL,
-                                   'debug': logging.DEBUG}
+                                   'fatal': logging.FATAL}
 
 MY_HOSTNAME = socket.gethostname()
 MY_SYSTEM_NAME = sys.platform
