@@ -3,6 +3,7 @@ import os
 import socket
 import sys
 import geoip2.database
+import geoip2.errors
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser, memoize
@@ -107,13 +108,14 @@ class AddGeoInfo(BaseThreadedModule):
                 continue
             if not lookup_field_name_value or lookup_field_name_value == "-":
                 continue
-            if isinstance(lookup_field_name_value, str):
-                geo_info_fields = self.getGeoIpInfo(lookup_field_name_value)
-            elif isinstance(lookup_field_name_value, list):
+            geo_info_fields = None
+            if isinstance(lookup_field_name_value, list):
                 for field_value in lookup_field_name_value:
                     geo_info_fields = self.getGeoIpInfo(field_value)
                     if geo_info_fields:
                         break
+            else:
+                geo_info_fields = self.getGeoIpInfo(lookup_field_name_value)
             if geo_info_fields:
                 if self.target_field:
                     event[self.target_field] = geo_info_fields
@@ -127,7 +129,10 @@ class AddGeoInfo(BaseThreadedModule):
         all_geo_info_fields = {}
         if not self.is_valid_ipv4_address(hostname_or_ip) and not self.is_valid_ipv6_address(hostname_or_ip):
             return {}
-        geoip_result = self.geoip_db.city(hostname_or_ip)
+        try:
+            geoip_result = self.geoip_db.city(hostname_or_ip)
+        except geoip2.errors.AddressNotFoundError:
+            return {}
         result_info_fields = {'city': geoip_result.city.name,
                               'postal_code': geoip_result.postal.code,
                               'country_name': geoip_result.country.name,
@@ -157,19 +162,19 @@ class AddGeoInfo(BaseThreadedModule):
     def is_valid_ipv4_address(self, address):
         try:
             addr = socket.inet_pton(socket.AF_INET, address)
-        except AttributeError: 
+        except AttributeError:
             try:
                 addr = socket.inet_aton(address)
             except socket.error:
                 return False
             return address.count('.') == 3
-        except socket.error: 
+        except socket.error:
             return False
         return True
 
     def is_valid_ipv6_address(self, address):
         try:
             addr = socket.inet_pton(socket.AF_INET6, address)
-        except socket.error: 
+        except socket.error:
             return False
         return True
