@@ -38,7 +38,7 @@ class ElasticSearch(BaseThreadedModule):
     Requests will the be loadbalanced via round robin.
 
     query:              The query to be executed, in json format.
-    search_type:        The default search type just will return all found documents. If set to 'scan' it will return
+    search_type:        The default search type just will return all found documents. If set to 'scroll' it will return
                         'batch_size' number of found documents, emit these as new events and then continue until all
                         documents have been sent.
     field_mappings:     Which fields from the result document to add to the new event.
@@ -64,8 +64,8 @@ class ElasticSearch(BaseThreadedModule):
     Configuration template:
 
     - ElasticSearch:
-       query:                           # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
-       search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
+       query:                           # <default: '{"query":{"match_all":{}},"sort":["_doc"]}'; type: string; is: optional>
+       search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scroll']>
        batch_size:                      # <default: 1000; type: integer; is: optional>
        field_mappings:                  # <default: 'all'; type: string||list||dict; is: optional;>
        nodes:                           # <type: string||list; is: required>
@@ -118,7 +118,7 @@ class ElasticSearch(BaseThreadedModule):
             self.connection_class = connection.RequestsHttpConnection
         self.lock = Lock()
         self.manager = Manager()
-        if self.search_type == 'scan':
+        if self.search_type == 'scroll':
             self.can_run_forked = True
             scroll_id = self.getInitalialScrollId()
             if not scroll_id:
@@ -134,10 +134,10 @@ class ElasticSearch(BaseThreadedModule):
         scroll_id = None
         results = None
         try:
-            response = requests.get('http://%s/%s/_search?search_type=scan&scroll=1m&size=%s' % (self.es_nodes[0], self.index_name, self.batch_size), data=self.query)
+            response = requests.get('http://%s/%s/_search?scroll=1m&size=%s' % (self.es_nodes[0], self.index_name, self.batch_size), data=self.query)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not initialize scan search. Exception: %s, Error: %s." % (etype, evalue))
+            self.logger.error("Could not initialize scroll search. Exception: %s, Error: %s." % (etype, evalue))
         try:
             results = json.loads(response.text)
         except:
@@ -187,7 +187,8 @@ class ElasticSearch(BaseThreadedModule):
 
     def run(self):
         while self.alive:
-            if self.search_type == 'scan':
+            found_documents = None
+            if self.search_type == 'scroll':
                 found_documents = self.executeScrollQuery()
             elif self.search_type == 'normal':
                 found_documents = self.executeQuery()
