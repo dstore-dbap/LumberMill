@@ -161,9 +161,9 @@ class LumberMill():
             logging.root.removeHandler(handler)
         log_level = LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.global_configuration['logging']['level'].lower()]
         logging.basicConfig(level=log_level,
-                                format=self.global_configuration['logging']['format'],
-                                filename=self.global_configuration['logging']['filename'],
-                                filemode=self.global_configuration['logging']['filemode'])
+                            format=self.global_configuration['logging']['format'],
+                            filename=self.global_configuration['logging']['filename'],
+                            filemode=self.global_configuration['logging']['filemode'])
         if not self.global_configuration['logging']['filename']:
             logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -172,8 +172,12 @@ class LumberMill():
         """ Initalize a module."""
         self.logger.debug("Initializing module %s." % (module_name))
         instance = None
-        #module = importlib.import_module(module_name, 'LumberMill')
-        module = __import__(module_name, globals(), locals(), module_name, -1)
+        try:
+            module = __import__(module_name, globals(), locals(), module_name, -1)
+        except ImportError:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Unknown module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
+            self.shutDown()
         module_class = getattr(module, module_name)
         instance = module_class(self)
         """
