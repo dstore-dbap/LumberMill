@@ -14,7 +14,8 @@ Introduction
 
 Collect, parse and store logs with a configurable set of modules.
 Inspired by `logstash <https://github.com/elasticsearch/logstash>`_ but
-with a smaller memory footprint and faster startup time.
+with a smaller memory footprint and faster startup time. Can also run
+multiprocessed to avoid `GIL <http://www.dabeaz.com/GIL/>`_ related restrictions.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
