@@ -6,6 +6,7 @@ from string import Formatter
 
 from lumbermill.constants import MY_HOSTNAME
 
+
 class KeyDotNotationDict(dict):
     """
     A dictionary that allows to access values via dot separated keys, e.g.:

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import pprint
 import sys
 import ssl
 import time
 import socket
 import logging
+import exceptions
 
 from tornado import autoreload
 from tornado.iostream import StreamClosedError
@@ -22,7 +22,7 @@ class TornadoTcpServer(TCPServer):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
         try:
-            TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
+            TCPServer.__init__(self, ssl_options=ssl_options, **kwargs)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not create tcp server. Exception: %s, Error: %s." % (etype, evalue))
@@ -89,8 +89,8 @@ class ConnectionHandler(object):
 
     def _on_close(self):
         # Send remaining buffer if neccessary.
+        data = ""
         if self.mode == 'stream' and self.stream._read_buffer_size > 0:
-            data = ""
             while True:
                 try:
                     data += self.stream._read_buffer.popleft().strip()

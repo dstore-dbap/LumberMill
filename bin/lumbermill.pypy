@@ -1,0 +1,12 @@
+#!/usr/bin/env pypy
+import os
+import sys
+
+pathname = os.path.abspath(__file__)
+pathname = pathname[:pathname.rfind("/")]
+sys.path.append(pathname[:pathname.rfind("/")])
+from lumbermill import LumberMill
+
+
+if __name__ == '__main__':
+    LumberMill.main()

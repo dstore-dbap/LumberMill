@@ -415,6 +415,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
+-  BeatsServer, read elastic beat inputs, e.g. filebeat.
 -  ElasticSearch, get documents from elasticsearch.
 -  File, read data from files.
 -  Kafka, receive events from apache kafka.

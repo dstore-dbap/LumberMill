@@ -3,6 +3,39 @@
 Input modules
 =============
 
+BeatsServer
+-----------
+
+Reads data from elastic beats client, i.e. filebeats, and sends it to its outputs.
+
+| **interface**:  Ipaddress to listen on.
+| **port**:       Port to listen on.
+| **timeout**:    Sockettimeout in seconds.
+| **tls**:        Use tls or not.
+| **key**:        Path to tls key file.
+| **cert**:       Path to tls cert file.
+| **cacert**:     Path to ca cert file.
+| **tls_proto**:  Set TLS protocol version.
+| **max_buffer_size**: Max kilobytes to in receiving buffer.
+
+Configuration template:
+
+::
+
+    - BeatsServer:
+       interface:                       # <default: ''; type: string; is: optional>
+       port:                            # <default: 5151; type: integer; is: optional>
+       timeout:                         # <default: None; type: None||integer; is: optional>
+       tls:                             # <default: False; type: boolean; is: optional>
+       key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
+       cacert:                          # <default: False; type: boolean||string; is: optional>
+       tls_proto:                       # <default: 'TLSv1'; type: string; values: ['TLSv1', 'TLSv1_1', 'TLSv1_2']; is: optional>
+       max_buffer_size:                 # <default: 10240; type: integer; is: optional>
+       receivers:
+        - NextModule
+
+
 ElasticSearch
 -------------
 

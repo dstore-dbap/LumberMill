@@ -14,11 +14,12 @@ Introduction
 
 Collect, parse and store logs with a configurable set of modules.
 Inspired by `logstash <https://github.com/elasticsearch/logstash>`_ but
-with a smaller memory footprint and faster startup time.
+with a smaller memory footprint and faster startup time. Can also run
+multiprocessed to avoid `GIL <http://www.dabeaz.com/GIL/>`_) related restrictions.
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-To run LumberMill you will need Python 2.7+.
+To run LumberMill you will need Python 2.7+. It is not yet Python 3 compatible.
 For better performance, I heartly recommend running LumberMill with pypy.
 The performance gain can be up to 5-6 times events/s throughput running single processed.
 Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
@@ -62,7 +63,7 @@ Now you can give LumberMill a testdrive with:
 ::
 
     wget https://raw.githubusercontent.com/dstore-dbap/LumberMill/master/conf/example-stdin.conf
-    echo "I'm a lumberjack, and I'm okay" | lumbermill -c ./example-stdin.conf
+    echo "I'm a lumberjack, and I'm okay" | bin/lumbermill -c conf/example-stdin.conf
 
 If you get a "command not found" please check your pythonpath setting. Depending on how you installed LumberMill,
 the executable can either be found in the bin dir of your python environment (e.g. /usr/lib64/pypy-2.4.0/bin/lumbermill)
@@ -415,6 +416,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
+-  BeatsServer, read elastic beat inputs, e.g. filebeat.
 -  ElasticSearch, get documents from elasticsearch.
 -  File, read data from files.
 -  Kafka, receive events from apache kafka.

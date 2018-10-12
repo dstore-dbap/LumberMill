@@ -2,7 +2,7 @@
 import sys
 
 from lumbermill.constants import TYPENAMES_TO_TYPE
-from lumbermill.utils.DynamicValues import replaceVarsAndCompileString
+from DynamicValues import replaceVarsAndCompileString
 
 if sys.hexversion > 0x03000000:
     pass

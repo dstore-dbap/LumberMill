@@ -12,7 +12,7 @@ class TestMongoDbSink(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestMongoDbSink, self).setUp(MongoDbSink.MongoDbSink(mock.Mock()))
-        self.mongodb_server = 'localhost:27017'
+        self.mongodb_server = '%s:%s' % (self.configuration['mongodb']['server'], self.configuration['mongodb']['port'])
         self.mongodb = self.connect()
 
     def connect(self):

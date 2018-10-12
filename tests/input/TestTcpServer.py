@@ -42,7 +42,7 @@ class TestTcpServer(ModuleBaseTestCase):
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1
-        self.assertTrue(event != False)
+        self.assertTrue(event is not False)
         self.assertEqual(counter, 1500)
         event.pop('lumbermill')
         self.assertDictEqual(event, expected_ret_val)
@@ -161,16 +161,15 @@ class TestTcpServer(ModuleBaseTestCase):
             connection_succeeded = True
         except:
             etype, evalue, etb = sys.exc_info()
-            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ( 'localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
+            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
         events = []
         time.sleep(1)
         for event in self.receiver.getEvent():
             events.append(event)
-        self.assertEquals(len(events), 7)
+        self.assertEquals(len(events), 6)
         self.assertEquals(len(events[0]['data']), 1024)
-        self.assertEquals(len(events[-1]['data']), 656)
 
     def tearDown(self):
         self.test_object.shutDown()

@@ -39,6 +39,16 @@ class TestModuleFilters(tests.ModuleBaseTestCase.ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             self.assertTrue(event['test'] == 10)
 
+    def testInputFilterOnNonExistingField(self):
+        self.test_object.configure({'filter': 'if $() == "StdIn" and $(lumbermill.list.2.hovercraft) == "eels"',
+                                    'target_field': 'test',
+                                    'function': 'int($(cache_hits)) * 2'})
+        self.checkConfiguration()
+        self.test_object.receiveEvent(self.event)
+        for event in self.receiver.getEvent():
+            self.assertTrue(event['test'] == 10)
+
+
     @unittest.skip("Some methodcalls are still failing due to problems with regex. Work in progress.")
     def testInputFilterMatchWithMethodCall(self):
         self.test_object.configure({'filter': 'if $(url).startswith("GET")',

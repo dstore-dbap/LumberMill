@@ -11,8 +11,8 @@ class TestRedisChannel(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestRedisChannel, self).setUp(RedisChannel.RedisChannel(mock.Mock()))
-        self.redis_host = 'localhost'
-        self.redis_port = 6379
+        self.redis_host = self.configuration['redis']['server']
+        self.redis_port = self.configuration['redis']['port']
         try:
             self.client = redis.Redis(host=self.redis_host, port=self.redis_port)
         except:

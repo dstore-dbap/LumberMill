@@ -2,7 +2,7 @@
 import multiprocessing
 from collections import defaultdict
 
-from lumbermill.utils import Decorators
+import Decorators
 
 
 @Decorators.Singleton
