@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import time
+import psutil
+import datetime
+from collections import defaultdict
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -20,6 +24,8 @@ class SimpleStats(BaseThreadedModule):
     this will start another process. So if you use SimpleStats, you will see workers + 1 processes in the process
     list.
 
+    For possible values for process_statistics see: https://code.google.com/archive/p/psutil/wikis/Documentation.wiki#CPU
+
     Configuration template:
 
     - SimpleStats:
@@ -27,6 +33,7 @@ class SimpleStats(BaseThreadedModule):
        event_type_statistics:           # <default: True; type: boolean; is: optional>
        receive_rate_statistics:         # <default: True; type: boolean; is: optional>
        waiting_event_statistics:        # <default: False; type: boolean; is: optional>
+       process_statistics:              # <default: ['cpu_percent','memory_percent']; type: boolean||list; is: optional>
        emit_as_event:                   # <default: False; type: boolean; is: optional>
     """
 
@@ -39,18 +46,21 @@ class SimpleStats(BaseThreadedModule):
         self.emit_as_event = self.getConfigurationValue('emit_as_event')
         self.interval = self.getConfigurationValue('interval')
         self.event_type_statistics = self.getConfigurationValue('event_type_statistics')
+        self.process_statistics = self.getConfigurationValue('process_statistics')
         self.stats_collector = StatisticCollector()
         self.mp_stats_collector = MultiProcessStatisticCollector()
         self.module_queues = {}
+        self.psutil_processes = []
+        self.methods = dir(self)
 
     def getRunTimedFunctionsFunc(self):
         @setInterval(self.interval)
-        def runTimedFunctionsFunc():
+        def evaluateStats():
             self.accumulateReceiveRateStats()
             self.accumulateEventTypeStats()
             if self.lumbermill.is_master():
                 self.printIntervalStatistics()
-        return runTimedFunctionsFunc
+        return evaluateStats
 
     def accumulateEventTypeStats(self):
         for event_type, count in self.stats_collector.getAllCounters().items():
@@ -71,15 +81,17 @@ class SimpleStats(BaseThreadedModule):
             self.receiveRateStatistics()
         if self.getConfigurationValue('event_type_statistics'):
             self.eventTypeStatistics()
-        #if self.getConfigurationValue('waiting_event_statistics'):
-        #    self.eventsInQueuesStatistics()
+        if self.getConfigurationValue('waiting_event_statistics'):
+            self.eventsInQueuesStatistics()
+        if self.getConfigurationValue('process_statistics'):
+            self.processStatistics()
 
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
         events_received = self.mp_stats_collector.getCounter('events_received')
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), AnsiColors.YELLOW, events_received, (events_received/self.interval), AnsiColors.ENDC))
         if self.emit_as_event:
-            self.sendEvent(DictUtils.getDefaultEventDict({"total_count": events_received, "count_per_sec": (events_received/self.interval), "field_name": "all_events", "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
+            self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "receiverate_stats", "receiverate_count": events_received, "receiverate_count_per_sec": int((events_received/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
         self.mp_stats_collector.resetCounter('events_received')
 
     def eventTypeStatistics(self):
@@ -88,10 +100,10 @@ class SimpleStats(BaseThreadedModule):
             count = self.mp_stats_collector.getCounter(event_type)
             if not event_type.startswith('event_type_'):
                 continue
-            event_name = event_type.replace('event_type_', '')
+            event_name = event_type.replace('event_type_', '').lower()
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
             if self.emit_as_event:
-                self.sendEvent(DictUtils.getDefaultEventDict({"total_count": count, "count_per_sec": (count/self.interval), "field_name": event_name, "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
             self.mp_stats_collector.resetCounter(event_type)
 
     def eventsInQueuesStatistics(self):
@@ -99,13 +111,54 @@ class SimpleStats(BaseThreadedModule):
             return
         self.logger.info(">> Queue stats")
         for module_name, queue in sorted(self.module_queues.items()):
-            self.logger.info("Events in %s queue: %s%s%s" % (module_name, AnsiColors.YELLOW, queue.qsize(), AnsiColors.ENDC))
+            try:
+                self.logger.info("Events in %s queue: %s%s%s" % (module_name, AnsiColors.YELLOW, queue.qsize(), AnsiColors.ENDC))
+            except NotImplementedError:
+                self.logger.info("Getting queue size of multiprocessed queues is not implemented for this platform.")
+                return
             if self.emit_as_event:
-                self.sendEvent(DictUtils.getDefaultEventDict({"queue_count": queue.qsize(), "field_name": "queue_counts", "interval": self.interval}, caller_class_name="Statistics", event_type="statistic"))
+                self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "queue_stats", "count": queue.qsize(), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
+
+    def processStatistics(self):
+        stats_event = {"stats_type": "process_stats", "timestamp": time.time()}
+        stats_event["worker_count"] = len(self.lumbermill.child_processes) + 1
+        stats_event["uptime"] = int(time.time() - self.psutil_processes[0].create_time())
+        self.logger.info(">> Process stats")
+        self.logger.info("num workers: %d" % (len(self.lumbermill.child_processes)+1))
+        self.logger.info("started: %s" % datetime.datetime.fromtimestamp(self.psutil_processes[0].create_time()).strftime("%Y-%m-%d %H:%M:%S"))
+        aggregated_metrics = defaultdict(int)
+        for psutil_process in self.psutil_processes:
+            stats_event["pid"] = psutil_process.pid
+            for metric_name, metric_value in psutil_process.as_dict(self.process_statistics).iteritems():
+                # Call metric specific method if it exists.
+                if "convertMetric_%s" % metric_name in self.methods:
+                    metric_name, metric_value = getattr(self, "convertMetric_%s" % self.action)(metric_name, metric_value)
+                try:
+                    aggregated_metrics[metric_name] += metric_value
+                except TypeError:
+                    try:
+                        metric_value = dict(metric_value.__dict__)
+                    except:
+                        pass
+                    try:
+                        stats_event[metric_name].append(metric_value)
+                    except KeyError:
+                        stats_event[metric_name] = [metric_value]
+                    self.logger.info("%s(pid: %s): %s" % (metric_name, psutil_process.pid, metric_value))
+            if self.emit_as_event:
+                self.sendEvent(DictUtils.getDefaultEventDict(stats_event, caller_class_name="Statistics", event_type="statistic"))
+        for agg_metric_name, agg_metric_value in aggregated_metrics.iteritems():
+            self.logger.info("%s: %s" % (agg_metric_name, agg_metric_value))
+        if self.emit_as_event:
+            self.sendEvent(DictUtils.getDefaultEventDict(aggregated_metrics, caller_class_name="Statistics", event_type="statistic"))
+
 
     def initAfterFork(self):
         # Get all configured queues for waiting event stats.
         self.module_queues = self.lumbermill.getAllQueues()
+        self.psutil_processes.append(psutil.Process(self.lumbermill.getMainProcessId()))
+        for worker in self.lumbermill.child_processes:
+            self.psutil_processes.append(psutil.Process(worker.pid))
         TimedFunctionManager.startTimedFunction(self.getRunTimedFunctionsFunc())
         BaseThreadedModule.initAfterFork(self)
 
@@ -119,5 +172,9 @@ class SimpleStats(BaseThreadedModule):
         yield event
 
     def shutDown(self):
+        self.accumulateReceiveRateStats()
+        self.accumulateEventTypeStats()
+        if self.lumbermill.is_master():
+            self.printIntervalStatistics()
         self.mp_stats_collector.shutDown()
         BaseThreadedModule.shutDown(self)

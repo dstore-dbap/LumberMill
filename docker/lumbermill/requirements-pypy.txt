@@ -1,0 +1,4 @@
+# Specific imports for pypy.
+
+# MsgPackParser
+msgpack-pypy

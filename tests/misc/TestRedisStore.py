@@ -10,7 +10,7 @@ class TestRedisStore(ModuleBaseTestCase):
         super(TestRedisStore, self).setUp(RedisStore.RedisStore(mock.Mock()))
 
     def testGetClient(self):
-        self.test_object.configure({'server': 'localhost'})
+        self.test_object.configure({'server': self.configuration['redis']['server']})
         self.checkConfiguration()
         rc = self.test_object.getClient()
         self.assertEqual(rc.__class__.__name__, 'StrictRedis')

@@ -4,6 +4,7 @@ import ssl
 import time
 import socket
 import logging
+import exceptions
 
 from tornado import autoreload
 from tornado.iostream import StreamClosedError
@@ -18,9 +19,14 @@ from lumbermill.utils.Decorators import ModuleDocstringParser
 class TornadoTcpServer(TCPServer):
 
     def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
-        TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
-
+        try:
+            TCPServer.__init__(self, ssl_options=ssl_options, **kwargs)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not create tcp server. Exception: %s, Error: %s." % (etype, evalue))
+            self.gp_module.shutDown()
     def handle_stream(self, stream, address):
         ConnectionHandler(stream, address, self.gp_module)
 
@@ -36,7 +42,7 @@ class ConnectionHandler(object):
         self.is_open = True
         self.stream = stream
         self.address = address
-        (self.host, self.port) = self.address
+        self.host, self.port = self.address[0], self.address[1]
         self.stream.set_close_callback(self._on_close)
         try:
             if not self.stream.closed():
@@ -83,15 +89,18 @@ class ConnectionHandler(object):
 
     def _on_close(self):
         # Send remaining buffer if neccessary.
+        data = ""
         if self.mode == 'stream' and self.stream._read_buffer_size > 0:
-            data = ""
             while True:
                 try:
                     data += self.stream._read_buffer.popleft().strip()
                 except IndexError:
-                    if data != "":
-                        self.sendEvent(data)
                     break
+                except AttributeError:
+                    #print(self.stream._read_buffer)
+                    sys.exit()
+        if data != "":
+            self.sendEvent(data)
         self.stream.close()
 
     def sendEvent(self, data):

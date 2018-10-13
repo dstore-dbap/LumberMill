@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import yaml
 import Queue
 import logging
 import logging.config
 import threading
 import unittest
-
 import mock
 
 sys.path.append('../')
 
-from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT, LUMBERMILL_BASEPATH
 from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
 from lumbermill.utils.misc import AnsiColors, coloredConsoleLogging
 from lumbermill.utils.MultiProcessDataStore import MultiProcessDataStore
@@ -125,26 +125,41 @@ class ModuleBaseTestCase(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super(ModuleBaseTestCase, self).__init__(*args, **kwargs)
-        self.global_configuration = {'logging': {'level': 'info',
-                                                 'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                                                 'filename': None,
-                                                 'filemode': 'w'}}
+        self.path_to_config_file = ("%s/../tests/conf/unittest.conf" % LUMBERMILL_BASEPATH)
+        self.configuration = {'logging': {'level': 'info',
+                                          'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                          'filename': None,
+                                          'filemode': 'w'}}
+        logging.basicConfig(handlers=logging.StreamHandler())
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.configure()
         self.configureLogging()
         self.conf_validator = ConfigurationValidator()
         self.receiver = MockReceiver()
 
+    def configure(self):
+        """Loads and parses the configuration"""
+        try:
+            with open(self.path_to_config_file, "r") as configuration_file:
+                self.raw_conf_file = configuration_file.read()
+            configuration = yaml.load(self.raw_conf_file)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (self.path_to_config_file, etype, evalue))
+            sys.exit()
+        self.configuration.update(configuration)
+
     def configureLogging(self):
         # Logger configuration.
-        if self.global_configuration['logging']['level'].lower() not in LOGLEVEL_STRING_TO_LOGLEVEL_INT:
+        if self.configuration['logging']['level'].lower() not in LOGLEVEL_STRING_TO_LOGLEVEL_INT:
             print("Loglevel unknown.")
             sys.exit(255)
-        log_level = LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.global_configuration['logging']['level'].lower()]
+        log_level = LOGLEVEL_STRING_TO_LOGLEVEL_INT[self.configuration['logging']['level'].lower()]
         logging.basicConfig(level=log_level,
-                            format=self.global_configuration['logging']['format'],
-                            filename=self.global_configuration['logging']['filename'],
-                            filemode=self.global_configuration['logging']['filemode'])
-        if not self.global_configuration['logging']['filename']:
+                            format=self.configuration['logging']['format'],
+                            filename=self.configuration['logging']['filename'],
+                            filemode=self.configuration['logging']['filemode'])
+        if not self.configuration['logging']['filename']:
             logging.StreamHandler.emit = coloredConsoleLogging(logging.StreamHandler.emit)
 
     def setUp(self, test_object):

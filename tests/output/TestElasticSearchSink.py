@@ -14,7 +14,7 @@ class TestElasticSearchSink(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestElasticSearchSink, self).setUp(ElasticSearchSink.ElasticSearchSink(mock.Mock()))
-        self.es_server = 'localhost'
+        self.es_server = "%s:%s" % (self.configuration['elasticsearch']['server'], self.configuration['elasticsearch']['port'])
         self.test_index_name = "test_index"
         self.es = self.connect([self.es_server])
         try:

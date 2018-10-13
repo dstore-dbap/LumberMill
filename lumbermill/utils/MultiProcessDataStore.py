@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import multiprocessing
-from lumbermill.utils import Decorators
+import Decorators
 
 
 @Decorators.Singleton

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 import getopt
 import logging.config
@@ -7,7 +7,6 @@ import os
 import signal
 import sys
 import time
-import importlib
 from collections import OrderedDict
 
 import tornado.ioloop
@@ -36,12 +35,12 @@ sys.path.append(pathname[:pathname.rfind("/")])
 #    print('Usage: %s -m %s -c <path/to/config.conf>' % (sys.executable, os.path.splitext(sys.argv[0])[0]))
 #    sys.exit()
 
-from lumbermill.constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from lumbermill.utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
-from lumbermill.utils.Buffers import BufferedQueue, ZeroMqMpQueue
-from lumbermill.utils.DictUtils import mergeNestedDicts
-from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
-from lumbermill.utils.MultiProcessDataStore import MultiProcessDataStore
+from constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
+from utils.Buffers import BufferedQueue, ZeroMqMpQueue
+from utils.DictUtils import mergeNestedDicts
+from utils.ConfigurationValidator import ConfigurationValidator
+from utils.MultiProcessDataStore import MultiProcessDataStore
 
 # Conditional imports for python2/3
 try:

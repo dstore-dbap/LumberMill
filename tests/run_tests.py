@@ -5,6 +5,10 @@ import sys
 import argparse
 import coverage
 
+pathname = os.path.abspath(__file__)
+pathname = pathname[:pathname.rfind("/")]
+sys.path.append(pathname[:pathname.rfind("/")])
+
 """
 To run coverage and submit data to coveralls:
 coverage run --source=lumbermill /usr/lib64/pypy-4.0/bin/nosetests --verbosity=3 Test*.py
@@ -21,6 +25,7 @@ def compileRegExPattern(pattern):
         print("RegEx error for pattern %s. Exception: %s, Error: %s." % (include_test_filename_pattern, etype, evalue))
         exit()
     return regex
+
 
 if __name__ == "__main__":
     test_dir = os.path.dirname(os.path.realpath(__file__))
