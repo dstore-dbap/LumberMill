@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import tornado.web
 
-import handler.ActionHandler
 import handler.HtmlHandler
 import handler.WebsocketHandler
 import uimodules.WebGui.ServerInfo
@@ -52,12 +51,5 @@ class WebGui(BaseModule):
                      # StaticFilesHandler
                      (r"/images/(.*)",tornado.web.StaticFileHandler, {"path": "%s/images/" % settings['static_path']}),
                      (r"/css/(.*)",tornado.web.StaticFileHandler, {"path": "%s/css/" % settings['static_path']}),
-                     (r"/js/(.*)",tornado.web.StaticFileHandler, {"path": "%s/js/" % settings['static_path']},),
-                     # REST ActionHandler
-                     (r"/rest/server/restart", handler.ActionHandler.RestartHandler),
-                     (r"/rest/server/info", handler.ActionHandler.GetServerInformation),
-                     (r"/rest/server/configuration", handler.ActionHandler.GetServerConfiguration),
-                     # WebsocketHandler
-                     (r"/websockets/statistics", handler.WebsocketHandler.StatisticsWebSocketHandler),
-                     (r"/websockets/get_logs", handler.WebsocketHandler.LogToWebSocketHandler)]
+                     (r"/js/(.*)",tornado.web.StaticFileHandler, {"path": "%s/js/" % settings['static_path']},)]
         return handlers

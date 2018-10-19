@@ -133,7 +133,7 @@ def parseDynamicValue(value):
 def mapDynamicValueInString(value, mapping_dict, use_strftime=False):
     try:
         if use_strftime:
-            if sys.platform .startswith('linux'):
+            if sys.platform.startswith('linux'):
                 value = datetime.datetime.utcnow().strftime(value)
             # On linux strftime will not remove non-supported format characters.
             # On other platforms this might be different.
