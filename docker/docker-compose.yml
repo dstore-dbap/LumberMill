@@ -17,9 +17,15 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
+  cerebro:
+    image: lmenezes/cerebro
+    container_name: cerebro
+    ports: ['9000:9000']
   elasticsearch:
     image: 'elasticsearch:latest'
     container_name: elasticsearch
+    volumes:
+      - /Users/bjorn/tmp:/usr/share/elasticsearch/data
     ports: ['9200:9200']
   mongodb:
     image: mongo:latest

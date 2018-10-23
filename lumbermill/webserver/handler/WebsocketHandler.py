@@ -42,13 +42,13 @@ class LogToWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler):
         # Create new log handler.
         self.ws_stream_handler = WebsocketLoggingHandler(self)
         # Get all configured modules and register our log handler.
-        for module_name, module_info in sorted(self.webserver_module.gp.modules.items(), key=lambda x: x[1]['idx']):
+        for module_name, module_info in sorted(self.webserver_module.lumbermill.modules.items(), key=lambda x: x[1]['idx']):
             for instance in module_info['instances']:
                 instance.logger.addHandler(self.ws_stream_handler)
 
     def on_close(self):
         # Get all configured modules and unregister our log handler.
-        for module_name, module_info in sorted(self.webserver_module.gp.modules.items(), key=lambda x: x[1]['idx']):
+        for module_name, module_info in sorted(self.webserver_module.lumbermill.modules.items(), key=lambda x: x[1]['idx']):
             for instance in module_info['instances']:
                 instance.logger.removeHandler(self.ws_stream_handler)
 
@@ -59,7 +59,7 @@ class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler
     """
     def open(self):
         # Try to get the statistics module
-        statistic_module_info = self.webserver_module.gp.getModuleInfoById('Statistics')
+        statistic_module_info = self.webserver_module.lumbermill.getModuleInfoById('Statistics')
         if not statistic_module_info:
             self.write_message(tornado.escape.json_encode(False))
             return
@@ -72,7 +72,7 @@ class StatisticsWebSocketHandler(tornado.websocket.WebSocketHandler, BaseHandler
     def sendIntervalStatistics(self):
         if self.statistic_module.getConfigurationValue('waiting_event_statistics'):
             self.receiveRateStatistics()
-        if self.statistic_module.getConfigurationValue('waiting_event_statistics'):
+        if self.statistic_module.getConfigurationValue('receive_rate_statistics'):
             self.eventsInQueuesStatistics()
         if self.statistic_module.getConfigurationValue('event_type_statistics'):
             self.eventTypeStatistics()

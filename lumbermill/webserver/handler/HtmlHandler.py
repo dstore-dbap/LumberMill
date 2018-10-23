@@ -22,7 +22,7 @@ class MainHandler(BaseHandler):
         localnode = {'server_name': socket.gethostname(),
                      'server_type': 'StandAlone'}
         # Check if cluster module is available.
-        cluster_info = self.webserver_module.gp.getModuleInfoById('Cluster')
+        cluster_info = self.webserver_module.lumbermill.getModuleInfoById('Cluster')
         if cluster_info:
             cluster_module = cluster_info['instances'][0]
             localnode['server_type'] = "PackLeader" if cluster_module.leader else "PackMember"
@@ -38,7 +38,7 @@ class MainHandler(BaseHandler):
 
 class ServerConfigurationAsText(BaseHandler):
     def get(self):
-        config_as_html = highlight(self.webserver_module.gp.getRawConfiguration(), YamlLexer(), HtmlFormatter(noclasses=True))
+        config_as_html = highlight(self.webserver_module.lumbermill.getRawConfiguration(), YamlLexer(), HtmlFormatter(noclasses=True))
         self.content_type = 'text/html'
         self.write(config_as_html)
 

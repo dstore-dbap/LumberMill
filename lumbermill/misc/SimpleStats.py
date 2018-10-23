@@ -51,6 +51,7 @@ class SimpleStats(BaseThreadedModule):
         self.mp_stats_collector = MultiProcessStatisticCollector()
         self.module_queues = {}
         self.psutil_processes = []
+        self.last_values = {'events_received': 0}
         self.methods = dir(self)
 
     def getRunTimedFunctionsFunc(self):
@@ -92,18 +93,20 @@ class SimpleStats(BaseThreadedModule):
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), AnsiColors.YELLOW, events_received, (events_received/self.interval), AnsiColors.ENDC))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "receiverate_stats", "receiverate_count": events_received, "receiverate_count_per_sec": int((events_received/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
+        self.mp_stats_collector.setCounter('last_events_received', events_received)
         self.mp_stats_collector.resetCounter('events_received')
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        for event_type  in sorted(self.mp_stats_collector.getAllCounters().keys()):
-            count = self.mp_stats_collector.getCounter(event_type)
+        for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
             if not event_type.startswith('event_type_'):
                 continue
+            count = self.mp_stats_collector.getCounter(event_type)
             event_name = event_type.replace('event_type_', '').lower()
             self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
             if self.emit_as_event:
                 self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
+            self.mp_stats_collector.setCounter("last_%s" % event_type, count)
             self.mp_stats_collector.resetCounter(event_type)
 
     def eventsInQueuesStatistics(self):
@@ -152,6 +155,32 @@ class SimpleStats(BaseThreadedModule):
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict(aggregated_metrics, caller_class_name="Statistics", event_type="statistic"))
 
+    def getLastReceiveCount(self):
+        try:
+            received_counter = self.mp_stats_collector.getCounter('last_events_received')
+        except KeyError:
+            received_counter = 0
+        return received_counter
+
+    def getLastEventTypeCounter(self):
+        event_type_counter = {}
+        for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
+            if not event_type.startswith('last_event_type_'):
+                continue
+            count = self.mp_stats_collector.getCounter(event_type)
+            event_name = event_type.replace('last_event_type_', '').lower()
+            event_type_counter[event_name] = count
+        return event_type_counter
+
+    def getEventsInQueuesCounter(self):
+        event_queue_counter = {}
+        for module_name, queue in sorted(self.module_queues.items()):
+            try:
+                event_queue_counter[module_name] = queue.qsize()
+            except NotImplementedError:
+                self.logger.debug("Getting queue size of multiprocessed queues is not implemented for this platform.")
+                continue
+        return event_queue_counter
 
     def initAfterFork(self):
         # Get all configured queues for waiting event stats.

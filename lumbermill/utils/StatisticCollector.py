@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import sys
 import multiprocessing
 from collections import defaultdict
 
@@ -9,6 +10,7 @@ import Decorators
 class StatisticCollector:
 
     def __init__(self):
+        self.max_int = sys.maxint
         self.counter_stats = defaultdict(int)
         #self.counter_stats_per_module = defaultdict(lambda: defaultdict(int))
         """ Stores the statistic data """

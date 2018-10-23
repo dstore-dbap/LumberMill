@@ -8,6 +8,8 @@ import tornado.autoreload
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
+import handler.ActionHandler
+import handler.WebsocketHandler
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser
@@ -26,6 +28,7 @@ class WebserverTornado(BaseThreadedModule):
        key:                             # <default: False; type: boolean||string; is: required if tls is True else optional>
        cert:                            # <default: False; type: boolean||string; is: required if tls is True else optional>
        document_root:                   # <default: '../assets/webserver_docroot'; type: string; is: optional>
+       statistic_module_id:             # <default: "SimpleStats"; type: string; is: optional>
        application_settings:            # <default: None; type: None||dict; is: optional>
     """
     module_type = "stand_alone"
@@ -39,6 +42,16 @@ class WebserverTornado(BaseThreadedModule):
         self.server = False
         self.settings = self.getSettings()
         self.application = tornado.web.Application([], **self.settings)
+        # Default handlers.
+        handlers = [ # REST ActionHandler
+                     (r"/rest/server/restart", handler.ActionHandler.RestartHandler),
+                     (r"/rest/server/info", handler.ActionHandler.GetServerInformation),
+                     (r"/rest/server/statistics", handler.ActionHandler.GetServerStatistics),
+                     (r"/rest/server/configuration", handler.ActionHandler.GetServerConfiguration),
+                      # WebsocketHandler
+                      (r"/websockets/statistics", handler.WebsocketHandler.StatisticsWebSocketHandler),
+                      (r"/websockets/get_logs", handler.WebsocketHandler.LogToWebSocketHandler) ]
+        self.addHandlers(handlers)
 
     def addHandlers(self, host_handlers=[], host_pattern='.*$'):
         self.application.add_handlers(host_pattern, host_handlers)
