@@ -155,7 +155,6 @@ class AsyncRedisClient(object):
         IOStream. It can be to ('127.0.0.1', 6379).
         """
         self.address         = address
-        self.io_loop         = io_loop or IOLoop.instance()
         self._callback_queue = deque()
         self._callback       = None
         self._read_buffer    = None
@@ -164,7 +163,7 @@ class AsyncRedisClient(object):
         self.socket.settimeout(socket_timeout)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.stream          = IOStream(self.socket, self.io_loop)
+        self.stream          = IOStream(self.socket)
         self.stream.connect(self.address, self._wait_result)
 
     def close(self):
