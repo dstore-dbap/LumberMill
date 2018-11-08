@@ -37,6 +37,7 @@ class RedisChannel(BaseModule):
     def configure(self, configuration):
          # Call parent configure method
         BaseModule.configure(self, configuration)
+
         try:
             self.client = AsyncRedisClient(address=(self.getConfigurationValue('server'), self.getConfigurationValue('port')))
             if self.getConfigurationValue('db') != 0:
