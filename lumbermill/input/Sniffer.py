@@ -7,15 +7,18 @@ import sys
 
 import pcapy
 from impacket.ImpactDecoder import EthDecoder
-from impacket.ImpactPacket import IP
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser
 
 PROTOCOL_TO_NAMES = {'eth': 'Ethernet',
-                     '0x8': 'IPv4'}
-
+                     '0x800': 'IPv4'}
+"""
+<class 'impacket.ImpactPacket.TCP'>
+<class 'impacket.ImpactPacket.Data'>
+<class 'impacket.ImpactPacket.ARP'>
+"""
 
 @ModuleDocstringParser
 class Sniffer(BaseThreadedModule):
@@ -23,18 +26,20 @@ class Sniffer(BaseThreadedModule):
     Sniff network traffic. Needs root privileges.
 
     Reason for using pcapy as sniffer lib:
-    As Gambolputty is intended to be run with pypy, every module should be compatible with pypy.
+    As LumberMill is intended to be run with pypy, every module should be compatible with pypy.
     Creating a raw socket in pypy is no problem but it is (up to now) not possible to bind this
     socket to a selected interface, e.g. socket.bind(('lo', 0)) will throw "error: unknown address family".
     With pcapy this problem does not exist.
 
     Dependencies:
-     - pcapy: pypy -m pip install pcapy
+     - pcapy, impacket: pypy -m pip install pcapy impacket
+     - libpcap-dev
 
     Configuration template:
 
     - Sniffer:
        interface:                       # <default: 'any'; type: None||string; is: optional>
+       protocols:                       # <default: ['Data']; type: list; is: optional>
        packetfilter:                    # <default: None; type: None||string; is: optional>
        promiscous:                      # <default: False; type: boolean; is: optional>
        key_value_store:                 # <default: None; type: none||string; is: optional>
@@ -49,12 +54,10 @@ class Sniffer(BaseThreadedModule):
     def configure(self, configuration):
         BaseThreadedModule.configure(self, configuration)
         self.interface = self.getConfigurationValue('interface')
+        self.protocols = self.getConfigurationValue('protocols')
         self.promiscous_mode = 1 if self.getConfigurationValue('promiscous') else 0
         self.kv_store = self.getConfigurationValue('key_value_store') if self.getConfigurationValue('key_value_store') else {}
         self.packet_decoders = {}
-        for ether_type, ether_protocol in PROTOCOL_TO_NAMES.items():
-            if "decodePacket%s" % ether_protocol in dir(self):
-                self.packet_decoders[ether_type] = getattr(self, "decodePacket%s" % ether_protocol)
         try:
             self.sniffer = pcapy.open_live(self.interface, 65536, self.promiscous_mode, 100)
         except:
@@ -95,19 +98,63 @@ class Sniffer(BaseThreadedModule):
                 pass
             if not packet:
                 continue
-            p = self.decodePacket(packet, 'eth')
-            decoded_packet = DictUtils.getDefaultEventDict({'protocols': ['ethernet'], 'data': packet, 'packet_size': pcap_header.getlen()}, caller_class_name=self.__class__.__name__)
-            decoded_packet['lumbermill']['event_type'] = 'PcapSniffer'
-            dest_mac, source_mac, proto_type = struct.unpack("!6s6sH", packet[:14])
-            decoded_packet['source_mac'] = ':'.join('%02x' % ord(byte) for byte in source_mac)
-            decoded_packet['destination_mac'] = ':'.join('%02x' % ord(byte) for byte in dest_mac)
-            if proto_type == 0x8100: # 802.1Q tag (optional)
-                proto_type = struct.unpack("!16xH", packet[:18])
-            packet_protocol = hex(socket.ntohs(proto_type))
-            decoded_packet = self.decodePacket(packet_protocol, decoded_packet)
-            self.sendEvent(decoded_packet)
+            decoder = self.getPacketDecoder('eth')
+            if not decoder:
+                continue
+            event = DictUtils.getDefaultEventDict({'protocols': []}, caller_class_name=self.__class__.__name__)
+            for decoded_packet in decoder.decodePacket(packet):
+                packet_type = str(type(decoded_packet))
+                if packet_type == "<class 'impacket.ImpactPacket.Ethernet'>":
+                    self.parseEtherPacket(decoded_packet, event)
+                elif packet_type == "<class 'impacket.ImpactPacket.IP'>":
+                    self.parseIPPacketEvent(decoded_packet, event)
+                elif packet_type == "<class 'impacket.ImpactPacket.TCP'>":
+                    self.parseTCPPacketEvent(decoded_packet, event)
+                elif packet_type == "<class 'impacket.ImpactPacket.Data'>":
+                    self.parseDataPacketEvent(decoded_packet, event)
+            if event['data']:
+                self.sendEvent(event)
+
+    def parseEtherPacket(self, decoded_packet, event):
+        event['protocols'].append('ethernet')
+        event['packet_size'] = decoded_packet.get_size()
+        event['data'] = decoded_packet.get_data_as_string()
+        event['source_mac'] = decoded_packet.as_eth_addr(decoded_packet.get_ether_shost())
+        event['destination_mac'] = decoded_packet.as_eth_addr(decoded_packet.get_ether_dhost())
+
+    def parseIPPacketEvent(self, decoded_packet, event):
+        event['protocols'].append('IPv4')
+        event['packet_size'] = decoded_packet.get_size()
+        event['data'] = decoded_packet.get_data_as_string()
+        event['ethertype'] = hex(decoded_packet.ethertype)
+        event['s_ip'] = decoded_packet.get_ip_src()
+        event['d_ip'] = decoded_packet.get_ip_dst()
+
+    def parseTCPPacketEvent(self, decoded_packet, event):
+        event['protocols'].append('TCP')
+        event['packet_size'] = decoded_packet.get_size()
+        event['s_port'] = decoded_packet.get_th_sport()
+        event['d_port'] = decoded_packet.get_th_dport()
+
+    def parseDataPacketEvent(self, decoded_packet, event):
+        event['data'] = decoded_packet.get_bytes().tostring()
+        #if data:
+        #    event['data'] = data;
 
 
+class PacketDecoderEthernet:
+    def __init__(self):
+        self.decoder = EthDecoder()
+
+    def decodePacket(self, packet):
+        packet = self.decoder.decode(packet)
+        while packet:
+            yield packet
+            packet = packet.child()
+
+###
+# We use impacket now, so no need to decode ourselfs.
+###
 class BasePacketDecoder:
 
     def __init__(self):
@@ -131,18 +178,6 @@ class BasePacketDecoder:
                 #etype, evalue, etb = sys.exc_info()
                 #self.logger.error("Could not find packet decoder for protocol %s. Exception: %s, Error: %s." % (protocol_name, etype, evalue))
                 return None
-
-
-class PacketDecoderEthernet(BasePacketDecoder):
-    def __init__(self):
-        BasePacketDecoder.__init__(self)
-        self.decoder = EthDecoder()
-
-    def decodePacket(self, packet):
-        decoded_packet = self.decoder.decode(packet)
-        next_layer_packet = decoded_packet.child()
-        #pprint.pprint(dir(next_layer_packet))
-        print(isinstance(next_layer_packet,IP))
 
 class PacketDecoderIPv4(BasePacketDecoder):
 
