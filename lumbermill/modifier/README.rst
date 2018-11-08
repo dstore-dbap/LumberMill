@@ -450,6 +450,9 @@ buffer_key: key to distinguish between different input streams
 | **buffer_size**:  Maximum size of events in buffer. If size is exceeded a flush will be executed.
 | **flush_interval_in_secs**:  If interval is reached, buffer will be flushed.
 | **pattern**:  Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+| **pattern_marks**: Set if the pattern marks the start or the end of an event.
+|                    If it marks the start of an event and a new event arrives and <pattern> matches, the buffer will be flushed prior appending the event.
+|                    If it marks the end of an event and a new event arrives and <pattern> matches, the buffer will be flushed after appending the event.
 | **glue**:  Join event data with glue as separator.
 
 Configuration template:
@@ -461,6 +464,7 @@ Configuration template:
        buffer_size:                     # <default: 100; type: integer; is: optional>
        flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
        pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+       pattern_marks:                   # <default: 'EndOfEvent'; type: string; values: ['StartOfEvent', 'EndOfEvent'];  is: optional;>
        match_field:                     # <default: "data"; type: string; is: optional>
        glue:                            # <default: ""; type: string; is: optional>
        receivers:

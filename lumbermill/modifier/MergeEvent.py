@@ -21,14 +21,17 @@ class MergeEvent(BaseThreadedModule):
 
     Each incoming event will be buffered in a queue identified by <buffer_key>.
     If a new event arrives and <pattern> does not match for this event, the event will be appended to the buffer.
-    If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior to appending the event.
+    If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior appending the event.
     After <flush_interval_in_secs> the buffer will also be flushed.
     Flushing the buffer will concatenate all contained event data to form one single new event.
 
     buffer_key: A key to correctly group events.
     buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
-    flush_interval_in_secs: If interval is reached, buffer will be flushed.
     pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+    pattern_marks: Set if the pattern marks the start or the end of an event.
+                   If it marks the start of an event and a new event arrives and <pattern> matches, the buffer will be flushed prior appending the event.
+                   If it marks the end of an event and a new event arrives and <pattern> matches, the buffer will be flushed after appending the event.
+    flush_interval_in_secs: If interval is reached, buffer will be flushed.
     glue: Join event data with glue as separator.
 
     Configuration template:
@@ -36,8 +39,9 @@ class MergeEvent(BaseThreadedModule):
     - MergeEvent:
        buffer_key:                      # <default: "$(lumbermill.received_from)"; type: string; is: optional>
        buffer_size:                     # <default: 100; type: integer; is: optional>
-       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
        pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+       pattern_marks:                   # <default: 'StartOfEvent'; type: string; values: ['StartOfEvent', 'EndOfEvent'];  is: optional;>
+       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
        match_field:                     # <default: "data"; type: string; is: optional>
        glue:                            # <default: ""; type: string; is: optional>
        receivers:
@@ -65,6 +69,10 @@ class MergeEvent(BaseThreadedModule):
         self.buffer_size = self.getConfigurationValue('buffer_size')
         self.flush_interval_in_secs = self.getConfigurationValue('flush_interval_in_secs')
         self.glue = self.getConfigurationValue('glue')
+        if self.getConfigurationValue('pattern_marks') == 'StartOfEvent':
+            self.handleEvent = self.handleEventStartPattern
+        else:
+            self.handleEvent = self.handleEventEndPattern
 
     def readLogstashPatterns(self):
         path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
@@ -101,7 +109,7 @@ class MergeEvent(BaseThreadedModule):
                                                                     maxsize=self.buffer_size))
         BaseThreadedModule.initAfterFork(self)
 
-    def handleEvent(self, event):
+    def handleEventStartPattern(self, event):
         key = self.getConfigurationValue("buffer_key", event)
         # No pattern was defined, to merging of event data will only be based on the buffer key.
         if not self.pattern:
@@ -122,6 +130,19 @@ class MergeEvent(BaseThreadedModule):
         # No buffer exists, so just pass this event on to next module.
         else:
             yield event
+
+    def handleEventEndPattern(self, event):
+        key = self.getConfigurationValue("buffer_key", event)
+        # If pattern matches append to buffer and flush.
+        if self.pattern.search(event[self.match_field]):
+            self.buffers[key].append(event)
+            self.buffers[key].flush()
+            yield None
+        # Append to existing buffer.
+        else:
+            self.buffers[key].append(event)
+            yield None
+
 
     def sendMergedEvent(self, events):
         if len(events) == 1:
