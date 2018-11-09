@@ -109,7 +109,7 @@ class JsonParser(BaseThreadedModule):
                 if self.drop_original:
                     event.pop(source_field, None)
                 if self.target_field:
-                    event.update({self.target_field: decoded_data})
+                    event[self.target_field] = decoded_data
                 else:
                     event.update(decoded_data)
                 yield event
@@ -132,5 +132,5 @@ class JsonParser(BaseThreadedModule):
             self.logger.warning("Could not json encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
             yield event
             return
-        event.update({self.target_field: encode_data})
+        event[self.target_field] = encode_data
         yield event

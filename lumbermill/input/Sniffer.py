@@ -121,7 +121,7 @@ class Sniffer(BaseThreadedModule):
             if decoded_data['data']:
                 event = DictUtils.getDefaultEventDict(caller_class_name=self.__class__.__name__)
                 if self.target_field:
-                    event.update({self.target_field: decoded_data})
+                    event[self.target_field] = decoded_data
                 else:
                     event.update(decoded_data)
                 self.sendEvent(event)

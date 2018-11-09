@@ -43,7 +43,7 @@ class Base64Parser(BaseThreadedModule):
             decoded_dataset = base64.b64decode(event[self.source_field])
             if self.drop_original:
                 event.pop(self.source_field, None)
-            event.update({self.target_field: decoded_dataset})
+            event[self.target_field] = decoded_dataset
         yield event
 
     def encodeBase64(self, event):
@@ -51,6 +51,6 @@ class Base64Parser(BaseThreadedModule):
             encoded_dataset = base64.b64encode(event[self.source_field])
             if self.drop_original:
                 event.pop(self.source_field, None)
-            event.update({self.target_field: encoded_dataset})
+            event[self.target_field] = encoded_dataset
         yield event
 

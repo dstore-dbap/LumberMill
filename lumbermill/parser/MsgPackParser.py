@@ -66,7 +66,7 @@ class MsgPackParser(BaseThreadedModule):
                 if self.drop_original:
                     event.pop(source_field, None)
                 if self.target_field:
-                    event.update({self.target_field: decoded_data})
+                    event[self.target_field] = decoded_data
                 else:
                     try:
                         event.update(decoded_data)

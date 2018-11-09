@@ -141,7 +141,7 @@ class NetFlowParser(BaseThreadedModule):
             copy_event = True
             if self.drop_original and self.source_field is not self.target_field:
                 event.pop(self.source_field, None)
-            event.update({self.target_field: netflow_data})
+            event[self.target_field] = netflow_data
             event['lumbermill']['event_type'] = "NetFlowV%s" % version
             yield event
 

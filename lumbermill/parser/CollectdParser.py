@@ -68,7 +68,7 @@ class CollectdParser(BaseThreadedModule):
             if self.drop_original:
                 event.pop(source_field, None)
             if self.target_field:
-                event.update({self.target_field: collectd_values})
+                event[self.target_field] = collectd_values
             else:
                 try:
                     event.update(collectd_values)
