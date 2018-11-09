@@ -47,4 +47,4 @@ class TestKeyDotNotationDict(unittest.TestCase):
         self.assertRaises(IndexError, self.event.get, 'nobody')
         self.assertTrue(self.event.get('params.nobody') == 'expects')
         self.assertTrue(self.event.get('empty.nobody') == 'expects')
-        #self.assertTrue(self.event.get('params.spanish.1') == 'inquisition')
+        self.assertTrue(self.event.get('params.spanish.0') == 'inquisition')
