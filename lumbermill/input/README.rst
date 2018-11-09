@@ -194,6 +194,7 @@ RedisChannel
 Subscribes to a redis channels and passes incoming events to receivers.
 
 | **channel**:  Name of redis channel to subscribe to.
+| **channel_pattern**: Channel pattern with wildcards (see: https://redis.io/commands/psubscribe) for channels to subscribe to.
 | **server**:  Redis server to connect to.
 | **port**:  Port redis server is listening on.
 | **db**:  Redis db.
@@ -204,7 +205,8 @@ Configuration template:
 ::
 
     - RedisChannel:
-       channel:                         # <type: string; is: required>
+       channel:                         # <default: False; type: boolean||string; is: required if channel_pattern is False else optional>
+       channel_pattern:                 # <default: False; type: boolean||string; is: required if channel is False else optional>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
        db:                              # <default: 0; type: integer; is: optional>

@@ -13,6 +13,7 @@ class RedisChannel(BaseModule):
     Subscribes to a redis channels and passes incoming events to receivers.
 
     channel: Name of redis channel to subscribe to.
+    channel_pattern: Channel pattern with wildcards (see: https://redis.io/commands/psubscribe) for channels to subscribe to.
     server: Redis server to connect to.
     port: Port redis server is listening on.
     db: Redis db.
@@ -21,7 +22,8 @@ class RedisChannel(BaseModule):
     Configuration template:
 
     - RedisChannel:
-       channel:                         # <type: string; is: required>
+       channel:                         # <default: False; type: boolean||string; is: required if channel_pattern is False else optional>
+       channel_pattern:                 # <default: False; type: boolean||string; is: required if channel is False else optional>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
        db:                              # <default: 0; type: integer; is: optional>
@@ -48,8 +50,14 @@ class RedisChannel(BaseModule):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.lumbermill.shutDown()
+        if self.getConfigurationValue('channel'):
+            channel_name = self.getConfigurationValue('channel')
+            subscribe_type = 'subscribe'
+        else:
+            channel_name = self.getConfigurationValue('channel_pattern')
+            subscribe_type = 'psubscribe'
         try:
-            self.client.fetch(('subscribe', self.getConfigurationValue('channel')), self.receiveEvent)
+            self.client.fetch((subscribe_type, channel_name), self.receiveEvent)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not subscribe to channel at redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
@@ -68,6 +76,6 @@ class RedisChannel(BaseModule):
             self.lumbermill.shutDown()
 
     def handleEvent(self, event):
-        if event[0] != 'message':
+        if 'message' not in event[0]:
             return
         yield DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)
