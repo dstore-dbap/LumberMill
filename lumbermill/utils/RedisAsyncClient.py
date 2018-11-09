@@ -148,7 +148,7 @@ class AsyncRedisClient(object):
     AsyncRedisClient implementation.
     """
 
-    def __init__(self, address, io_loop=None, socket_timeout=10):
+    def __init__(self, address, socket_timeout=10):
         """Creates a AsyncRedisClient.
 
         address is the tuple of redis server address that can be connect by
@@ -224,7 +224,7 @@ class AsyncRedisClient(object):
                 length = int(data[1:])
                 self.stream.read_bytes(length+2, self._on_read_bulk_body)
         elif c == '*':
-            if data[1] in '-0' :
+            if data[1] in '-0':
                 self._maybe_callback()
             else:
                 self._multibulk_number = int(data[1:])
