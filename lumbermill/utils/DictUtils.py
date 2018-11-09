@@ -16,7 +16,7 @@ class KeyDotNotationDict(dict):
     """
 
     def __getitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        dict_or_list = dict_or_list if dict_or_list is not None else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
@@ -29,17 +29,19 @@ class KeyDotNotationDict(dict):
         return self.__getitem__(remaining_keys, dict_or_list)
 
     def __setitem__(self, key, value, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        dict_or_list = dict_or_list if dict_or_list is not None else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
+            #print("%s: %s = %s" % (dict_or_list, key, value))
             return dict_or_list.__setitem__(key, value)
         current_key, remaining_keys = key.split('.', 1)
         dict_or_list = dict_or_list.__getitem__(current_key)
+        #print("%s > %s: %s = %s\n" % (current_key, remaining_keys, dict_or_list, value))
         return self.__setitem__(remaining_keys, value, dict_or_list)
 
     def __delitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        dict_or_list = dict_or_list if dict_or_list is not None else super(KeyDotNotationDict, self)
         if "." not in key:
             if isinstance(dict_or_list, list):
                 key = int(key)
@@ -49,7 +51,7 @@ class KeyDotNotationDict(dict):
         return self.__delitem__(remaining_keys, dict_or_list)
 
     def __contains__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+        dict_or_list = dict_or_list if dict_or_list is not None else super(KeyDotNotationDict, self)
         if "." not in key:
             return dict_or_list.__contains__(key)
         current_key, remaining_keys = key.split('.', 1)
