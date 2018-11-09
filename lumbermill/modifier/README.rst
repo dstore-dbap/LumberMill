@@ -6,15 +6,22 @@ Modifier modules
 AddDateTime
 -----------
 
-Add a field with the current datetime.
+Add a field with a datetime.
+
+If source_fields is not set, datetime will be based on current time.
+If source_fields is set, event will be searched for each source_field.
+If found, all source_formats will be applied, to parse the date.
+First successful conversion will win.
 
 Configuration template:
 
 ::
 
     - AddDateTime:
+       source_fields:                   # <default: None; type: None||list; is: optional>
+       source_formats:                  # <default: None; type: None||list; is: required if source_fields is not None else optional>
        target_field:                    # <default: '@timestamp'; type: string; is: optional>
-       format:                          # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
+       target_format:                   # <default: '%Y-%m-%dT%H:%M:%S'; type: string; is: optional>
        receivers:
         - NextModule
 

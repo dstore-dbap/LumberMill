@@ -48,3 +48,6 @@ class TestKeyDotNotationDict(unittest.TestCase):
         self.assertTrue(self.event.get('params.nobody') == 'expects')
         self.assertTrue(self.event.get('empty.nobody') == 'expects')
         self.assertTrue(self.event.get('params.spanish.0') == 'inquisition')
+
+    def testStringIndex(self):
+        self.assertTrue(self.event.get('url.0') == 'G')
