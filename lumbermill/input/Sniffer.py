@@ -42,6 +42,7 @@ class Sniffer(BaseThreadedModule):
        protocols:                       # <default: ['Data']; type: list; is: optional>
        packetfilter:                    # <default: None; type: None||string; is: optional>
        promiscous:                      # <default: False; type: boolean; is: optional>
+       target_field:                    # # <default: None; type: None||string; is: optional>
        key_value_store:                 # <default: None; type: none||string; is: optional>
        receivers:
         - NextModule
@@ -56,6 +57,7 @@ class Sniffer(BaseThreadedModule):
         self.interface = self.getConfigurationValue('interface')
         self.protocols = self.getConfigurationValue('protocols')
         self.promiscous_mode = 1 if self.getConfigurationValue('promiscous') else 0
+        self.target_field = self.getConfigurationValue('target_field')
         self.kv_store = self.getConfigurationValue('key_value_store') if self.getConfigurationValue('key_value_store') else {}
         self.packet_decoders = {}
         try:
@@ -105,18 +107,23 @@ class Sniffer(BaseThreadedModule):
             decoder = self.getPacketDecoder('eth')
             if not decoder:
                 continue
-            event = DictUtils.getDefaultEventDict({'protocols': []}, caller_class_name=self.__class__.__name__)
+            decoded_data = {'protocols': []}
             for decoded_packet in decoder.decodePacket(packet):
                 packet_type = str(type(decoded_packet))
                 if packet_type == "<class 'impacket.ImpactPacket.Ethernet'>":
-                    self.parseEtherPacket(decoded_packet, event)
+                    self.parseEtherPacket(decoded_packet, decoded_data)
                 elif packet_type == "<class 'impacket.ImpactPacket.IP'>":
-                    self.parseIPPacketEvent(decoded_packet, event)
+                    self.parseIPPacketEvent(decoded_packet, decoded_data)
                 elif packet_type == "<class 'impacket.ImpactPacket.TCP'>":
-                    self.parseTCPPacketEvent(decoded_packet, event)
+                    self.parseTCPPacketEvent(decoded_packet, decoded_data)
                 elif packet_type == "<class 'impacket.ImpactPacket.Data'>":
-                    self.parseDataPacketEvent(decoded_packet, event)
-            if event['data']:
+                    self.parseDataPacketEvent(decoded_packet, decoded_data)
+            if decoded_data['data']:
+                event = DictUtils.getDefaultEventDict(caller_class_name=self.__class__.__name__)
+                if self.target_field:
+                    event.update({self.target_field: decoded_data})
+                else:
+                    event.update(decoded_data)
                 self.sendEvent(event)
 
     def parseEtherPacket(self, decoded_packet, event):
