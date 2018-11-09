@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 
 import lumbermill.utils.DictUtils as DictUtils
@@ -80,6 +81,7 @@ class RedisChannel(BaseModule):
             self.lumbermill.shutDown()
 
     def handleEvent(self, event):
-        if 'message' not in event[0]:
-            return
-        yield DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)
+        if event[0] == 'message':
+            yield DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[1], "data": event[2]}, caller_class_name=self.__class__.__name__)
+        elif event[0] == 'pmessage':
+            yield DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[2], "data": event[3]}, caller_class_name=self.__class__.__name__)
