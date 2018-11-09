@@ -68,6 +68,10 @@ class Sniffer(BaseThreadedModule):
             self.sniffer.setfilter(self.getConfigurationValue('packetfilter'))
         self.link_layer = self.sniffer.datalink()
 
+    def getStartMessage(self):
+        start_msg = "sniffing %s on %s. Filter: %s." % (self.protocols, self.interface, self.getConfigurationValue('packetfilter'))
+        return start_msg
+
     def getPacketDecoder(self, packet_protocol):
         try:
             return self.packet_decoders[packet_protocol]

@@ -51,13 +51,13 @@ class RedisChannel(BaseModule):
             self.logger.error("Could not connect to redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
             self.lumbermill.shutDown()
         if self.getConfigurationValue('channel'):
-            channel_name = self.getConfigurationValue('channel')
+            self.channel_name = self.getConfigurationValue('channel')
             subscribe_type = 'subscribe'
         else:
-            channel_name = self.getConfigurationValue('channel_pattern')
+            self.channel_name = self.getConfigurationValue('channel_pattern')
             subscribe_type = 'psubscribe'
         try:
-            self.client.fetch((subscribe_type, channel_name), self.receiveEvent)
+            self.client.fetch((subscribe_type, self.channel_name), self.receiveEvent)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not subscribe to channel at redis store at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('server'), etype, evalue))
@@ -69,6 +69,10 @@ class RedisChannel(BaseModule):
         #except ValueError:
             # Ignore errors like "ValueError: I/O operation on closed kqueue fd". These might be thrown during a reload.
         #    pass
+
+    def getStartMessage(self):
+        start_msg = "subscribed to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.channel_name)
+        return start_msg
 
     def checkReply(self, answer):
         if answer != "OK":

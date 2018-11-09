@@ -64,6 +64,10 @@ class RedisList(BaseThreadedModule):
         else:
             self.run = self.handleBatchEvents
 
+    def getStartMessage(self):
+        start_msg = "subscribed to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.lists)
+        return start_msg
+
     def run(self):
         self.logger.error("Monkeypatching the run method of RedisList seems to have failed.")
         self.lumbermill.shutDown()
