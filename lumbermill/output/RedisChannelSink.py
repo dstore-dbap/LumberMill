@@ -53,7 +53,7 @@ class RedisChannelSink(BaseThreadedModule):
         BaseThreadedModule.initAfterFork(self)
 
     def getStartMessage(self):
-        start_msg = "publishing to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.channel_name)
+        start_msg = "publishing to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.getConfigurationValue('channel'))
         return start_msg
 
     def handleEvent(self, event):
