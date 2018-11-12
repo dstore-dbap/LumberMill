@@ -40,7 +40,7 @@ class StdOutSink(BaseThreadedModule):
             output = mapDynamicValue(self.format, event)
         else:
             output = event
-        if self.pretty_print and not self.format:
+        if self.pretty_print:
             pprint.pprint(output, indent=4)
         else:
             print("%s" % output)
