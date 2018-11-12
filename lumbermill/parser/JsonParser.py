@@ -97,7 +97,7 @@ class JsonParser(BaseThreadedModule):
                     decoded_datasets = json.loads(json_string, cls=ConcatJSONDecoder)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("Could not json decode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                    self.logger.warning("Could not json decode event data: %s. Exception: %s, Error: %s." % (json_string, etype, evalue))
                     self.logger.warning("Maybe your json string contains single quotes?")
                     continue
             if not isinstance(decoded_datasets, list):
@@ -131,7 +131,7 @@ class JsonParser(BaseThreadedModule):
             encode_data = json.dumps(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("Could not json encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.warning("Could not json encode event data: %s. Exception: %s, Error: %s." % (encode_data, etype, evalue))
             yield event
             return
         event[self.target_field] = encode_data
