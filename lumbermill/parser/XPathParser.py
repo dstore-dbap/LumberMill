@@ -55,15 +55,16 @@ class XPathParser(BaseThreadedModule, ModuleCacheMixin):
         @return data: dictionary
         """
         source_field = self.getConfigurationValue('source_field', event)
-        if source_field not in event:
-            yield event
-            return
         result = None
         if self.cache:
             cache_key = self.getConfigurationValue('cache_key', event)
             result = self._getFromCache(cache_key, event)
         if result is None:
-            xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
+            try:
+                xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
+            except KeyError:
+                yield event
+                return
             try:
                 xml_root = etree.fromstring(xml_string)
                 xml_tree = etree.ElementTree(xml_root)

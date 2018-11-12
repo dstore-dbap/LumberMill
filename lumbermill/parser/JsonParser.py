@@ -85,9 +85,10 @@ class JsonParser(BaseThreadedModule):
 
     def decodeEvent(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
+            try:
+                json_string = str(event[source_field])
+            except KeyError:
                 continue
-            json_string = str(event[source_field])
             try:
                 decoded_datasets = json.loads(json_string)
             except:
@@ -120,9 +121,10 @@ class JsonParser(BaseThreadedModule):
         else:
             encode_data = {}
             for source_field in self.source_fields:
-                if source_field not in event:
+                try:
+                    encode_data.update({source_field: event[source_field]})
+                except KeyError:
                     continue
-                encode_data.update({source_field: event[source_field]})
                 if self.drop_original:
                     event.pop(source_field, None)
         try:

@@ -47,9 +47,10 @@ class AddDateTime(BaseThreadedModule):
 
     def handleEventWithSourceFields(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
+            try:
+                time_field = event[source_field]
+            except KeyError:
                 continue
-            time_field = event[source_field]
             for source_format in self.source_formats:
                 try:
                     date_time = datetime.datetime.strptime(time_field, source_format)

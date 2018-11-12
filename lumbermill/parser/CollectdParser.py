@@ -51,10 +51,10 @@ class CollectdParser(BaseThreadedModule):
 
     def decodeEvent(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
-                continue
             try:
                 decoded_data = self.parser.interpret(event[source_field])
+            except KeyError:
+                continue
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Could not decode event data: %s. Exception: %s, Error: %s." % (event[source_field], etype, evalue))

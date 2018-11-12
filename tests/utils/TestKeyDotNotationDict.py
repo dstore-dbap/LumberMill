@@ -1,4 +1,3 @@
-import pprint
 import unittest
 import lumbermill.utils.DictUtils as DictUtils
 
@@ -49,5 +48,5 @@ class TestKeyDotNotationDict(unittest.TestCase):
         self.assertTrue(self.event.get('empty.nobody') == 'expects')
         self.assertTrue(self.event.get('params.spanish.0') == 'inquisition')
 
-    def testStringIndex(self):
-        self.assertTrue(self.event.get('url.0') == 'G')
+    def testInStringFails(self):
+        print(self.event['http_status.faller'])

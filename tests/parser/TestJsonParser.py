@@ -1,13 +1,12 @@
-import ModuleBaseTestCase
 import mock
 import json
-
-
 import lumbermill.utils.DictUtils as DictUtils
+
+from tests.ModuleBaseTestCase import ModuleBaseTestCase
 from lumbermill.parser import JsonParser
 
 
-class TestJsonParser(ModuleBaseTestCase.ModuleBaseTestCase):
+class TestJsonParser(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestJsonParser, self).setUp(JsonParser.JsonParser(mock.Mock()))
