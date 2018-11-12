@@ -52,6 +52,10 @@ class RedisChannelSink(BaseThreadedModule):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseThreadedModule.initAfterFork(self)
 
+    def getStartMessage(self):
+        start_msg = "publishing to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.channel_name)
+        return start_msg
+
     def handleEvent(self, event):
         if self.format:
             publish_data = mapDynamicValue(self.format, event)

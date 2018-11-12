@@ -59,10 +59,10 @@ class RedisListSink(BaseThreadedModule):
             self.lumbermill.shutDown()
 
     def getStartMessage(self):
-        return "[%s] on %s:%s. Max buffer size: %d" % (self.list,
-                                                       self.getConfigurationValue('server'),
-                                                       self.getConfigurationValue('port'),
-                                                       self.getConfigurationValue('backlog_size'))
+        return "publishing to %s:%s -> %s. Max buffer size: %d" % (self.getConfigurationValue('server'),
+                                                                   self.getConfigurationValue('port'),
+                                                                   self.list,
+                                                                   self.getConfigurationValue('backlog_size'))
 
 
     def initAfterFork(self):
