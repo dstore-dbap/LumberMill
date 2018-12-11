@@ -1,0 +1,117 @@
+- Global:
+   workers: 1
+
+- Sniffer:
+   interface: br-ebafa67b24fa
+   packetfilter: tcp port 3335 or port 3336 or port 3337 or port 3337
+   target_field: sniffer
+
+- MergeEvent:
+   match_field: sniffer.data
+   buffer_key: $(lumbermill.d_port)
+   flush_interval_in_secs: 3
+   buffer_size: 20
+   pattern: "\n$"
+   pattern_marks: EndOfEvent
+
+#- SimpleStats
+
+#- StdOutSink
+
+#- JsonParser:
+#   source_fields: [sniffer.data]
+#   target_field: parsed_json
+
+- ModifyFields:
+   action: map
+   source_field: sniffer.d_port
+   map: {3335: 'hssearch', 3336: 'sqsdata', 3337: 'monsterlog', 3338: 'aaaerrorlog'}
+   target_field: lumbermill.event_type
+   receivers:
+    - RedisHssearchChannelSink:
+       filter: if $(lumbermill.event_type) == 'hssearch'
+    - RedisSQSDataChannelSink:
+       filter: if $(lumbermill.event_type) == 'sqsdata'
+    - RedisMonsterLogChannelSink:
+       filter: if $(lumbermill.event_type) == 'monsterlog'
+    - RedisAAAErrorLogChannelSink:
+       filter: if $(lumbermill.event_type) == 'aaaerrorlog'
+
+#- StdOutSink:
+#   id: StdOutHssearchChannelSink
+
+- RedisChannelSink:
+   id: RedisHssearchChannelSink
+   channel: test_hssearch
+   server: localhost
+   format: $(sniffer.data)
+
+- RedisChannelSink:
+   id: RedisSQSDataChannelSink
+   channel: test_sqsdata
+   server: localhost
+   format: $(sniffer.data)
+
+- RedisChannelSink:
+   id: RedisMonsterLogChannelSink
+   channel: test_monsterlog
+   server: localhost
+   format: $(sniffer.data)
+
+- RedisChannelSink:
+   id: RedisAAAErrorLogChannelSink
+   channel: test_aaaerrorlog
+   server: localhost
+   format: $(sniffer.data)
+
+# From redis.
+- RedisChannel:
+   channel_pattern: test_*
+   server: localhost
+
+- JsonParser:
+   target_field: parsed_json
+   add_fields: {'parsed_json._id': $(lumbermill.event_id)}
+   receivers:
+    - DevNullSink:
+       filter: if $(lumbermill.received_from) == 'test_hssearch'
+    - SQSData:
+       filter: if $(lumbermill.received_from) == 'test_sqsdata'
+    #- DevNullSink:
+    #   filter: if $(lumbermill.received_from) == 'test_monsterlog'
+    #- DevNullSink:
+    #   filter: if $(lumbermill.received_from) == 'test_aaaerrorlog'
+
+# hssearch
+- ModifyFields:
+   action: cast_to_int
+   fields: [parsed_json.id, parsed_json.object_id]
+   add_fields: {'parsed_json._type': hssearch}
+
+
+- ElasticSearchSink:
+   nodes: ["172.31.3.88:9200"]
+   index_name: 'lm-hssearch'
+   format: $()
+   store_interval_in_secs: 10
+
+# sqsdata
+- JsonParser:
+   id: SQSData
+   source_fields: [parsed_json.message]
+   target_field: parsed_json.message
+
+- ModifyFields:
+   action: cast_to_str
+   fields: [parsed_json.message.match_event.id]
+
+- AddDateTime:
+   source_fields: [parsed_json.sqstimestamp]
+   source_formats: ['%Y-%m-%dT%H:%M:%S.%fZ'] # 2018-11-09T15:33:26.573Z
+   target_field: parsed_json.@timestamp
+
+- DevNullSink
+
+- StdOutSink:
+    fields: [parsed_json]
+    filter: if $(lumbermill.received_from) == 'test_hssearch'
