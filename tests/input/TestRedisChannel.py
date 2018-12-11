@@ -11,8 +11,9 @@ class TestRedisChannel(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestRedisChannel, self).setUp(RedisChannel.RedisChannel(mock.Mock()))
-        self.redis_host = self.configuration['redis']['server']
-        self.redis_port = self.configuration['redis']['port']
+        redis_service = self.getRedisService()
+        self.redis_host = redis_service['server']
+        self.redis_port = redis_service['port']
         try:
             self.client = redis.Redis(host=self.redis_host, port=self.redis_port)
         except:
@@ -21,7 +22,9 @@ class TestRedisChannel(ModuleBaseTestCase):
             sys.exit(255)
 
     def testDefaultvalues(self):
-        self.test_object.configure({'channel': 'TestChannel'})
+        self.test_object.configure({'channel': 'TestChannel',
+                                    'server': self.redis_host,
+                                    'port': self.redis_port})
         self.checkConfiguration()
         self.startTornadoEventLoop()
         data = "It's my belief that these sheep are laborin' under the misapprehension that they're birds."

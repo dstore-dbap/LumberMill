@@ -58,3 +58,7 @@ py-zabbix>=1.1.1
 
 # WebGui
 Pygments>=2.0.0
+
+# Tests
+coverage>=4.4.0
+mock>=1.9.0

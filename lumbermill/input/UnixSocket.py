@@ -13,8 +13,8 @@ from lumbermill.utils.Decorators import ModuleDocstringParser
 
 class SocketServer(TCPServer):
 
-    def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
-        TCPServer.__init__(self, io_loop=io_loop, ssl_options=ssl_options, **kwargs)
+    def __init__(self, ssl_options=None, gp_module=False, **kwargs):
+        TCPServer.__init__(self, ssl_options=ssl_options, **kwargs)
         self.gp_module = gp_module
         self.address = socket.gethostname()
 

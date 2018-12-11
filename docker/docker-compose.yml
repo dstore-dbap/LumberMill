@@ -8,6 +8,7 @@ services:
       - $PWD/../:/opt/LumberMill
     ports:
       - '5151:5151'
+      - '5252:5252'
   redis:
     image: 'redis:latest'
     container_name: 'redis'

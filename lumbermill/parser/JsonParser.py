@@ -3,6 +3,7 @@ import re
 import sys
 import types
 from json import JSONDecoder
+from bs4 import UnicodeDammit
 
 from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -87,6 +88,8 @@ class JsonParser(BaseThreadedModule):
         for source_field in self.source_fields:
             try:
                 json_string = str(event[source_field])
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                json_string = UnicodeDammit(event[source_field]).unicode_markup
             except KeyError:
                 continue
             try:
