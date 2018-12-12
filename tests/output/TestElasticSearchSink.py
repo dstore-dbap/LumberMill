@@ -27,7 +27,6 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         except elasticsearch.exceptions.RequestError:
             self.logger.error("Could not create index %s on %s." % (self.test_index_name, self.es_server))
             self.fail()
-        self.es.get(index="test_index", id=1234)
         return
 
     def connect(self, nodes):
@@ -74,7 +73,7 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         self.test_object.shutDown()
         time.sleep(1)
         try:
-            result = self.es.get(index=index_name, id=doc_id)
+            result = self.es.get(index=index_name, doc_type='Unknown', id=doc_id)
         except elasticsearch.exceptions.NotFoundError, e:
             self.fail(e)
         self.assertEqual(type(result), dict)
@@ -93,7 +92,7 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         self.test_object.shutDown()
         time.sleep(1)
         try:
-            result = self.es.get(index=self.test_index_name, id=doc_id)
+            result = self.es.get(index=self.test_index_name, doc_type='Unknown', id=doc_id)
         except elasticsearch.exceptions.NotFoundError, e:
             self.fail(e)
         self.assertEqual(type(result), dict)
@@ -111,7 +110,7 @@ class TestElasticSearchSink(ModuleBaseTestCase):
                                            'event_doc_id': 'Ewan'})
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
-        result = self.es.get(index=self.test_index_name, id='Ewan')
+        result = self.es.get(index=self.test_index_name, doc_type='Unknown', id='Ewan')
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
 
@@ -127,7 +126,7 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
         index_name = mapDynamicValueInString('testindex-%Y.%m.%d-%(lumbermill.event_type)s', event, use_strftime=True).lower()
-        result = self.es.get(index=index_name, id=doc_id)
+        result = self.es.get(index=index_name, doc_type='Unknown', id=doc_id)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
         self.es.indices.delete(index=index_name, ignore=[400, 404])
@@ -156,14 +155,14 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
         try:
-            result = self.es.get(index=self.test_index_name, id=doc_id)
+            result = self.es.get(index=self.test_index_name, doc_type='Unknown', id=doc_id)
         except elasticsearch.NotFoundError:
             self.fail("Document was not found.")
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
         time.sleep(2)
         try:
-            result = self.es.get(index=self.test_index_name, id=doc_id)
+            result = self.es.get(index=self.test_index_name, doc_type='Unknown', id=doc_id)
             self.fail("Document was not deleted after ttl.")
         except elasticsearch.NotFoundError:
             pass
@@ -192,11 +191,11 @@ class TestElasticSearchSink(ModuleBaseTestCase):
         self.test_object.shutDown()
         time.sleep(1)
         try:
-            result = self.es.get(index=index_name, id=doc_id)
+            result = self.es.get(index=index_name, doc_type='pirate', id=doc_id)
         except elasticsearch.exceptions.NotFoundError, e:
             self.fail(e)
         self.assertEqual(type(result), dict)
-        self.assertDictContainsSubset(event, result['_source'])
+        self.assertDictContainsSubset(event['sheep'], result['_source'])
         self.es.indices.delete(index=index_name, ignore=[400, 404])
 
     def tearDown(self):

@@ -8,7 +8,7 @@ import logging.config
 import threading
 import unittest
 import mock
-import ServicesDiscovery
+import ServiceDiscovery
 
 sys.path.append('../')
 
@@ -188,21 +188,21 @@ class ModuleBaseTestCase(unittest.TestCase):
         self.ioloop_thread.stop()
 
     def getRedisService(self):
-        service = ServicesDiscovery.discover_redis()
+        service = ServiceDiscovery.discover_redis()
         if service:
             return service
         return {'server': self.configuration['redis']['server'],
                 'port': self.configuration['redis']['port']}
 
     def getElasticSeachService(self):
-        service = ServicesDiscovery.discover_elasticsearch()
+        service = ServiceDiscovery.discover_elasticsearch()
         if service:
             return service
         return {'server': self.configuration['elasticsearch']['server'],
                 'port': self.configuration['elasticsearch']['port']}
 
     def getMongoDBService(self):
-        service = ServicesDiscovery.discover_mongodb()
+        service = ServiceDiscovery.discover_mongodb()
         if service:
             return service
         return {'server': self.configuration['mongodb']['server'],

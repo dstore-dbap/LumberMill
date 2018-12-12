@@ -22,7 +22,7 @@ Compatibility and Performance
 To run LumberMill you will need Python 2.7+. It is not yet Python 3 compatible.
 For better performance, I heartly recommend running LumberMill with pypy.
 The performance gain can be up to 5-6 times events/s throughput running single processed.
-Tested with pypy-2.4, pypy-2.5 and pypy-4.1.
+Tested with pypy-2.4, pypy-2.5 and pypy-4.2.
 A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
 
 Installation
