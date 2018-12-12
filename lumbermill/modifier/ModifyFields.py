@@ -312,10 +312,10 @@ class ModifyFields(BaseThreadedModule):
         """
         source = self.source_field if self.source_field else self.source_fields
         target = self.target_field if self.target_field else self.target_fields
-        if not source:
-            return "%s: %s" % (self.action, target)
-        elif not target:
+        if source and not target:
             return "%s: %s" % (self.action, source)
+        elif target and not source:
+            return "%s: %s" % (self.action, target)
         else:
             return "%s: %s => %s" % (self.action, source, target)
 
