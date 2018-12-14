@@ -3,6 +3,7 @@ import re
 import sys
 import types
 from json import JSONDecoder
+from bs4 import UnicodeDammit
 
 from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -85,9 +86,12 @@ class JsonParser(BaseThreadedModule):
 
     def decodeEvent(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
+            try:
+                json_string = str(event[source_field])
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                json_string = UnicodeDammit(event[source_field]).unicode_markup
+            except KeyError:
                 continue
-            json_string = str(event[source_field])
             try:
                 decoded_datasets = json.loads(json_string)
             except:
@@ -96,10 +100,12 @@ class JsonParser(BaseThreadedModule):
                     decoded_datasets = json.loads(json_string, cls=ConcatJSONDecoder)
                 except:
                     etype, evalue, etb = sys.exc_info()
-                    self.logger.warning("Could not json decode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+                    self.logger.warning("Could not json decode event.%s: %s. Exception: %s, Error: %s." % (source_field, json_string, etype, evalue))
                     self.logger.warning("Maybe your json string contains single quotes?")
                     continue
-            if not isinstance(decoded_datasets, list):
+            if not isinstance(decoded_datasets, dict) and not isinstance(decoded_datasets, list):
+                continue
+            if isinstance(decoded_datasets, dict):
                 decoded_datasets = [decoded_datasets]
             copy_event = False
             for decoded_data in decoded_datasets:
@@ -109,7 +115,7 @@ class JsonParser(BaseThreadedModule):
                 if self.drop_original:
                     event.pop(source_field, None)
                 if self.target_field:
-                    event.update({self.target_field: decoded_data})
+                    event[self.target_field] = decoded_data
                 else:
                     event.update(decoded_data)
                 yield event
@@ -120,17 +126,18 @@ class JsonParser(BaseThreadedModule):
         else:
             encode_data = {}
             for source_field in self.source_fields:
-                if source_field not in event:
+                try:
+                    encode_data.update({source_field: event[source_field]})
+                except KeyError:
                     continue
-                encode_data.update({source_field: event[source_field]})
                 if self.drop_original:
                     event.pop(source_field, None)
         try:
             encode_data = json.dumps(encode_data)
         except:
             etype, evalue, etb = sys.exc_info()
-            self.logger.warning("Could not json encode event data: %s. Exception: %s, Error: %s." % (event, etype, evalue))
+            self.logger.warning("Could not json encode event data: %s. Exception: %s, Error: %s." % (encode_data, etype, evalue))
             yield event
             return
-        event.update({self.target_field: encode_data})
+        event[self.target_field] = encode_data
         yield event

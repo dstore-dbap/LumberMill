@@ -84,7 +84,8 @@ class Statistics(BaseThreadedModule):
 
     def handleEvent(self, event):
         for field in self.fields:
-            if field not in event:
+            try:
+                self.stats_collector.incrementCounter((field, event[field]))
+            except KeyError:
                 continue
-            self.stats_collector.incrementCounter((field, event[field]))
         yield event

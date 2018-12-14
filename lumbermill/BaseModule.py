@@ -109,6 +109,18 @@ class BaseModule:
         """
         return 'started'
 
+    def isDynamicConfigurationValue(self, key):
+        config_setting = None
+        try:
+            config_setting = self.configuration_data[key]
+        except KeyError:
+            self.logger.warning("Could not find configuration setting for: %s." % key)
+            self.lumbermill.shutDown()
+        if not isinstance(config_setting, dict):
+            self.logger.debug("Configuration for key: %s is incorrect." % key)
+            return False
+        return config_setting['contains_dynamic_value']
+
     def getConfigurationValue(self, key, mapping_dict={}, use_strftime=False):
         """
         Get a configuration value. This method encapsulates the internal configuration dictionary and

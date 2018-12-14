@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import logging
 import sys
 import time
+import pprint
+import logging
 import elasticsearch
 
 from lumbermill.constants import IS_PYPY
@@ -34,7 +35,7 @@ class ElasticSearchSink(BaseThreadedModule):
     Requests will the be loadbalanced via round robin.
 
     action:     Either index or update. If update be sure to provide the correct doc_id.
-    format:     Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'.
+    fields:     Which event fields to send on, e.g. [timestamp, url, country_code].
                 If not set the whole event dict is send.
     nodes:      Configures the elasticsearch nodes.
     read_timeout: Set number of seconds to wait until requests to elasticsearch will time out.
@@ -61,7 +62,7 @@ class ElasticSearchSink(BaseThreadedModule):
 
     - ElasticSearchSink:
        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
-       format:                          # <default: None; type: None||string; is: optional>
+       fields:                          # <default: None; type: None||list; is: optional>
        nodes:                           # <type: string||list; is: required>
        read_timeout:                    # <default: 10; type: integer; is: optional>
        connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
@@ -69,6 +70,7 @@ class ElasticSearchSink(BaseThreadedModule):
        use_ssl:                         # <default: False; type: boolean; is: optional>
        index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
        doc_id:                          # <default: '$(lumbermill.event_id)'; type: string; is: optional>
+       doc_type:                        # <default: '$(lumbermill.event_type)'; type: string; is: optional>
        routing:                         # <default: None; type: None||string; is: optional>
        ttl:                             # <default: None; type: None||integer||string; is: optional>
        sniff_on_start:                  # <default: False; type: boolean; is: optional>
@@ -91,11 +93,13 @@ class ElasticSearchSink(BaseThreadedModule):
                 # Set log level for elasticsarch library if configured to other than default.
                 logging.getLogger(module_name).setLevel(self.logger.level)
         self.action = self.getConfigurationValue('action')
-        self.format = self.getConfigurationValue('format')
+        self.fields = self.getConfigurationValue('fields')
         self.ttl = self.getConfigurationValue("ttl")
         self.index_name = self.getConfigurationValue("index_name")
         self.routing_pattern = self.getConfigurationValue("routing")
         self.doc_id_pattern = self.getConfigurationValue("doc_id")
+        self.doc_type_pattern = self.getConfigurationValue("doc_type")
+        self.doc_type_is_dynamic = self.isDynamicConfigurationValue("doc_type")
         self.es_nodes = self.getConfigurationValue("nodes")
         self.read_timeout = self.getConfigurationValue("read_timeout")
         if not isinstance(self.es_nodes, list):
@@ -149,8 +153,13 @@ class ElasticSearchSink(BaseThreadedModule):
         return es
 
     def handleEvent(self, event):
-        if self.format:
-            publish_data = self.getConfigurationValue('format', event)
+        if self.fields:
+            publish_data = {}
+            for field in self.fields:
+                try:
+                    publish_data.update(event[field])
+                except KeyError:
+                    continue
         else:
             publish_data = event
         self.buffer.append(publish_data)
@@ -163,14 +172,14 @@ class ElasticSearchSink(BaseThreadedModule):
         json_data = []
         for event in events:
             index_name = mapDynamicValueInString(self.index_name, event, use_strftime=True).lower()
-            event_type = event['lumbermill']['event_type'] if 'lumbermill' in event and 'event_type' in event['lumbermill'] else 'Unknown'
-            doc_id = mapDynamicValue(self.doc_id_pattern, event)
+            doc_type = mapDynamicValueInString(self.doc_type_pattern, event)
+            doc_id = mapDynamicValueInString(self.doc_id_pattern, event)
             routing = mapDynamicValue(self.routing_pattern, use_strftime=True)
             if not doc_id:
                 self.logger.error("Could not find doc_id %s for event %s." % (self.getConfigurationValue("doc_id"), event))
                 continue
             header = {self.action: {'_index': index_name,
-                                    '_type': event_type,
+                                    '_type': doc_type,
                                     '_id': doc_id}}
             if self.routing_pattern:
                 header['index']['_routing'] = routing

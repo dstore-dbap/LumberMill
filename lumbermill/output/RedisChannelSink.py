@@ -29,9 +29,6 @@ class RedisChannelSink(BaseThreadedModule):
        db:                              # <default: 0; type: integer; is: optional>
        password:                        # <default: None; type: None||string; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
-       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
-       batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -54,6 +51,10 @@ class RedisChannelSink(BaseThreadedModule):
     def initAfterFork(self):
         #self.buffer = Utils.Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
         BaseThreadedModule.initAfterFork(self)
+
+    def getStartMessage(self):
+        start_msg = "publishing to %s:%s -> %s" % (self.getConfigurationValue('server'), self.getConfigurationValue('port'), self.getConfigurationValue('channel'))
+        return start_msg
 
     def handleEvent(self, event):
         if self.format:

@@ -49,6 +49,6 @@ class LineParser(BaseThreadedModule):
             decoded_datasets = event[self.source_field].split(self.seperator)
             if self.drop_original:
                 event.pop(self.source_field, None)
-            event.update({self.target_field: decoded_datasets})
+            event[self.target_field] = decoded_datasets
         yield event
 

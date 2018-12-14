@@ -1,13 +1,5 @@
 version: '2'
 services:
-  lumbermill:
-    build: './lumbermill/'
-    container_name: 'lumbermill'
-    command: '/bin/bash -c "while true; do sleep 1; done"'
-    volumes:
-      - $PWD/../:/opt/LumberMill
-    ports:
-      - '5151:5151'
   redis:
     image: 'redis:latest'
     container_name: 'redis'
@@ -17,30 +9,41 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
-  cerebro:
-    image: lmenezes/cerebro
-    container_name: cerebro
-    ports: ['9000:9000']
   elasticsearch:
-    image: 'elasticsearch:latest'
+    image: 'elasticsearch:6.4.1'
     container_name: elasticsearch
     volumes:
       - /Users/bjorn/tmp:/usr/share/elasticsearch/data
     ports: ['9200:9200']
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
   mongodb:
     image: mongo:latest
     container_name: 'mongodb'
     ports:
       - '27017:27017'
     command: mongod --smallfiles --logpath=/dev/null # --quiet
-  filebeat:
-    image: 'docker.elastic.co/beats/filebeat:6.2.4'
-    container_name: 'filebeat'
-    command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+  lumbermill:
+    build: './lumbermill/'
+    container_name: 'lumbermill'
+    command: '/bin/bash -c "while true; do sleep 1; done"'
     volumes:
-      - './filebeat/test.log:/var/log/test.log'
-      - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
+      - $PWD/../:/opt/LumberMill
+    ports:
+      - '5151:5151'
+      - '5252:5252'
+    depends_on:
+      - redis
+      - elasticsearch
+      - mongodb
 
+ # filebeat:
+ #   image: 'docker.elastic.co/beats/filebeat:6.2.4'
+ #   container_name: 'filebeat'
+ #   command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+ #   volumes:
+ #     - './filebeat/test.log:/var/log/test.log'
+ #     - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
  # kafka:
  #   image: "wurstmeister/kafka:latest"
  #   ports:

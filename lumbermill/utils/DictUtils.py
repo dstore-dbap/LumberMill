@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-import copy
 import os
+import sys
+import copy
 import random
+import pprint
 from string import Formatter
 
 from lumbermill.constants import MY_HOSTNAME
@@ -15,47 +17,63 @@ class KeyDotNotationDict(dict):
     "value"
     """
 
-    def __getitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def __getitem__(self, key, item=None):
+        item = item if item is not None else super(KeyDotNotationDict, self)
         if "." not in key:
-            if isinstance(dict_or_list, list):
+            if isinstance(item, list):
                 key = int(key)
-            return dict_or_list.__getitem__(key)
+            try:
+                value = item.__getitem__(key)
+            except (KeyError, IndexError, TypeError, AttributeError):
+                raise KeyError(key)
+            return value
         current_key, remaining_keys = key.split('.', 1)
         try:
-            dict_or_list = dict_or_list.__getitem__(current_key)
+            item = item.__getitem__(current_key)
         except TypeError:
-            dict_or_list = dict_or_list.__getitem__(int(current_key))
-        return self.__getitem__(remaining_keys, dict_or_list)
+            item = item.__getitem__(int(current_key))
+        return self.__getitem__(remaining_keys, item)
 
-    def __setitem__(self, key, value, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def __setitem__(self, key, value, item=None):
+        item = item if item is not None else super(KeyDotNotationDict, self)
         if "." not in key:
-            if isinstance(dict_or_list, list):
+            if isinstance(item, list):
                 key = int(key)
-            return dict_or_list.__setitem__(key, value)
+            try:
+                ret = item.__setitem__(key, value)
+            except (KeyError, IndexError, TypeError, AttributeError):
+                raise KeyError(key)
+            return ret
         current_key, remaining_keys = key.split('.', 1)
-        dict_or_list = dict_or_list.__getitem__(current_key)
-        return self.__setitem__(remaining_keys, value, dict_or_list)
+        item = item.__getitem__(current_key)
+        return self.__setitem__(remaining_keys, value, item)
 
-    def __delitem__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def __delitem__(self, key, item=None):
+        item = item if item is not None else super(KeyDotNotationDict, self)
         if "." not in key:
-            if isinstance(dict_or_list, list):
+            if isinstance(item, list):
                 key = int(key)
-            return dict_or_list.__delitem__(key)
+            try:
+                ret = item.__delitem__(key)
+            except (KeyError, IndexError, TypeError, AttributeError):
+                raise KeyError(key)
+            return ret
         current_key, remaining_keys = key.split('.', 1)
-        dict_or_list = dict_or_list.__getitem__(current_key)
-        return self.__delitem__(remaining_keys, dict_or_list)
+        item = item.__getitem__(current_key)
+        return self.__delitem__(remaining_keys, item)
 
-    def __contains__(self, key, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def __contains__(self, key, item=None):
+        item = item if item is not None else super(KeyDotNotationDict, self)
         if "." not in key:
-            return dict_or_list.__contains__(key)
+            try:
+                value = item.__contains__(key)
+            except (KeyError, IndexError, TypeError, AttributeError):
+                raise KeyError(key)
+            return value
         current_key, remaining_keys = key.split('.', 1)
         try:
-            dict_or_list = dict_or_list.__getitem__(current_key)
-            return self.__contains__(remaining_keys, dict_or_list)
+            item = item.__getitem__(current_key)
+            return self.__contains__(remaining_keys, item)
         except KeyError:
             return False
 
@@ -81,37 +99,37 @@ class KeyDotNotationDict(dict):
             except KeyError:
                 raise e
 
-    def __get(self, key, default, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def __get(self, key, default, item=None):
+        item = item if item else super(KeyDotNotationDict, self)
         if "." not in key:
-            if not isinstance(dict_or_list, list):
-                return dict_or_list.get(key, default)
+            if not isinstance(item, list):
+                return item.get(key, default)
             else:
                 try:
-                    return dict_or_list[int(key)]
+                    return item[int(key)]
                 except KeyError:
                     return default
         current_key, remaining_keys = key.split('.', 1)
         try:
-            dict_or_list = dict_or_list.__getitem__(current_key)
-            return self.get(remaining_keys, default, dict_or_list)
+            item = item.__getitem__(current_key)
+            return self.get(remaining_keys, default, item)
         except KeyError:
             return default
 
-    def pop(self, key, default=None, dict_or_list=None):
-        dict_or_list = dict_or_list if dict_or_list else super(KeyDotNotationDict, self)
+    def pop(self, key, default=None, item=None):
+        item = item if item else super(KeyDotNotationDict, self)
         if "." not in key:
-            if not isinstance(dict_or_list, list):
-                return dict_or_list.pop(key, default)
+            if not isinstance(item, list):
+                return item.pop(key, default)
             else:
                 try:
-                    return dict_or_list[int(key)]
+                    return item[int(key)]
                 except KeyError:
                     return default
         current_key, remaining_keys = key.split('.', 1)
         try:
-            dict_or_list = dict_or_list.__getitem__(current_key)
-            return self.pop(remaining_keys, default, dict_or_list)
+            item = item.__getitem__(current_key)
+            return self.pop(remaining_keys, default, item)
         except KeyError:
             return default
 

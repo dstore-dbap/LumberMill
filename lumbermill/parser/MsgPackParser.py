@@ -52,9 +52,10 @@ class MsgPackParser(BaseThreadedModule):
 
     def decodeEventStream(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
+            try:
+                self.unpacker.feed(event[source_field])
+            except KeyError:
                 continue
-            self.unpacker.feed(event[source_field])
             # If decoded data contains more than one event, we need to clone all events but the first one.
             # Otherwise we will have multiple events with the same event_id.
             # KeyDotNotationDict.copy method will take care of creating a new event id.
@@ -66,7 +67,7 @@ class MsgPackParser(BaseThreadedModule):
                 if self.drop_original:
                     event.pop(source_field, None)
                 if self.target_field:
-                    event.update({self.target_field: decoded_data})
+                    event[self.target_field] = decoded_data
                 else:
                     try:
                         event.update(decoded_data)
@@ -77,10 +78,10 @@ class MsgPackParser(BaseThreadedModule):
 
     def decodeEventLine(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
-                continue
             try:
                 decoded_data = msgpack.unpackb(event[source_field])
+            except KeyError:
+                continue
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Could not parse msgpack event data: %s. Exception: %s, Error: %s." % (event[source_field], etype, evalue))
@@ -103,9 +104,10 @@ class MsgPackParser(BaseThreadedModule):
         else:
             encode_data = {}
             for source_field in self.source_fields:
-                if source_field not in event:
+                try:
+                    encode_data[source_field] = event[source_field]
+                except KeyError:
                     continue
-                encode_data[source_field] = event[source_field]
                 if self.drop_original:
                     event.pop(source_field, None)
         try:

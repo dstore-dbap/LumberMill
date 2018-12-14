@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import time
+import socket
 import psutil
 import datetime
 from collections import defaultdict
@@ -90,6 +92,9 @@ class SimpleStats(BaseThreadedModule):
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
         events_received = self.mp_stats_collector.getCounter('events_received')
+        # If LumberMill is shutting down and running with multiple processes, we might end up with an empty return value.
+        if not events_received:
+            return
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), AnsiColors.YELLOW, events_received, (events_received/self.interval), AnsiColors.ENDC))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "receiverate_stats", "receiverate_count": events_received, "receiverate_count_per_sec": int((events_received/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
@@ -98,16 +103,24 @@ class SimpleStats(BaseThreadedModule):
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
-        for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
-            if not event_type.startswith('event_type_'):
-                continue
-            count = self.mp_stats_collector.getCounter(event_type)
-            event_name = event_type.replace('event_type_', '').lower()
-            self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
-            if self.emit_as_event:
-                self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
-            self.mp_stats_collector.setCounter("last_%s" % event_type, count)
-            self.mp_stats_collector.resetCounter(event_type)
+        try:
+            for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
+                if not event_type.startswith('event_type_'):
+                    continue
+                count = self.mp_stats_collector.getCounter(event_type)
+                event_name = event_type.replace('event_type_', '').lower()
+                self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
+                if self.emit_as_event:
+                    self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
+                self.mp_stats_collector.setCounter("last_%s" % event_type, count)
+                self.mp_stats_collector.resetCounter(event_type)
+        except socket.error:
+            # socket.error: [Errno 2] No such file or directory may be thrown when exiting lumbermill via CTRL+C. Ignore it
+            etype, evalue, etb = sys.exc_info()
+            if "No such file or directory" in evalue:
+                pass
+            else:
+                raise etype, evalue, etb
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
@@ -123,9 +136,9 @@ class SimpleStats(BaseThreadedModule):
                 self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "queue_stats", "count": queue.qsize(), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
 
     def processStatistics(self):
-        stats_event = {"stats_type": "process_stats", "timestamp": time.time()}
-        stats_event["worker_count"] = len(self.lumbermill.child_processes) + 1
-        stats_event["uptime"] = int(time.time() - self.psutil_processes[0].create_time())
+        stats_event = {"stats_type": "process_stats", "timestamp": time.time(),
+                       "worker_count": len(self.lumbermill.child_processes) + 1,
+                       "uptime": int(time.time() - self.psutil_processes[0].create_time())}
         self.logger.info(">> Process stats")
         self.logger.info("num workers: %d" % (len(self.lumbermill.child_processes)+1))
         self.logger.info("started: %s" % datetime.datetime.fromtimestamp(self.psutil_processes[0].create_time()).strftime("%Y-%m-%d %H:%M:%S"))
@@ -154,6 +167,32 @@ class SimpleStats(BaseThreadedModule):
             self.logger.info("%s: %s" % (agg_metric_name, agg_metric_value))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict(aggregated_metrics, caller_class_name="Statistics", event_type="statistic"))
+
+    def getProcessStatistics(self):
+        stats = {"timestamp": time.time(),
+                 "worker_count": len(self.lumbermill.child_processes) + 1,
+                 "uptime": int(time.time() - self.psutil_processes[0].create_time())}
+        aggregated_metrics = defaultdict(int)
+        for psutil_process in self.psutil_processes:
+            stats["pid"] = psutil_process.pid
+            for metric_name, metric_value in psutil_process.as_dict(self.process_statistics).iteritems():
+                # Call metric specific method if it exists.
+                if "convertMetric_%s" % metric_name in self.methods:
+                    metric_name, metric_value = getattr(self, "convertMetric_%s" % self.action)(metric_name, metric_value)
+                try:
+                    aggregated_metrics[metric_name] += metric_value
+                except TypeError:
+                    try:
+                        metric_value = dict(metric_value.__dict__)
+                    except:
+                        pass
+                    try:
+                        stats[metric_name].append(metric_value)
+                    except KeyError:
+                        stats[metric_name] = [metric_value]
+        for agg_metric_name, agg_metric_value in aggregated_metrics.iteritems():
+            stats[agg_metric_name] = agg_metric_value
+        return stats
 
     def getLastReceiveCount(self):
         try:

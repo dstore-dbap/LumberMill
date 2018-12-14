@@ -1,24 +1,27 @@
 # -*- coding: utf-8 -*-
 import base64
+from bs4 import UnicodeDammit
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
-class Base64Parser(BaseThreadedModule):
+class StringEncodingParser(BaseThreadedModule):
     r"""
-    This module will let you en/decode base64 data.
+    This module will let you en/decode different string encodings.
 
-    source_fields:  Input fields to split. Can be a single field or a list of fields.
-    target_fields:   event field to be filled with the new data.
+    TODO: THIS MODULE IS ONLY A STUB....
+
+    source_fields:  Input fields to en/decode. Can be a single field or a list of fields.
+    target_fields:  Event field to be filled with the new data.
 
     Configuration template:
 
-    - LineParser:
+    - StringEncodingParser:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
-       source_field:                    # <default: 'data'; type: string||list; is: optional>
-       target_field:                    # <default: 'data'; type:string; is: optional>
+       source_fields:                   # <default: 'data'; type: string||list; is: optional>
+       target_fields:                   # <default: 'data'; type:string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
        receivers:
         - NextModule
@@ -30,15 +33,15 @@ class Base64Parser(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
-        self.source_field = self.getConfigurationValue('source_field')
-        self.target_field = self.getConfigurationValue('target_field')
+        self.source_fields = self.getConfigurationValue('source_fields')
+        self.target_fields = self.getConfigurationValue('target_fields')
         self.drop_original = not self.getConfigurationValue('keep_original')
         if self.getConfigurationValue('action') == 'decode':
-            self.handleEvent = self.decodeBase64
+            self.handleEvent = self.decode
         else:
-            self.handleEvent = self.encodeBase64
+            self.handleEvent = self.encode
 
-    def decodeBase64(self, event):
+    def decode(self, event):
         if self.source_field in event:
             decoded_dataset = base64.b64decode(event[self.source_field])
             if self.drop_original:
@@ -46,7 +49,7 @@ class Base64Parser(BaseThreadedModule):
             event[self.target_field] = decoded_dataset
         yield event
 
-    def encodeBase64(self, event):
+    def encode(self, event):
         if self.source_field in event:
             encoded_dataset = base64.b64encode(event[self.source_field])
             if self.drop_original:

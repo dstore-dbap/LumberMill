@@ -57,16 +57,18 @@ class UserAgentParser(BaseThreadedModule):
 
     def handleEvent(self, event):
         for source_field in self.source_fields:
-            if source_field not in event:
+            try:
+                ua_string = event[source_field]
+            except KeyError:
                 continue
             # Try to get it from cache.
             try:
-                ua_info = self.in_mem_cache.get(event[source_field])
+                ua_info = self.in_mem_cache.get(ua_string)
             except KeyError:
                 # Drop the 'string' field to avoid duplicate data.
-                ua_info = user_agent_parser.Parse(event[source_field])
+                ua_info = user_agent_parser.Parse(ua_string)
                 if 'string' in ua_info:
                     ua_info.pop('string')
-                self.in_mem_cache.set(event[source_field], ua_info)
+                self.in_mem_cache.set(ua_string, ua_info)
             event[self.target_field] = ua_info
         yield event

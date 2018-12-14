@@ -4,7 +4,8 @@ WORKDIR /opt/LumberMill
 
 COPY requirements.txt ./
 COPY requirements-pypy.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt \
  && pip install --no-cache-dir -r requirements-pypy.txt \
  && rm -f /opt/LumberMill/requirements.txt \
  && rm -f /opt/LumberMill/requirements-pypy.txt \

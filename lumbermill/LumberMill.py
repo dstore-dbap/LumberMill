@@ -436,7 +436,7 @@ class LumberMill():
         self.runModules()
         if self.is_master():
             self.logger.info("LumberMill started with %s processes(%s)." % (len(self.child_processes) + 1, os.getpid()))
-        tornado.ioloop.IOLoop.instance().start()
+            tornado.ioloop.IOLoop.instance().start()
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):

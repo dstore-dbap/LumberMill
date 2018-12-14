@@ -1,6 +1,7 @@
 import os
 import time
 import mock
+import pprint
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
@@ -47,6 +48,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
+        pprint.pprint(events)
         self.assertEquals(len(events), 3)
 
     def testMergeEventWithNonMatchingLines(self):
@@ -99,8 +101,24 @@ java.lang.IllegalArgumentException: no category found for name: en
         for input_line in example_input_data.split("\n"):
             event = DictUtils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
             self.test_object.receiveEvent(event)
-        time.sleep(1)
+        time.sleep(1.5)
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
         self.assertEquals(len(events), 5)
+
+    def testNewlineEndEvent(self):
+        self.test_object.configure({'pattern': "\n$",
+                                    'pattern_marks': 'EndOfEvent'})
+        self.checkConfiguration()
+        self.test_object.initAfterFork()
+        event = DictUtils.getDefaultEventDict({'data': 'No newline.'}, received_from='TestMergeEvent_%s' % os.getpid())
+        self.test_object.receiveEvent(event)
+        event = DictUtils.getDefaultEventDict({'data': "But now: \n"}, received_from='TestMergeEvent_%s' % os.getpid())
+        self.test_object.receiveEvent(event)
+        time.sleep(1.5)
+        events = []
+        for event in self.receiver.getEvent():
+            events.append(event)
+        self.assertEquals(len(events), 1)
+        self.assertEquals(events[0]['data'], 'No newline.But now: \n')

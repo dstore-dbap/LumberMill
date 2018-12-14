@@ -11,6 +11,7 @@ class TestCache(ModuleBaseTestCase):
     key = u'Gambol'
 
     def setUp(self):
+        self.redis_service = self.getRedisService()
         super(TestCache, self).setUp(Cache.Cache(mock.Mock()))
         try:
             self.test_object.kv_store.delete(self.key)
@@ -42,7 +43,7 @@ class TestCache(ModuleBaseTestCase):
 
     def testRedisBackendSimpleValue(self):
         self.test_object.configure({'backend': 'RedisStore',
-                                    'server': self.configuration['redis']['server']})
+                                    'server': self.redis_service['server']})
         self.checkConfiguration()
         value = 'Putty'
         self.test_object.set(self.key, value)
@@ -50,7 +51,7 @@ class TestCache(ModuleBaseTestCase):
 
     def testRedisBackendPickledValue(self):
         self.test_object.configure({'backend': 'RedisStore',
-                                    'server': self.configuration['redis']['server']})
+                                    'server': self.redis_service['server']})
         self.checkConfiguration()
         value = {'Putty': {'Composer': True}}
         self.test_object.set(self.key, value)
@@ -58,7 +59,7 @@ class TestCache(ModuleBaseTestCase):
 
     def testRedisBackendTtlValue(self):
         self.test_object.configure({'backend': 'RedisStore',
-                                    'server': self.configuration['redis']['server']})
+                                    'server': self.redis_service['server']})
         self.checkConfiguration()
         value = 'Putty'
         self.test_object.set(self.key, value, ttl=1)
@@ -77,7 +78,7 @@ class TestCache(ModuleBaseTestCase):
 
     def testBufferWithBatchSize(self):
         self.test_object.configure({'backend': 'RedisStore',
-                                    'server': self.configuration['redis']['server'],
+                                    'server': self.redis_service['server'],
                                     'batch_size': 10,
                                     'store_interval_in_secs': 60})
         self.checkConfiguration()
@@ -101,7 +102,7 @@ class TestCache(ModuleBaseTestCase):
 
     def testBufferWithInterval(self):
         self.test_object.configure({'backend': 'RedisStore',
-                                    'server': self.configuration['redis']['server'],
+                                    'server': self.redis_service['server'],
                                     'batch_size': 50,
                                     'store_interval_in_secs': 1})
         self.checkConfiguration()

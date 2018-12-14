@@ -12,7 +12,8 @@ class TestMongoDbSink(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestMongoDbSink, self).setUp(MongoDbSink.MongoDbSink(mock.Mock()))
-        self.mongodb_server = '%s:%s' % (self.configuration['mongodb']['server'], self.configuration['mongodb']['port'])
+        mongodb_service = self.getMongoDBService()
+        self.mongodb_server = '%s:%s' % (mongodb_service['server'], mongodb_service['port'])
         self.mongodb = self.connect()
 
     def connect(self):

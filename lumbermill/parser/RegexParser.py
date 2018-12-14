@@ -148,14 +148,15 @@ class RegexParser(BaseThreadedModule):
         """
         When an event type was successfully detected, extract the fields with to corresponding regex pattern.
         """
-        if self.source_field not in event:
+        try:
+            string_to_match = event[self.source_field]
+        except KeyError:
             yield event
             return
         if not isinstance(event[self.source_field], basestring):
             self.logger.warning("Data in event[%s] not of type string. Skipping." % self.source_field)
             yield event
             return
-        string_to_match = event[self.source_field]
         matches_dict = False
         for regex_data in self.fieldextraction_regexpressions:
             event_type = regex_data['event_type']

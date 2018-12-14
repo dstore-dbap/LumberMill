@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-import collections
 import os
 import re
 import sys
+import pprint
+import collections
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -21,14 +22,18 @@ class MergeEvent(BaseThreadedModule):
 
     Each incoming event will be buffered in a queue identified by <buffer_key>.
     If a new event arrives and <pattern> does not match for this event, the event will be appended to the buffer.
-    If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior to appending the event.
+    If a new event arrives and <pattern> matches for this event, the buffer will be flushed prior appending the event.
     After <flush_interval_in_secs> the buffer will also be flushed.
     Flushing the buffer will concatenate all contained event data to form one single new event.
 
     buffer_key: A key to correctly group events.
     buffer_size: Maximum size of events in buffer. If size is exceeded a flush will be executed.
-    flush_interval_in_secs: If interval is reached, buffer will be flushed.
     pattern: Pattern to match new events. If pattern matches, a flush will be executed prior to appending the event to buffer.
+    pattern_marks: Set if the pattern marks the start or the end of an event.
+                   If it marks the start of an event and a new event arrives and <pattern> matches, the buffer will be flushed prior appending the event.
+                   If it marks the end of an event and a new event arrives and <pattern> matches, the buffer will be flushed after appending the event.
+    flush_interval_in_secs: If interval is reached, buffer will be flushed.
+    match_field: Which field to check for the pattern.
     glue: Join event data with glue as separator.
 
     Configuration template:
@@ -36,8 +41,9 @@ class MergeEvent(BaseThreadedModule):
     - MergeEvent:
        buffer_key:                      # <default: "$(lumbermill.received_from)"; type: string; is: optional>
        buffer_size:                     # <default: 100; type: integer; is: optional>
-       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
        pattern:                         # <default: None; type: None||string; is: required if flush_interval_in_secs is None else optional>
+       pattern_marks:                   # <default: 'StartOfEvent'; type: string; values: ['StartOfEvent', 'EndOfEvent'];  is: optional;>
+       flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
        match_field:                     # <default: "data"; type: string; is: optional>
        glue:                            # <default: ""; type: string; is: optional>
        receivers:
@@ -65,6 +71,10 @@ class MergeEvent(BaseThreadedModule):
         self.buffer_size = self.getConfigurationValue('buffer_size')
         self.flush_interval_in_secs = self.getConfigurationValue('flush_interval_in_secs')
         self.glue = self.getConfigurationValue('glue')
+        if self.getConfigurationValue('pattern_marks') == 'StartOfEvent':
+            self.handleEvent = self.handleEventStartPattern
+        else:
+            self.handleEvent = self.handleEventEndPattern
 
     def readLogstashPatterns(self):
         path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
@@ -96,20 +106,25 @@ class MergeEvent(BaseThreadedModule):
     def initAfterFork(self):
         # As the buffer uses a threaded timed function to flush its buffer and thread will not survive a fork, init buffer here.
         self.buffers = collections.defaultdict(lambda: Buffer(flush_size=self.buffer_size,
-                                                                    callback=self.sendMergedEvent,
-                                                                    interval=self.flush_interval_in_secs,
-                                                                    maxsize=self.buffer_size))
+                                                              callback=self.sendMergedEvent,
+                                                              interval=self.flush_interval_in_secs,
+                                                              maxsize=self.buffer_size))
         BaseThreadedModule.initAfterFork(self)
 
-    def handleEvent(self, event):
+    def handleEventStartPattern(self, event):
         key = self.getConfigurationValue("buffer_key", event)
         # No pattern was defined, to merging of event data will only be based on the buffer key.
         if not self.pattern:
             self.buffers[key].append(event)
             yield None
             return
+        try:
+            field_data = event[self.match_field]
+        except KeyError:
+            yield event
+            return
         # If pattern matches create new buffer with current key.
-        if self.pattern.search(event[self.match_field]):
+        if self.pattern.search(field_data):
             # If a buffer with current key exists, flush it before appending again.
             if self.buffers[key].bufsize() > 0:
                 self.buffers[key].flush()
@@ -123,15 +138,33 @@ class MergeEvent(BaseThreadedModule):
         else:
             yield event
 
+    def handleEventEndPattern(self, event):
+        key = self.getConfigurationValue("buffer_key", event)
+        try:
+            field_data = event[self.match_field]
+        except KeyError:
+            yield event
+            return
+        # If pattern matches append to buffer and flush.
+        if self.pattern.search(field_data, re.MULTILINE):
+            self.buffers[key].append(event)
+            self.buffers[key].flush()
+            yield None
+        # Append to existing buffer.
+        else:
+            self.buffers[key].append(event)
+            yield None
+
+
     def sendMergedEvent(self, events):
         if len(events) == 1:
             self.sendEvent(events[0])
             return True
         else:
-            parent_event = events[0]
-            parent_event['data'] = self.glue.join([event["data"] for event in events])
-            caller_class_name = parent_event["lumbermill"].get("source_module", None)
-            received_from = parent_event["lumbermill"].get("received_from", None)
-            merged_event = DictUtils.getDefaultEventDict(parent_event, caller_class_name=caller_class_name, received_from=received_from)
+            root_event = events[0]
+            root_event[self.match_field] = self.glue.join([event[self.match_field] for event in events])
+            caller_class_name = root_event["lumbermill"].get("source_module", None)
+            received_from = root_event["lumbermill"].get("received_from", None)
+            merged_event = DictUtils.getDefaultEventDict(root_event, caller_class_name=caller_class_name, received_from=received_from)
             self.sendEvent(merged_event)
             return True

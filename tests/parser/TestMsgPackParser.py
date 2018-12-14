@@ -78,11 +78,11 @@ class TestMsgPackParser(ModuleBaseTestCase):
         s.sendall(msgpack.packb(orig_event))
         s.close()
         received_event = False
-        time.sleep(.1)
+        time.sleep(.5)
         for received_event in self.receiver.getEvent():
             received_event.pop('lumbermill')
             self.assertDictEqual(received_event, orig_event)
-        self.assertTrue(received_event != False)
+        self.assertTrue(received_event)
 
     def tearDown(self):
         self.tcp_server.shutDown()

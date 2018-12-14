@@ -21,6 +21,7 @@ class TestKeyDotNotationDict(unittest.TestCase):
                  'url': 'GET /wiki/Monty_Python/?spanish=inquisition HTTP/1.0',
                  'fields': ['nobody', 'expects', 'the'],
                  'params':  { u'spanish': [u'inquisition']},
+                 'empty': {},
                  'user': '-'}
         self.event = DictUtils.getDefaultEventDict(event)
 
@@ -38,3 +39,14 @@ class TestKeyDotNotationDict(unittest.TestCase):
         self.assertTrue(self.event.get('lumbermill.missing_key', 'default value') == "default value")
         self.assertTrue(self.event.get('lumbermill.list.2.hovercraft', 'default value') == 'eels')
         self.assertTrue(self.event.get('lumbermill.list.3.hovercraft', 'default value') == 'default value')
+
+    def testSetViaDotAccess(self):
+        self.event['params.nobody'] = 'expects'
+        self.event['empty.nobody'] = 'expects'
+        self.assertRaises(IndexError, self.event.get, 'nobody')
+        self.assertTrue(self.event.get('params.nobody') == 'expects')
+        self.assertTrue(self.event.get('empty.nobody') == 'expects')
+        self.assertTrue(self.event.get('params.spanish.0') == 'inquisition')
+
+    def testInStringFails(self):
+        print(self.event['http_status.faller'])

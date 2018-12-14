@@ -18,7 +18,7 @@ class TestAddDateTime(ModuleBaseTestCase):
             self.assert_(re.match('^\d+-\d+-\d+T\d+:\d+:\d+$', event['@timestamp'])) # 2013-08-29T10:25:26
 
     def testAddDateTimeCustomFormat(self):
-        self.test_object.configure({'format': '%Y/%M/%d %H.%M.%S'})
+        self.test_object.configure({'target_format': '%Y/%M/%d %H.%M.%S'})
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({})):
             self.assert_(re.match('^\d+/\d+/\d+ \d+.\d+.\d+$', event['@timestamp'])) # 2013/08/29 10.25.26
 
@@ -31,3 +31,10 @@ class TestAddDateTime(ModuleBaseTestCase):
         self.test_object.configure({'target_field': 'test'})
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({})):
             self.assert_('test' in event)
+
+    def testAddDateTimeFromSourceField(self):
+        self.test_object.configure({'source_fields': ['timestamp'],
+                                    'source_formats': ['%Y', '%Y-%m-%dT%H:%M:%S.%fZ']})
+        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'timestamp': '2018-11-07T10:05:07.431Z'})): # -11-07T10:05:07.431Z
+            self.assertTrue('@timestamp' in event)
+            self.assertEqual(event['@timestamp'], '2018-11-07T10:05:07')

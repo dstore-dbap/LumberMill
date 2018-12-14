@@ -148,14 +148,13 @@ class AsyncRedisClient(object):
     AsyncRedisClient implementation.
     """
 
-    def __init__(self, address, io_loop=None, socket_timeout=10):
+    def __init__(self, address, socket_timeout=10):
         """Creates a AsyncRedisClient.
 
         address is the tuple of redis server address that can be connect by
         IOStream. It can be to ('127.0.0.1', 6379).
         """
         self.address         = address
-        self.io_loop         = io_loop or IOLoop.instance()
         self._callback_queue = deque()
         self._callback       = None
         self._read_buffer    = None
@@ -164,7 +163,7 @@ class AsyncRedisClient(object):
         self.socket.settimeout(socket_timeout)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.stream          = IOStream(self.socket, self.io_loop)
+        self.stream          = IOStream(self.socket)
         self.stream.connect(self.address, self._wait_result)
 
     def close(self):
@@ -225,7 +224,7 @@ class AsyncRedisClient(object):
                 length = int(data[1:])
                 self.stream.read_bytes(length+2, self._on_read_bulk_body)
         elif c == '*':
-            if data[1] in '-0' :
+            if data[1] in '-0':
                 self._maybe_callback()
             else:
                 self._multibulk_number = int(data[1:])

@@ -8,6 +8,7 @@ import logging.config
 import threading
 import unittest
 import mock
+import ServiceDiscovery
 
 sys.path.append('../')
 
@@ -185,6 +186,27 @@ class ModuleBaseTestCase(unittest.TestCase):
         import tornado.ioloop
         tornado.ioloop.IOLoop.instance().stop()
         self.ioloop_thread.stop()
+
+    def getRedisService(self):
+        service = ServiceDiscovery.discover_redis()
+        if service:
+            return service
+        return {'server': self.configuration['redis']['server'],
+                'port': self.configuration['redis']['port']}
+
+    def getElasticSeachService(self):
+        service = ServiceDiscovery.discover_elasticsearch()
+        if service:
+            return service
+        return {'server': self.configuration['elasticsearch']['server'],
+                'port': self.configuration['elasticsearch']['port']}
+
+    def getMongoDBService(self):
+        service = ServiceDiscovery.discover_mongodb()
+        if service:
+            return service
+        return {'server': self.configuration['mongodb']['server'],
+                'port': self.configuration['mongodb']['port']}
 
     """
     def testQueueCommunication(self, config = {}):

@@ -11,8 +11,9 @@ class TestRedisList(ModuleBaseTestCase):
 
     def setUp(self):
         super(TestRedisList, self).setUp(RedisList.RedisList(mock.Mock()))
-        self.redis_host = self.configuration['redis']['server']
-        self.redis_port = self.configuration['redis']['port']
+        redis_service = self.getRedisService()
+        self.redis_host = redis_service['server']
+        self.redis_port = redis_service['port']
         try:
             self.client = redis.Redis(host=self.redis_host, port=self.redis_port)
         except:
@@ -33,7 +34,8 @@ class TestRedisList(ModuleBaseTestCase):
     """
     def test(self):
         self.test_object.configure({'lists': ['TestList'],
-                                    'server': 'localhost'})
+                                    'server': self.redis_host,
+                                    'port': self.redis_port})
         self.checkConfiguration()
         self.test_object.start()
         data = "It's my belief that these sheep are laborin' under the misapprehension that they're birds."

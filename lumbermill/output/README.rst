@@ -109,21 +109,20 @@ Send metrics to graphite server.
 
 Here a simple example to send http_status statistics to graphite:
 
-...
+::
 
-- Statistics:
-interval: 10
-fields: ['http_status']
+    - Statistics:
+        interval: 10
+        fields: ['http_status']
 
-- GraphiteSink:
-filter: if $(field_name) == "http_status"
-server: 127.0.0.1
-batch_size: 1
-formats: ['lumbermill.stats.http_200_$(interval)s $(field_counts.200)',
-'lumbermill.stats.http_400_$(interval)s $(field_counts.400)',
-'lumbermill.stats.http_total_$(interval)s $(total_count)']
+    - GraphiteSink:
+        filter: if $(field_name) == "http_status"
+        server: 127.0.0.1
+        batch_size: 1
+        formats: ['lumbermill.stats.http_200_$(interval)s $(field_counts.200)',
+                  'lumbermill.stats.http_400_$(interval)s $(field_counts.400)',
+                  'lumbermill.stats.http_total_$(interval)s $(total_count)']
 
-...
 
 Configuration template:
 
@@ -212,9 +211,6 @@ Configuration template:
        db:                              # <default: 0; type: integer; is: optional>
        password:                        # <default: None; type: None||string; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
-       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
-       batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 5000; type: integer; is: optional>
 
 
 RedisListSink
@@ -290,6 +286,7 @@ StdOutSink
 Print the data dictionary to stdout.
 
 | **pretty_print**:  Use pythons pprint function.
+| **fields**: Set event fields to include in pretty print output.
 | **format**:  Format of messages to send to graphite, e.g.: ['lumbermill.stats.event_rate_$(interval)s $(event_rate)'].
 
 Configuration template:
@@ -298,6 +295,7 @@ Configuration template:
 
     - StdOutSink:
        pretty_print:                    # <default: True; type: boolean; is: optional>
+       fields:                          # <default: None; type: None||list; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
 
 
