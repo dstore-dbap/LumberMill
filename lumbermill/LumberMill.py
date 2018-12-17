@@ -372,7 +372,7 @@ class LumberMill():
         return module_queues
 
     def getInternalDataStore(self):
-        return self.internal_datastore;
+        return self.internal_datastore
 
     def setInInternalDataStore(self, key, value):
         # TODO: Come up with a better way of sharing data between modules and filters.
@@ -428,9 +428,12 @@ class LumberMill():
         # multiple processes under pypy.
         # Register SIGINT to call shutDown for all processes.
         signal.signal(signal.SIGINT, self.shutDown)
+        signal.signal(signal.SIGTERM, self.shutDown)
+        signal.signal(signal.SIGQUIT, self.shutDown)
         if self.is_master():
             # Register SIGALARM only for master process. This will take care to kill all subprocesses.
             signal.signal(signal.SIGALRM, self.restart)
+            signal.signal(signal.SIGHUP, self.restart)
         self.alive = True
         self.initModulesAfterFork()
         self.runModules()
