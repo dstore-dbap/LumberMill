@@ -416,7 +416,7 @@ class LumberMill():
         self.runWorkers()
 
     def runWorkers(self):
-        for i in range(1, self.global_configuration['workers']):
+        for _ in range(1, self.global_configuration['workers']):
             worker = multiprocessing.Process(target=self.run)
             worker.start()
             self.child_processes.append(worker)
@@ -426,12 +426,12 @@ class LumberMill():
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
-        # Register SIGINT to call shutDown for all processes.
+        # Register SIGINT to call shutDown, this will take care to kill all subprocesses.
         signal.signal(signal.SIGINT, self.shutDown)
         signal.signal(signal.SIGTERM, self.shutDown)
         signal.signal(signal.SIGQUIT, self.shutDown)
         if self.is_master():
-            # Register SIGALARM only for master process. This will take care to kill all subprocesses.
+            # Register SIGALARM and SIGHUP to call restart only in master process.
             signal.signal(signal.SIGALRM, self.restart)
             signal.signal(signal.SIGHUP, self.restart)
         self.alive = True
@@ -452,19 +452,19 @@ class LumberMill():
         restartMainProcess()
 
     def shutDown(self, signum=False, frame=False):
-        if self.is_master():
-            self.logger.info("Shutting down LumberMill.")
-            # Send SIGINT to workers for good measure.
-            for worker in list(self.child_processes):
-                os.kill(worker.pid, signal.SIGINT)
-        if not self.alive:
-            sys.exit(0)
         self.alive = False
         self.shutDownModules()
+        self.internal_datastore.shutDown()
+        if not self.is_master():
+            return
+        self.logger.info("Shutting down LumberMill.")
+        for worker in list(self.child_processes):
+            # Send SIGINT to workers.
+            os.kill(worker.pid, signal.SIGSTOP)
         TimedFunctionManager.stopTimedFunctions()
         tornado.ioloop.IOLoop.instance().stop()
-        if self.is_master():
-            self.logger.info("Shutdown complete.")
+        self.logger.info("Shutdown complete.")
+        os.kill(self.getMainProcessId(), signal.SIGSTOP) 
 
     def shutDownModules(self):
         # Shutdown all input modules.
