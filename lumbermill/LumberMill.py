@@ -80,6 +80,7 @@ class LumberMill():
         success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
         if not success:
             self.shutDown()
+        self.ioloop = tornado.ioloop.IOLoop.current()
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
@@ -372,7 +373,7 @@ class LumberMill():
         return module_queues
 
     def getInternalDataStore(self):
-        return self.internal_datastore
+        return self.internal_datastore;
 
     def setInInternalDataStore(self, key, value):
         # TODO: Come up with a better way of sharing data between modules and filters.
@@ -416,7 +417,7 @@ class LumberMill():
         self.runWorkers()
 
     def runWorkers(self):
-        for _ in range(1, self.global_configuration['workers']):
+        for i in range(1, self.global_configuration['workers']):
             worker = multiprocessing.Process(target=self.run)
             worker.start()
             self.child_processes.append(worker)
@@ -426,20 +427,20 @@ class LumberMill():
         # Catch Keyboard interrupt here. Catching the signal seems
         # to be more reliable then using try/except when running
         # multiple processes under pypy.
-        # Register SIGINT to call shutDown, this will take care to kill all subprocesses.
+        # Register SIGINT to call shutDown for all processes.
         signal.signal(signal.SIGINT, self.shutDown)
-        signal.signal(signal.SIGTERM, self.shutDown)
-        signal.signal(signal.SIGQUIT, self.shutDown)
         if self.is_master():
-            # Register SIGALARM and SIGHUP to call restart only in master process.
+            # Register SIGTERM for master process. If we not catch it here, a kill <MASTER_PID> will kill the master,
+            # but child process will still be running. E.g. supervisor uses this to restart a service by default.
+            signal.signal(signal.SIGTERM, self.shutDown)
+            # Register SIGALARM only for master process. This will take care to kill all subprocesses.
             signal.signal(signal.SIGALRM, self.restart)
-            signal.signal(signal.SIGHUP, self.restart)
         self.alive = True
         self.initModulesAfterFork()
         self.runModules()
         if self.is_master():
             self.logger.info("LumberMill started with %s processes(%s)." % (len(self.child_processes) + 1, os.getpid()))
-            tornado.ioloop.IOLoop.instance().start()
+            self.ioloop.start()
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):
@@ -452,19 +453,20 @@ class LumberMill():
         restartMainProcess()
 
     def shutDown(self, signum=False, frame=False):
+        if self.is_master():
+            self.logger.info("Shutting down LumberMill.")
+            # Send SIGINT to workers for good measure.
+            for worker in list(self.child_processes):
+                os.kill(worker.pid, signal.SIGINT)
+        if not self.alive:
+            sys.exit(0)
         self.alive = False
         self.shutDownModules()
-        self.internal_datastore.shutDown()
-        if not self.is_master():
-            return
-        self.logger.info("Shutting down LumberMill.")
-        for worker in list(self.child_processes):
-            # Send SIGINT to workers.
-            os.kill(worker.pid, signal.SIGSTOP)
         TimedFunctionManager.stopTimedFunctions()
-        tornado.ioloop.IOLoop.instance().stop()
-        self.logger.info("Shutdown complete.")
-        os.kill(self.getMainProcessId(), signal.SIGSTOP) 
+        if self.is_master():
+            self.internal_datastore.shutDown()
+            self.logger.info("Shutdown complete.")
+            self.ioloop.stop()
 
     def shutDownModules(self):
         # Shutdown all input modules.

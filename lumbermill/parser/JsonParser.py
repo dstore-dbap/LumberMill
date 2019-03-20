@@ -103,9 +103,7 @@ class JsonParser(BaseThreadedModule):
                     self.logger.warning("Could not json decode event.%s: %s. Exception: %s, Error: %s." % (source_field, json_string, etype, evalue))
                     self.logger.warning("Maybe your json string contains single quotes?")
                     continue
-            if not isinstance(decoded_datasets, dict) and not isinstance(decoded_datasets, list):
-                continue
-            if isinstance(decoded_datasets, dict):
+            if not isinstance(decoded_datasets, list):
                 decoded_datasets = [decoded_datasets]
             copy_event = False
             for decoded_data in decoded_datasets:

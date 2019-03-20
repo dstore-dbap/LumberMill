@@ -16,7 +16,7 @@ services:
       - /Users/bjorn/tmp:/usr/share/elasticsearch/data
     ports: ['9200:9200']
     environment:
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ES_JAVA_OPTS: -Xms512m -Xmx512m 
   mongodb:
     image: mongo:latest
     container_name: 'mongodb'
@@ -37,13 +37,13 @@ services:
       - elasticsearch
       - mongodb
 
- # filebeat:
- #   image: 'docker.elastic.co/beats/filebeat:6.2.4'
- #   container_name: 'filebeat'
- #   command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
- #   volumes:
+  filebeat:
+    image: 'docker.elastic.co/beats/filebeat:6.2.4'
+    container_name: 'filebeat'
+    command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+    volumes:
  #     - './filebeat/test.log:/var/log/test.log'
- #     - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
+      - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
  # kafka:
  #   image: "wurstmeister/kafka:latest"
  #   ports:

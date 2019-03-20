@@ -80,6 +80,7 @@ class TestMsgPackParser(ModuleBaseTestCase):
         received_event = False
         time.sleep(.5)
         for received_event in self.receiver.getEvent():
+            print("asdads")
             received_event.pop('lumbermill')
             self.assertDictEqual(received_event, orig_event)
         self.assertTrue(received_event)

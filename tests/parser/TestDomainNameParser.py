@@ -17,6 +17,6 @@ class TestDomainNameParser(ModuleBaseTestCase):
         self.checkConfiguration()
         payload = 'http://the.sheep.co.uk'
         data = DictUtils.getDefaultEventDict({'url': payload})
-        expected_result = {'domain': u'sheep', 'subdomain': u'the', 'suffix': u'co.uk', 'tld': u'sheep.co.uk'}
+        expected_result = {'domain': u'sheep', 'subdomain': u'the', 'suffix': u'co.uk', 'tld': u'co.uk'}
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['url_tld_data'] == expected_result)

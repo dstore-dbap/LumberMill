@@ -1,0 +1,62 @@
+# Global requirements
+importlib
+crypto>=1.0.0
+pylru>=1.0.0
+PyYAML>=2.0.0
+redis>=1.0.0
+hiredis>=0.1.0
+simplekv>=0.5.0
+tornado>=5.1.0
+pyzmq>=10.0.0
+psutil
+bs4
+
+# ElasticSearchSink
+elasticsearch>=2.1.0
+
+# ModifyFields
+mmh3>=2.0.0
+
+# MsgPackParser
+msgpack-python>=0.4.0
+
+# AddGeoInfo
+geoip2>=2.3.0
+
+# UserAgentParser
+ua-parser>=0.5.0
+
+# XPathParser
+# Need to switch to another parser, lxml seems to be incompatible with pypy4.
+#lxml
+
+# Kafka input/output
+kafka-python>=0.8.0
+
+# Sniffer, disabled.
+# pcapy
+# netifaces
+
+# AddDnsLookup
+dnspython>=1.0.0
+
+# DomainNameParser
+tld>=0.5.0
+
+# MongoDbSink
+pymongo>=3.0.0
+
+# AWS Services
+boto3>=1.1.0
+
+# File
+glob2>=0.3
+
+# DateTimeParser
+pytz
+
+# ZabbixSink
+py-zabbix>=1.1.1
+
+# WebGui
+Pygments>=2.0.0

@@ -20,7 +20,6 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            print(event)
             self.assertTrue(event['host'] == '85.214.142.46')
         self.assertIsNotNone(event)
 

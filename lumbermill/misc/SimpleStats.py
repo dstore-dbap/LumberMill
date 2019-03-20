@@ -136,9 +136,9 @@ class SimpleStats(BaseThreadedModule):
                 self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "queue_stats", "count": queue.qsize(), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
 
     def processStatistics(self):
-        stats_event = {"stats_type": "process_stats", "timestamp": time.time(),
-                       "worker_count": len(self.lumbermill.child_processes) + 1,
-                       "uptime": int(time.time() - self.psutil_processes[0].create_time())}
+        stats_event = {"stats_type": "process_stats", "timestamp": time.time()}
+        stats_event["worker_count"] = len(self.lumbermill.child_processes) + 1
+        stats_event["uptime"] = int(time.time() - self.psutil_processes[0].create_time())
         self.logger.info(">> Process stats")
         self.logger.info("num workers: %d" % (len(self.lumbermill.child_processes)+1))
         self.logger.info("started: %s" % datetime.datetime.fromtimestamp(self.psutil_processes[0].create_time()).strftime("%Y-%m-%d %H:%M:%S"))
@@ -167,32 +167,6 @@ class SimpleStats(BaseThreadedModule):
             self.logger.info("%s: %s" % (agg_metric_name, agg_metric_value))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict(aggregated_metrics, caller_class_name="Statistics", event_type="statistic"))
-
-    def getProcessStatistics(self):
-        stats = {"timestamp": time.time(),
-                 "worker_count": len(self.lumbermill.child_processes) + 1,
-                 "uptime": int(time.time() - self.psutil_processes[0].create_time())}
-        aggregated_metrics = defaultdict(int)
-        for psutil_process in self.psutil_processes:
-            stats["pid"] = psutil_process.pid
-            for metric_name, metric_value in psutil_process.as_dict(self.process_statistics).iteritems():
-                # Call metric specific method if it exists.
-                if "convertMetric_%s" % metric_name in self.methods:
-                    metric_name, metric_value = getattr(self, "convertMetric_%s" % self.action)(metric_name, metric_value)
-                try:
-                    aggregated_metrics[metric_name] += metric_value
-                except TypeError:
-                    try:
-                        metric_value = dict(metric_value.__dict__)
-                    except:
-                        pass
-                    try:
-                        stats[metric_name].append(metric_value)
-                    except KeyError:
-                        stats[metric_name] = [metric_value]
-        for agg_metric_name, agg_metric_value in aggregated_metrics.iteritems():
-            stats[agg_metric_name] = agg_metric_value
-        return stats
 
     def getLastReceiveCount(self):
         try:

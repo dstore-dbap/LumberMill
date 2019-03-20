@@ -40,13 +40,13 @@ class TestModuleFilters(tests.ModuleBaseTestCase.ModuleBaseTestCase):
             self.assertTrue(event['test'] == 10)
 
     def testInputFilterOnNonExistingField(self):
-        self.test_object.configure({'filter': 'if $() == "StdIn" and $(lumbermill.list.2.hovercraft) == "eels"',
+        self.test_object.configure({'filter': 'if $(noone.expects.the.spanish.inquisition) == "StdIn" and $(lumbermill.list.2.hovercraft) == "eels"',
                                     'target_field': 'test',
                                     'function': 'int($(cache_hits)) * 2'})
         self.checkConfiguration()
         self.test_object.receiveEvent(self.event)
         for event in self.receiver.getEvent():
-            self.assertTrue(event['test'] == 10)
+            self.assertTrue('test' not in event)
 
 
     @unittest.skip("Some methodcalls are still failing due to problems with regex. Work in progress.")
