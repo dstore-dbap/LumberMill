@@ -109,7 +109,7 @@ class LumberMill():
         try:
             with open(path_to_config_file, "r") as configuration_file:
                 self.raw_conf_file = configuration_file.read()
-            configuration = yaml.load(self.raw_conf_file)
+            configuration = yaml.safe_load(self.raw_conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
@@ -467,11 +467,13 @@ class LumberMill():
         self.alive = False
         self.shutDownModules()
         TimedFunctionManager.stopTimedFunctions()
+        tornado.ioloop.IOLoop.current().stop()
         if self.is_master():
             if self.internal_datastore:
                 self.internal_datastore.shutDown()
             self.logger.info("Shutdown complete.")
-            tornado.ioloop.IOLoop.current().stop()
+        sys.exit(0)
+
 
     def shutDownModules(self):
         # Shutdown all input modules.
