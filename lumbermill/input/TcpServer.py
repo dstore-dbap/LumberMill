@@ -183,6 +183,7 @@ class TcpServer(BaseModule):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not add sockets to forked server process: Exception: %s, Error: %s." % (etype, evalue))
+            self.shutDown()
 
     def shutDown(self):
         self.server.stop()
