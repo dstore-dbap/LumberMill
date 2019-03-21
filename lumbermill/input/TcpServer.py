@@ -1,96 +1,93 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 import ssl
 import time
 import socket
 import logging
-import exceptions
+import tornado.gen
+import tornado.ioloop
 
 from tornado import autoreload
-from tornado.iostream import StreamClosedError
 from tornado.netutil import bind_sockets
 from tornado.tcpserver import TCPServer
+from tornado.iostream import StreamClosedError
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.BaseModule import BaseModule
 from lumbermill.utils.Decorators import ModuleDocstringParser
 
-
 class TornadoTcpServer(TCPServer):
 
-    def __init__(self, io_loop=None, ssl_options=None, gp_module=False, **kwargs):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.gp_module = gp_module
-        try:
-            TCPServer.__init__(self, ssl_options=ssl_options, **kwargs)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not create tcp server. Exception: %s, Error: %s." % (etype, evalue))
-            self.gp_module.shutDown()
-    def handle_stream(self, stream, address):
-        ConnectionHandler(stream, address, self.gp_module)
-
-class ConnectionHandler(object):
-
-    def __init__(self, stream, address, gp_module):
+    def __init__(self, ssl_options=None, gp_module=False, **kwargs):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.gp_module = gp_module
         self.simple_separator = self.gp_module.getConfigurationValue('simple_separator')
         self.regex_separator = self.gp_module.getConfigurationValue('regex_separator')
         self.chunksize = self.gp_module.getConfigurationValue('chunksize')
         self.mode = self.gp_module.getConfigurationValue('mode')
-        self.is_open = True
+        try:
+            TCPServer.__init__(self, ssl_options=ssl_options, **kwargs)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not create tcp server. Exception: %s, Error: %s." % (etype, evalue))
+            self.gp_module.shutDown()
+
+    @tornado.gen.coroutine
+    def handle_stream(self, stream, address):
+        while True:
+            try:
+                if not stream.closed():
+                    ch = ConnectionHandler(stream, address, self.gp_module)
+                    if self.mode == 'line' and self.regex_separator:
+                        yield ch.read_until_regex(self.regex_separator)
+                    elif self.mode == 'line':
+                        yield ch.read_until_seperator(self.simple_separator)
+                    else:
+                        yield ch.read_chunk(self.chunksize)
+            except StreamClosedError:
+                break
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not read from socket %s. Exception: %s, Error: %s." % (address, etype, evalue))
+
+class ConnectionHandler(object):
+
+    def __init__(self, stream, address, gp_module):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.gp_module = gp_module
         self.stream = stream
         self.address = address
         self.host, self.port = self.address[0], self.address[1]
         self.stream.set_close_callback(self._on_close)
-        try:
-            if not self.stream.closed():
-                if self.mode == 'line' and self.regex_separator:
-                    self.stream.read_until_regex(self.regex_separator, self._on_read_line)
-                elif self.mode == 'line':
-                    self.stream.read_until(self.simple_separator, self._on_read_line)
-                else:
-                    self.stream.read_bytes(self.chunksize, self._on_read_chunk)
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
 
-    def _on_read_line(self, data):
+    @tornado.gen.coroutine
+    def read_until_seperator(self, seperator):
+        data = yield self.stream.read_until(seperator)
         data = data.strip()
         if data == "":
             return
         self.sendEvent(data)
-        try:
-            if not self.stream.reading():
-                if self.regex_separator:
-                    self.stream.read_until_regex(self.regex_separator, self._on_read_line)
-                else:
-                    self.stream.read_until(self.simple_separator, self._on_read_line)
-        except StreamClosedError:
-            pass
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Could not read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
 
-    def _on_read_chunk(self, data):
+    @tornado.gen.coroutine
+    def read_until_regex(self, seperator_regex):
+        data = yield self.stream.read_until_regex(seperator_regex)
         data = data.strip()
         if data == "":
             return
         self.sendEvent(data)
-        try:
-            if not self.stream.reading():
-                self.stream.read_bytes(self.chunksize, self._on_read_chunk)
-        except StreamClosedError:
-            pass
-        except:
-            etype, evalue, etb = sys.exc_info()
-            self.logger.error("Failed to read from socket %s. Exception: %s, Error: %s." % (self.address, etype, evalue))
+
+    @tornado.gen.coroutine
+    def read_chunk(self, chunksize):
+        data = yield self.stream.read_bytes(chunksize)
+        if data == "":
+            return
+        self.sendEvent(data)
 
     def _on_close(self):
         # Send remaining buffer if neccessary.
         data = ""
-        if self.mode == 'stream' and self.stream._read_buffer_size > 0:
+        if self.stream and self.stream._read_buffer_size > 0:
             while True:
                 try:
                     data += self.stream._read_buffer.popleft().strip()
@@ -105,6 +102,7 @@ class ConnectionHandler(object):
 
     def sendEvent(self, data):
         self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
+
 
 @ModuleDocstringParser
 class TcpServer(BaseModule):
@@ -153,19 +151,23 @@ class TcpServer(BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.configure(self, configuration)
-        self.server = False
-        self.max_buffer_size = self.getConfigurationValue('max_buffer_size') * 10240 #* 10240
-        self.start_ioloop = False
+        self.alive = True
+        ssl_options = None
+        if self.getConfigurationValue("tls"):
+            ssl_options = {'ssl_version': getattr(ssl, "PROTOCOL_%s" % self.getConfigurationValue("tls_proto")),
+                           'certfile': self.getConfigurationValue("cert"),
+                           'keyfile': self.getConfigurationValue("key")}
+        self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.getConfigurationValue('max_buffer_size') * 10240)
         try:
             self.sockets = bind_sockets(self.getConfigurationValue("port"), self.getConfigurationValue("interface"), backlog=128)
-            for server_socket in self.sockets:
-                server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not listen on %s:%s. Exception: %s, Error: %s." % (self.getConfigurationValue("interface"),
                                                                                         self.getConfigurationValue("port"), etype, evalue))
             self.lumbermill.shutDown()
             return
+        for server_socket in self.sockets:
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         autoreload.add_reload_hook(self.shutDown)
 
     def getStartMessage(self):
@@ -176,19 +178,18 @@ class TcpServer(BaseModule):
 
     def initAfterFork(self):
         BaseModule.initAfterFork(self)
-        ssl_options = None
-        if self.getConfigurationValue("tls"):
-            ssl_options = {'ssl_version': getattr(ssl, "PROTOCOL_%s" % self.getConfigurationValue("tls_proto")),
-                           'certfile': self.getConfigurationValue("cert"),
-                           'keyfile': self.getConfigurationValue("key")}
-        self.server = TornadoTcpServer(ssl_options=ssl_options, gp_module=self, max_buffer_size=self.max_buffer_size)
-        self.server.add_sockets(self.sockets)
+        try:
+            self.server.add_sockets(self.sockets)
+        except:
+            etype, evalue, etb = sys.exc_info()
+            self.logger.error("Could not add sockets to forked server process: Exception: %s, Error: %s." % (etype, evalue))
 
     def shutDown(self):
-        try:
-            self.server.stop()
-            self.sockets.close()
-            # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
-            time.sleep(.2)
-        except AttributeError:
-            pass
+        self.server.stop()
+        for server_socket in self.sockets:
+            try:
+                server_socket.shutdown(socket.SHUT_RDWR)
+            except socket.error:
+                pass
+            server_socket.close()
+

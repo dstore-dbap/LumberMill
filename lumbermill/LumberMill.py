@@ -40,7 +40,7 @@ from utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainP
 from utils.Buffers import BufferedQueue, ZeroMqMpQueue
 from utils.DictUtils import mergeNestedDicts
 from utils.ConfigurationValidator import ConfigurationValidator
-from utils.MultiProcessDataStore import MultiProcessDataStore
+#from utils.MultiProcessDataStore import MultiProcessDataStore
 
 # Conditional imports for python2/3
 try:
@@ -67,7 +67,8 @@ class LumberMill():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
-        self.internal_datastore = MultiProcessDataStore()
+        #self.internal_datastore = MultiProcessDataStore()
+        self.internal_datastore = None
         self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
                                      'queue_size': 20,
                                      'queue_buffer_size': 50,
@@ -80,7 +81,6 @@ class LumberMill():
         success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
         if not success:
             self.shutDown()
-        self.ioloop = tornado.ioloop.IOLoop.current()
 
     def produceQueue(self, queue_type='simple', queue_max_size=20, queue_buffer_size=1):
         """Returns a queue with queue_max_size"""
@@ -382,9 +382,13 @@ class LumberMill():
         # module.<module_name>.get.<key> instead of e.g. internal.<key>
         # This datastore is based on multiprocessing.Manager(), using multiprocessing.Lock() for mp synchronization.
         # So frequent usage of this store might impact performance.
+        if not self.internal_datastore:
+            return False
         self.internal_datastore.setValue(key, value)
 
     def getFromInternalDataStore(self, key, default=None):
+        if not self.internal_datastore:
+            return default
         try:
             return self.internal_datastore.getValue(key)
         except KeyError:
@@ -430,8 +434,8 @@ class LumberMill():
         # Register SIGINT to call shutDown for all processes.
         signal.signal(signal.SIGINT, self.shutDown)
         if self.is_master():
-            # Register SIGTERM for master process. If we not catch it here, a kill <MASTER_PID> will kill the master,
-            # but child process will still be running. E.g. supervisor uses this to restart a service by default.
+            # Register SIGTERM for master process. Otherwise a kill <master pid> will kill the master process
+            # but not the child processes. E.g. supervisord uses this method by default to restart a service.
             signal.signal(signal.SIGTERM, self.shutDown)
             # Register SIGALARM only for master process. This will take care to kill all subprocesses.
             signal.signal(signal.SIGALRM, self.restart)
@@ -440,7 +444,7 @@ class LumberMill():
         self.runModules()
         if self.is_master():
             self.logger.info("LumberMill started with %s processes(%s)." % (len(self.child_processes) + 1, os.getpid()))
-            self.ioloop.start()
+        tornado.ioloop.IOLoop.current().start()
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):
@@ -464,9 +468,10 @@ class LumberMill():
         self.shutDownModules()
         TimedFunctionManager.stopTimedFunctions()
         if self.is_master():
-            self.internal_datastore.shutDown()
+            if self.internal_datastore:
+                self.internal_datastore.shutDown()
             self.logger.info("Shutdown complete.")
-            self.ioloop.stop()
+            tornado.ioloop.IOLoop.current().stop()
 
     def shutDownModules(self):
         # Shutdown all input modules.
