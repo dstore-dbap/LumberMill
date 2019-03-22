@@ -474,7 +474,6 @@ class LumberMill():
             self.logger.info("Shutdown complete.")
         sys.exit(0)
 
-
     def shutDownModules(self):
         # Shutdown all input modules.
         for module_name, module_info in self.modules.items():
