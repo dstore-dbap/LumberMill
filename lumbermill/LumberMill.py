@@ -7,6 +7,7 @@ import os
 import signal
 import sys
 import time
+import exceptions
 from collections import OrderedDict
 
 import tornado.ioloop
@@ -444,7 +445,21 @@ class LumberMill():
         self.runModules()
         if self.is_master():
             self.logger.info("LumberMill started with %s processes(%s)." % (len(self.child_processes) + 1, os.getpid()))
-        tornado.ioloop.IOLoop.current().start()
+        tries = 0
+        while self.alive:
+            # Sometimes tornado throws an obscure <error: [Errno 0] Success> exception self._sslobj.do_handshake().
+            # We try to catch that here and restart the event loop.
+            tries += 1
+            if tries > 3:
+                # Back off if problem does not resove after max tries.
+                self.shutDown()
+            try:
+                tornado.ioloop.IOLoop.current().start()
+            except exceptions.SystemExit:
+                pass
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):
