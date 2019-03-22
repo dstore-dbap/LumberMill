@@ -27,6 +27,27 @@ class TestModifyFields(ModuleBaseTestCase):
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('Name' in event and event['Name'] == 'JohannGambolputty')
 
+    def testUpper(self):
+        self.default_dict['First name'] = 'Johann'
+        self.default_dict['Last name'] = 'Gambolputty'
+        self.test_object.configure({'action': 'upper',
+                                    'source_fields': ['First name', 'Last name']})
+        for event in self.test_object.handleEvent(self.default_dict):
+            import pprint
+            pprint.pprint(event)
+            self.assertTrue('First name' in event and event['First name'] == 'JOHANN')
+            self.assertTrue('Last name' in event and event['Last name'] == 'GAMBOLPUTTY')
+
+    def testLowerWithTargetFields(self):
+        self.default_dict['First name'] = 'Johann'
+        self.default_dict['Last name'] = 'Gambolputty'
+        self.test_object.configure({'action': 'lower',
+                                    'source_fields': ['First name', 'Last name'],
+                                    'target_fields': ['First name lower', 'Last name lower']})
+        for event in self.test_object.handleEvent(self.default_dict):
+            self.assertTrue('First name lower' in event and event['First name lower'] == 'johann')
+            self.assertTrue('Last name lower' in event and event['Last name lower'] == 'gambolputty')
+
     def testInsert(self):
         self.default_dict['First name'] = 'Johann'
         self.default_dict['Last name'] = 'Gambolputty'
