@@ -36,6 +36,22 @@ class ModifyFields(BaseThreadedModule):
        receivers:
         - NextModule
 
+    # Convert all fields to lowercase.
+    - ModifyFields:
+       action: lower                    # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       target_fields:                    # <type: string; is: optional>
+       receivers:
+        - NextModule
+
+    # Convert all fields to uppercase.
+    - ModifyFields:
+       action: upper                    # <type: string; is: required>
+       source_fields:                   # <type: list; is: required>
+       target_fields:                    # <type: string; is: optional>
+       receivers:
+        - NextModule
+
     # Insert a new field with "target_field" name and "value" as new value.
     - ModifyFields:
        action: insert                   # <type: string; is: required>
@@ -312,10 +328,10 @@ class ModifyFields(BaseThreadedModule):
         """
         source = self.source_field if self.source_field else self.source_fields
         target = self.target_field if self.target_field else self.target_fields
-        if source and not target:
-            return "%s: %s" % (self.action, source)
-        elif target and not source:
+        if not source:
             return "%s: %s" % (self.action, target)
+        elif not target:
+            return "%s: %s" % (self.action, source)
         else:
             return "%s: %s => %s" % (self.action, source, target)
 
@@ -394,6 +410,36 @@ class ModifyFields(BaseThreadedModule):
             except KeyError:
                 pass
         event[self.target_field] = concat_str
+        return event
+
+    def lower(self, event):
+        """
+        Field names listed in ['source_fields'] will be converted to a lowercase.
+        The result will be stored in ['target_field']
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        for idx, field in enumerate(self.source_fields):
+            if self.target_fields:
+                event[self.target_fields[idx]] = event[field].lower()
+            else:
+                event[field] = event[field].lower()
+        return event
+
+    def upper(self, event):
+        """
+        Field names listed in ['source_fields'] will be converted to a uppercase.
+        The result will be stored in ['target_field']
+
+        @param event: dictionary
+        @return: event: dictionary
+        """
+        for idx, field in enumerate(self.source_fields):
+            if self.target_fields:
+                event[self.target_fields[idx]] = event[field].upper()
+            else:
+                event[field] = event[field].upper()
         return event
 
     def slice(self, event):

@@ -18,7 +18,7 @@ services:
       - /Users/bjorn/tmp:/usr/share/elasticsearch/data
     ports: ['9200:9200']
     environment:
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ES_JAVA_OPTS: -Xms512m -Xmx512m      
     logging:
       driver: "none"
   mongodb:
@@ -30,7 +30,9 @@ services:
     logging:
       driver: "none"
   lumbermill:
-    build: './lumbermill/'
+    build: 
+      context: lumbermill/
+      dockerfile: dockerfile-develop
     container_name: 'lumbermill'
     command: '/bin/bash -c "/usr/local/bin/pypy /opt/LumberMill/tests/run_tests.py; rm -rf /opt/LumberMill/tests/coverage"'
     volumes:
@@ -42,14 +44,14 @@ services:
       - redis
       - elasticsearch
       - mongodb
+  filebeat:
+    image: 'docker.elastic.co/beats/filebeat:6.2.4'
+    container_name: 'filebeat'
+    command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+    volumes:
+    #  - './filebeat/test.log:/var/log/test.log'
+      - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
 
-  #filebeat:
-  #  image: 'docker.elastic.co/beats/filebeat:6.2.4'
-  #  container_name: 'filebeat'
-  #  command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
-  #  volumes:
-  #    - './filebeat/test.log:/var/log/test.log'
-  #    - './filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml'
   # kafka:
   #   image: "wurstmeister/kafka:latest"
   #   ports:

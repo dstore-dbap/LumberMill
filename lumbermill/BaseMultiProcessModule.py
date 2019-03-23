@@ -87,6 +87,5 @@ class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
             pass
         # Kill self via signal. Otherwise a simple reload will not terminate the worker processes.
         # Why that is escapes me...
-        self.alive = False
         if self.pid:
             os.kill(self.pid, signal.SIGQUIT)

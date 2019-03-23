@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 import ssl
-import time
 import socket
 import logging
-import exceptions
 
 from tornado import autoreload
 from tornado.iostream import StreamClosedError
@@ -185,10 +183,10 @@ class TcpServer(BaseModule):
         self.server.add_sockets(self.sockets)
 
     def shutDown(self):
-        try:
-            self.server.stop()
-            self.sockets.close()
-            # Give os time to free the socket. Otherwise a reload will fail with 'address already in use'
-            time.sleep(.2)
-        except AttributeError:
-            pass
+        self.server.stop()
+        for server_socket in self.sockets:
+            try:
+                server_socket.shutdown(socket.SHUT_RDWR)
+            except socket.error:
+                pass
+            server_socket.close()

@@ -73,13 +73,11 @@ class GetServerStatistics(BaseHandler):
         statistic_data = {}
         statistic_module = statistic_module_info['instances'][0]
         if statistic_module.getConfigurationValue('receive_rate_statistics'):
-            statistic_data['receive_rate_statistics'] = self.receiveRateStatistics(statistic_module)
+            statistic_data.update(self.receiveRateStatistics(statistic_module))
         if statistic_module.getConfigurationValue('waiting_event_statistics'):
-            statistic_data['waiting_event_statistics'] = self.eventsInQueuesStatistics(statistic_module)
+            statistic_data.update(self.eventsInQueuesStatistics(statistic_module))
         if statistic_module.getConfigurationValue('event_type_statistics'):
-            statistic_data['event_type_statistics'] = self.eventTypeStatistics(statistic_module)
-        if statistic_module.getConfigurationValue('process_statistics'):
-            statistic_data['process_statistics'] = statistic_module.getProcessStatistics()
+            statistic_data.update(self.eventTypeStatistics(statistic_module))
         self.write(tornado.escape.json_encode(statistic_data))
 
 class GetServerInformation(BaseHandler):

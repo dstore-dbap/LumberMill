@@ -15,8 +15,10 @@ class TestTcpServer(ModuleBaseTestCase):
     def setUp(self):
         super(TestTcpServer, self).setUp(TcpServer.TcpServer(mock.Mock()))
 
-    def testTcpConnection(self):
-        self.test_object.configure({})
+    def TestATcpConnection(self):
+        print("testTcpConnection")
+        self.test_object.configure({'port': 5353,
+                                    'simple_separator': '\n'})
         self.checkConfiguration()
         self.test_object.initAfterFork()
         self.startTornadoEventLoop()
@@ -28,11 +30,12 @@ class TestTcpServer(ModuleBaseTestCase):
             s.connect(('localhost', self.test_object.getConfigurationValue('port')))
             for _ in range(0, 1500):
                 s.sendall("Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.\n")
+            s.shutdown(socket.SHUT_RDWR)
             s.close()
             connection_succeeded = True
         except:
             etype, evalue, etb = sys.exc_info()
-            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ( 'localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
+            print "Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue)
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
         expected_ret_val = DictUtils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
@@ -46,6 +49,7 @@ class TestTcpServer(ModuleBaseTestCase):
         self.assertEqual(counter, 1500)
         event.pop('lumbermill')
         self.assertDictEqual(event, expected_ret_val)
+        self.tearDown()
 
     def testATlsTcpConnection(self):
         self.test_object.configure({'port': 5252,
@@ -84,6 +88,7 @@ class TestTcpServer(ModuleBaseTestCase):
         self.assertEqual(counter, 1500)
         event.pop('lumbermill')
         self.assertDictEqual(event, expected_ret_val)
+        self.tearDown()
 
     def testLineModeRegexSeparator(self):
         self.test_object.configure({'regex_separator': 'C[oO]nfused?\s+ca+t'})
@@ -113,6 +118,7 @@ class TestTcpServer(ModuleBaseTestCase):
         self.assertIsNotNone(event)
         self.assertEquals(counter, 4)
         self.assertEquals(event['data'], "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.Confused   cat")
+        self.tearDown()
 
     def testLineModeSimpleSeparator(self):
         self.test_object.configure({'simple_separator': '***'})
@@ -142,6 +148,7 @@ class TestTcpServer(ModuleBaseTestCase):
         self.assertIsNotNone(event)
         self.assertEquals(counter, 4)
         self.assertEquals(event['data'], "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.***")
+        self.tearDown()
 
     def testStreamMode(self):
         self.test_object.configure({'mode': 'stream',
@@ -170,6 +177,7 @@ class TestTcpServer(ModuleBaseTestCase):
             events.append(event)
         self.assertEquals(len(events), 6)
         self.assertEquals(len(events[0]['data']), 1024)
+        self.tearDown()
 
     def tearDown(self):
         self.test_object.shutDown()

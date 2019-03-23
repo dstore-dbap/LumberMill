@@ -47,6 +47,3 @@ class TestKeyDotNotationDict(unittest.TestCase):
         self.assertTrue(self.event.get('params.nobody') == 'expects')
         self.assertTrue(self.event.get('empty.nobody') == 'expects')
         self.assertTrue(self.event.get('params.spanish.0') == 'inquisition')
-
-    def testInStringFails(self):
-        print(self.event['http_status.faller'])

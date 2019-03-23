@@ -14,13 +14,13 @@ class TestUnixSocket(ModuleBaseTestCase):
         super(TestUnixSocket, self).setUp(UnixSocket.UnixSocket(mock.Mock()))
 
     def testUnixSocket(self):
-        raise unittest.SkipTest('Skipping test because no UnixSocket input is currently broken.')
+        self.test_object.configure({'path_to_socket': '/tmp/test.sock'})
+        raise unittest.SkipTest('Skipping test because UnixSocket input is currently broken.')
         try:
             os.remove('/tmp/test.sock')
         except OSError:
             pass
         self.assertFalse(os.path.exists('/tmp/test.sock'))
-        self.test_object.configure({'path_to_socket': '/tmp/test.sock'})
         self.checkConfiguration()
         self.test_object.start()
         self.startTornadoEventLoop()

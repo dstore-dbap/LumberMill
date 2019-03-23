@@ -52,8 +52,8 @@ class MultiProcessStatisticCollector:
                 self.counter_stats[name] += increment_value
             except KeyError:
                 self.counter_stats[name] = increment_value
-            except (OSError, IOError):
-                # OSError: [Errno 32] and IOError Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it.
+            except OSError:
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it.
                 pass
             except socket.error:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting lumbermill via CTRL+C. Ignore it

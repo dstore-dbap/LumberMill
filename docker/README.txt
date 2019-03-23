@@ -1,5 +1,5 @@
 To build docker image (execute this is the root folder of the LumberMill repository):
->docker build -f lumbermill/Dockerfile -t lumbermill .
+>docker build -f lumbermill/dockerfile -t lumbermill .
 
 To start LumberMill docker container (execute this in the root folder of the LumberMill repository):
 >sudo docker run -it --rm -p5151:5151 -v $(pwd):/opt/LumberMill/ lumbermill /opt/LumberMill/bin/lumbermill.pypy -c <path to configuration>

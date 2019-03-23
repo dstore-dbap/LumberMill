@@ -7,6 +7,7 @@ import os
 import signal
 import sys
 import time
+import exceptions
 from collections import OrderedDict
 
 import tornado.ioloop
@@ -40,7 +41,7 @@ from utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainP
 from utils.Buffers import BufferedQueue, ZeroMqMpQueue
 from utils.DictUtils import mergeNestedDicts
 from utils.ConfigurationValidator import ConfigurationValidator
-from utils.MultiProcessDataStore import MultiProcessDataStore
+#from utils.MultiProcessDataStore import MultiProcessDataStore
 
 # Conditional imports for python2/3
 try:
@@ -67,7 +68,8 @@ class LumberMill():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
-        self.internal_datastore = MultiProcessDataStore()
+        #self.internal_datastore = MultiProcessDataStore()
+        self.internal_datastore = None
         self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
                                      'queue_size': 20,
                                      'queue_buffer_size': 50,
@@ -108,7 +110,7 @@ class LumberMill():
         try:
             with open(path_to_config_file, "r") as configuration_file:
                 self.raw_conf_file = configuration_file.read()
-            configuration = yaml.load(self.raw_conf_file)
+            configuration = yaml.safe_load(self.raw_conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
@@ -381,9 +383,13 @@ class LumberMill():
         # module.<module_name>.get.<key> instead of e.g. internal.<key>
         # This datastore is based on multiprocessing.Manager(), using multiprocessing.Lock() for mp synchronization.
         # So frequent usage of this store might impact performance.
+        if not self.internal_datastore:
+            return False
         self.internal_datastore.setValue(key, value)
 
     def getFromInternalDataStore(self, key, default=None):
+        if not self.internal_datastore:
+            return default
         try:
             return self.internal_datastore.getValue(key)
         except KeyError:
@@ -429,6 +435,9 @@ class LumberMill():
         # Register SIGINT to call shutDown for all processes.
         signal.signal(signal.SIGINT, self.shutDown)
         if self.is_master():
+            # Register SIGTERM for master process. Otherwise a kill <master pid> will kill the master process
+            # but not the child processes. E.g. supervisord uses this method by default to restart a service.
+            signal.signal(signal.SIGTERM, self.shutDown)
             # Register SIGALARM only for master process. This will take care to kill all subprocesses.
             signal.signal(signal.SIGALRM, self.restart)
         self.alive = True
@@ -436,7 +445,21 @@ class LumberMill():
         self.runModules()
         if self.is_master():
             self.logger.info("LumberMill started with %s processes(%s)." % (len(self.child_processes) + 1, os.getpid()))
-            tornado.ioloop.IOLoop.instance().start()
+        tries = 0
+        while self.alive:
+            # Sometimes tornado throws an obscure <error: [Errno 0] Success> exception self._sslobj.do_handshake().
+            # We try to catch that here and restart the event loop.
+            tries += 1
+            if tries > 3:
+                # Back off if problem does not resove after max tries.
+                self.shutDown()
+            try:
+                tornado.ioloop.IOLoop.current().start()
+            except exceptions.SystemExit:
+                pass
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):
@@ -459,9 +482,12 @@ class LumberMill():
         self.alive = False
         self.shutDownModules()
         TimedFunctionManager.stopTimedFunctions()
-        tornado.ioloop.IOLoop.instance().stop()
+        tornado.ioloop.IOLoop.current().stop()
         if self.is_master():
+            if self.internal_datastore:
+                self.internal_datastore.shutDown()
             self.logger.info("Shutdown complete.")
+        sys.exit(0)
 
     def shutDownModules(self):
         # Shutdown all input modules.

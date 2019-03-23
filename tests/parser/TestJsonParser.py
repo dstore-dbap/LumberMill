@@ -20,6 +20,15 @@ class TestJsonParser(ModuleBaseTestCase):
             self.assertTrue('South African' in event and event['South African'] == "Fast")
         self.assertIsNotNone(event)
 
+    def testDecodeOfNestedSourceField(self):
+        self.test_object.configure({'source_fields': ['swallow.json_data']})
+        self.checkConfiguration()
+        data = DictUtils.getDefaultEventDict({'swallow': {'json_data': '{"South African": "Fast", "unladen": "swallow"}'}})
+        event = None
+        for event in self.test_object.handleEvent(data):
+            self.assertTrue('South African' in event and event['South African'] == "Fast")
+        self.assertIsNotNone(event)
+
     def testEncode(self):
         self.test_object.configure({'action': 'encode',
                                     'source_fields': 'all',
