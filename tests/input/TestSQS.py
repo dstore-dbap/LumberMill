@@ -18,7 +18,7 @@ class TestSQS(ModuleBaseTestCase):
             self.aws_access_key_id = os.environ['AWS_ID']
             self.aws_secret_access_key = os.environ['AWS_KEY']
         except KeyError:
-            raise unittest.SkipTest('Skipping test bescause no aws credentials set. Please set env vars AWS_ID and AWS_KEY.')
+            raise unittest.SkipTest('Skipping test because no aws credentials set. Please set env vars AWS_ID and AWS_KEY.')
         self.queue_name = "%032x%s" % (random.getrandbits(128), os.getpid())
         self.connectToSqsQueue()
         super(TestSQS, self).setUp(SQS.SQS(mock.Mock()))
@@ -46,11 +46,11 @@ class TestSQS(ModuleBaseTestCase):
             self.sqs_queue = self.sqs_resource.create_queue(QueueName=self.queue_name)
         except:
             etype, evalue, etb = sys.exc_info()
-            print "Could not create sqs queue %s. Exception: %s, Error: %s" % (self.queue_name, etype, evalue)
+            print("Could not create sqs queue %s. Exception: %s, Error: %s" % (self.queue_name, etype, evalue))
 
     def testSQS(self):
-        self.test_object.configure({'aws_access_key_id': os.environ['AWS_ID'],
-                                    'aws_secret_access_key': os.environ['AWS_KEY'],
+        self.test_object.configure({'aws_access_key_id': self.aws_access_key_id,
+                                    'aws_secret_access_key': self.aws_secret_access_key,
                                     'region': 'eu-west-1',
                                     'queue': self.queue_name})
         self.checkConfiguration()
@@ -62,7 +62,7 @@ class TestSQS(ModuleBaseTestCase):
         time.sleep(2)
         self.test_object.start()
         event = False
-        time.sleep(2)
+        time.sleep(4)
         counter = 0
         for event in self.receiver.getEvent():
             counter += 1

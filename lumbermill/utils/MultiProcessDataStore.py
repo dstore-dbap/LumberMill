@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import multiprocessing
-import Decorators
+
+import utils.Decorators as Decorators
 
 
 @Decorators.Singleton
@@ -23,7 +24,7 @@ class MultiProcessDataStore:
             try:
                 self.data_dict[key] = value
             except OSError:
-                # OSError: [Errno 32] Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it
                 pass
 
     def getValue(self, key, value):
@@ -31,7 +32,7 @@ class MultiProcessDataStore:
             try:
                 self.data_dict[key] = value
             except OSError:
-                # OSError: [Errno 32] Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it
                 pass
 
     def getDataDict(self):

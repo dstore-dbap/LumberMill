@@ -2,16 +2,18 @@
 import sys
 import os
 import yaml
-import Queue
 import logging
 import logging.config
 import threading
 import unittest
 import mock
-import ServiceDiscovery
+import queue
+import unittest
+
 
 sys.path.append('../')
 
+import tests.ServiceDiscovery
 from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT, LUMBERMILL_BASEPATH
 from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
 from lumbermill.utils.misc import AnsiColors, coloredConsoleLogging
@@ -143,7 +145,7 @@ class ModuleBaseTestCase(unittest.TestCase):
         try:
             with open(self.path_to_config_file, "r") as configuration_file:
                 self.raw_conf_file = configuration_file.read()
-            configuration = yaml.load(self.raw_conf_file)
+            configuration = yaml.load(self.raw_conf_file, Loader=yaml.FullLoader)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (self.path_to_config_file, etype, evalue))
@@ -167,7 +169,7 @@ class ModuleBaseTestCase(unittest.TestCase):
         test_object.addReceiver('MockReceiver', self.receiver)
         self.test_object = test_object
         if hasattr(test_object, 'setInputQueue'):
-            self.input_queue = Queue.Queue()
+            self.input_queue = queue.Queue()
             self.test_object.setInputQueue(self.input_queue)
 
     def checkConfiguration(self):
@@ -176,7 +178,7 @@ class ModuleBaseTestCase(unittest.TestCase):
 
     def startTornadoEventLoop(self):
         import tornado.ioloop
-        self.ioloop_thread = StoppableThread(target=tornado.ioloop.IOLoop.instance().start)
+        self.ioloop_thread = threading.Thread(target=tornado.ioloop.IOLoop.instance().start)
         self.ioloop_thread.daemon = True
         self.ioloop_thread.start()
 
@@ -186,74 +188,80 @@ class ModuleBaseTestCase(unittest.TestCase):
         import tornado.ioloop
         tornado.ioloop.IOLoop.instance().stop()
         self.ioloop_thread.stop()
+        self.ioloop_thread = None
 
     def getRedisService(self):
-        service = ServiceDiscovery.discover_redis()
+        service = tests.ServiceDiscovery.discover_redis()
         if service:
             return service
         return {'server': self.configuration['redis']['server'],
                 'port': self.configuration['redis']['port']}
 
     def getElasticSeachService(self):
-        service = ServiceDiscovery.discover_elasticsearch()
+        service = tests.ServiceDiscovery.discover_elasticsearch()
         if service:
             return service
         return {'server': self.configuration['elasticsearch']['server'],
                 'port': self.configuration['elasticsearch']['port']}
 
     def getMongoDBService(self):
-        service = ServiceDiscovery.discover_mongodb()
+        service = tests.ServiceDiscovery.discover_mongodb()
         if service:
             return service
         return {'server': self.configuration['mongodb']['server'],
                 'port': self.configuration['mongodb']['port']}
 
     """
+    @unittest.skip("Skipping test. Feature removed.")
     def testQueueCommunication(self, config = {}):
+        output_queue = queue.Queue()
         self.test_object.configure(config)
         if hasattr(self.test_object, 'start'):
             self.test_object.start()
         else:
             self.test_object.run()
-        self.input_queue.put(Utils.getDefaultEventDict({}))
+        self.input_queue.put(getDefaultEventDict({}))
         queue_emtpy = False
         try:
-            self.output_queue.get(timeout=2)
-        except Queue.Empty:
+            output_queue.get(timeout=2)
+        except queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy != True)
 
+    @unittest.skip("Skipping test. Feature removed.")
     def testWorksOnOriginal(self, config = {}):
+        output_queue = queue.Queue()
         config['work_on_copy'] = {'value': False, 'contains_dynamic_value': False}
-        data_dict = Utils.getDefaultEventDict({})
+        data_dict = getDefaultEventDict({})
         self.test_object.configure(config)
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         try:
-            returned_data_dict = self.output_queue.get(timeout=1)
-        except Queue.Empty:
+            returned_data_dict = output_queue.get(timeout=1)
+        except queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == False and returned_data_dict is data_dict)
 
-
+    @unittest.skip("Skipping test. Feature removed.")
     def testWorksOnCopy(self, config = {}):
+        output_queue = queue.Queue()
         config['work_on_copy'] = {'value': True, 'contains_dynamic_value': False}
-        data_dict = Utils.getDefaultEventDict({})
+        data_dict = getDefaultEventDict({})
         self.test_object.configure(config)
         self.test_object.start()
         self.input_queue.put(data_dict)
         queue_emtpy = False
         try:
-            returned_data_dict = self.output_queue.get(timeout=1)
-        except Queue.Empty:
+            returned_data_dict = output_queue.get(timeout=1)
+        except queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == False and returned_data_dict is not data_dict)
 
-
+    @unittest.skip("Skipping test. Feature removed.")
     def testOutputQueueFilterNoMatch(self, config = {}):
-        output_queue = Queue.Queue()
-        data_dict = Utils.getDefaultEventDict({})
+        output_queue = queue.Queue()
+        data_dict = getDefaultEventDict({})
         data_dict['Johann'] = 'Gambolputty'
         result = self.test_object.configure(config)
         self.assertFalse(result)
@@ -264,13 +272,14 @@ class ModuleBaseTestCase(unittest.TestCase):
         returned_data_dict = {}
         try:
             returned_data_dict = output_queue.get(timeout=2)
-        except Queue.Empty:
+        except queue.Empty:
             queue_emtpy = True
         self.assert_(queue_emtpy == True)
 
+    @unittest.skip("Skipping test. Feature removed.")
     def testOutputQueueFilterMatch(self,config = {}):
-        output_queue = Queue.Queue()
-        data_dict = Utils.getDefaultEventDict({'Johann': 'Gambolputty', 'event_type': 'agora_access_log'})
+        output_queue = queue.Queue()
+        data_dict = getDefaultEventDict({'Johann': 'Gambolputty', 'event_type': 'agora_access_log'})
         result = self.test_object.configure(config)
         self.assertFalse(result)
         self.test_object.addOutputQueue(output_queue, filter='Johann in ["Gambolputty", "Blagr"] or Johan not in ["Gambolputty", "Blagr"]')
@@ -280,10 +289,10 @@ class ModuleBaseTestCase(unittest.TestCase):
         returned_data_dict = {}
         try:
             returned_data_dict = output_queue.get(timeout=2)
-        except Queue.Empty:
+        except queue.Empty:
             queue_emtpy = True
-        print data_dict
-        print returned_data_dict
+        print(data_dict)
+        print(returned_data_dict)
         self.assert_(queue_emtpy == False and 'Johann' in returned_data_dict)
     """
 

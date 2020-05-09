@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 @ModuleDocstringParser
 class ExecPython(BaseThreadedModule):
@@ -45,7 +45,7 @@ class ExecPython(BaseThreadedModule):
             exec("import %s" % module)
         source = "def UserFunc(event):\n%s" % self.getConfigurationValue("source")
         if self.getConfigurationValue("debug"):
-            print source
+            print(source)
         exec(source)
         try:
             pass

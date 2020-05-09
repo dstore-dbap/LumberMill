@@ -20,7 +20,7 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            self.assertTrue(event['host'] == '85.214.142.46')
+            self.assertTrue(event['host'] == '195.128.101.111')
         self.assertIsNotNone(event)
 
     def testDnsLookupWithTargetField(self):
@@ -35,7 +35,7 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            self.assertTrue(event['host_ip_address'] == '85.214.142.46')
+            self.assertTrue(event['host_ip_address'] == '195.128.101.111')
         self.assertIsNotNone(event)
 
     def testReverseDnsLookup(self):
@@ -44,13 +44,12 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = DictUtils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
+        data = DictUtils.getDefaultEventDict({'remote_ip': '1.1.1.1'})
         self.test_object.receiveEvent(data)
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            result = event['remote_ip'].split('.')[0]
-            self.assertTrue(result == 'localhost')
+            self.assertTrue(event['remote_ip'] == 'one.one.one.one.')
         self.assertIsNotNone(event)
 
     def testReverseDnsLookupwithTargetField(self):
@@ -60,11 +59,10 @@ class TestAddDnsLookup(ModuleBaseTestCase):
         self.test_object.configure(config)
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        data = DictUtils.getDefaultEventDict({'remote_ip': '127.0.0.1'})
+        data = DictUtils.getDefaultEventDict({'remote_ip': '1.1.1.1'})
         self.test_object.receiveEvent(data)
         self.test_object.shutDown()
         event = None
         for event in self.receiver.getEvent():
-            result = event['remote_host'].split('.')[0]
-            self.assertTrue(result == 'localhost')
+            self.assertTrue(event['remote_host'] == 'one.one.one.one.')
         self.assertIsNotNone(event)

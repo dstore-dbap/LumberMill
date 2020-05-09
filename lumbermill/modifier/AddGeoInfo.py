@@ -5,9 +5,9 @@ import sys
 import geoip2.database
 import geoip2.errors
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, memoize
-from lumbermill.constants import LUMBERMILL_BASEPATH
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser, memoize
+from constants import LUMBERMILL_BASEPATH
 
 
 @ModuleDocstringParser

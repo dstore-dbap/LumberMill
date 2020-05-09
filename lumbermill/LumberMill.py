@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import getopt
 import logging.config
@@ -7,7 +7,7 @@ import os
 import signal
 import sys
 import time
-import exceptions
+
 from collections import OrderedDict
 
 import tornado.ioloop
@@ -20,13 +20,6 @@ module_dirs = ['input',
                'output',
                'webserver',
                'cluster']
-
-# Expand the include path to our libs and modules.
-# TODO: Check for problems with similar named modules in different module directories.
-pathname = os.path.abspath(__file__)
-pathname = pathname[:pathname.rfind("/")]
-sys.path.append(pathname[:pathname.rfind("/")])
-[sys.path.append(pathname + "/" + mod_dir) for mod_dir in module_dirs]
 
 # Make sure we are called as module. Otherwise imports will fail.
 #import inspect
@@ -41,9 +34,8 @@ from utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainP
 from utils.Buffers import BufferedQueue, ZeroMqMpQueue
 from utils.DictUtils import mergeNestedDicts
 from utils.ConfigurationValidator import ConfigurationValidator
-#from utils.MultiProcessDataStore import MultiProcessDataStore
+from utils.MultiProcessDataStore import MultiProcessDataStore
 
-# Conditional imports for python2/3
 try:
     import Queue
 except ImportError:
@@ -56,7 +48,7 @@ class LumberMill():
 
     LumberMill helps to parse text based streams by providing a framework of modules.
     These modules can be combined via a simple configuration in any way you like. Have
-    a look at the example config lumbermill.conf.example in the conf folder.
+    a look at the example config conf.example in the conf folder.
 
     This is the main class that reads the configuration, includes the needed modules
     and connects them as configured.
@@ -68,8 +60,7 @@ class LumberMill():
         self.child_processes = []
         self.main_process_pid = os.getpid()
         self.modules = OrderedDict()
-        #self.internal_datastore = MultiProcessDataStore()
-        self.internal_datastore = None
+        self.internal_datastore = MultiProcessDataStore()
         self.global_configuration = {'workers': multiprocessing.cpu_count() - 1,
                                      'queue_size': 20,
                                      'queue_buffer_size': 50,
@@ -77,7 +68,7 @@ class LumberMill():
                                                  'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                                                  'filename': None,
                                                  'filemode': 'w'}}
-        logging.basicConfig(handlers=logging.StreamHandler())
+        logging.basicConfig(handlers=[logging.StreamHandler()])
         self.logger = logging.getLogger(self.__class__.__name__)
         success = self.setConfiguration(self.readConfiguration(self.path_to_config_file), merge=False)
         if not success:
@@ -174,12 +165,12 @@ class LumberMill():
         self.logger.debug("Initializing module %s." % (module_name))
         instance = None
         try:
-            module = __import__(module_name, globals(), locals(), module_name, -1)
+            module = __import__(module_name, globals(), locals(), module_name, 0)
         except ImportError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Unknown module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
             self.shutDown()
-        module_class = getattr(module, module_name)
+        module_class = getattr(module, module_name.split(".")[1])
         instance = module_class(self)
         """
         try:
@@ -200,8 +191,8 @@ class LumberMill():
         for idx, module_info in enumerate(self.configuration):
             module_config = {}
             module_id = None
-            if isinstance(module_info, dict):
-                module_class_name = module_info.keys()[0]
+            if isinstance(module_info, dict):    
+                module_class_name = list(module_info.keys())[0]
                 module_config = module_info[module_class_name]
                 # Set module id. If the id field was used in configuration use it else use class name of module.
                 try:
@@ -451,15 +442,16 @@ class LumberMill():
             # We try to catch that here and restart the event loop.
             tries += 1
             if tries > 3:
-                # Back off if problem does not resove after max tries.
+                # Back off if problem does not resolve after max tries.
                 self.shutDown()
             try:
                 tornado.ioloop.IOLoop.current().start()
-            except exceptions.SystemExit:
+            except SystemExit:
                 pass
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
+            self.shutDown();
 
     def restart(self, signum=False, frame=False):
         for worker in list(self.child_processes):
@@ -472,6 +464,8 @@ class LumberMill():
         restartMainProcess()
 
     def shutDown(self, signum=False, frame=False):
+        kill_master = False;
+        self.logger.debug("shutDown called in process %s" % os.getpid())
         if self.is_master():
             self.logger.info("Shutting down LumberMill.")
             # Send SIGINT to workers for good measure.
@@ -482,11 +476,18 @@ class LumberMill():
         self.alive = False
         self.shutDownModules()
         TimedFunctionManager.stopTimedFunctions()
-        tornado.ioloop.IOLoop.current().stop()
+        try:
+            tornado.ioloop.IOLoop.current().stop()
+        except RuntimeError:
+            # On Mac, tornado lib seems to have a bug. See @https://github.com/tornadoweb/tornado/issues/2183
+            # This bug prevents a clean exit. So we forcefully kill master.
+            kill_master = True
         if self.is_master():
             if self.internal_datastore:
                 self.internal_datastore.shutDown()
             self.logger.info("Shutdown complete.")
+            if kill_master:
+                os.kill(os.getpid(), signal.SIGKILL)
         sys.exit(0)
 
     def shutDownModules(self):

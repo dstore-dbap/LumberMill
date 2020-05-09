@@ -5,8 +5,8 @@ import logging
 import datetime
 import re
 
-GP_DYNAMIC_VAL_REGEX = re.compile('[\$|%]\(([^\)]*)\)')
-GP_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('[\$|%]\(([^\)]*)\)(-?\d*[-\.\*]?\d*[sdf]?)')
+LM_DYNAMIC_VAL_REGEX = re.compile('[\$%]\(([^\)]*)\)')
+LM_DYNAMIC_VAL_REGEX_WITH_TYPES = re.compile('[\$%]\(([^\)]*)\)(-?\d*[-\.\*]?\d*[sdf]?)')
 PYTHON_DYNAMIC_VAL_REGEX = re.compile('%\((.*?)\)')
 DYNAMIC_VALUE_REPLACE_PATTERN = r"%(\1)"
 
@@ -71,7 +71,7 @@ def parseDynamicValuesInString(value):
     parsed:
     filter: %(lumbermill.source_module)s == 'TcpServer'
     """
-    matches = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.search(value)
+    matches = LM_DYNAMIC_VAL_REGEX_WITH_TYPES.search(value)
     if not matches:
         return value
     # Get custom format if set.
@@ -80,7 +80,7 @@ def parseDynamicValuesInString(value):
         replace_pattern = DYNAMIC_VALUE_REPLACE_PATTERN + matches.group(2)
     else:
         replace_pattern = DYNAMIC_VALUE_REPLACE_PATTERN + "s"
-    return GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(replace_pattern, value)
+    return LM_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(replace_pattern, value)
 
 def parseDynamicValuesInList(value_list, contains_dynamic_value):
     # Copy list since we might change it during iteration.
@@ -90,7 +90,7 @@ def parseDynamicValuesInList(value_list, contains_dynamic_value):
             parseDynamicValuesInList(value_list[idx], contains_dynamic_value)
         elif isinstance(value, dict):
             parseDynamicValuesInDict(value_list[idx], contains_dynamic_value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             new_value = parseDynamicValuesInString(value)
             if new_value == value:
                 continue
@@ -102,13 +102,13 @@ def parseDynamicValuesInDict(value_dict, contains_dynamic_value):
     value_dict_copy = value_dict.copy()
     for key, value in value_dict_copy.items():
         new_key = key
-        if(isinstance(key, basestring)):
+        if(isinstance(key, str)):
             new_key = parseDynamicValuesInString(key)
         if isinstance(value, list):
             parseDynamicValuesInList(value_dict[key], contains_dynamic_value)
         elif isinstance(value, dict):
             parseDynamicValuesInDict(value_dict[key], contains_dynamic_value)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             new_value = parseDynamicValuesInString(value)
             if key == new_key and value == new_value:
                 continue
@@ -123,7 +123,7 @@ def parseDynamicValue(value):
         parseDynamicValuesInList(value, contains_dynamic_value)
     elif isinstance(value, dict):
         parseDynamicValuesInDict(value, contains_dynamic_value)
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         new_value = parseDynamicValuesInString(value)
         if value != new_value:
             value = new_value
@@ -144,7 +144,7 @@ def mapDynamicValueInString(value, mapping_dict, use_strftime=False):
             else:
                 value = PYTHON_DYNAMIC_VAL_REGEX.sub(r"$(\1)", value)
                 value = datetime.datetime.utcnow().strftime(value)
-                value = GP_DYNAMIC_VAL_REGEX.sub(r"%(\1)", value)
+                value = LM_DYNAMIC_VAL_REGEX.sub(r"%(\1)", value)
         return value % mapping_dict # dot_dict_formatter.format(value, **mapping_dict)
     except KeyError:
         return value
@@ -159,7 +159,7 @@ def mapDynamicValueInList(value_list, mapping_dict, use_strftime=False):
             mapDynamicValueInList(value, mapping_dict, use_strftime)
         elif isinstance(value, dict):
             mapDynamicValueInDict(value, mapping_dict, use_strftime)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             new_value = mapDynamicValueInString(value, mapping_dict, use_strftime)
             if new_value == value:
                 continue
@@ -168,20 +168,20 @@ def mapDynamicValueInList(value_list, mapping_dict, use_strftime=False):
 def mapDynamicValueInDict(value_dict, mapping_dict, use_strftime=False):
     for key, value in value_dict.items():
         new_key = key
-        if(isinstance(key, basestring)):
+        if(isinstance(key, str)):
             new_key = mapDynamicValueInString(key, mapping_dict, use_strftime)
         if isinstance(value, list):
             mapDynamicValueInList(value, mapping_dict, use_strftime)
         elif isinstance(value, dict):
             mapDynamicValueInDict(value, mapping_dict, use_strftime)
-        elif isinstance(value, basestring):
+        elif isinstance(value, str):
             new_value = mapDynamicValueInString(value, mapping_dict, use_strftime)
             if key == new_key and value == new_value:
                 continue
             value_dict[new_key] = new_value
 
 def mapDynamicValue(value, mapping_dict={}, use_strftime=False):
-    if isinstance(value, basestring):
+    if isinstance(value, str):
         return mapDynamicValueInString(value, mapping_dict, use_strftime)
     if isinstance(value, list):
         # If value is of type list or dict, the next operations might have some nice recursion.

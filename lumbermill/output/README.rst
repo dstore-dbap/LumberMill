@@ -3,7 +3,7 @@
 Output modules
 ==============
 
-DevNullSink
+DevNull
 -----------
 
 Just discard messages send to this module.
@@ -12,10 +12,10 @@ Configuration template:
 
 ::
 
-    - DevNullSink
+    - output.DevNull
 
 
-ElasticSearchSink
+ElasticSearch
 -----------------
 
 Store the data dictionary in an elasticsearch index.
@@ -51,7 +51,7 @@ Configuration template:
 
 ::
 
-    - ElasticSearchSink:
+    - output.ElasticSearch:
        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
        format:                          # <default: None; type: None||string; is: optional>
        nodes:                           # <type: string||list; is: required>
@@ -70,7 +70,7 @@ Configuration template:
        backlog_size:                    # <default: 500; type: integer; is: optional>
 
 
-FileSink
+File
 --------
 
 Store all received events in a file.
@@ -86,7 +86,7 @@ Configuration template:
 
 ::
 
-    - FileSink:
+    - output.File:
        file_name:                       # <type: string; is: required>
        format:                          # <default: '$(data)'; type: string; is: optional>
        store_interval_in_secs:          # <default: 10; type: integer; is: optional>
@@ -95,7 +95,7 @@ Configuration template:
        compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
-GraphiteSink
+Graphite
 ------------
 
 Send metrics to graphite server.
@@ -111,11 +111,11 @@ Here a simple example to send http_status statistics to graphite:
 
 ::
 
-    - Statistics:
+    - output.Statistics:
         interval: 10
         fields: ['http_status']
 
-    - GraphiteSink:
+    - output.Graphite:
         filter: if $(field_name) == "http_status"
         server: 127.0.0.1
         batch_size: 1
@@ -128,7 +128,7 @@ Configuration template:
 
 ::
 
-    - GraphiteSink:
+    - output.Graphite:
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 2003; type: integer; is: optional>
        formats:                         # <type: list; is: required>
@@ -137,7 +137,7 @@ Configuration template:
        backlog_size:                    # <default: 50; type: integer; is: optional>
 
 
-LoggerSink
+Logger
 ----------
 
 Send data to lumbermill logger.
@@ -152,11 +152,11 @@ Configuration template:
 
 ::
 
-    - LoggerSink:
+    - output.Logger:
        formats:                         # <type: list; is: required>
 
 
-MongoDbSink
+MongoDb
 -----------
 
 Store incoming events in a mongodb.
@@ -176,7 +176,7 @@ Configuration template:
 
 ::
 
-    - MongoDbSink:
+    - output.MongoDb:
        host:                            # <default: 'localhost:27017'; type: string; is: optional>
        database:                        # <default: 'lumbermill'; type: string; is: optional>
        collection:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
@@ -188,7 +188,7 @@ Configuration template:
        backlog_size:                    # <default: 5000; type: integer; is: optional>
 
 
-RedisChannelSink
+RedisChannel
 ----------------
 
 Publish incoming events to redis channel.
@@ -204,7 +204,7 @@ Configuration template:
 
 ::
 
-    - RedisChannelSink:
+    - output.RedisChannel:
        channel:                         # <type: string; is: required>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
@@ -213,7 +213,7 @@ Configuration template:
        format:                          # <default: None; type: None||string; is: optional>
 
 
-RedisListSink
+RedisList
 -------------
 
 Send events to a redis lists.
@@ -232,7 +232,7 @@ Configuration template:
 
 ::
 
-    - RedisListSink:
+    - output.RedisList:
        list:                            # <type: String; is: required>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
@@ -244,7 +244,7 @@ Configuration template:
        backlog_size:                    # <default: 500; type: integer; is: optional>
 
 
-SQSSink
+SQS
 -------
 
 Send messages to amazon sqs service.
@@ -267,7 +267,7 @@ Configuration template:
 
 ::
 
-    - SQSSink:
+    - output.SQS:
        aws_access_key_id:               # <type: string; is: required>
        aws_secret_access_key:           # <type: string; is: required>
        region:                          # <type: string; is: required>
@@ -280,7 +280,7 @@ Configuration template:
         - NextModule
 
 
-StdOutSink
+StdOut
 ----------
 
 Print the data dictionary to stdout.
@@ -293,13 +293,13 @@ Configuration template:
 
 ::
 
-    - StdOutSink:
+    - output.StdOut:
        pretty_print:                    # <default: True; type: boolean; is: optional>
        fields:                          # <default: None; type: None||list; is: optional>
        format:                          # <default: None; type: None||string; is: optional>
 
 
-SyslogSink
+Syslog
 ----------
 
 Send events to syslog.
@@ -313,14 +313,14 @@ Configuration template:
 
 ::
 
-    - SyslogSink:
+    - output.Syslog:
        format:                          # <type: string; is: required>
        address:                         # <default: 'localhost:514'; type: string; is: required>
        proto:                           # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
        facility:                        # <default: 'user'; type: string; is: optional>
 
 
-WebHdfsSink
+WebHdfs
 -----------
 
 Store events in hdfs via webhdfs.
@@ -339,7 +339,7 @@ Configuration template:
 
 ::
 
-    - WebHdfsSink:
+    - output.WebHdfs:
        server:                          # <default: 'localhost:14000'; type: string; is: optional>
        user:                            # <type: string; is: required>
        path:                            # <type: string; is: required>
@@ -351,7 +351,7 @@ Configuration template:
        compress:                        # <default: None; type: None||string; values: [None,'gzip','snappy']; is: optional>
 
 
-ZabbixSink
+Zabbix
 ----------
 
 Send events to zabbix.
@@ -370,7 +370,7 @@ Configuration template:
 
 ::
 
-    - ZabbixSink:
+    - output.Zabbix:
        hostname:                        # <type: string; is: required>
        fields:                          # <type: list; is: required>
        field_prefix:                    # <default: "lumbermill_"; type: string; is: optional>
@@ -382,7 +382,7 @@ Configuration template:
        backlog_size:                    # <default: 500; type: integer; is: optional>
 
 
-ZmqSink
+Zmq
 -------
 
 Sends events to zeromq.
@@ -401,7 +401,7 @@ Configuration template:
 
 ::
 
-    - ZmqSink:
+    - output.Zmq:
        server:                          # <default: 'localhost:5570'; type: string; is: optional>
        pattern:                         # <default: 'push'; type: string; values: ['push', 'pub']; is: optional>
        mode:                            # <default: 'connect'; type: string; values: ['connect', 'bind']; is: optional>

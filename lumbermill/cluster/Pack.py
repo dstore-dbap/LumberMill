@@ -12,9 +12,9 @@ import msgpack
 from Crypto import Random
 from Crypto.Cipher import AES
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.misc import TimedFunctionManager
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.misc import TimedFunctionManager
 
 
 class PackMember:

@@ -2,11 +2,11 @@
 import sys
 import hashlib
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.misc import TimedFunctionManager
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.mixins.ModuleCacheMixin import ModuleCacheMixin
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -26,7 +26,7 @@ class Facet(BaseThreadedModule, ModuleCacheMixin):
 
     source_field: Field to be scanned for unique values.
     group_by: Field to relate the variations to, e.g. ip address.
-    cache: Name of the cache plugin. When running multiple instances of lumbermill this cache can be used to
+    cache: Name of the cache plugin. When running multiple instances of this cache can be used to
            synchronize events across multiple instances.
     cache_key: Keyname to use to store the facet data in cache.
     cache_lock: Lockname to use if multiple instances of Lumbermill work on the same data.
@@ -172,7 +172,7 @@ class Facet(BaseThreadedModule, ModuleCacheMixin):
         except KeyError:
             yield event
             return
-        key = hashlib.md5(self.getConfigurationValue('group_by', event)).hexdigest()
+        key = hashlib.md5(self.getConfigurationValue('group_by', event).encode('utf-8')).hexdigest()
         if not key:
             self.logger.warning("Group_by value %s could not be generated. Event ignored." % (self.getConfigurationValue('group_by')))
             yield event

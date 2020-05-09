@@ -15,7 +15,7 @@ class TestRedisStore(ModuleBaseTestCase):
                                     'port': self.redis_service['port']})
         self.checkConfiguration()
         rc = self.test_object.getClient()
-        self.assertEqual(rc.__class__.__name__, 'StrictRedis')
+        self.assertEqual(rc.__class__.__name__, 'Redis')
 
     def testSetGetValue(self):
         self.test_object.configure({'server': self.redis_service['server'],
@@ -24,5 +24,5 @@ class TestRedisStore(ModuleBaseTestCase):
         self.checkConfiguration()
         rc = self.test_object.getClient()
         rc.setex('Johann Gambolputty', 10, value)
-        test = rc.get('Johann Gambolputty')
+        test = str(rc.get('Johann Gambolputty'), "utf-8")
         self.assertEquals(test, value)

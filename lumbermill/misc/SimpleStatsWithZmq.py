@@ -1,18 +1,18 @@
 import os
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
-from lumbermill.utils.misc import AnsiColors, TimedFunctionManager
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+from utils.misc import AnsiColors, TimedFunctionManager
 
 
 @ModuleDocstringParser
 class SimpleStats(BaseThreadedModule):
     """
-    Collect and log some simple lumbermill statistic data.
+    Collect and log some simple statistic data.
 
-    Use this module if you just need some simple statistics on how many events are passing through lumbermill.
+    Use this module if you just need some simple statistics on how many events are passing through 
     Per default, statistics will just be send to stdout.
 
     Configuration template:

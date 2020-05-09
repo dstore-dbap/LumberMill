@@ -75,7 +75,7 @@ class TestSpam(ModuleBaseTestCase):
                                     'events_count': 7})
         self.test_object.checkConfiguration()
         self.test_object.lumbermill.setWorkerCount(worker_count)
-        for _ in xrange(0, self.test_object.lumbermill.getWorkerCount()):
+        for _ in range(0, self.test_object.lumbermill.getWorkerCount()):
             self.test_object.initAfterFork()
             if self.test_object.lumbermill.is_master_process:
                 self.assertEquals(self.test_object.max_events_count, 3)

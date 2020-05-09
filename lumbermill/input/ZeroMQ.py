@@ -3,9 +3,9 @@ import socket
 import sys
 import zmq
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -21,7 +21,7 @@ class ZeroMQ(BaseThreadedModule):
 
     Configuration template:
 
-    - ZeroMQ:
+    - input.ZeroMQ:
        mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
        address:                         # <default: '*:5570'; type: string; is: optional>
        pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>

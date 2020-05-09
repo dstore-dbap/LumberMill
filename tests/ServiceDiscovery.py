@@ -31,3 +31,13 @@ def discover_mongodb():
             if s.connect_ex((server, port)) == 0:
                 return {'server': server, 'port': port}
     return None
+
+
+def getFreeTcpPortoOnLocalhost():
+    # Get a free random port.
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('127.0.0.1', 0))
+    sock.listen(socket.SOMAXCONN)
+    ipaddr, port = sock.getsockname()
+    return (ipaddr, port)

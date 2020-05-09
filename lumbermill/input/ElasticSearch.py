@@ -8,11 +8,11 @@ from elasticsearch import Elasticsearch, connection
 from ctypes import c_char_p
 from multiprocessing import Manager, Lock
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.constants import IS_PYPY
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
-from lumbermill.utils.DynamicValues import mapDynamicValue
+import utils.DictUtils as DictUtils
+from constants import IS_PYPY
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
+from utils.DynamicValues import mapDynamicValue
 
 # For pypy the default json module is the fastest.
 if IS_PYPY:
@@ -63,7 +63,7 @@ class ElasticSearch(BaseThreadedModule):
 
     Configuration template:
 
-    - ElasticSearch:
+    - input.ElasticSearch:
        query:                           # <default: '{"query":{"match_all":{}},"sort":["_doc"]}'; type: string; is: optional>
        search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scroll']>
        batch_size:                      # <default: 1000; type: integer; is: optional>
@@ -213,7 +213,7 @@ class ElasticSearch(BaseThreadedModule):
             try:
                scroll_id = self.shared_scroll_id.value
             except OSError:
-                # OSError: [Errno 32] Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it.
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 return []
             try:
                 response = self.simple_es_client.get('http://%s/_search/scroll?scroll=1m' % self.es_nodes[0], data=scroll_id)
@@ -231,7 +231,7 @@ class ElasticSearch(BaseThreadedModule):
             try:
                 self.shared_scroll_id.value = result['_scroll_id']
             except OSError:
-                # OSError: [Errno 32] Broken pipe may be thrown when exiting lumbermill via CTRL+C. Ignore it.
+                # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
         return result['hits']['hits']
 

@@ -6,7 +6,7 @@ import random
 import pprint
 from string import Formatter
 
-from lumbermill.constants import MY_HOSTNAME
+from constants import MY_HOSTNAME
 
 
 class KeyDotNotationDict(dict):

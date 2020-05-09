@@ -48,4 +48,4 @@ class TestRedisList(ModuleBaseTestCase):
             counter += 1
         self.assertTrue(event != False)
         self.assertEqual(counter, 500)
-        self.assertEqual(event['data'], data)
+        self.assertEqual(data, event['data'])

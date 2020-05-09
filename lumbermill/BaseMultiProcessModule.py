@@ -7,7 +7,7 @@ import BaseModule
 
 class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #
     """
-    Base class for all lumbermill modules that will run as separate processes.
+    Base class for all modules that will run as separate processes.
     If you happen to override one of the methods defined here, be sure to know what you
     are doing ;) You have been warned...
 

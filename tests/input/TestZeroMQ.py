@@ -5,10 +5,11 @@ import socket
 import zmq
 import os
 import unittest
-import lumbermill.utils.DictUtils as DictUtils
 
-from tests.ModuleBaseTestCase import ModuleBaseTestCase
+import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.input import ZeroMQ
+from tests.ModuleBaseTestCase import ModuleBaseTestCase
+from tests.ServiceDiscovery import getFreeTcpPortoOnLocalhost
 
 @unittest.skip("These tests sometimes seem to run into an endless loop. Need to look into this before reactivating.")
 class TestZmq(ModuleBaseTestCase):
@@ -19,7 +20,7 @@ class TestZmq(ModuleBaseTestCase):
         super(TestZmq, self).setUp(ZeroMQ.ZeroMQ(mock.Mock()))
 
     def testZmqPull(self):
-        ipaddr, port = self.getFreePortoOnLocalhost()
+        ipaddr, port = getFreeTcpPortoOnLocalhost()
         self.test_object.configure({'address': '%s:%s' % (ipaddr, port),
                                     'pattern': 'pull'})
         self.checkConfiguration()
@@ -109,12 +110,3 @@ class TestZmq(ModuleBaseTestCase):
             print("Failed to connect to %s:%s. Exception: %s, Error: %s." % (host, port, etype, evalue))
             return None
         return sock
-
-    def getFreePortoOnLocalhost(self):
-        # Get a free random port.
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('127.0.0.1', 0))
-        sock.listen(socket.SOMAXCONN)
-        ipaddr, port = sock.getsockname()
-        return (ipaddr, port)

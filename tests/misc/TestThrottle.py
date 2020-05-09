@@ -16,7 +16,7 @@ class TestThrottle(ModuleBaseTestCase):
                                     'max_count': 10})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        for _ in xrange(1, 6):
+        for _ in range(1, 6):
             self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'Spam': 'Spam'}))
         event_counter = 0
         for _ in self.receiver.getEvent():
@@ -43,7 +43,7 @@ class TestThrottle(ModuleBaseTestCase):
                                     'max_count': 10})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        for _ in xrange(1, 20):
+        for _ in range(1, 20):
             self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'Spam': 'Spam'}))
         event_counter = False
         for _ in self.receiver.getEvent():
@@ -57,7 +57,7 @@ class TestThrottle(ModuleBaseTestCase):
                                     'max_count': 10})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        for _ in xrange(0, 6):
+        for _ in range(0, 6):
             self.test_object.receiveEvent(DictUtils.getDefaultEventDict({'Spam': 'Spam'}))
         event_counter = 0
         for _ in self.receiver.getEvent():

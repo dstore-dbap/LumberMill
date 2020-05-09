@@ -1,6 +1,6 @@
 import mock
-import StringIO
 import sys
+from io import StringIO
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
 from lumbermill.input import StdIn
@@ -13,7 +13,7 @@ class TestStdIn(ModuleBaseTestCase):
 
     def testStdInSingleLine(self):
         self.test_object.configure({})
-        input = StringIO.StringIO("We are the knights who say ni!")
+        input = StringIO("We are the knights who say ni!")
         stdin = sys.stdin
         sys.stdin = input
         self.test_object.run()
@@ -23,7 +23,7 @@ class TestStdIn(ModuleBaseTestCase):
 
     def testStdInMultiLine(self):
         self.test_object.configure({'multiline': True})
-        input = StringIO.StringIO("""We are the knights who say ni!
+        input = StringIO("""We are the knights who say ni!
 Bring us a shrubbery!""")
         stdin = sys.stdin
         sys.stdin = input
@@ -37,7 +37,7 @@ Bring us a shrubbery!""")
         self.test_object.configure({'multiline': True,
                                     'stream_end_signal': "Ekki-Ekki-Ekki-Ekki-PTANG\n"})
         self.checkConfiguration()
-        input = StringIO.StringIO("""We are the knights who say ni!
+        input = StringIO("""We are the knights who say ni!
 Bring us a shrubbery!
 Ekki-Ekki-Ekki-Ekki-PTANG
 We are now no longer the Knights who say Ni.""")

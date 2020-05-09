@@ -7,9 +7,9 @@ from zmq.eventloop import ioloop, zmqstream
 
 ioloop.install()
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseModule import BaseModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseModule import BaseModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -25,7 +25,7 @@ class ZmqTornado(BaseModule):
 
     Configuration template:
 
-    - ZmqTornado:
+    - input.ZmqTornado:
        mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
        address:                         # <default: '*:5570'; type: string; is: optional>
        pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>

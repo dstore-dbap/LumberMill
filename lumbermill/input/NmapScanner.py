@@ -3,10 +3,10 @@ import sys
 
 import nmap
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseModule import BaseModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.misc import TimedFunctionManager
+import utils.DictUtils as DictUtils
+from BaseModule import BaseModule
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -16,7 +16,7 @@ class NmapScanner(BaseModule):
 
     Configuration template:
 
-    - NmapScanner:
+    - input.NmapScanner:
        network:                         # <type: string; is: required>
        netmask:                         # <default: '/24'; type: string; is: optional>
        ports:                           # <default: None; type: None||string; is: optional>

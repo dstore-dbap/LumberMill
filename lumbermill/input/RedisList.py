@@ -4,9 +4,9 @@ import time
 
 import redis
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -24,7 +24,7 @@ class RedisList(BaseThreadedModule):
 
     Configuration template:
 
-    - RedisList:
+    - input.RedisList:
        lists:                           # <type: string||list; is: required>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
@@ -81,7 +81,7 @@ class RedisList(BaseThreadedModule):
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 self.logger.error("Could not read data from redis list(s) %s. Exception: %s, Error: %s." % (self.lists, exc_type, exc_value))
             if event:
-                event = DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
+                event = DictUtils.getDefaultEventDict(dict={"received_from": str(event[0], 'utf-8'), "data": str(event[1], 'utf-8')}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)
             else:
                 # Queue is exhausted. Sleep a bit and retry.
@@ -106,5 +106,5 @@ class RedisList(BaseThreadedModule):
                     # Queue is exhausted. Sleep a bit and retry.
                     time.sleep(.5)
                     break
-                event = DictUtils.getDefaultEventDict(dict={"received_from": '%s' % event[0], "data": event[1]}, caller_class_name=self.__class__.__name__)
+                event = DictUtils.getDefaultEventDict(dict={"received_from": str(event[0], 'utf-8'), "data": str(event[1], 'utf-8')}, caller_class_name=self.__class__.__name__)
                 self.sendEvent(event)

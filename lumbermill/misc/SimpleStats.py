@@ -7,19 +7,19 @@ import psutil
 import datetime
 from collections import defaultdict
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
-from lumbermill.utils.misc import AnsiColors, TimedFunctionManager
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+from utils.misc import AnsiColors, TimedFunctionManager
 
 
 @ModuleDocstringParser
 class SimpleStats(BaseThreadedModule):
     """
-    Collect and log some simple lumbermill statistic data.
+    Collect and log some simple statistic data.
 
-    Use this module if you just need some simple statistics on how many events are passing through lumbermill.
+    Use this module if you just need some simple statistics on how many events are passing through 
     Per default, statistics will just be send to stdout.
 
     As a side note: This module inits MultiProcessStatisticCollector. As it uses multiprocessing.Manager().dict()
@@ -115,7 +115,7 @@ class SimpleStats(BaseThreadedModule):
                 self.mp_stats_collector.setCounter("last_%s" % event_type, count)
                 self.mp_stats_collector.resetCounter(event_type)
         except socket.error:
-            # socket.error: [Errno 2] No such file or directory may be thrown when exiting lumbermill via CTRL+C. Ignore it
+            # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
             etype, evalue, etb = sys.exc_info()
             if "No such file or directory" in evalue:
                 pass

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseModule import BaseModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
-from lumbermill.utils.RedisAsyncClient import AsyncRedisClient
+import utils.DictUtils as DictUtils
+from BaseModule import BaseModule
+from utils.Decorators import ModuleDocstringParser
+from utils.RedisAsyncClient import AsyncRedisClient
 
 
 @ModuleDocstringParser
@@ -21,7 +21,7 @@ class RedisChannel(BaseModule):
 
     Configuration template:
 
-    - RedisChannel:
+    - input.RedisChannel:
        channel:                         # <default: False; type: boolean||string; is: required if channel_pattern is False else optional>
        channel_pattern:                 # <default: False; type: boolean||string; is: required if channel is False else optional>
        server:                          # <default: 'localhost'; type: string; is: optional>

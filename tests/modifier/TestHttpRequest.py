@@ -80,6 +80,6 @@ class TestHttpRequest(ModuleBaseTestCase):
                                     'cache_ttl': 5})
         self.checkConfiguration()
         data = DictUtils.getDefaultEventDict({'TreeNodeID': '1', 'surname': 'Johann'})
-        self.test_object.handleEvent(data).next()
+        next(self.test_object.handleEvent(data))
         for event in self.test_object.handleEvent(data):
             self.assertTrue(event['lumbermill']['cache_hit'])

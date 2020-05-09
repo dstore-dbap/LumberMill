@@ -3,8 +3,8 @@
 Input modules
 =============
 
-BeatsServer
------------
+Beats
+-----
 
 Reads data from elastic beats client, i.e. filebeats, and sends it to its outputs.
 
@@ -22,7 +22,7 @@ Configuration template:
 
 ::
 
-    - BeatsServer:
+    - input.Beats:
        interface:                       # <default: ''; type: string; is: optional>
        port:                            # <default: 5151; type: integer; is: optional>
        timeout:                         # <default: None; type: None||integer; is: optional>
@@ -72,7 +72,7 @@ Configuration template:
 
 ::
 
-    - ElasticSearch:
+    - input.ElasticSearch:
        query:                           # <default: '{"query": {"match_all": {}}}'; type: string; is: optional>
        search_type:                     # <default: 'normal'; type: string; is: optional; values: ['normal', 'scan']>
        batch_size:                      # <default: 1000; type: integer; is: optional>
@@ -119,7 +119,7 @@ Configuration template:
 
 ::
 
-    - File:
+    - input.File:
        paths:                           # <type: string||list; is: required>
        pattern:                         # <default: '*'; type: string; is: optional>
        recursive:                       # <default: False; type: boolean; is: optional>
@@ -151,7 +151,7 @@ Configuration template:
 
 ::
 
-    - Kafka:
+    - input.Kafka:
        brokers:                         # <type: list; is: required>
        topics:                          # <type: string||list; is: required>
        client_id:                       # <default: 'kafka.consumer.kafka'; type: string; is: optional>
@@ -178,7 +178,7 @@ Configuration template:
 
 ::
 
-    - NmapScanner:
+    - input.NmapScanner:
        network:                         # <type: string; is: required>
        netmask:                         # <default: '/24'; type: string; is: optional>
        ports:                           # <default: None; type: None||string; is: optional>
@@ -204,7 +204,7 @@ Configuration template:
 
 ::
 
-    - RedisChannel:
+    - input.RedisChannel:
        channel:                         # <default: False; type: boolean||string; is: required if channel_pattern is False else optional>
        channel_pattern:                 # <default: False; type: boolean||string; is: required if channel is False else optional>
        server:                          # <default: 'localhost'; type: string; is: optional>
@@ -232,7 +232,7 @@ Configuration template:
 
 ::
 
-    - RedisList:
+    - input.RedisList:
        lists:                           # <type: string||list; is: required>
        server:                          # <default: 'localhost'; type: string; is: optional>
        port:                            # <default: 6379; type: integer; is: optional>
@@ -262,7 +262,7 @@ Configuration template:
 
 ::
 
-    - SQS:
+    - input.SQS:
        aws_access_key_id:               # <type: string; is: required>
        aws_secret_access_key:           # <type: string; is: required>
        region:                          # <type: string; is: required; values: ['us-east-1', 'us-west-1', 'us-west-2', 'eu-central-1', 'eu-west-1', 'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'sa-east-1', 'us-gov-west-1', 'cn-north-1']>
@@ -293,7 +293,7 @@ Configuration template:
 
 ::
 
-    - Sniffer:
+    - input.Sniffer:
        interface:                       # <default: 'any'; type: None||string; is: optional>
        packetfilter:                    # <default: None; type: None||string; is: optional>
        promiscous:                      # <default: False; type: boolean; is: optional>
@@ -324,7 +324,7 @@ Configuration template:
 
 ::
 
-    - Spam:
+    - input.Spam:
        event:                           # <default: ""; type: string||list||dict; is: optional>
        sleep:                           # <default: 0; type: int||float; is: optional>
        events_count:                    # <default: 0; type: int; is: optional>
@@ -341,15 +341,15 @@ Configuration template:
 
 ::
 
-    - StdIn:
+    - input.StdIn:
        multiline:                       # <default: False; type: boolean; is: optional>
        stream_end_signal:               # <default: False; type: boolean||string; is: optional>
        receivers:
         - NextModule
 
 
-TcpServer
----------
+Tcp
+---
 
 Reads data from tcp socket and sends it to its outputs.
 Should be the best choice perfomancewise if you are on Linux and are running with multiple workers.
@@ -372,7 +372,7 @@ Configuration template:
 
 ::
 
-    - TcpServer:
+    - input.Tcp:
        interface:                       # <default: ''; type: string; is: optional>
        port:                            # <default: 5151; type: integer; is: optional>
        timeout:                         # <default: None; type: None||integer; is: optional>
@@ -390,8 +390,8 @@ Configuration template:
         - NextModule
 
 
-UdpServer
----------
+Udp
+---
 
 Reads data from udp socket and sends it to its output queues.
 
@@ -403,7 +403,7 @@ Configuration template:
 
 ::
 
-    - UdpServer:
+    - input.Udp:
        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
        port:                            # <default: 5151; type: integer; is: optional>
        timeout:                         # <default: None; type: None||integer; is: optional>
@@ -420,7 +420,7 @@ Configuration template:
 
 ::
 
-    - UnixSocket:
+    - input.UnixSocket:
        path_to_socket:                  # <type: string; is: required>
        receivers:
         - NextModule
@@ -441,7 +441,7 @@ Configuration template:
 
 ::
 
-    - ZeroMQ:
+    - input.ZeroMQ:
        mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
        address:                         # <default: '*:5570'; type: string; is: optional>
        pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>
@@ -466,7 +466,7 @@ Configuration template:
 
 ::
 
-    - ZmqTornado:
+    - input.ZmqTornado:
        mode:                            # <default: 'server'; type: string; values: ['server', 'client']; is: optional>
        address:                         # <default: '*:5570'; type: string; is: optional>
        pattern:                         # <default: 'pull'; type: string; values: ['pull', 'sub']; is: optional>

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-import Queue
+import queue
 import threading
-import types
 
 from dns import resolver, reversename
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Buffers import MemoryCache
-from lumbermill.utils.Decorators import ModuleDocstringParser
+from BaseThreadedModule import BaseThreadedModule
+from utils.Buffers import MemoryCache
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -47,7 +46,7 @@ class AddDnsLookup(BaseThreadedModule):
         self.nameservers = self.getConfigurationValue('nameservers')
         self.timeout = self.getConfigurationValue('timeout')
         # Allow single string as well.
-        if isinstance(self.nameservers, types.StringTypes):
+        if isinstance(self.nameservers, str):
             self.nameservers = [self.nameservers]
         self.lookup_threads_pool_size = 3
 
@@ -57,7 +56,7 @@ class AddDnsLookup(BaseThreadedModule):
         self.resolver.lifetime = self.timeout
         if self.nameservers:
             self.resolver.nameservers = self.nameservers
-        self.queue = Queue.Queue(20)
+        self.queue = queue.Queue(20)
         self.lookup_threads = [LookupThread(self.queue, self.lookup_type, self) for _ in range(0, self.lookup_threads_pool_size)]
         for thread in self.lookup_threads:
             thread.start()
@@ -93,7 +92,7 @@ class LookupThread(threading.Thread):
         while self.alive:
             try:
                 payload = self.queue.get(block=False, timeout=.2)
-            except Queue.Empty:
+            except queue.Empty:
                 continue
             source_field = payload['source_field']
             target_field = payload['target_field']

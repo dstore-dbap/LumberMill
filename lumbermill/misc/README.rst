@@ -26,7 +26,7 @@ Configuration template:
 
 ::
 
-    - EventBuffer:
+    - misc.EventBuffer:
        backend:                         # <default: 'RedisStore'; type: string; is: optional>
        gc_interval:                     # <default: 5; type: integer; is: optional>
        key_prefix:                      # <default: "lumbermill:eventbuffer"; type: string; is: optional>
@@ -52,7 +52,7 @@ Configuration template:
 
 ::
 
-    - Cache:
+    - misc.Cache:
        backend:                         # <default: 'DictStore'; type: string; values:['DictStore', 'RedisStore', 'MemcacheStore']; is: optional>
        server:                          # <default: None; type: None||string; is: required if backend in ['RedisStore', 'MemcacheStore'] and cluster is None else optional>
        cluster:                         # <default: None; type: None||dictionary; is: required if backend == 'RedisStore' and server is None else optional>
@@ -85,7 +85,7 @@ Configuration template:
 
 ::
 
-    - SimpleStats:
+    - misc.SimpleStats:
        interval:                        # <default: 10; type: integer; is: optional>
        event_type_statistics:           # <default: True; type: boolean; is: optional>
        receive_rate_statistics:         # <default: True; type: boolean; is: optional>
@@ -105,7 +105,7 @@ Configuration template:
 
 ::
 
-    - SimpleStats:
+    - misc.SimpleStats:
        interval:                        # <default: 10; type: integer; is: optional>
        event_type_statistics:           # <default: True; type: boolean; is: optional>
        receive_rate_statistics:         # <default: True; type: boolean; is: optional>
@@ -140,7 +140,7 @@ Configuration template:
 
 ::
 
-    - Statistics:
+    - misc.Statistics:
        interval:                        # <default: 10; type: integer; is: optional>
        fields:                          # <default: ['lumbermill.event_type']; type: list; is: optional>
 
@@ -156,7 +156,7 @@ Configuration template:
 
 ::
 
-    - Tarpit:
+    - misc.Tarpit:
        delay:                           # <default: 10; type: integer; is: optional>
        receivers:
         - NextModule
@@ -178,7 +178,7 @@ Configuration template:
 
 ::
 
-    - Throttle:
+    - misc.Throttle:
        key:                             # <type:string; is: required>
        timeframe:                       # <default: 600; type: integer; is: optional>
        min_count:                       # <default: 1; type: integer; is: optional>

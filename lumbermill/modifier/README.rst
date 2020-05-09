@@ -17,7 +17,7 @@ Configuration template:
 
 ::
 
-    - AddDateTime:
+    - modifier.AddDateTime:
        source_fields:                   # <default: None; type: None||list; is: optional>
        source_formats:                  # <default: None; type: None||list; is: required if source_fields is not None else optional>
        target_field:                    # <default: '@timestamp'; type: string; is: optional>
@@ -42,7 +42,7 @@ Configuration template:
 
 ::
 
-    - AddDnsLookup:
+    - modifier.AddDnsLookup:
        action:                          # <default: 'resolve'; type: string; is: optional; values: ['resolve', 'reverse']>
        source_field:                    # <default: None; type: string; is: required>
        target_field:                    # <default: None; type: None||string; is: optional>
@@ -84,7 +84,7 @@ Configuration template:
 
 ::
 
-    - AddGeoInfo:
+    - modifier.AddGeoInfo:
        geoip_dat_path:                  # <default: './assets/maxmind/GeoLite2-City.mmdb'; type: string; is: optional>
        geoip_locals:                    # <default: ['en']; type: list; is: optional>
        geoip_mode:                      # <default: 'MODE_AUTO'; type: string; is: optional; values: ['MODE_MMAP_EXT', 'MODE_MMAP', 'MODE_FILE', 'MODE_MEMORY', 'MODE_AUTO']>
@@ -106,7 +106,7 @@ Configuration template:
 
 ::
 
-    - DropEvent
+    - modifier.DropEvent
 
 
 ExecPython
@@ -134,7 +134,7 @@ Configuration template:
 
 ::
 
-    - ExecPython:
+    - modifier.ExecPython:
        imports:                         # <default: []; type: list; is: optional>
        source:                          # <type: string; is: required>
        debug:                           # <default: False; type: boolean; is: optional>
@@ -168,7 +168,7 @@ Configuration template:
 
 ::
 
-    - Facet:
+    - modifier.Facet:
        source_field:                    # <type:string; is: required>
        group_by:                        # <type:string; is: required>
        backend:                         # <default: None; type: None||string; is: required>
@@ -204,7 +204,7 @@ Configuration template:
 
 ::
 
-    - HttpRequest:
+    - modifier.HttpRequest:
        url:                             # <type: string; is: required>
        socket_timeout:                  # <default: 25; type: integer; is: optional>
        get_metadata:                    # <default: False; type: boolean; is: optional>
@@ -242,7 +242,7 @@ Configuration template:
 
 ::
 
-    - Math:
+    - modifier.Math:
        function:                        # <type: string; is: required>
        results_function:                # <default: None; type: None||string; is: optional if interval is None else required>
        interval:                        # <default: None; type: None||float||integer; is: optional>
@@ -261,21 +261,21 @@ Configuration templates:
 ::
 
     # Keep all fields listed in source_fields, discard all others.
-    - ModifyFields:
+    - modifier.Field:
        action: keep                     # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
         - NextModule
 
     # Discard all fields listed in source_fields.
-    - ModifyFields:
+    - modifier.Field:
        action: delete                   # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
         - NextModule
 
     # Concat all fields listed in source_fields.
-    - ModifyFields:
+    - modifier.Field:
        action: concat                   # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        target_field:                    # <type: string; is: required>
@@ -283,7 +283,7 @@ Configuration templates:
         - NextModule
 
     # Insert a new field with "target_field" name and "value" as new value.
-    - ModifyFields:
+    - modifier.Field:
        action: insert                   # <type: string; is: required>
        target_field:                    # <type: string; is: required>
        value:                           # <type: string; is: required>
@@ -291,7 +291,7 @@ Configuration templates:
         - NextModule
 
     # Replace field values matching string "old" in data dictionary with "new".
-    - ModifyFields:
+    - modifier.Field:
        action: string_replace           # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        old:                             # <type: string; is: required>
@@ -301,7 +301,7 @@ Configuration templates:
         - NextModule
 
     # Replace field values in data dictionary with self.getConfigurationValue['with'].
-    - ModifyFields:
+    - modifier.Field:
        action: replace                  # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        regex: ['<[^>]*>', 're.MULTILINE | re.DOTALL'] # <type: list; is: required>
@@ -310,7 +310,7 @@ Configuration templates:
         - NextModule
 
     # Rename a field.
-    - ModifyFields:
+    - modifier.Field:
        action: rename                   # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        target_field:                    # <type: string; is: required>
@@ -318,7 +318,7 @@ Configuration templates:
         - NextModule
 
     # Rename a field by regex.
-    - ModifyFields:
+    - modifier.Field:
        action: rename_regex             # <type: string; is: required>
        regex:                           # <type: string; is: required>
        source_field:                    # <default: None; type: None||string; is: optional>
@@ -328,7 +328,7 @@ Configuration templates:
         - NextModule
 
     # Rename a field by replace.
-    - ModifyFields:
+    - modifier.Field:
        action: rename_replace           # <type: string; is: required>
        old:                             # <type: string; is: required>
        new:                             # <type: string; is: required>
@@ -338,7 +338,7 @@ Configuration templates:
         - NextModule
 
     # Map a field value.
-    - ModifyFields:
+    - modifier.Field:
        action: map                      # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        map:                             # <type: dictionary; is: required>
@@ -348,7 +348,7 @@ Configuration templates:
         - NextModule
 
     # Split source field to target fields based on key value pairs.
-    - ModifyFields:
+    - modifier.Field:
        action: key_value                # <type: string; is: required>
        line_separator:                  # <type: string; is: required>
        kv_separator:                    # <type: string; is: required>
@@ -359,7 +359,7 @@ Configuration templates:
         - NextModule
 
     # Split source field to target fields based on key value pairs using regex.
-    - ModifyFields:
+    - modifier.Field:
        action: key_value_regex          # <type: string; is: required>
        regex:                           # <type: string; is: required>
        source_field:                    # <type: list; is: required>
@@ -369,7 +369,7 @@ Configuration templates:
         - NextModule
 
     # Split source field to array at separator.
-    - ModifyFields:
+    - modifier.Field:
        action: split                    # <type: string; is: required>
        separator:                       # <type: string; is: required>
        source_field:                    # <type: list; is: required>
@@ -378,7 +378,7 @@ Configuration templates:
         - NextModule
 
     # Merge source fields to target field as list.
-    - ModifyFields:
+    - modifier.Field:
        action: merge                    # <type: string; is: required>
        target_field:                    # <type: string; is: reuired>
        source_fields:                   # <type: list; is: required>
@@ -386,7 +386,7 @@ Configuration templates:
         - NextModule
 
     # Merge source field to target field as string.
-    - ModifyFields:
+    - modifier.Field:
        action: join                     # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        target_field:                    # <type: string; is: required>
@@ -395,28 +395,28 @@ Configuration templates:
         - NextModule
 
     # Cast field values to integer.
-    - ModifyFields:
+    - modifier.Field:
        action: cast_to_int              # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
         - NextModule
 
     # Cast field values to float.
-    - ModifyFields:
+    - modifier.Field:
        action: cast_to_float            # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
         - NextModule
 
     # Cast field values to string.
-    - ModifyFields:
+    - modifier.Field:
        action: cast_to_str              # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
         - NextModule
 
     # Cast field values to boolean.
-    - ModifyFields:
+    - modifier.Field:
        action: cast_to_bool             # <type: string; is: required>
        source_fields:                   # <type: list; is: required>
        receivers:
@@ -426,7 +426,7 @@ Configuration templates:
     # If target_fields is provided, it should have the same length as source_fields.
     # If target_fields is not provided, source_fields will be replaced with the hashed value.
     # Hash algorithm can be any of the in hashlib supported algorithms.
-    - ModifyFields:
+    - modifier.Field:
        action: hash                     # <type: string; is: required>
        algorithm: sha1                  # <default: "md5"; type: string; is: optional;>
        salt:                            # <default: None; type: None||string; is: optional;>
@@ -466,7 +466,7 @@ Configuration template:
 
 ::
 
-    - MergeEvent:
+    - modifier.MergeEvent:
        buffer_key:                      # <default: "$(lumbermill.received_from)"; type: string; is: optional>
        buffer_size:                     # <default: 100; type: integer; is: optional>
        flush_interval_in_secs:          # <default: 1; type: None||integer; is: required if pattern is None else optional>
@@ -490,7 +490,7 @@ Configuration template:
 
 ::
 
-    - Permutate:
+    - modifier.Permutate:
        source_field:                    # <type: string; is: required>
        target_fields:                   # <type: list; is: required>
        context_data_field:              # <default: ""; type:string; is: optional>

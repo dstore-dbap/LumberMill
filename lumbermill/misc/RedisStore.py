@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import cPickle
 import sys
-
 import redis
+from pickle import loads, dumps
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Buffers import Buffer
-from lumbermill.utils.Decorators import ModuleDocstringParser
+from BaseThreadedModule import BaseThreadedModule
+from utils.Buffers import Buffer
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -139,7 +138,7 @@ class RedisStore(BaseThreadedModule):
     def set(self, key, value, ttl=0, pickle=True):
         if pickle is True:
             try:
-                value = cPickle.dumps(value)
+                value = dumps(value)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
@@ -152,7 +151,7 @@ class RedisStore(BaseThreadedModule):
     def setBuffered(self, key, value, ttl=0, pickle=True):
         if pickle is True:
             try:
-                value = cPickle.dumps(value)
+                value = dumps(value)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
@@ -178,10 +177,10 @@ class RedisStore(BaseThreadedModule):
 
 
     def get(self, key, unpickle=True):
-        value = self.client.get(key)
+        value = str(self.client.get(key), "utf-8")
         if unpickle and value:
             try:
-                value = cPickle.loads(value)
+                value = loads(value)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not unpickle %s:%s from redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
@@ -207,10 +206,10 @@ class RedisStore(BaseThreadedModule):
             self._delete(key)
 
     def pop(self, key, unpickle=True):
-        value = self.get(key, unpickle)
+        value = str(self.get(key, unpickle), "utf-8")
         if value:
             self.delete(key)
-        return value
+        return str(value, "utf-8")
 
     def popBuffered(self, key, unpickle=True):
         try:

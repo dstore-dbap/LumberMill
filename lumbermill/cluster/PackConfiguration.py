@@ -4,9 +4,9 @@ import sys
 
 import yaml
 
-from lumbermill.BaseModule import BaseModule
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.misc import TimedFunctionManager
+from BaseModule import BaseModule
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

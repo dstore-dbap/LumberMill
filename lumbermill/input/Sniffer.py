@@ -8,9 +8,9 @@ import sys
 import pcapy
 from impacket.ImpactDecoder import EthDecoder
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 PROTOCOL_TO_NAMES = {'eth': 'Ethernet',
                      '0x800': 'IPv4'}
@@ -37,7 +37,7 @@ class Sniffer(BaseThreadedModule):
 
     Configuration template:
 
-    - Sniffer:
+    - input.Sniffer:
        interface:                       # <default: 'any'; type: None||string; is: optional>
        protocols:                       # <default: ['Data']; type: list; is: optional>
        packetfilter:                    # <default: None; type: None||string; is: optional>

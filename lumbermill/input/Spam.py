@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -13,7 +13,7 @@ class Spam(BaseThreadedModule):
 
     Use this module to load test LumberMill. Also nice for testing your regexes.
 
-    The event field can either be a simple string. This string will be used to create a default lumbermill event dict.
+    The event field can either be a simple string. This string will be used to create a default event dict.
     If you want to provide more custom fields, you can provide a dictionary containing at least a "data" field that
     should your raw event string.
 
@@ -26,7 +26,7 @@ class Spam(BaseThreadedModule):
 
     Configuration template:
 
-    - Spam:
+    - input.Spam:
        event:                           # <default: ""; type: string||list||dict; is: optional>
        sleep:                           # <default: 0; type: int||float; is: optional>
        events_count:                    # <default: 0; type: int; is: optional>

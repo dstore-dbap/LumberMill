@@ -32,16 +32,16 @@ import time
 import logging
 import threading
 
-from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from utils import IS_GZIPPED_FILE, REOPEN_FILES
-from utils import ENCODINGS
+from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from utils.beaver.worker.utils import IS_GZIPPED_FILE, REOPEN_FILES
+from utils.beaver.worker.utils import ENCODINGS
 
 
 class Tail(threading.Thread):
     """Follows a single file and outputs new lines from it to a callback
     """
 
-    def __init__(self, lumbermill_module, filename, callback, position="end", file_config=None):
+    def __init__(self, module, filename, callback, position="end", file_config=None):
         threading.Thread.__init__(self)
         self.active = False
         self._callback = callback
@@ -52,24 +52,24 @@ class Tail(threading.Thread):
         self._last_file_mapping_update = None
         self._line_count = 0
         self._line_count_sincedb = 0
-        self._lumbermill_module = lumbermill_module
-        self._logger = logging.getLogger('%s::%s' % (lumbermill_module.__class__.__name__, self.__class__.__name__))
-        self._logger.setLevel(LOGLEVEL_STRING_TO_LOGLEVEL_INT[lumbermill_module.getConfigurationValue('log_level').lower()])
+        self._lumbermill_module = module
+        self._logger = logging.getLogger('%s::%s' % (module.__class__.__name__, self.__class__.__name__))
+        self._logger.setLevel(LOGLEVEL_STRING_TO_LOGLEVEL_INT[module.getConfigurationValue('log_level').lower()])
 
-        self._sincedb_path = os.path.realpath(lumbermill_module.getConfigurationValue('sincedb_path'))
-        self._ignore_empty = lumbermill_module.getConfigurationValue('ignore_empty')
-        self._ignore_truncate = lumbermill_module.getConfigurationValue('ignore_truncate')
-        self._sincedb_write_interval = lumbermill_module.getConfigurationValue('sincedb_write_interval')
-        self._start_position = lumbermill_module.getConfigurationValue('start_position')
-        self._stat_interval = lumbermill_module.getConfigurationValue('stat_interval')
-        self._tail_lines = lumbermill_module.getConfigurationValue('tail_lines')
-        self._encoding = lumbermill_module.getConfigurationValue('encoding')
+        self._sincedb_path = os.path.realpath(module.getConfigurationValue('sincedb_path'))
+        self._ignore_empty = module.getConfigurationValue('ignore_empty')
+        self._ignore_truncate = module.getConfigurationValue('ignore_truncate')
+        self._sincedb_write_interval = module.getConfigurationValue('sincedb_write_interval')
+        self._start_position = module.getConfigurationValue('start_position')
+        self._stat_interval = module.getConfigurationValue('stat_interval')
+        self._tail_lines = module.getConfigurationValue('tail_lines')
+        self._encoding = module.getConfigurationValue('encoding')
 
         # The following is for the buffered tokenization
         # Store the specified delimiter
-        self._delimiter = lumbermill_module.getConfigurationValue("separator")
+        self._delimiter = module.getConfigurationValue("separator")
         # Store the specified size limitation
-        self._size_limit = lumbermill_module.getConfigurationValue("size_limit")
+        self._size_limit = module.getConfigurationValue("size_limit")
         # The input buffer is stored as an array.  This is by far the most efficient
         # approach given language constraints (in C a linked list would be a more
         # appropriate data structure).  Segments of input data are stored in a list
@@ -118,7 +118,7 @@ class Tail(threading.Thread):
                     _file = io.open(self._filename, 'r', encoding=self._encoding, errors='replace')
                 else:
                     _file = io.open(self._filename, 'r', errors='replace')
-        except IOError, e:
+        except IOError as e:
             self._log_warning(str(e))
             _file = None
             self.close()
@@ -232,8 +232,8 @@ class Tail(threading.Thread):
 
         try:
             st = os.stat(self._filename)
-        except EnvironmentError, err:
-            if err.errno == errno.ENOENT:
+        except EnvironmentError as e:
+            if e.errno == errno.ENOENT:
                 self._log_debug('file removed')
                 self.close()
                 return
@@ -265,7 +265,7 @@ class Tail(threading.Thread):
         while True:
             try:
                 data = self._file.read(4096)
-            except IOError, e:
+            except IOError as e:
                 if e.errno == errno.ESTALE:
                     self.active = False
                     return False
@@ -495,8 +495,8 @@ class Tail(threading.Thread):
             self.active = True
             try:
                 st = os.stat(self._filename)
-            except EnvironmentError, err:
-                if err.errno == errno.ENOENT:
+            except EnvironmentError as e:
+                if e.errno == errno.ENOENT:
                     self._log_debug('file removed')
                     self.close()
 
@@ -526,8 +526,8 @@ class Tail(threading.Thread):
                     return self.tail_read(f, window, position=position)
 
                 return False
-            except IOError, err:
-                if err.errno == errno.ENOENT:
+            except IOError as e:
+                if e.errno == errno.ENOENT:
                     return []
                 raise
             except UnicodeDecodeError:

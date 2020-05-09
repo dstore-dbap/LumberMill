@@ -1,5 +1,6 @@
 import copy
 import time
+import os
 import sys
 import tempfile
 
@@ -70,9 +71,10 @@ class TestFile(ModuleBaseTestCase):
         self.assertEquals(event['data'], 'Spam! Spam! Spam!')
 
     def testFileTailMode(self):
-        self.temp_file = tempfile.NamedTemporaryFile()
+        self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
+        tmp_file_path = self.temp_file.name
         self.test_object.configure({'log_level': 'info',
-                                    'paths': self.temp_file.name,
+                                    'paths': tmp_file_path,
                                     'line_by_line': True,
                                     'mode': 'tail',
                                     'stat_interval': .1})
@@ -82,8 +84,8 @@ class TestFile(ModuleBaseTestCase):
         time.sleep(.2)
         self.temp_file.write("Spam!\nSpam! Spam!\nSpam! Spam! Spam!\n")
         # Force os to flush data to file.
-        self.temp_file.read()
-        time.sleep(.2)
+        self.temp_file.close()
+        time.sleep(1)
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
@@ -91,6 +93,7 @@ class TestFile(ModuleBaseTestCase):
         self.assertTrue(events[0]['data'] == "Spam!")
         self.assertTrue(events[1]['data'] == "Spam! Spam!")
         self.assertTrue(events[2]['data'] == "Spam! Spam! Spam!")
+        os.unlink(tmp_file_path)
 
     def testDivideFilesToMultipleWorkers(self):
         worker_count = 3
@@ -102,7 +105,7 @@ class TestFile(ModuleBaseTestCase):
         self.test_object.lumbermill.setWorkerCount(worker_count)
         all_files = copy.copy(self.test_object.files)
         worker_files = []
-        for _ in xrange(0, self.test_object.lumbermill.getWorkerCount()):
+        for _ in range(0, self.test_object.lumbermill.getWorkerCount()):
             self.test_object.initAfterFork()
             worker_files.append(copy.copy(self.test_object.files))
             self.test_object.files = copy.copy(all_files)

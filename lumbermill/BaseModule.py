@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Testing merge request
+# and notification emails.
 import abc
 import logging
 import os
@@ -8,7 +10,7 @@ from functools import wraps
 
 from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
 from utils.ConfigurationValidator import ConfigurationValidator
-from utils.DynamicValues import parseDynamicValue, mapDynamicValue, GP_DYNAMIC_VAL_REGEX_WITH_TYPES
+from utils.DynamicValues import parseDynamicValue, mapDynamicValue, LM_DYNAMIC_VAL_REGEX, LM_DYNAMIC_VAL_REGEX_WITH_TYPES
 
 
 class BaseModule:
@@ -83,14 +85,17 @@ class BaseModule:
         """
         Replace the configuration notation for dynamic values with pythons notation.
         E.g:
-        filter: $(lumbermill.source_module) == 'TcpServer'
-        filter: $(lumbermill.source_module) == 'TcpServer'
+        id: myid_$(event.lumbermill.event_id)
         parsed:
-        filter: %(lumbermill.source_module)s == 'TcpServer'
+        id: %(event.lumbermill.event_id)s == 'TcpServer'
         """
         # Copy dict since we might change it during iteration.
         configuration_data_copy = self.configuration_data.copy()
-        for key, value in configuration_data_copy.iteritems():
+        for key, value in configuration_data_copy.items():
+            # Parsing of filter strings will be handled by setInputFilter and addOutputFilter methods.
+            if key == "filter":
+                self.configuration_data[key] = {'value': value, 'contains_dynamic_value': True}
+                continue
             self.configuration_data[key] = parseDynamicValue(value)
 
     def checkConfiguration(self):
@@ -156,13 +161,17 @@ class BaseModule:
         converts to:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
+        # Remove possible leading "if".
         filter_string_tmp = re.sub('^if\s+', "", filter_string)
+        # Remove event reference.
+        filter_string_tmp = re.sub('\$\(event\.', '%(', filter_string_tmp)
         # Check if we have a reference to the internal LumberMill datastore.
-        if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
-            filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+        if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
+            filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
         # Replace all remaining dynamic references.
-        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
         filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
+        print(filter_string_tmp)
         try:
             event_filter = eval(filter_string_tmp)
         except:
@@ -180,13 +189,16 @@ class BaseModule:
         converts to:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
-        filter_string_tmp = re.sub('^if\s+', "", filter_string)
+        # Remove possible leading "if".
+        filter_string_tmp = re.sub('^if\s+', '', filter_string)
+        # Remove event reference.
+        filter_string_tmp = re.sub('\$\(event\.', '\$(', filter_string_tmp)
         # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
         # Check if we have a reference to the internal LumberMill datastore.
-        if re.search(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string):
-            filter_string_tmp = re.sub(r"%\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+        if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
+            filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
         # Replace all remaining dynamic references.
-        filter_string_tmp = GP_DYNAMIC_VAL_REGEX_WITH_TYPES.sub(r"event.get('\1', False)", filter_string_tmp)
+        filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
         filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
             output_filter = eval(filter_string_tmp)
@@ -226,7 +238,7 @@ class BaseModule:
         """
         self.process_id = os.getpid()
         for receiver_name, receiver in self.receivers.items():
-            if hasattr(receiver, 'put'):
+            if isinstance(receiver, BaseModule) and hasattr(receiver, 'put'):
                 receiver.startInterval()
 
     def commonActions(self, event):

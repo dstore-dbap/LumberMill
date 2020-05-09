@@ -2,14 +2,12 @@
 import fnmatch
 import os
 import random
-import types
-
 import time
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils import DictUtils
-from lumbermill.utils.Decorators import ModuleDocstringParser
-from lumbermill.utils.beaver.worker.tail import Tail
+from BaseThreadedModule import BaseThreadedModule
+from utils import DictUtils
+from utils.Decorators import ModuleDocstringParser
+from utils.beaver.worker.tail import Tail
 
 
 @ModuleDocstringParser
@@ -40,7 +38,7 @@ class File(BaseThreadedModule):
 
     Configuration template:
 
-    - File:
+    - input.File:
        paths:                           # <type: string||list; is: required>
        pattern:                         # <default: '*'; type: string; is: optional>
        recursive:                       # <default: False; type: boolean; is: optional>
@@ -69,7 +67,7 @@ class File(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method.
         BaseThreadedModule.configure(self, configuration)
-        self.file_tailer = None
+        self.file_tailer = []
         self.files = self.scanPaths()
         self.line_by_line = self.getConfigurationValue('line_by_line')
         self.mode = self.getConfigurationValue('mode')
@@ -80,7 +78,7 @@ class File(BaseThreadedModule):
     def scanPaths(self):
         found_files = []
         paths = self.getConfigurationValue('paths')
-        if isinstance(paths, types.StringType):
+        if isinstance(paths, str):
             paths = [paths]
         for path in paths:
             if os.path.isfile(path):
@@ -97,7 +95,7 @@ class File(BaseThreadedModule):
 
     def startFileTailer(self):
         self.file_tailer = []
-        for file_to_tail in self.files: # (self, lumbermill_module, filename, callback, position="end", file_config=None):
+        for file_to_tail in self.files: # (self, module, filename, callback, position="end", file_config=None):
             self.file_tailer.append(Tail(self, file_to_tail, self.handleFileChange))
             self.file_tailer[-1].start()
 
@@ -149,7 +147,7 @@ class File(BaseThreadedModule):
                 pass
 
     def shutDown(self):
-        if self.file_tailer:
+        if hasattr(self, "file_tailer") and len(self.file_tailer) > 0:
             for file_tailer in self.file_tailer:
                 file_tailer.close()
         self.alive = False

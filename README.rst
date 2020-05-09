@@ -19,11 +19,9 @@ multiprocessed to avoid `GIL <http://www.dabeaz.com/GIL/>`_ related restrictions
 
 Compatibility and Performance
 '''''''''''''''''''''''''''''
-To run LumberMill you will need Python 2.7+. It is not yet Python 3 compatible.
+To run LumberMill you will need Python 3.2+. For Python 2 support, please use an older version of this tool.
 For better performance, I heartly recommend running LumberMill with pypy.
 The performance gain can be up to 5-6 times events/s throughput running single processed.
-Tested with pypy-2.4, pypy-2.5 and pypy-4.2.
-A small benchmark comparing the performance of different python/pypy versions and logstash-1.4.2 can be found `here  <http://www.netprojects.de/simple-benchmark-of-lumbermill/>`_.
 
 Installation
 ''''''''''''
@@ -92,23 +90,23 @@ Below, I will explain each section in more detail.
        workers: 2
 
     # Listen on all interfaces, port 5151.
-    - TcpServer:
+    - input.Tcp:
        port: 5151
        receivers:
         - RegexParser
 
     # Listen on all interfaces, port 5152.
-    - TcpServer:
+    - input.Tcp:
        port: 5152
        mode: stream
        chunksize: 32768
 
     # Decode msgpacked data.
-    - MsgPackParser:
+    - parser.MsgPack:
        mode: stream
 
     # Extract fields.
-    - RegexParser:
+    - parser.RegexParser:
        source_field: data
        hot_rules_first: True
        field_extraction_patterns:
@@ -123,62 +121,62 @@ Below, I will explain each section in more detail.
            filter: $(lumbermill.event_type) == 'Unknown'
 
     # Print out some stats every 10 seconds.
-    - SimpleStats:
+    - misc.SimpleStats:
        interval: 10
 
     # Extract the syslog prival from events received via syslog.
-    - SyslogPrivalParser:
+    - parser.SyslogPrival:
        source_field: syslog_prival
 
     # Add a timestamp field.
-    - AddDateTime:
+    - modifier.AddDateTime:
        format: '%Y-%m-%dT%H:%M:%S.%f'
        target_field: "@timestamp"
 
     # Add geo info based on the lookup_fields. The first field in <source_fields> that yields a result from geoip will be used.
-    - AddGeoInfo:
+    - modifier.AddGeoInfo:
        geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
        source_fields: [x_forwarded_for, remote_ip]
        geo_info_fields: ['latitude', 'longitude', 'country_code']
 
     # Nginx logs request time in seconds with milliseconds as float. Apache logs microseconds as int.
     # At least cast nginx to integer.
-    - Math:
+    - modifier.Math:
        filter: if $(server_type) == "nginx"
        target_field: request_time
        function: float($(request_time)) * 1000
 
     # Map field values of <source_field> to values in <map>.
-    - ModifyFields:
+    - modifier.Field:
        filter: if $(http_status)
        action: map
        source_field: http_status
        map: {100: 'Continue', 200: 'OK', 301: 'Moved Permanently', 302: 'Found', 304: 'Not Modified', 400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found', 500: 'Internal Server Error', 502: 'Bad Gateway'}
 
     # Kibana’s ‘bettermap’ panel needs an array of floats in order to plot events on map.
-    - ModifyFields:
+    - modifier.Field:
        filter: if $(latitude)
        action: merge
        source_fields: [longitude, latitude]
        target_field: geoip
 
     # Extarct some fields from the user agent data.
-    - UserAgentParser:
+    - parser.UserAgent:
        source_fields: user_agent
 
     # Parse the url into its components.
-    - UrlParser:
+    - parser.Url:
        source_field: uri
        target_field: uri_parsed
        parse_querystring: True
        querystring_target_field: params
 
     # Store events in elastic search.
-    - ElasticSearchSink:
+    - output.ElasticSearch:
        nodes: [localhost]
        store_interval_in_secs: 5
 
-    - StdOutSink
+    - output.StdOutSink
 
 Let me explain it in more detail:
 
@@ -198,7 +196,7 @@ Default number of workers is CPU\_COUNT - 1.
 ::
 
     # Listen on all interfaces, port 5151.
-    - TcpServer:
+    - input.Tcp:
        port: 5151
        receivers:
         - RegexParser
@@ -215,7 +213,7 @@ This module will send its output directly to RegexParser.
 ::
 
     # Listen on all interfaces, port 5152.
-    - TcpServer:
+    - input.Tcp:
        port: 5152
        mode: stream
        chunksize: 32768
@@ -229,7 +227,7 @@ module.
 ::
 
     # Decode msgpacked data.
-    - MsgPackParser:
+    - parser.MsgPack:
        mode: stream
 
 Decode the received data from the above tcp server in msgpack format.
@@ -239,7 +237,7 @@ This can be used to e.g. handle data send via
 ::
 
     # Extract fields.
-    - RegexParser:
+    - parser.Regex:
        source_field: data
        hot_rules_first: True
        field_extraction_patterns:
@@ -284,7 +282,7 @@ prior to store it in some backend.
 ::
 
     # Print out some stats every 10 seconds.
-    - SimpleStats:
+    - misc.SimpleStats:
        interval: 10
 
 Prints out some simple stats every interval seconds.
@@ -292,7 +290,7 @@ Prints out some simple stats every interval seconds.
 ::
 
     # Extract the syslog prival from events received via syslog.
-    - SyslogPrivalParser:
+    - parser.SyslogPrivalParser:
        source_field: syslog_prival
 
 Parses syslog prival values to human readable ones based on
@@ -301,7 +299,7 @@ Parses syslog prival values to human readable ones based on
 ::
 
     # Add a timestamp field.
-    - AddDateTime:
+    - parser.AddDateTime:
        format: '%Y-%m-%dT%H:%M:%S.%f'
        target_field: "@timestamp"
 
@@ -311,7 +309,7 @@ your event data, this field is required.
 ::
 
     # Add geo info based on the lookup_fields. The first field in <source_fields> that yields a result from geoip will be used.
-    - AddGeoInfo:
+    - parser.AddGeoInfo:
        geoip_dat_path: /usr/share/GeoIP/GeoLiteCity.dat
        source_fields: [x_forwarded_for, remote_ip]
        geo_info_fields: ['latitude', 'longitude', 'country_code']
@@ -324,7 +322,7 @@ result will be used.
 
     # Nginx logs request time in seconds with milliseconds as float. Apache logs microseconds as int.
     # At least cast nginx to integer.
-    - Math:
+    - parser.Math:
        filter: if $(server_type) == "nginx"
        target_field: request_time
        function: float($(request_time)) * 1000
@@ -338,7 +336,7 @@ by this module.
 ::
 
     # Map field values of <source_field> to values in <map>.
-    - ModifyFields:
+    - modifier.Field:
        filter: if $(http_status)
        action: map
        source_field: http_status
@@ -350,7 +348,7 @@ example numeric http status codes are mapped to human readable values.
 ::
 
     # Kibana’s ‘bettermap’ panel needs an array of floats in order to plot events on map.
-    - ModifyFields:
+    - modifier.Field:
        filter: if $(latitude)
        action: merge
        source_fields: [longitude, latitude]
@@ -363,7 +361,7 @@ into the geoip field.
 ::
 
     # Extarct some fields from the user agent data.
-    - UserAgentParser:
+    - parser.UserAgent:
        source_fields: user_agent
        target_field: user_agent_info
 
@@ -374,7 +372,7 @@ user\_agent\_info.browser.name etc.
 ::
 
     # Parse the url into its components.
-    - UrlParser:
+    - parser.Url:
        source_field: uri
        target_field: uri_parsed
        parse_querystring: True
@@ -386,7 +384,7 @@ uri\_parsed.scheme, uri\_parsed.path, uri\_parsed.query etc.
 ::
 
     # Store events in elastic search.
-    - ElasticSearchSink:
+    - output.ElasticSearch:
        nodes: [localhost]
        store_interval_in_secs: 5
 
@@ -395,7 +393,7 @@ nodes to connect to.
 
 ::
 
-    - StdOutSink
+    - output.StdOut
 
 Events received by this module will be printed out to stdout. The
 RegexParser module was configured to send unmatched events to this
@@ -416,7 +414,7 @@ Working modules
 Event inputs
 ^^^^^^^^^^^^
 
--  BeatsServer, read elastic beat inputs, e.g. filebeat.
+-  Beats, read elastic beat inputs, e.g. filebeat.
 -  ElasticSearch, get documents from elasticsearch.
 -  File, read data from files.
 -  Kafka, receive events from apache kafka.
@@ -427,30 +425,30 @@ Event inputs
 -  Spam, what it says on the can - spams LumberMill for testing.
 -  SQS, read messages from amazons simple queue service.
 -  StdIn, read stream from standard in.
--  TcpServer, read stream from a tcp socket.
--  UdpServer, read data from udp socket.
+-  Tcp, read stream from a tcp socket.
+-  Udp, read data from udp socket.
 -  UnixSocket, read stream from a named socket on unix like systems.
 -  ZeroMQ, read events from a zeromq.
 
 Event parsers
 ^^^^^^^^^^^^^
 
--  Base64Parser, parse base64 data.
--  CollectdParser, parse collectd binary protocol data.
--  CSVParser, parse a char separated string.
--  DateTimeParser, parse a string to a dateobject and convert it to different date pattern.
--  DomainNameParser, parse a domain name or url to tld, subdomain etc. parts.
--  InflateParser, inflates any fields with supported compression codecs.
--  JsonParser, parse a json formatted string.
--  LineParser, split lines at a seperator and emit each line as new
+-  Base64, parse base64 data.
+-  Collectd, parse collectd binary protocol data.
+-  CSV, parse a char separated string.
+-  DateTime, parse a string to a dateobject and convert it to different date pattern.
+-  DomainName, parse a domain name or url to tld, subdomain etc. parts.
+-  Inflate, inflates any fields with supported compression codecs.
+-  Json, parse a json formatted string.
+-  Line, split lines at a seperator and emit each line as new
    event.
--  MsgPackParser, parse a msgpack encoded string.
--  RegexParser, parse a string using regular expressions and named
+-  MsgPack, parse a msgpack encoded string.
+-  Regex, parse a string using regular expressions and named
    capturing groups.
--  SyslogPrivalParser, parse the syslog prival value (RFC5424).
--  UrlParser, parse the query string from an url.
--  UserAgentParser, parse a http user agent string.
--  XPathParser, parse an XML document via an xpath expression.
+-  SyslogPrival, parse the syslog prival value (RFC5424).
+-  Url, parse the query string from an url.
+-  UserAgent, parse a http user agent string.
+-  XPath, parse an XML document via an xpath expression.
 
 Event modifiers
 ^^^^^^^^^^^^^^^
@@ -465,7 +463,7 @@ Event modifiers
 -  HttpRequest, execute an arbritrary http request and store result.
 -  Math, execute arbitrary math functions.
 -  MergeEvent, merge multiple events to one single event.
--  ModifyFields, some methods to change extracted fields, e.g. insert,
+-  Field, some methods to change extracted fields, e.g. insert,
    delete, replace, castToInteger etc.
 -  Permutate, takes a list in the event data emits events for all
    possible permutations of that list.
@@ -473,20 +471,20 @@ Event modifiers
 Outputs
 ^^^^^^^
 
--  DevNullSink, discards all data that it receives.
--  ElasticSearchSink, stores data entries in an elasticsearch index.
--  FileSink, store events in a file.
--  GraphiteSink, send metrics to graphite server.
--  LoggerSink, sends data to lumbermill internal logger for output.
--  MongoDbSink, stores data entries in a mongodb index.
--  RedisChannelSink, publish incoming events to redis channel.
--  RedisListSink, publish incoming events to redis list.
--  StdOutSink, prints all received data to standard out.
--  SQSSink, sends events to amazons simple queue service.
--  SyslogSink, send events to syslog.
--  WebHdfsSink, store events in hdfs via webhdfs.
--  ZabbixSink, send metrics to zabbix.
--  ZmqSink, sends incoming event to zeromq.
+-  DevNull, discards all data that it receives.
+-  ElasticSearch, stores data entries in an elasticsearch index.
+-  File, store events in a file.
+-  Graphite, send metrics to graphite server.
+-  Logger, sends data to lumbermill internal logger for output.
+-  MongoDb, stores data entries in a mongodb index.
+-  RedisChannel, publish incoming events to redis channel.
+-  RedisList, publish incoming events to redis list.
+-  StdOut, prints all received data to standard out.
+-  SQS, sends events to amazons simple queue service.
+-  Syslog, send events to syslog.
+-  WebHdfs, store events in hdfs via webhdfs.
+-  Zabbix, send metrics to zabbix.
+-  Zmq, sends incoming event to zeromq.
 
 Misc modules
 ^^^^^^^^^^^^
@@ -508,8 +506,8 @@ Cluster modules
    discovery.
 -  PackConfiguration, syncs leader configuration to pack members.
 
-Webserver modules
-^^^^^^^^^^^^^^^^^
+Plugins
+^^^^^^^
 
 -  WebGui, a web interface to LumberMill.
 -  WebserverTornado, base webserver module. Handles all incoming
@@ -541,7 +539,7 @@ configuration follows the same pattern:
 
 ::
 
-    - SomeModuleName:
+    - category.SomeModuleName:
         id: AliasModuleName                     # <default: ""; type: string; is: optional>
         filter: if $(cache_status) == "-"
         add_fields: {'my_new_field': 'my_new_value'}
@@ -609,10 +607,10 @@ dots:
 
 ::
 
-    - RegexParser:
+    - parser.Regex:
         source_field: fields.2
 
-    - RegexParser:
+    - parser.Regex:
         source_field: params.spanish
 
 Notation in strings
@@ -623,7 +621,7 @@ use dots:
 
 ::
 
-    - ElasticSearchSink:
+    - output.ElasticSearch:
         index_name: 1perftests
         doc_id: $(fields.0)-$(params.spanish.0)
 
@@ -634,7 +632,7 @@ Use $(variable\_name) notation. If referring to a nested dict, use dots:
 
 ::
 
-    - StdOutSink:
+    - output.StdOut:
         filter: if $(fields.0) == "nobody" and $(params.spanish.0) == 'inquisition'
 
 Filters
@@ -644,18 +642,18 @@ Modules can have an input filter:
 
 ::
 
-    - StdOutSink:
+    - output.StdOut:
         filter: if $(remote_ip) == '192.168.2.20' and re.match('^GET', $(url))
 
 Modules can have an output filter:
 
 ::
 
-    - RegexParser:
+    - parser.Regex:
         ...
         receivers:
-          - StdOutSink:
-              filter: if $(remote_ip) == '192.168.2.20' and re.match('^GET', $(url))
+          - output.StdOut:
+              filter: if $(remote_ip) == '192.168.2.20' and $(hostname).startswith("www.")
 
 
 
@@ -676,9 +674,9 @@ Configure the linux syslog-ng service to send data to a tcp address
 ::
 
     ...
-    destination d_gambolputty { tcp( localhost port(5151) ); };
+    destination d_lumbermill { tcp( localhost port(5151) ); };
     filter f_httpd_access { facility(local1); };
-    log { source(s_sys); filter(f_httpd_access); destination(d_gambolputty); flags(final);};
+    log { source(s_sys); filter(f_httpd_access); destination(d_lumbermill); flags(final);};
     ... 
 
 Configure LumberMill to listen on localhost
@@ -687,8 +685,9 @@ Configure LumberMill to listen on localhost
 ::
 
     ...
-    - TcpServer:
+    - input.Tcp:
         interface: localhost
         port: 5151
     ...
 
+Work in progress.

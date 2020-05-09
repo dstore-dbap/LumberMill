@@ -3,8 +3,8 @@
 Parser modules
 ==============
 
-Base64Parser
-------------
+Base64
+------
 
 This module will let you en/decode base64 data.
 
@@ -15,7 +15,7 @@ Configuration template:
 
 ::
 
-    - LineParser:
+    - parser.Line:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        source_field:                    # <default: 'data'; type: string||list; is: optional>
        target_field:                    # <default: 'data'; type:string; is: optional>
@@ -24,8 +24,8 @@ Configuration template:
         - NextModule
 
 
-CollectdParser
---------------
+Collectd
+--------
 
 Parse collectd binary protocol data.
 
@@ -41,7 +41,7 @@ Configuration template:
 
 ::
 
-    - CollectdParser:
+    - parser.Collectd:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
        target_field:                    # <default: None; type: None||string; is: optional>
@@ -50,8 +50,8 @@ Configuration template:
         - NextModule
 
 
-CsvParser
----------
+Csv
+---
 
 Parse a string as csv data.
 
@@ -69,7 +69,7 @@ Configuration template:
 
 ::
 
-    - CsvParser:
+    - parser.Csv:
        source_field:                    # <default: 'data'; type: string; is: optional>
        escapechar:                      # <default: '\'; type: string; is: optional>
        skipinitialspace:                # <default: False; type: boolean; is: optional>
@@ -80,8 +80,8 @@ Configuration template:
         - NextModule
 
 
-DateTimeParser
---------------
+DateTime
+--------
 
 Parse a string to a time object an back again.
 
@@ -91,7 +91,7 @@ Configuration template:
 
 ::
 
-    - DateTimeParser:
+    - parser.DateTime:
        source_field:                    # <type: string; is: required>
        source_date_pattern:             # <type: string; is: required>
        source_timezone:                 # <default: 'utc'; type: string; is: optional>
@@ -102,8 +102,8 @@ Configuration template:
         - NextModule
 
 
-DomainNameParser
-----------------
+DomainName
+----------
 
 Parse fqdn to top level domain and subdomain parts.
 
@@ -125,15 +125,15 @@ Configuration template:
 
 ::
 
-    - UserAgentParser:
+    - parser.DomainName:
        source_field:                    # <type: string||list; is: required>
        target_field:                    # <default: 'domain_name_info'; type:string; is: optional>
        receivers:
         - NextModule
 
 
-InflateParser
--------------
+Inflate
+-------
 
 Inflate any field with supported compression codecs.
 
@@ -149,7 +149,7 @@ Configuration template:
 
 ::
 
-    - InflateParser:
+    - parser.Inflate:
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
        target_fields:                   # <default: None; type: None||string||list; is: optional>
        compression:                     # <default: 'gzip'; type: string; is: optional; values: ['gzip', 'zlib']>
@@ -157,8 +157,8 @@ Configuration template:
         - NextModule
 
 
-JsonParser
-----------
+Json
+----
 
 Json codec.
 
@@ -178,7 +178,7 @@ Configuration template:
 
 ::
 
-    - JsonParser:
+    - parser.Json:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
        target_field:                    # <default: None; type: None||string; is: optional>
@@ -187,8 +187,8 @@ Configuration template:
         - NextModule
 
 
-LineParser
-----------
+Line
+----
 
 Line parser.
 
@@ -208,7 +208,7 @@ Configuration template:
 
 ::
 
-    - LineParser:
+    - parser.Line:
        source_field:                    # <default: 'data'; type: string||list; is: optional>
        seperator:                       # <default: '\n'; type: string; is: optional>
        target_field:                    # <default: 'data'; type:string; is: optional>
@@ -217,8 +217,8 @@ Configuration template:
         - NextModule
 
 
-MsgPackParser
--------------
+MsgPack
+-------
 
 Decode:
 It will parse the msgpack data and create or replace fields in the internal data dictionary with
@@ -230,7 +230,7 @@ Configuration template:
 
 ::
 
-    - MsgPackParser:
+    - parser.MsgPack:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        mode:                            # <default: 'line'; type: string; values: ['line','stream']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
@@ -240,8 +240,8 @@ Configuration template:
         - NextModule
 
 
-NetFlowParser
--------------
+NetFlow
+-------
 
 Netflow parser
 
@@ -254,7 +254,7 @@ Configuration template:
 
 ::
 
-    - NetFlowParser:
+    - parser.NetFlow:
        source_field:                    # <default: 'data'; type: string; is: optional>
        target_field:                    # <default: 'data'; type: string; is: optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
@@ -262,8 +262,8 @@ Configuration template:
         - NextModule
 
 
-RegexParser
------------
+Regex
+-----
 
 Parse a string by named regular expressions.
 
@@ -283,7 +283,7 @@ Configuration template:
 
 ::
 
-    - RegexParser:
+    - parser.Regex:
        source_field:                    # <default: 'data'; type: string; is: optional>
        mark_unmatched_as:               # <default: 'Unknown'; type: string; is: optional>
        break_on_match:                  # <default: True; type: boolean; is: optional>
@@ -294,8 +294,8 @@ Configuration template:
         - NextModule
 
 
-SyslogPrivalParser
-------------------
+SyslogPrival
+------------
 
 It will parse the source field in the event dictionary for the default severity
 and facility fields (RFC5424, http://tools.ietf.org/html/rfc5424).
@@ -345,7 +345,7 @@ Configuration template:
 
 ::
 
-    - SyslogPrivalParser:
+    - parser.SyslogPrival:
        source_field:                    # <default: 'syslog_prival'; type: string; is: optional>
        map_values: False                # <default: True; type: boolean; is: optional>
        facility_mappings:               # <default: {}; type: dictionary; is: optional>
@@ -354,8 +354,8 @@ Configuration template:
         - NextModule
 
 
-UrlParser
----------
+Url
+---
 
 Urlencode or decode an event field and extract url parameters.
 
@@ -372,7 +372,7 @@ Configuration template:
 
 ::
 
-    - UrlParser:
+    - parser.Url:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        source_field:                    # <type: string; is: required>
        target_field:                    # <default: None; type: None||string; is: optional>
@@ -383,8 +383,8 @@ Configuration template:
         - NextModule
 
 
-UserAgentParser
----------------
+UserAgent
+---------
 
 Parse http user agent string
 
@@ -412,15 +412,15 @@ Configuration template:
 
 ::
 
-    - UserAgentParser:
+    - parser.UserAgent:
        source_fields:                   # <type: string||list; is: required>
        target_field:                    # <default: 'user_agent_info'; type:string; is: optional>
        receivers:
         - NextModule
 
 
-XPathParser
------------
+XPath
+-----
 
 Parse an xml string via xpath.
 
@@ -432,7 +432,7 @@ Configuration template:
 
 ::
 
-    - XPathParser:
+    - parser.XPath:
        source_field:                    # <type: string; is: required>
        target_field:                    # <default: "gambolputty_xpath"; type: string; is: optional>
        query:                           # <type: string; is: required>

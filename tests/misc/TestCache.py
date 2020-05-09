@@ -89,7 +89,7 @@ class TestCache(ModuleBaseTestCase):
         # Getting directly from kv store should succeed.
         self.assertEquals(value, self.test_object.get(self.key))
         # Trigger batch size.
-        for _ in xrange(0, 15):
+        for _ in range(0, 15):
             self.test_object.set(self.key, value)
         # Getting from backend should now succeed.
         value_in_backend = None

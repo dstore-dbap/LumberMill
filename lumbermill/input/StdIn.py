@@ -3,9 +3,9 @@ import os
 import socket
 import sys
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -15,7 +15,7 @@ class StdIn(BaseThreadedModule):
 
     Configuration template:
 
-    - StdIn:
+    - input.StdIn:
        multiline:                       # <default: False; type: boolean; is: optional>
        stream_end_signal:               # <default: False; type: boolean||string; is: optional>
        receivers:

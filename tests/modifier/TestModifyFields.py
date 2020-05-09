@@ -2,13 +2,13 @@ import mock
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
-from lumbermill.modifier import ModifyFields
+from lumbermill.modifier import Field
 
 
-class TestModifyFields(ModuleBaseTestCase):
+class TestFields(ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestModifyFields, self).setUp(ModifyFields.ModifyFields(mock.Mock()))
+        super(TestFields, self).setUp(Field.Field(mock.Mock()))
         self.default_dict = DictUtils.getDefaultEventDict({})
 
     def testDelete(self):

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import cPickle
 import sys
 import redis
+from pickle import dumps, loads
 
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Buffers import Buffer
-from lumbermill.utils.Decorators import ModuleDocstringParser
+from BaseThreadedModule import BaseThreadedModule
+from utils.Buffers import Buffer
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -179,7 +179,7 @@ class Cache(BaseThreadedModule):
     def set(self, key, value, ttl=0, pickle=True):
         if pickle is True:
             try:
-                value = cPickle.dumps(value)
+                value = dumps(value)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (key, value, etype, evalue))
@@ -202,7 +202,7 @@ class Cache(BaseThreadedModule):
         for value in values:
             if value['pickle'] is True:
                 try:
-                    value['value'] = cPickle.dumps(value['value'])
+                    value['value'] = dumps(value['value'])
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("Could not store %s:%s in redis. Exception: %s, Error: %s." % (value['key'], value['value'], etype, evalue))
@@ -222,7 +222,7 @@ class Cache(BaseThreadedModule):
         value = self.kv_store.get(key)
         if unpickle and value:
             try:
-                value = cPickle.loads(value)
+                value = loads(value)
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.error("Could not unpickle %s:%s from redis. Exception: %s, Error: %s." % (key, value, etype, evalue))

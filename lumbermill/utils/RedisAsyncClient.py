@@ -60,7 +60,7 @@ def decode(read_buffer):
                 line = read_buffer.popleft()
                 c = line[0]
                 if c == '$':
-                    length  = int(line[1:])
+                    length = int(line[1:])
                     element = read_buffer.popleft()[:length]
                     result.append(element)
                 else:
@@ -184,12 +184,13 @@ class AsyncRedisClient(object):
         in the callback.
         """
         self._callback_queue.append(callback)
-        self.stream.write(encode(request))
+        encoded_request = bytes(encode(request), 'utf-8')
+        self.stream.write(encoded_request)
 
     def _wait_result(self):
         """Read a completed result data from the redis server."""
         self._read_buffer = deque()
-        self.stream.read_until('\r\n', self._on_read_first_line)
+        self.stream.read_until(b"\r\n", self._on_read_first_line)
 
     def _maybe_callback(self):
         """Try call callback in _callback_queue when we read a redis result."""
@@ -213,6 +214,7 @@ class AsyncRedisClient(object):
             self._wait_result()
 
     def _on_read_first_line(self, data):
+        data = str(data, 'utf-8')
         self._read_buffer.append(data)
         c = data[0]
         if c in ':+-':
@@ -228,13 +230,15 @@ class AsyncRedisClient(object):
                 self._maybe_callback()
             else:
                 self._multibulk_number = int(data[1:])
-                self.stream.read_until('\r\n', self._on_read_multibulk_bulk_head)
+                self.stream.read_until(b'\r\n', self._on_read_multibulk_bulk_head)
 
     def _on_read_bulk_body(self, data):
+        data = str(data, 'utf-8')
         self._read_buffer.append(data)
         self._maybe_callback()
 
     def _on_read_multibulk_bulk_head(self, data):
+        data = str(data, 'utf-8')
         self._read_buffer.append(data)
         c = data[0]
         if c == '$':
@@ -244,10 +248,11 @@ class AsyncRedisClient(object):
             self._maybe_callback()
 
     def _on_read_multibulk_bulk_body(self, data):
+        data = str(data, 'utf-8')
         self._read_buffer.append(data)
         self._multibulk_number -= 1
         if self._multibulk_number:
-            self.stream.read_until('\r\n', self._on_read_multibulk_bulk_head)
+            self.stream.read_until(b'\r\n', self._on_read_multibulk_bulk_head)
         else:
             self._maybe_callback()
 
@@ -265,7 +270,7 @@ class RedisError(Exception):
 
 def test():
     def handle_request(result):
-        print 'Redis reply: %r' % result
+        print('Redis reply: %r' % result)
     redis_client = AsyncRedisClient(('localhost', 6379))
     redis_client.fetch(('subscribe', 'GamboPutty'), handle_request)
     #redis_client.fetch(('set', 'foo', 'bar'), handle_request)

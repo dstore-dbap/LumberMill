@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from lumbermill.constants import TYPENAMES_TO_TYPE
-from DynamicValues import replaceVarsAndCompileString
+from constants import TYPENAMES_TO_TYPE
+from utils.DynamicValues import replaceVarsAndCompileString
 
 if sys.hexversion > 0x03000000:
     pass

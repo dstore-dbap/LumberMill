@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import socket
 import sys
-import urllib2
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
-from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
-from lumbermill.utils.misc import TimedFunctionManager
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.mixins.ModuleCacheMixin import ModuleCacheMixin
+from utils.Decorators import ModuleDocstringParser, setInterval
+from utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -27,7 +28,7 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
     get_metadata: Also get metadata like headers, encoding etc.
     target_field: Specifies the name of the field to store the retrieved data in.
     interval: Number of seconds to wait before calling <url> again.
-    cache: Name of the cache plugin. When running multiple instances of lumbermill this cache can be used to
+    cache: Name of the cache plugin. When running multiple instances of this cache can be used to
            synchronize events across multiple instances.
     cache_key: Keyname to use to store the facet data in cache.
     cache_lock: Lockname to use if multiple instances of Lumbermill work on the same data.
@@ -104,13 +105,13 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
 
     def execRequest(self, url):
         try:
-            response = urllib2.urlopen(url)
+            response = urlopen(url)
             return response
-        except urllib2.HTTPError, e:
+        except HTTPError as e:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Request to %s failed. Exception: %s, Error: %s" % (url, etype, evalue))
             raise
-        except urllib2.URLError, e:
+        except URLError as e:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Request to %s failed. Exception: %s, Error: %s" % (url, etype, evalue))
             raise

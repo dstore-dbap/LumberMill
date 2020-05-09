@@ -3,9 +3,9 @@ import sys
 
 from kafka import KafkaConsumer
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -16,7 +16,7 @@ class Kafka(BaseThreadedModule):
 
     Configuration template:
 
-    - Kafka:
+    - input.Kafka:
        brokers:                         # <type: list; is: required>
        topics:                          # <type: string||list; is: required>
        client_id:                       # <default: 'kafka.consumer.kafka'; type: string; is: optional>

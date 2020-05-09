@@ -6,9 +6,9 @@ import sys
 from tornado import netutil
 from tornado.tcpserver import TCPServer
 
-import lumbermill.utils.DictUtils as DictUtils
-from lumbermill.BaseThreadedModule import BaseThreadedModule
-from lumbermill.utils.Decorators import ModuleDocstringParser
+import utils.DictUtils as DictUtils
+from BaseThreadedModule import BaseThreadedModule
+from utils.Decorators import ModuleDocstringParser
 
 
 class SocketServer(TCPServer):
@@ -49,7 +49,7 @@ class UnixSocket(BaseThreadedModule):
 
     Configuration template:
 
-    - UnixSocket:
+    - input.UnixSocket:
        path_to_socket:                  # <type: string; is: required>
        receivers:
         - NextModule
