@@ -5,14 +5,14 @@ import logging
 import multiprocessing
 from collections import defaultdict
 
-import Decorators
+from utils.Decorators import Singleton
 
 
-@Decorators.Singleton
+@Singleton
 class StatisticCollector:
 
     def __init__(self):
-        self.max_int = sys.maxint
+        self.max_int = sys.maxsize
         self.counter_stats = defaultdict(int)
         #self.counter_stats_per_module = defaultdict(lambda: defaultdict(int))
         """ Stores the statistic data """
@@ -37,7 +37,7 @@ class StatisticCollector:
     def getAllCounters(self):
         return self.counter_stats
 
-@Decorators.Singleton
+@Singleton
 class MultiProcessStatisticCollector:
 
     def __init__(self):
@@ -55,13 +55,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
-            except socket.error:
+            except socket.error as e1:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
                 if "No such file or directory" in evalue:
                     return 0
                 else:
-                    raise etype, evalue, etb
+                    raise e
 
     def decrementCounter(self, name, decrement_value=1):
         with self.lock:
@@ -72,13 +72,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
-            except socket.error:
+            except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
                 if "No such file or directory" in evalue:
                     return 0
                 else:
-                    raise etype, evalue, etb
+                    raise e
 
     def resetCounter(self,name):
         with self.lock:
@@ -87,13 +87,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
-            except socket.error:
+            except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
                 if "No such file or directory" in evalue:
                     return 0
                 else:
-                    raise etype, evalue, etb
+                    raise e
 
     def setCounter(self, name, value):
         with self.lock:
@@ -102,13 +102,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
-            except socket.error:
+            except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
                 if "No such file or directory" in evalue:
                     return 0
                 else:
-                    raise etype, evalue, etb
+                    raise e
 
     def getCounter(self, name):
         with self.lock:
@@ -119,13 +119,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 return 0
-            except socket.error:
+            except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
                 if "No such file or directory" in evalue:
                     return 0
                 else:
-                    raise etype, evalue, etb
+                    raise e
 
     def getAllCounters(self):
         return self.counter_stats

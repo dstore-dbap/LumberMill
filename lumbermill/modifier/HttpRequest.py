@@ -4,6 +4,8 @@ import sys
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
 
+import http.client
+
 import utils.DictUtils as DictUtils
 from BaseThreadedModule import BaseThreadedModule
 from utils.mixins.ModuleCacheMixin import ModuleCacheMixin
@@ -25,7 +27,7 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
 
     url: The url to grab. Can also contain templated values for dynamic replacement with event data.
     socket_timeout: The socket timeout in seconds after which a request is considered failed.
-    get_metadata: Also get metadata like headers, encoding etc.
+    get_response_header: Also get response headers
     target_field: Specifies the name of the field to store the retrieved data in.
     interval: Number of seconds to wait before calling <url> again.
     cache: Name of the cache plugin. When running multiple instances of this cache can be used to
@@ -39,7 +41,7 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
     - HttpRequest:
        url:                             # <type: string; is: required>
        socket_timeout:                  # <default: 25; type: integer; is: optional>
-       get_metadata:                    # <default: False; type: boolean; is: optional>
+       get_response_header:             # <default: False; type: boolean; is: optional>
        target_field:                    # <default: "http_request_result"; type: string; is: optional>
        interval:                        # <default: None; type: None||float||integer; is: optional>
        cache:                           # <default: None; type: None||string; is: optional>
@@ -56,7 +58,7 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
         BaseThreadedModule.configure(self, configuration)
         ModuleCacheMixin.configure(self)
         socket.setdefaulttimeout(self.getConfigurationValue('socket_timeout'))
-        self.get_metadata = self.getConfigurationValue('get_metadata')
+        self.get_response_header = self.getConfigurationValue('get_response_header')
         self.interval = self.getConfigurationValue('interval')
 
     def getRunTimedFunctionsFunc(self):
@@ -88,13 +90,8 @@ class HttpRequest(BaseThreadedModule, ModuleCacheMixin):
                 response_dict = {'content': response.read(),
                                  'status_code': response.getcode(),
                                  'url': response.geturl()}
-                if self.get_metadata:
-                    response_dict.update({'headers': response.info().headers,
-                                          'parameter_list': response.info().getplist(),
-                                          'encoding': response.info().getencoding(),
-                                          'type': response.info().gettype(),
-                                          'maintype': response.info().getmaintype(),
-                                          'subtype': response.info().getsubtype()})
+                if self.get_response_header:
+                    response_dict.update({'headers': response.getheaders()})
                 if response and self.cache:
                     self.cache.set(cache_key, response_dict, self.cache_ttl)
             except KeyError:

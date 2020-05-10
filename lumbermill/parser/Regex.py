@@ -66,10 +66,10 @@ class Regex(BaseThreadedModule):
             if isinstance(regex_pattern, list):
                 i = iter(regex_pattern)
                 # Pattern is the first entry
-                regex_pattern = i.next()
+                regex_pattern = next(i)
                 # Regex options the second
                 try:
-                    regex_options = eval(i.next())
+                    regex_options = eval(next(i))
                 except:
                     etype, evalue, etb = sys.exc_info()
                     self.logger.error("RegEx error for options %s. Exception: %s, Error: %s." % (regex_options, etype, evalue))
@@ -77,7 +77,7 @@ class Regex(BaseThreadedModule):
                     return
                 # Regex match type the third (optional)
                 try:
-                    regex_match_type = i.next()
+                    regex_match_type = next(i)
                 except StopIteration:
                     pass
             # Make sure regex_match_type is valid

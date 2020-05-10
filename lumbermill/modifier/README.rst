@@ -193,7 +193,7 @@ If that fails, it will execute the http request and store the result in redis.
 
 | **url**:  The url to grab. Can also contain templated values for dynamic replacement with event data.
 | **socket_timeout**:  The socket timeout in seconds after which a request is considered failed.
-| **get_metadata**:  Also get metadata like headers, encoding etc.
+| **get_response_header**:  Also get resonse headers.
 | **target_field**:  Specifies the name of the field to store the retrieved data in.
 | **interval**:  Number of seconds to wait before calling <url> again.
 | **redis_store**:  Redis address to cache crawling results.
@@ -207,7 +207,7 @@ Configuration template:
     - modifier.HttpRequest:
        url:                             # <type: string; is: required>
        socket_timeout:                  # <default: 25; type: integer; is: optional>
-       get_metadata:                    # <default: False; type: boolean; is: optional>
+       get_response_header:             # <default: False; type: boolean; is: optional>
        target_field:                    # <default: "gambolputty_http_request"; type: string; is: optional>
        interval:                        # <default: None; type: None||float||integer; is: optional>
        redis_store:                     # <default: None; type: None||string; is: optional>

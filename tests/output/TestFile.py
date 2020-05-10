@@ -33,10 +33,11 @@ class TestFile(ModuleBaseTestCase):
         buffer = io.BytesIO(data)
         compressor = gzip.GzipFile(mode='rb', fileobj=buffer)
         try:
-            inflated_data = compressor.read()
+            inflated_data = str(compressor.read(), "utf-8")
         except:
             inflated_data = None
         return inflated_data
+
 
     def test(self):
         temp_file_name = self.getTempFileName()
@@ -60,7 +61,7 @@ class TestFile(ModuleBaseTestCase):
         event = DictUtils.getDefaultEventDict({'data': 'One thing is for sure; a sheep is not a creature of the air.'})
         self.test_object.receiveEvent(event)
         self.test_object.shutDown()
-        with open("%s.gz" % temp_file_name) as temp_file:
+        with open("%s.gz" % temp_file_name, "rb") as temp_file:
             for line in temp_file:
                 defalted_data = self.inflateGzipData(line)
                 self.assertIsNotNone(defalted_data)

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import gzip
 import sys
-import types
 import zlib
-from cStringIO import StringIO
+from io import BytesIO
 
 from BaseThreadedModule import BaseThreadedModule
 from utils.Decorators import ModuleDocstringParser
@@ -39,11 +38,11 @@ class Inflate(BaseThreadedModule):
         BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
-        if isinstance(self.source_fields, types.StringTypes):
+        if isinstance(self.source_fields, str):
             self.source_fields = [self.source_fields]
         self.target_fields = self.getConfigurationValue('target_fields')
         # Allow single string as well.
-        if isinstance(self.target_fields, types.StringTypes):
+        if isinstance(self.target_fields, str):
             self.target_fields = [self.target_fields]
         # If target_fields were provided they need to be of same length as source_fields.
         if self.target_fields and len(self.source_fields) != len(self.target_fields):
@@ -52,7 +51,7 @@ class Inflate(BaseThreadedModule):
         self.compression = self.getConfigurationValue('compression')
         # Get compression specific handler.
         try:
-            self.deflater = getattr(self, "deflate_with_%s" % self.compression)
+            self.inflater = getattr(self, "inflate_with_%s" % self.compression)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Unknown decompression lib: %s. Exception: %s, Error: %s" % (self.compression, etype, evalue))
@@ -60,27 +59,27 @@ class Inflate(BaseThreadedModule):
 
     def handleEvent(self, event):
         for idx, source_field in enumerate(self.source_fields):
-            infalted_data = self.deflater(event[source_field])
+            infalted_data = str(self.inflater(event[source_field]), "utf-8")
             if not self.target_fields:
                 event[source_field] = infalted_data
             else:
                 event[self.target_fields[idx]] = infalted_data
         yield event
 
-    def deflate_with_gzip(self, value):
-        buffer = StringIO(value)
+    def inflate_with_gzip(self, value):
+        buffer = BytesIO(value)
         try:
-            deflated_value = gzip.GzipFile(fileobj=buffer)
+            infalted_value = gzip.GzipFile(fileobj=buffer)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("Could not decompress data %s. Exception: %s, Error: %s." % (value, etype, evalue))
-        return deflated_value.read()
+        return infalted_value.read()
 
-    def deflate_with_zlib(self, value):
+    def inflate_with_zlib(self, value):
         try:
             # Adding 32 to windowBits will trigger header detection.
-            deflated_value = zlib.decompress(value, zlib.MAX_WBITS|32)
+            inflated_value = zlib.decompress(value, zlib.MAX_WBITS|32)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("Could not decompress data %s. Exception: %s, Error: %s." % (value, etype, evalue))
-        return deflated_value
+        return inflated_value

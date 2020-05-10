@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-import types
 from json import JSONDecoder
 from bs4 import UnicodeDammit
 
@@ -74,7 +73,7 @@ class Json(BaseThreadedModule):
         BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
-        if isinstance(self.source_fields, types.StringTypes):
+        if isinstance(self.source_fields, str):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
         self.drop_original = not self.getConfigurationValue('keep_original')

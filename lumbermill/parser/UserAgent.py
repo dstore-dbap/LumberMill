@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import types
-
 from ua_parser import user_agent_parser
 
 from BaseThreadedModule import BaseThreadedModule
@@ -50,7 +48,7 @@ class UserAgent(BaseThreadedModule):
         BaseThreadedModule.configure(self, configuration)
         self.source_fields = self.getConfigurationValue('source_fields')
         # Allow single string as well.
-        if isinstance(self.source_fields, types.StringTypes):
+        if isinstance(self.source_fields, str):
             self.source_fields = [self.source_fields]
         self.target_field = self.getConfigurationValue('target_field')
         self.in_mem_cache = MemoryCache(size=1000)

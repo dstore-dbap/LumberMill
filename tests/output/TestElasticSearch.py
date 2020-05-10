@@ -74,7 +74,7 @@ class TestElasticSearch(ModuleBaseTestCase):
         time.sleep(1)
         try:
             result = self.es.get(index=index_name, doc_type='Unknown', id=doc_id)
-        except elasticsearch.exceptions.NotFoundError, e:
+        except elasticsearch.exceptions.NotFoundError as e:
             self.fail(e)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
@@ -93,7 +93,7 @@ class TestElasticSearch(ModuleBaseTestCase):
         time.sleep(1)
         try:
             result = self.es.get(index=self.test_index_name, doc_type='Unknown', id=doc_id)
-        except elasticsearch.exceptions.NotFoundError, e:
+        except elasticsearch.exceptions.NotFoundError as e:
             self.fail(e)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event, result['_source'])
@@ -192,7 +192,7 @@ class TestElasticSearch(ModuleBaseTestCase):
         time.sleep(1)
         try:
             result = self.es.get(index=index_name, doc_type='pirate', id=doc_id)
-        except elasticsearch.exceptions.NotFoundError, e:
+        except elasticsearch.exceptions.NotFoundError as e:
             self.fail(e)
         self.assertEqual(type(result), dict)
         self.assertDictContainsSubset(event['sheep'], result['_source'])

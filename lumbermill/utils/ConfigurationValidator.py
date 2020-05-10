@@ -97,10 +97,10 @@ class ConfigurationValidator():
 
     def validateModuleConfiguration(self, moduleInstance):
         result = []
-        # The ModifyFields module is an exception as it provides more than one configuration.
+        # The modifier.Field module is an exception as it provides more than one configuration.
         # This needs to be taken into account when testing for required configuration values.
         # At the moment, I just skip this module until I have a good idea on how to tackle this.
-        if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['ModifyFields']:
+        if not hasattr(moduleInstance, 'configuration_metadata') or moduleInstance.__class__.__name__ in ['Field']:
             return result
         # Check for pool_size > 1 in single threaded/processed modules.
         if 'pool_size' in moduleInstance.configuration_data and moduleInstance.getConfigurationValue('pool_size') > 1 and moduleInstance.can_run_forked is False:

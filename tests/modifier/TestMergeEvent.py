@@ -37,7 +37,8 @@ java.lang.IllegalArgumentException: no category found for name: en
 	at de.dbap.controller.FacetedNavController.index(FacetedNavController.groovy:37)
 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-	at java.lang.Thread.run(Thread.java:745)"""
+	at java.lang.Thread.run(Thread.java:745)
+2015-02-18 14:53:35,493 [http-bio-8080]"""
         self.test_object.configure({'pattern': '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+ [^]]*\]'})
         self.checkConfiguration()
         self.test_object.initAfterFork()

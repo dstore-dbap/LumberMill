@@ -1,9 +1,9 @@
-import StringIO
 import zlib
 import gzip
 import mock
-import lumbermill.utils.DictUtils as DictUtils
+from io import BytesIO
 
+import lumbermill.utils.DictUtils as DictUtils
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
 from lumbermill.parser import Inflate
 
@@ -17,9 +17,9 @@ class TestInflate(ModuleBaseTestCase):
         config = {'source_fields': 'gzip-compressed'}
         self.test_object.configure(config)
         self.checkConfiguration()
-        out = StringIO.StringIO()
+        out = BytesIO()
         with gzip.GzipFile(fileobj=out, mode="w") as f:
-            f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
+            f.write(b"Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
         data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):
@@ -30,9 +30,9 @@ class TestInflate(ModuleBaseTestCase):
                   'target_fields': 'gzip-inflated'}
         self.test_object.configure(config)
         self.checkConfiguration()
-        out = StringIO.StringIO()
+        out = BytesIO()
         with gzip.GzipFile(fileobj=out, mode="w") as f:
-            f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
+            f.write(b"Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
         data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):
@@ -44,13 +44,13 @@ class TestInflate(ModuleBaseTestCase):
                   'target_fields': ['gzip-inflated1', 'gzip-inflated2']}
         self.test_object.configure(config)
         self.checkConfiguration()
-        out = StringIO.StringIO()
+        out = BytesIO()
         with gzip.GzipFile(fileobj=out, mode="w") as f:
-            f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
+            f.write(b"Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload1 = out.getvalue()
         out.seek(0)
         with gzip.GzipFile(fileobj=out, mode="w") as f:
-            f.write("Well, there's spam egg sausage and spam, that's not got much spam in it.")
+            f.write(b"Well, there's spam egg sausage and spam, that's not got much spam in it.")
         payload2 = out.getvalue()
         data = DictUtils.getDefaultEventDict({'gzip-compressed1': payload1, 'gzip-compressed2': payload2})
         for event in self.test_object.handleEvent(data):
@@ -64,9 +64,9 @@ class TestInflate(ModuleBaseTestCase):
                   'compression': 'zlib'}
         self.test_object.configure(config)
         self.checkConfiguration()
-        out = StringIO.StringIO()
+        out = BytesIO()
         with gzip.GzipFile(fileobj=out, mode="w") as f:
-            f.write("Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
+            f.write(b"Spam! Spam! Spam! Lovely Spam! Spam! Spam!")
         payload = out.getvalue()
         data = DictUtils.getDefaultEventDict({'gzip-compressed': payload})
         for event in self.test_object.handleEvent(data):

@@ -59,9 +59,9 @@ class TestHttpRequest(ModuleBaseTestCase):
         self.assertTrue(len(events) == 3)
         self.assertNotEquals(events[0]['http_request_result'], '')
 
-    def testGetMetaData(self):
+    def testGetResponseHeader(self):
         self.test_object.configure({'url': 'http://www.google.com',
-                                    'get_metadata': True})
+                                    'get_response_header': True})
         self.checkConfiguration()
         event = None
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({})):

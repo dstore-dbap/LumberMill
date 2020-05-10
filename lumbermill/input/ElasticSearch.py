@@ -258,7 +258,7 @@ class ElasticSearch(BaseThreadedModule):
     def extractFieldsFromResultDocumentWithMapping(self, field_mapping, document):
         document = DictUtils.KeyDotNotationDict(document)
         new_document = DictUtils.KeyDotNotationDict()
-        for source_field, target_field in field_mapping.iteritems():
+        for source_field, target_field in field_mapping.items():
             if source_field not in document:
                 continue
             new_document[target_field] = document[source_field]

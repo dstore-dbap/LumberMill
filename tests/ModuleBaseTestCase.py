@@ -10,6 +10,12 @@ import mock
 import queue
 import unittest
 
+# Fix problem of asyncio when adding new tasks to an already running ioloop.
+# Vanilla asyncio will throw "RuntimeError: This event loop is already running".
+# nest_asyncio monkeypathes vanilla asyncio to allow for this.
+# See @https://github.com/erdewit/nest_asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 sys.path.append('../')
 
@@ -94,7 +100,7 @@ class MockLumberMill(mock.Mock):
                                      'configuration': module_instances[0].configuration_data}
 
     def shutDown(self):
-        for module_name, mod in self.modules.iteritems():
+        for module_name, mod in self.modules.items():
             mod.shutDown()
 
 class MockReceiver(mock.Mock):
@@ -186,9 +192,8 @@ class ModuleBaseTestCase(unittest.TestCase):
         if not hasattr(self, 'ioloop_thread'):
             return
         import tornado.ioloop
-        tornado.ioloop.IOLoop.instance().stop()
-        self.ioloop_thread.stop()
-        self.ioloop_thread = None
+        tornado.ioloop.IOLoop.current().stop()
+        tornado.ioloop.IOLoop.clear_current()
 
     def getRedisService(self):
         service = tests.ServiceDiscovery.discover_redis()

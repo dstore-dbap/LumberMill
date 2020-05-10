@@ -1,14 +1,17 @@
-FROM pypy:2-5
+FROM pypy:2-7.0.0-slim
 
 WORKDIR /opt/LumberMill
 
 COPY requirements/requirements.txt ./
 COPY requirements/requirements-pypy.txt ./
-COPY bin ./bin
-COPY conf ./conf
-COPY lumbermill ./lumbermill
+#COPY bin ./bin
+#COPY conf ./conf
+#COPY lumbermill ./lumbermill
 
-RUN pip install --no-cache-dir --upgrade pip \
+RUN apt-get -y update \
+ && apt-get -y install gcc \
+ && apt-get -y clean \
+ && pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir -r requirements.txt \
  && pip install --no-cache-dir -r requirements-pypy.txt \
  && rm -f /opt/LumberMill/requirements.txt \

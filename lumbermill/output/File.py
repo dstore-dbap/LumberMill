@@ -3,7 +3,7 @@ import collections
 import os
 import sys
 import time
-from cStringIO import StringIO
+from io import BytesIO
 
 from BaseThreadedModule import BaseThreadedModule
 from utils.Buffers import Buffer
@@ -81,7 +81,8 @@ class File(BaseThreadedModule):
             self.file_handles.pop(path)
 
     def closeAllFileHandles(self):
-        for path, file_handle_data in self.file_handles.items():
+        file_handles = dict(self.file_handles)
+        for path, file_handle_data in file_handles.items():
             self.logger.info('Closing file handle for %s.' % path)
             file_handle_data['handle'].close()
             self.file_handles.pop(path)
@@ -146,13 +147,13 @@ class File(BaseThreadedModule):
         BaseThreadedModule.shutDown(self)
 
     def compressGzip(self, data):
-        buffer = StringIO()
+        buffer = BytesIO()
         compressor = self.gzip_module.GzipFile(mode='wb', fileobj=buffer)
         try:
-            compressor.write(data)
+            compressor.write(bytes(data, "utf-8"))
         finally:
             compressor.close()
         return buffer.getvalue()
 
     def compressSnappy(self, data):
-        return self.snappy_module.compress(data)
+        return self.snappy_module.compress(bytes(data, "utf-8"))

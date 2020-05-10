@@ -61,7 +61,7 @@ class XPath(BaseThreadedModule, ModuleCacheMixin):
             result = self._getFromCache(cache_key, event)
         if result is None:
             try:
-                xml_string = event[source_field].decode('utf8').encode('ascii', 'ignore')
+                xml_string = bytes(event[source_field], "UTF-8")
             except KeyError:
                 yield event
                 return

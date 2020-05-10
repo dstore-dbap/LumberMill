@@ -102,8 +102,8 @@ class SyslogPrival(BaseThreadedModule):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
         self.source_field = self.getConfigurationValue('source_field')
-        self.facility_mappings = dict(self.rfc_5424_facilities.items() + self.getConfigurationValue('facility_mappings').items())
-        self.severity_mappings = dict(self.rfc_5424_severities.items() + self.getConfigurationValue('severity_mappings').items())
+        self.facility_mappings = {**self.rfc_5424_facilities, **self.getConfigurationValue('facility_mappings')}
+        self.severity_mappings = {**self.rfc_5424_severities, **self.getConfigurationValue('severity_mappings')}
 
     def handleEvent(self, event):
         try:

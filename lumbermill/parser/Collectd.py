@@ -287,7 +287,7 @@ class Data(object):
     typeinstance = None
 
     def __init__(self, **kw):
-        for k,v in kw.iteritems():
+        for k,v in kw.items():
             setattr(self, k, v)
 
     @property

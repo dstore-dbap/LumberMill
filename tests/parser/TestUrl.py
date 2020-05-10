@@ -14,5 +14,7 @@ class TestUrl(ModuleBaseTestCase):
         self.test_object.configure({'source_field': 'uri'})
         self.checkConfiguration()
         data = DictUtils.getDefaultEventDict({'uri': 'http://en.wikipedia.org/wiki/Monty_Python/?gambol=putty'})
+        event = None
         for event in self.test_object.handleEvent(data):
             self.assert_('uri' in event and event['uri']['query'] == 'gambol=putty')
+        self.assertIsNotNone(event)

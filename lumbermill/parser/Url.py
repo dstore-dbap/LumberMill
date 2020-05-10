@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import urllib
-import urlparse
 
 from BaseThreadedModule import BaseThreadedModule
 from utils.Decorators import ModuleDocstringParser
@@ -58,8 +57,8 @@ class Url(BaseThreadedModule):
             #    decoded_field = urllib.unquote(event[self.source_field]).decode('utf8')
             #except UnicodeDecodeError:
             #    decoded_field = urllib.unquote(unicode(event[self.source_field]))
-            decoded_field = urllib.unquote(unicode(event[self.source_field]))
-            parsed_result = urlparse.urlparse('%s' % decoded_field)
+            decoded_field = urllib.parse.unquote(event[self.source_field])
+            parsed_result = urllib.parse.urlparse('%s' % decoded_field)
             parsed_url = {'scheme': parsed_result.scheme,
                           'netloc': parsed_result.netloc,
                           'path': parsed_result.path,
@@ -72,9 +71,9 @@ class Url(BaseThreadedModule):
                           'port': parsed_result.port}
             event[self.target_field] = parsed_url
             if self.parse_querystring:
-                query_params_dict = urlparse.parse_qs(parsed_result.query)
+                query_params_dict = urllib.parse_qs(parsed_result.query)
                 if self.querystring_prefix:
-                    query_params_dict = dict(map(lambda (key, value): ("%s%s" % (self.querystring_prefix, str(key)), value), query_params_dict.items()))
+                    query_params_dict = dict(map(lambda key, value: ("%s%s" % (self.querystring_prefix, str(key)), value), query_params_dict.items()))
                 if self.querystring_target_field:
                     event[self.querystring_target_field] = query_params_dict
                 else:
@@ -83,5 +82,5 @@ class Url(BaseThreadedModule):
 
     def encodeEvent(self, event):
         if self.source_field in event:
-            urllib.quote(event[self.source_field]).encode('utf8')
+            urllib.parse.quote(event[self.source_field]).encode('utf8')
         yield event

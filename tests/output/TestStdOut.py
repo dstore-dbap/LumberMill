@@ -2,15 +2,15 @@ import sys
 import time
 import lumbermill.utils.DictUtils as DictUtils
 
-from cStringIO import StringIO
+from io import StringIO
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
-from lumbermill.output import StdOutSink
+from lumbermill.output import StdOut
 
 
 class TestStdOutSink(ModuleBaseTestCase):
 
     def setUp(self):
-        super(TestStdOutSink, self).setUp(StdOutSink.StdOutSink(MockLumberMill()))
+        super(TestStdOutSink, self).setUp(StdOut.StdOut(MockLumberMill()))
 
     def test(self):
         self.test_object.configure({})

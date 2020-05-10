@@ -48,6 +48,7 @@ class BaseModule:
         self.input_filter = None
         self.output_filters = {}
         self.process_id = os.getpid()
+        self.is_configured = False
 
     def configure(self, configuration=None):
         """
@@ -77,9 +78,10 @@ class BaseModule:
             for receiver_config in self.getConfigurationValue('receivers'):
                 if not isinstance(receiver_config, dict):
                     continue
-                receiver_name, receiver_filter_config = iter(receiver_config.items()).next()
+                receiver_name, receiver_filter_config = next(iter(receiver_config.items()))
                 self.addOutputFilter(receiver_name, receiver_filter_config['filter'])
         self.checkConfiguration()
+        self.is_configured = True
 
     def parseDynamicValuesInConfiguration(self):
         """
@@ -92,11 +94,7 @@ class BaseModule:
         # Copy dict since we might change it during iteration.
         configuration_data_copy = self.configuration_data.copy()
         for key, value in configuration_data_copy.items():
-            # Parsing of filter strings will be handled by setInputFilter and addOutputFilter methods.
-            if key == "filter":
-                self.configuration_data[key] = {'value': value, 'contains_dynamic_value': True}
-                continue
-            self.configuration_data[key] = parseDynamicValue(value)
+            self.configuration_data[key] = parseDynamicValue(key, value)
 
     def checkConfiguration(self):
         configuration_errors = ConfigurationValidator().validateModuleConfiguration(self)
@@ -161,19 +159,8 @@ class BaseModule:
         converts to:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
-        # Remove possible leading "if".
-        filter_string_tmp = re.sub('^if\s+', "", filter_string)
-        # Remove event reference.
-        filter_string_tmp = re.sub('\$\(event\.', '%(', filter_string_tmp)
-        # Check if we have a reference to the internal LumberMill datastore.
-        if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
-            filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
-        # Replace all remaining dynamic references.
-        filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
-        filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
-        print(filter_string_tmp)
         try:
-            event_filter = eval(filter_string_tmp)
+            event_filter = eval(filter_string)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Failed to compile filter: %s. Exception: %s, Error: %s." % (filter_string, etype, evalue))
@@ -189,19 +176,8 @@ class BaseModule:
         converts to:
         lambda event : event.get('lumbermill.source_module', False) == 'TcpServer'
         """
-        # Remove possible leading "if".
-        filter_string_tmp = re.sub('^if\s+', '', filter_string)
-        # Remove event reference.
-        filter_string_tmp = re.sub('\$\(event\.', '\$(', filter_string_tmp)
-        # Output filter strings are not automatically parsed by parseDynamicValuesInConfiguration. So we need to do this here.
-        # Check if we have a reference to the internal LumberMill datastore.
-        if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
-            filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
-        # Replace all remaining dynamic references.
-        filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
-        filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
         try:
-            output_filter = eval(filter_string_tmp)
+            output_filter = eval(filter_string)
             self.output_filters[receiver_name] = output_filter
         except:
             etype, evalue, etb = sys.exc_info()

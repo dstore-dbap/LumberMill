@@ -217,8 +217,8 @@ class Field(BaseThreadedModule):
     # Hash algorithm can be any of the in hashlib supported algorithms.
     - modify.Field:
        action: hash                     # <type: string; is: required>
-       algorithm: sha1                  # <default: "md5"; type: string; is: optional;>
-       salt:                            # <default: None; type: None||string; is: optional;>
+       algorithm:                       # <default: "md5"; type: string; is: optional>
+       salt:                            # <default: None; type: None||string; is: optional>
        source_fields:                   # <type: list; is: required>
        target_fields:                   # <default: []; type: list; is: optional>
        receivers:
@@ -304,9 +304,6 @@ class Field(BaseThreadedModule):
 
     def configure_join_action(self):
         self.separator = self.getConfigurationValue('separator')
-
-    def configure_anonymize_action(self):
-        self.configure_hash_action()
 
     def configure_hash_action(self):
         # Import murmur hashlib if configured.
@@ -502,13 +499,13 @@ class Field(BaseThreadedModule):
 
     def _rename_regex_recursive(self, dict_to_scan):
         fields_to_rename = {}
-        for field_name, field_value in dict_to_scan.iteritems():
+        for field_name, field_value in dict_to_scan.items():
             new_field_name = self.regex.sub(self.replace, field_name)
             if field_name != new_field_name:
                 fields_to_rename[field_name] = new_field_name
             if self.recursive and isinstance(field_value, dict):
                 self._rename_regex_recursive(field_value)
-        for old_field_name, new_field_name in fields_to_rename.iteritems():
+        for old_field_name, new_field_name in fields_to_rename.items():
             dict_to_scan[new_field_name] = dict_to_scan.pop(old_field_name)
 
     def rename_replace(self, event):
@@ -525,13 +522,13 @@ class Field(BaseThreadedModule):
 
     def _rename_replace_recursive(self, dict_to_scan):
         fields_to_rename = {}
-        for field_name, field_value in dict_to_scan.iteritems():
+        for field_name, field_value in dict_to_scan.items():
             new_field_name = field_name.replace(self.old, self.new)
             if field_name != new_field_name:
                 fields_to_rename[field_name] = new_field_name
             if self.recursive and isinstance(field_value, dict):
                 self._rename_replace_recursive(field_value)
-        for old_field_name, new_field_name in fields_to_rename.iteritems():
+        for old_field_name, new_field_name in fields_to_rename.items():
             dict_to_scan[new_field_name] = dict_to_scan.pop(old_field_name)
 
     def string_replace(self, event):
@@ -583,7 +580,7 @@ class Field(BaseThreadedModule):
 
         @param event: dictionary
         @return: event: dictionary
-
+        """
         if self.line_separator:
             kv_dict = {}
             for kv in event[self.source_field].split(self.line_separator):
@@ -594,13 +591,13 @@ class Field(BaseThreadedModule):
         else:
             kv_dict = event[self.source_field].split(self.kv_separator)
         if self.prefix:
-            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
+            kv_dict = dict(map(lambda key, value: ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:
             event[self.target_field] = kv_dict
         else:
             event.update(kv_dict)
         return event
-        """
+
 
     def key_value_regex(self, event):
         """
@@ -619,19 +616,19 @@ class Field(BaseThreadedModule):
 
         @param event: dictionary
         @return: event: dictionary
-
+        """
         try:
             kv_dict = dict(re.findall(self.regex, event[self.source_field]))
         except:
             return event
         if self.prefix:
-            kv_dict = dict(map(lambda (key, value): ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
+            kv_dict = dict(map(lambda key, value: ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:
             event[self.target_field] = kv_dict
         else:
             event.update(kv_dict)
         return event
-        """
+
 
     def split(self, event):
         """
@@ -785,12 +782,6 @@ class Field(BaseThreadedModule):
                 pass
         return event
 
-    def anonymize(self, data):
-        """
-        Alias function for hash.
-        """
-        return self.hash(data)
-
     def hash(self, event):
         """
         ['source_fields'] values in data dictionary will hashed with hash algorithm set in configuration.
@@ -801,7 +792,7 @@ class Field(BaseThreadedModule):
         for idx, field in enumerate(self.source_fields):
             target_fieldname = field if not self.target_fields else self.target_fields[idx]
             try:
-                event[target_fieldname] = self.hash_func("%s%s" % (self.salt, event[field]))
+                event[target_fieldname] = self.hash_func(("%s%s" % (self.salt, event[field])).encode('utf-8'))
             except:
                 pass
         return event

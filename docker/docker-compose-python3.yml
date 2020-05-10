@@ -24,9 +24,9 @@ services:
       - '27017:27017'
     command: mongod --smallfiles --logpath=/dev/null # --quiet
   lumbermill:
-    build: './lumbermill/'
-    container_name: 'lumbermill'
-    command: '/bin/bash -c "while true; do sleep 1; done"'
+    build: './lumbermill-python3'
+    container_name: 'lumbermill-python3'
+    entrypoint: '/bin/bash -c "while true; do sleep 1; done"'
     volumes:
       - $PWD/../:/opt/LumberMill
     ports:

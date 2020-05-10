@@ -55,7 +55,7 @@ class NetFlow(BaseThreadedModule):
                 m = r.match(line)
                 if not m:
                     continue
-                NetFlowParser.IP_PROTOCOLS[int(m.group("num"))] = m.group("proto")
+                NetFlow.IP_PROTOCOLS[int(m.group("num"))] = m.group("proto")
 
     def configure(self, configuration):
         # Call parent configure method
@@ -67,21 +67,21 @@ class NetFlow(BaseThreadedModule):
 
     def getTcpFflags(self, flags):
         ret = []
-        if flags & NetFlowParser.TH_FIN:
+        if flags & NetFlow.TH_FIN:
                 ret.append('FIN')
-        if flags & NetFlowParser.TH_SYN:
+        if flags & NetFlow.TH_SYN:
                 ret.append('SYN')
-        if flags & NetFlowParser.TH_RST:
+        if flags & NetFlow.TH_RST:
                 ret.append('RST')
-        if flags & NetFlowParser.TH_PUSH:
+        if flags & NetFlow.TH_PUSH:
                 ret.append('PUSH')
-        if flags & NetFlowParser.TH_ACK:
+        if flags & NetFlow.TH_ACK:
                 ret.append('ACk')
-        if flags & NetFlowParser.TH_URG:
+        if flags & NetFlow.TH_URG:
                 ret.append('URG')
-        if flags & NetFlowParser.TH_ECE:
+        if flags & NetFlow.TH_ECE:
                 ret.append('ECE')
-        if flags & NetFlowParser.TH_CWR:
+        if flags & NetFlow.TH_CWR:
                 ret.append('CWR')
         return ret
 
@@ -89,8 +89,8 @@ class NetFlow(BaseThreadedModule):
         nf_data = {}
         (nf_data['sys_uptime'], nf_data['unix_secs'], nf_data['unix_nsecs'], nf_data['flow_sequence'], nf_data['engine_type'], nf_data['engine_id'], nf_data['sampling_interval']) = struct.unpack('!IIIIBBH', raw_nf_data[4:24])
         for i in range(0, record_count):
-            record_starts_at = NetFlowParser.NF_V5_HEADER_LENGTH + (i * NetFlowParser.NF_V5_RECORD_LENGTH)
-            record = raw_nf_data[record_starts_at:record_starts_at+NetFlowParser.NF_V5_RECORD_LENGTH]
+            record_starts_at = NetFlow.NF_V5_HEADER_LENGTH + (i * NetFlow.NF_V5_RECORD_LENGTH)
+            record = raw_nf_data[record_starts_at:record_starts_at+NetFlow.NF_V5_RECORD_LENGTH]
             # Decode record, except src and dest addresses.
             decoded_record = struct.unpack('!HHIIIIHHBBBBHHBBH', record[12:])
             nf_data['srcaddr'] = inet_ntoa(record[:4])
@@ -107,7 +107,7 @@ class NetFlow(BaseThreadedModule):
             nf_data['tcp_flags_binary'] = decoded_record[9]
             nf_data['tcp_flags'] = self.getTcpFflags(decoded_record[9])
             nf_data['prot'] = decoded_record[10]
-            nf_data['prot_name'] = NetFlowParser.IP_PROTOCOLS[decoded_record[10]]
+            nf_data['prot_name'] = NetFlow.IP_PROTOCOLS[decoded_record[10]]
             nf_data['tos'] = decoded_record[11]
             nf_data['src_as'] = decoded_record[12]
             nf_data['dst_as'] = decoded_record[13]

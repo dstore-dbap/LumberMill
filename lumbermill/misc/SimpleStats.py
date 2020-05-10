@@ -114,13 +114,13 @@ class SimpleStats(BaseThreadedModule):
                     self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
                 self.mp_stats_collector.setCounter("last_%s" % event_type, count)
                 self.mp_stats_collector.resetCounter(event_type)
-        except socket.error:
+        except socket.error as e:
             # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
             etype, evalue, etb = sys.exc_info()
             if "No such file or directory" in evalue:
                 pass
             else:
-                raise etype, evalue, etb
+                raise e
 
     def eventsInQueuesStatistics(self):
         if len(self.module_queues) == 0:
@@ -145,7 +145,7 @@ class SimpleStats(BaseThreadedModule):
         aggregated_metrics = defaultdict(int)
         for psutil_process in self.psutil_processes:
             stats_event["pid"] = psutil_process.pid
-            for metric_name, metric_value in psutil_process.as_dict(self.process_statistics).iteritems():
+            for metric_name, metric_value in psutil_process.as_dict(self.process_statistics).items():
                 # Call metric specific method if it exists.
                 if "convertMetric_%s" % metric_name in self.methods:
                     metric_name, metric_value = getattr(self, "convertMetric_%s" % self.action)(metric_name, metric_value)
@@ -163,7 +163,7 @@ class SimpleStats(BaseThreadedModule):
                     self.logger.info("%s(pid: %s): %s" % (metric_name, psutil_process.pid, metric_value))
             if self.emit_as_event:
                 self.sendEvent(DictUtils.getDefaultEventDict(stats_event, caller_class_name="Statistics", event_type="statistic"))
-        for agg_metric_name, agg_metric_value in aggregated_metrics.iteritems():
+        for agg_metric_name, agg_metric_value in aggregated_metrics.items():
             self.logger.info("%s: %s" % (agg_metric_name, agg_metric_value))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict(aggregated_metrics, caller_class_name="Statistics", event_type="statistic"))

@@ -53,20 +53,24 @@ class TestXPath(ModuleBaseTestCase):
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()'})
         self.checkConfiguration()
-        event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
+        data = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                                'category': 'COOKING'})
-        for event in self.test_object.handleEvent(event):
+        event = None
+        for event in self.test_object.handleEvent(data):
             self.assertEquals(event['xpath_result'], ['Everyday Italian'])
+        self.assertIsNotNone(event)
 
     def testHandleDataWithTargetField(self):
         self.test_object.configure({'source_field': 'agora_product_xml',
                                     'target_field': 'book_title',
                                     'query': '//bookstore/book[@category="$(category)"]/title/text()'})
         self.checkConfiguration()
-        event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
+        data = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                                'category': 'COOKING'})
-        for event in self.test_object.handleEvent(event):
+        event = None
+        for event in self.test_object.handleEvent(data):
             self.assertEquals(event['book_title'], ['Everyday Italian'])
+        self.assertIsNotNone(event)
 
     def testCache(self):
         cache = Cache.Cache(mock.Mock())
@@ -77,9 +81,11 @@ class TestXPath(ModuleBaseTestCase):
                                     'cache': 'Cache',
                                     'cache_key': '$(category)'})
         self.checkConfiguration()
-        event = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
+        data = DictUtils.getDefaultEventDict({'agora_product_xml': self.xml_string,
                                                'category': 'COOKING'})
-        self.test_object.handleEvent(event).next()
-        for event in self.test_object.handleEvent(event):
+        next(self.test_object.handleEvent(data))
+        event = None
+        for event in self.test_object.handleEvent(data):
             self.assertEquals(event['xpath_result'], ['Everyday Italian'])
             self.assertTrue(event['lumbermill']['cache_hit'])
+        self.assertIsNotNone(event)

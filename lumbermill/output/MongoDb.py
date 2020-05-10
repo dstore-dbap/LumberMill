@@ -107,7 +107,7 @@ class MongoDb(BaseThreadedModule):
                 self.logger.debug("Payload: %s" % event)
                 if "Broken pipe" in evalue or "Connection reset by peer" in evalue:
                     self.mongodb = self.connect()
-        for collection_name, bulk_object in bulk_objects.iteritems():
+        for collection_name, bulk_object in bulk_objects.items():
             try:
                 result = bulk_object.execute()
                 self.logger.debug(str(result))

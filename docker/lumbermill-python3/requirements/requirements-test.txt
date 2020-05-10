@@ -4,12 +4,10 @@ crypto>=1.0.0
 pylru>=1.0.0
 PyYAML>=2.0.0
 redis>=1.0.0
-hiredis>=0.1.0
 simplekv>=0.5.0
-tornado<=5.1.0
+tornado>=3.0.0
 pyzmq>=10.0.0
 psutil
-bs4
 
 # ElasticSearchSink
 elasticsearch>=2.1.0
@@ -61,5 +59,8 @@ py-zabbix>=1.1.1
 # WebGui
 Pygments>=2.0.0
 
-# Fix asyncio problem
-nest_asyncio
+# Tests requirements.
+unittest2
+mock
+coverage
+coveralls

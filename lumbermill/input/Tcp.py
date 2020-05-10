@@ -102,7 +102,11 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": str(data, "utf-8")}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
+        #try:
+        #    data = str(data, "utf-8")
+        #except UnicodeDecodeError:
+        #    pass
+        self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @ModuleDocstringParser
 class Tcp(BaseModule):
@@ -183,10 +187,11 @@ class Tcp(BaseModule):
         self.server.add_sockets(self.sockets)
 
     def shutDown(self):
-        self.server.stop()
-        for server_socket in self.sockets:
-            try:
-                server_socket.shutdown(socket.SHUT_RDWR)
-            except socket.error:
-                pass
-            server_socket.close()
+        if self.is_configured:
+            self.server.stop()
+            for server_socket in self.sockets:
+                try:
+                    server_socket.shutdown(socket.SHUT_RDWR)
+                except socket.error:
+                    pass
+                server_socket.close()

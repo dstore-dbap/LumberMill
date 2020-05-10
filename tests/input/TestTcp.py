@@ -25,7 +25,7 @@ class TestTcp(ModuleBaseTestCase):
         self.test_object.initAfterFork()
         self.startTornadoEventLoop()
         # Give server process time to startup.
-        time.sleep(1)
+        time.sleep(.1)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
@@ -66,7 +66,7 @@ class TestTcp(ModuleBaseTestCase):
         self.test_object.initAfterFork()
         self.startTornadoEventLoop()
         # Give server process time to startup.
-        time.sleep(1)
+        time.sleep(.1)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
@@ -136,7 +136,7 @@ class TestTcp(ModuleBaseTestCase):
                                     'simple_separator': '***'})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        #self.startTornadoEventLoop()
+        self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(.1)
         try:
@@ -170,7 +170,7 @@ class TestTcp(ModuleBaseTestCase):
                                     'chunksize': 1024})
         self.checkConfiguration()
         self.test_object.initAfterFork()
-        #self.startTornadoEventLoop()
+        self.startTornadoEventLoop()
         # Give server process time to startup.
         time.sleep(.1)
         try:

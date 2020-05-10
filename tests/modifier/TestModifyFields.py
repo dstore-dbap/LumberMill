@@ -187,23 +187,15 @@ class TestFields(ModuleBaseTestCase):
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'id': 1}, 'hash_me': 'Nobody inspects the spammish repetition'})):
             self.assertEqual(event, expected)
 
-    def testAnonymizeMd5(self):
-        self.test_object.configure({'action': 'anonymize',
-                                    'source_fields': ['anon_me'],
-                                    'algorithm': 'md5'})
-        expected = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'bb649c83dd1ea5c9d9dec9a18df0ffe9'})
-        for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'anon_me': 'Nobody inspects the spammish repetition'})):
-            self.assertEqual(event, expected)
-
     def testRenameRegex(self):
         self.test_object.configure({'action': 'rename_regex',
                                     'regex': '(Gam[Bb]olputty)\s+(Johann)-(.*)',
                                     'replace': '\\2 \\1 \\3'})
         data = DictUtils.getDefaultEventDict({'Gambolputty Johann-de von': 1,
                                               'Gambolputty Johann-de von Ausfern': 2,
-                                              'Gambolputty Johann-de von Ausfern Schlingern Schlendern': 3,})
-        event = None
+                                              'Gambolputty Johann-de von Ausfern Schlingern Schlendern': 3})
         for event in self.test_object.handleEvent(data):
+            self.assertIsNotNone(event)
             self.assertEquals(event['Johann Gambolputty de von'], 1)
             self.assertEquals(event['Johann Gambolputty de von Ausfern'], 2)
             self.assertEquals(event['Johann Gambolputty de von Ausfern Schlingern Schlendern'], 3)
@@ -216,8 +208,8 @@ class TestFields(ModuleBaseTestCase):
         data = DictUtils.getDefaultEventDict({'Gambolputty Hannes de von': 1,
                                               'Gambolputty Hannes de von Ausfern': 2,
                                               'Gambolputty Hannes de von Ausfern Schlingern Schlendern': 3,})
-        event = None
         for event in self.test_object.handleEvent(data):
+            self.assertIsNotNone(event)
             self.assertEquals(event['Gambolputty Johann de von'], 1)
             self.assertEquals(event['Gambolputty Johann de von Ausfern'], 2)
             self.assertEquals(event['Gambolputty Johann de von Ausfern Schlingern Schlendern'], 3)
@@ -229,8 +221,8 @@ class TestFields(ModuleBaseTestCase):
                                     'line_separator': '/',
                                     'source_field': 'url'})
         data = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'url': 'Johann-Gambolputty/Schlingern-Schlendern/nobody-/spammish-repetition/'})
-        event = None
         for event in self.test_object.handleEvent(data):
+            self.assertIsNotNone(event)
             self.assertEquals(event['Johann'], 'Gambolputty')
             self.assertEquals(event['Schlingern'], 'Schlendern')
             self.assertEquals(event['nobody'], '')

@@ -40,7 +40,7 @@ class Base64(BaseThreadedModule):
 
     def decodeBase64(self, event):
         if self.source_field in event:
-            decoded_dataset = base64.b64decode(event[self.source_field])
+            decoded_dataset = str(base64.b64decode(bytes(event[self.source_field], "utf-8")), "utf-8")
             if self.drop_original:
                 event.pop(self.source_field, None)
             event[self.target_field] = decoded_dataset
@@ -48,7 +48,7 @@ class Base64(BaseThreadedModule):
 
     def encodeBase64(self, event):
         if self.source_field in event:
-            encoded_dataset = base64.b64encode(event[self.source_field])
+            encoded_dataset = str(base64.b64encode(bytes(event[self.source_field], "utf-8")), "utf-8")
             if self.drop_original:
                 event.pop(self.source_field, None)
             event[self.target_field] = encoded_dataset

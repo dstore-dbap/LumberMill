@@ -63,6 +63,19 @@ class ReplaceVars(ast.NodeTransformer):
         new_node = ast.parse(self.replacement % node.id).body[0].value
         return new_node
 
+def parseDynamicValuesinFilterString(filter_string):
+    # Remove possible leading "if".
+    filter_string_tmp = re.sub('^if\s+', "", filter_string)
+    # Remove event reference.
+    filter_string_tmp = re.sub('\$\(event\.', '%(', filter_string_tmp)
+    # Check if we have a reference to the internal LumberMill datastore.
+    if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
+        filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+    # Replace all remaining dynamic references.
+    filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
+    filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp
+    return filter_string_tmp
+
 def parseDynamicValuesInString(value):
     """
     Parse a string and replace the configuration notation for dynamic values with pythons notation.
@@ -109,7 +122,10 @@ def parseDynamicValuesInDict(value_dict, contains_dynamic_value):
         elif isinstance(value, dict):
             parseDynamicValuesInDict(value_dict[key], contains_dynamic_value)
         elif isinstance(value, str):
-            new_value = parseDynamicValuesInString(value)
+            if key == "filter":
+                new_value = parseDynamicValuesinFilterString(value)
+            else:
+                new_value = parseDynamicValuesInString(value)
             if key == new_key and value == new_value:
                 continue
             if new_key != key:
@@ -117,14 +133,17 @@ def parseDynamicValuesInDict(value_dict, contains_dynamic_value):
             contains_dynamic_value.append(True)
             value_dict[new_key] = new_value
 
-def parseDynamicValue(value):
+def parseDynamicValue(key, value):
     contains_dynamic_value = []
     if isinstance(value, list):
         parseDynamicValuesInList(value, contains_dynamic_value)
     elif isinstance(value, dict):
         parseDynamicValuesInDict(value, contains_dynamic_value)
     elif isinstance(value, str):
-        new_value = parseDynamicValuesInString(value)
+        if key == "filter":
+            new_value = parseDynamicValuesinFilterString(value)
+        else:
+            new_value = parseDynamicValuesInString(value)
         if value != new_value:
             value = new_value
             contains_dynamic_value.append(True)

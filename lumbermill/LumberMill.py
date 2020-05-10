@@ -41,6 +41,12 @@ try:
 except ImportError:
     import queue as Queue
 
+# Fix problem of asyncio when adding new tasks to an already running ioloop.
+# Vanilla asyncio will throw "RuntimeError: This event loop is already running".
+# nest_asyncio monkeypathes vanilla asyncio to allow for this.
+# See @https://github.com/erdewit/nest_asyncio
+import nest_asyncio
+nest_asyncio.apply()
 
 class LumberMill():
     """
@@ -278,7 +284,7 @@ class LumberMill():
                 if not receiver_data:
                     break
                 if isinstance(receiver_data, dict):
-                    receiver_name, _ = iter(receiver_data.items()).next()
+                    receiver_name, _ = next(iter(receiver_data.items()))
                 else:
                     receiver_name = receiver_data
                 if receiver_name not in self.modules:
