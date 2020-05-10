@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import threading
-import BaseModule
 
+import lumbermill.BaseModule as BaseModule
 
 # Conditional imports for python2/3
 try:

@@ -4,9 +4,9 @@ import sys
 from json import JSONDecoder
 from bs4 import UnicodeDammit
 
-from constants import IS_PYPY
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.constants import IS_PYPY
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 # For pypy the default json module is the fastest.
 if IS_PYPY:

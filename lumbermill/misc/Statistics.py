@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.StatisticCollector import StatisticCollector
-from utils.misc import TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.StatisticCollector import StatisticCollector
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

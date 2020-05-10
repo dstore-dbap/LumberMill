@@ -3,9 +3,9 @@ import sys
 
 from lxml import etree
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.mixins.ModuleCacheMixin import ModuleCacheMixin
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

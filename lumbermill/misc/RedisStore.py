@@ -3,9 +3,9 @@ import sys
 import redis
 from pickle import loads, dumps
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import Buffer
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

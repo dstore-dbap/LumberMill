@@ -5,8 +5,8 @@ import struct
 import sys
 from socket import inet_ntoa
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

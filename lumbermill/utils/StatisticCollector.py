@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 import socket
-import logging
 import multiprocessing
 from collections import defaultdict
 
-from utils.Decorators import Singleton
+from lumbermill.utils.Decorators import Singleton
 
 
 @Singleton
@@ -55,10 +54,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
-            except socket.error as e1:
+            except EOFError:
+                # EOFError may be thrown when exiting via CTRL+C. Ignore it.
+                pass
+            except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
-                if "No such file or directory" in evalue:
+                if "No such file or directory" in str(evalue):
                     return 0
                 else:
                     raise e
@@ -72,10 +74,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
+            except EOFError:
+                # EOFError may be thrown when exiting via CTRL+C. Ignore it.
+                pass
             except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
-                if "No such file or directory" in evalue:
+                if "No such file or directory" in str(evalue):
                     return 0
                 else:
                     raise e
@@ -87,10 +92,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
+            except EOFError:
+                # EOFError may be thrown when exiting via CTRL+C. Ignore it.
+                pass
             except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
-                if "No such file or directory" in evalue:
+                if "No such file or directory" in str(evalue):
                     return 0
                 else:
                     raise e
@@ -102,10 +110,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
+            except EOFError:
+                # EOFError may be thrown when exiting via CTRL+C. Ignore it.
+                pass
             except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
-                if "No such file or directory" in evalue:
+                if "No such file or directory" in str(evalue):
                     return 0
                 else:
                     raise e
@@ -119,10 +130,13 @@ class MultiProcessStatisticCollector:
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 return 0
+            except EOFError:
+                # EOFError may be thrown when exiting via CTRL+C. Ignore it.
+                pass
             except socket.error as e:
                 # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
                 etype, evalue, etb = sys.exc_info()
-                if "No such file or directory" in evalue:
+                if "No such file or directory" in str(evalue):
                     return 0
                 else:
                     raise e

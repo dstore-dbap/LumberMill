@@ -5,10 +5,10 @@ import sys
 import pprint
 import collections
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import Buffer
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

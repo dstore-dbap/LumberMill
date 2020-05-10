@@ -7,11 +7,11 @@ import psutil
 import datetime
 from collections import defaultdict
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
-from utils.misc import AnsiColors, TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+from lumbermill.utils.misc import AnsiColors, TimedFunctionManager
 
 
 @ModuleDocstringParser
@@ -114,10 +114,13 @@ class SimpleStats(BaseThreadedModule):
                     self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
                 self.mp_stats_collector.setCounter("last_%s" % event_type, count)
                 self.mp_stats_collector.resetCounter(event_type)
+        except BrokenPipeError:
+            # BrokenPipeError  may be thrown when exiting via CTRL+C. Ignore it.
+            pass
         except socket.error as e:
-            # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it
+            # socket.error: [Errno 2] No such file or directory may be thrown when exiting via CTRL+C. Ignore it.
             etype, evalue, etb = sys.exc_info()
-            if "No such file or directory" in evalue:
+            if "No such file or directory" in str(evalue):
                 pass
             else:
                 raise e

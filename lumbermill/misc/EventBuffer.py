@@ -4,10 +4,10 @@ import gc
 import random
 import sys
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.misc import TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

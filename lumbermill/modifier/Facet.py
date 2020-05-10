@@ -2,11 +2,11 @@
 import sys
 import hashlib
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.mixins.ModuleCacheMixin import ModuleCacheMixin
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.misc import TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.mixins.ModuleCacheMixin import ModuleCacheMixin
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

@@ -4,9 +4,9 @@ import logging.handlers
 import os
 import socket
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
-from utils.DynamicValues import mapDynamicValue
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 
 @ModuleDocstringParser

@@ -8,11 +8,11 @@ from elasticsearch import Elasticsearch, connection
 from ctypes import c_char_p
 from multiprocessing import Manager, Lock
 
-import utils.DictUtils as DictUtils
-from constants import IS_PYPY
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
-from utils.DynamicValues import mapDynamicValue
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.constants import IS_PYPY
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 # For pypy the default json module is the fastest.
 if IS_PYPY:

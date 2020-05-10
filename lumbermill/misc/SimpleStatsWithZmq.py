@@ -1,10 +1,10 @@
 import os
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
-from utils.misc import AnsiColors, TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.StatisticCollector import StatisticCollector, MultiProcessStatisticCollector
+from lumbermill.utils.misc import AnsiColors, TimedFunctionManager
 
 
 @ModuleDocstringParser

@@ -4,8 +4,8 @@ import sys
 import zlib
 from io import BytesIO
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

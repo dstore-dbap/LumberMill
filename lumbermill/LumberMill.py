@@ -29,12 +29,12 @@ module_dirs = ['input',
 #    print('Usage: %s -m %s -c <path/to/config.conf>' % (sys.executable, os.path.splitext(sys.argv[0])[0]))
 #    sys.exit()
 
-from constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
-from utils.Buffers import BufferedQueue, ZeroMqMpQueue
-from utils.DictUtils import mergeNestedDicts
-from utils.ConfigurationValidator import ConfigurationValidator
-from utils.MultiProcessDataStore import MultiProcessDataStore
+from lumbermill.constants import MSGPACK_AVAILABLE, ZMQ_AVAILABLE, LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.utils.misc import TimedFunctionManager, coloredConsoleLogging, restartMainProcess
+from lumbermill.utils.Buffers import BufferedQueue, ZeroMqMpQueue
+from lumbermill.utils.DictUtils import mergeNestedDicts
+from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
+from lumbermill.utils.MultiProcessDataStore import MultiProcessDataStore
 
 try:
     import Queue
@@ -171,7 +171,7 @@ class LumberMill():
         self.logger.debug("Initializing module %s." % (module_name))
         instance = None
         try:
-            module = __import__(module_name, globals(), locals(), module_name, 0)
+            module = __import__("lumbermill.%s" % module_name, globals(), locals(), module_name, 0)
         except ImportError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Unknown module %s. Exception: %s, Error: %s." % (module_name, etype, evalue))
@@ -450,13 +450,14 @@ class LumberMill():
             if tries > 3:
                 # Back off if problem does not resolve after max tries.
                 self.shutDown()
-            try:
-                tornado.ioloop.IOLoop.current().start()
-            except SystemExit:
-                pass
-            except:
-                etype, evalue, etb = sys.exc_info()
-                self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
+            tornado.ioloop.IOLoop.current().start()
+            #try:
+            #    tornado.ioloop.IOLoop.current().start()
+            #except SystemExit:
+            #    pass
+            #except:
+            #    etype, evalue, etb = sys.exc_info()
+            #    self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
             self.shutDown();
 
     def restart(self, signum=False, frame=False):
@@ -528,6 +529,10 @@ def usage():
     print('Usage: ' + sys.argv[0] + ' -c <path/to/config.conf> --configtest')
 
 def main():
+    """
+
+    :rtype: object
+    """
     path_to_config_file = ""
     run_configtest = False
     try:
@@ -543,11 +548,11 @@ def main():
             path_to_config_file = arg
         elif opt in ("--configtest"):
             run_configtest = True
-    gp = LumberMill(path_to_config_file)
+    lm = LumberMill(path_to_config_file)
     if run_configtest:
-        gp.configTest()
+        lm.configTest()
     else:
-        gp.start()
+        lm.start()
 
 if __name__ == '__main__':
     main()

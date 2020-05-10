@@ -3,10 +3,10 @@ import sys
 
 import redis
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import Buffer
-from utils.Decorators import ModuleDocstringParser
-from utils.DynamicValues import mapDynamicValue
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue
 
 
 @ModuleDocstringParser

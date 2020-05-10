@@ -2,13 +2,10 @@
 import pymongo
 import sys
 
-import time
-
-from constants import IS_PYPY
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import Buffer
-from utils.Decorators import ModuleDocstringParser
-from utils.DynamicValues import mapDynamicValue, mapDynamicValueInString
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import Buffer
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DynamicValues import mapDynamicValue, mapDynamicValueInString
 
 
 @ModuleDocstringParser

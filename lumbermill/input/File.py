@@ -4,10 +4,10 @@ import os
 import random
 import time
 
-from BaseThreadedModule import BaseThreadedModule
-from utils import DictUtils
-from utils.Decorators import ModuleDocstringParser
-from utils.beaver.worker.tail import Tail
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils import DictUtils
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.beaver.worker.tail import Tail
 
 
 @ModuleDocstringParser

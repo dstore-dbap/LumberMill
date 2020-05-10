@@ -6,9 +6,9 @@ import sys
 from tornado import netutil
 from tornado.tcpserver import TCPServer
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 class SocketServer(TCPServer):

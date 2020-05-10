@@ -3,10 +3,10 @@ import sys
 
 import nmap
 
-import utils.DictUtils as DictUtils
-from BaseModule import BaseModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.misc import TimedFunctionManager
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseModule import BaseModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

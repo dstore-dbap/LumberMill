@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import tornado.web
 
-import handler.HtmlHandler
-import handler.WebsocketHandler
-import uimodules.WebGui.ServerInfo
-from BaseModule import BaseModule
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.plugin.handler.HtmlHandler as HtmlHandler
+import lumbermill.plugin.uimodules.WebGui as WebGui
+from lumbermill.BaseModule import BaseModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser
@@ -39,15 +38,15 @@ class WebGui(BaseModule):
             self.lumbermill.shutDown()
             return
         self.webserver_module = mod_info['instances'][0]
-        self.webserver_module.addUiModules([uimodules.WebGui.ServerInfo])
+        self.webserver_module.addUiModules([WebGui.ServerInfo])
         self.webserver_module.addHandlers(self.getHandlers())
 
     def getHandlers(self):
         settings = self.webserver_module.getSettings()
         handlers =  [# HtmlHandler
-                     (r"/", handler.HtmlHandler.MainHandler),
-                     (r"/server_configuration", handler.HtmlHandler.ServerConfigurationAsText),
-                     (r"/configuration", handler.HtmlHandler.ConfigurationHandler),
+                     (r"/", HtmlHandler.MainHandler),
+                     (r"/server_configuration", HtmlHandler.ServerConfigurationAsText),
+                     (r"/configuration", HtmlHandler.ConfigurationHandler),
                      # StaticFilesHandler
                      (r"/images/(.*)",tornado.web.StaticFileHandler, {"path": "%s/images/" % settings['static_path']}),
                      (r"/css/(.*)",tornado.web.StaticFileHandler, {"path": "%s/css/" % settings['static_path']}),

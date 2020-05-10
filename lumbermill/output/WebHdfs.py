@@ -4,15 +4,15 @@ import logging
 import multiprocessing
 import sys
 import time
-from cStringIO import StringIO
+from io import StringIO
 
 import pywebhdfs
 from pywebhdfs.webhdfs import PyWebHdfsClient
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.DynamicValues import mapDynamicValue
-from utils.misc import TimedFunctionManager
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.DynamicValues import mapDynamicValue
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

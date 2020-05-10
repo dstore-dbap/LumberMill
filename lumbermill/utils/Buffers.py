@@ -18,9 +18,9 @@ try:
 except ImportError:
     zmq_avaiable = False
 
-from utils.Decorators import setInterval
-from utils.misc import TimedFunctionManager
-from utils.DictUtils import KeyDotNotationDict
+from lumbermill.utils.Decorators import setInterval
+from lumbermill.utils.misc import TimedFunctionManager
+from lumbermill.utils.DictUtils import KeyDotNotationDict
 
 class Buffer:
     def __init__(self, flush_size=None, callback=None, interval=1, maxsize=5000):

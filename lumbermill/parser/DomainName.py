@@ -3,9 +3,9 @@ import types
 
 from tld import get_tld
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import MemoryCache
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import MemoryCache
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

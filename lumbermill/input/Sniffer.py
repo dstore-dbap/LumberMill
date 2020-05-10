@@ -8,9 +8,9 @@ import sys
 import pcapy
 from impacket.ImpactDecoder import EthDecoder
 
-import utils.DictUtils as DictUtils
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 PROTOCOL_TO_NAMES = {'eth': 'Ethernet',
                      '0x800': 'IPv4'}

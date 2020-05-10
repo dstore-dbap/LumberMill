@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from ua_parser import user_agent_parser
 
-from BaseThreadedModule import BaseThreadedModule
-from utils.Buffers import MemoryCache
-from utils.Decorators import ModuleDocstringParser
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Buffers import MemoryCache
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 @ModuleDocstringParser

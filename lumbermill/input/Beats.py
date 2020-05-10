@@ -15,10 +15,10 @@ from tornado.netutil import bind_sockets
 from tornado.tcpserver import TCPServer
 from tornado import gen
 
-import utils.DictUtils as DictUtils
-from constants import IS_PYPY
-from BaseModule import BaseModule
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.constants import IS_PYPY
+from lumbermill.BaseModule import BaseModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 # For pypy the default json module is the fastest.
 if IS_PYPY:

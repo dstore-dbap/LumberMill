@@ -4,10 +4,10 @@ import re
 import sys
 from operator import itemgetter
 
-from constants import LUMBERMILL_BASEPATH
-from BaseThreadedModule import BaseThreadedModule
-from utils.Decorators import ModuleDocstringParser, setInterval
-from utils.misc import TimedFunctionManager
+from lumbermill.constants import LUMBERMILL_BASEPATH
+from lumbermill.BaseThreadedModule import BaseThreadedModule
+from lumbermill.utils.Decorators import ModuleDocstringParser, setInterval
+from lumbermill.utils.misc import TimedFunctionManager
 
 
 @ModuleDocstringParser

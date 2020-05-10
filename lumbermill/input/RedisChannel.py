@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import utils.DictUtils as DictUtils
-from BaseModule import BaseModule
-from utils.Decorators import ModuleDocstringParser
-from utils.RedisAsyncClient import AsyncRedisClient
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseModule import BaseModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.RedisAsyncClient import AsyncRedisClient
 
 
 @ModuleDocstringParser

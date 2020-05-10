@@ -2,7 +2,8 @@
 import os
 import multiprocessing
 import signal
-import BaseModule
+
+import lumbermill.BaseModule as BaseModule
 
 
 class BaseMultiProcessModule(BaseModule.BaseModule, multiprocessing.Process): #

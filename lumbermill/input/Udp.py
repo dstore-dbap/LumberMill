@@ -6,9 +6,9 @@ import socket
 import sys
 import threading
 
-import utils.DictUtils as DictUtils
-from BaseModule import BaseModule
-from utils.Decorators import ModuleDocstringParser
+import lumbermill.utils.DictUtils as DictUtils
+from lumbermill.BaseModule import BaseModule
+from lumbermill.utils.Decorators import ModuleDocstringParser
 
 
 class ThreadPoolMixIn(socketserver.ThreadingMixIn):

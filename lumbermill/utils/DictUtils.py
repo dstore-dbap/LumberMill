@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
-import sys
 import copy
 import random
-import pprint
 from string import Formatter
 
-from constants import MY_HOSTNAME
+from lumbermill.constants import MY_HOSTNAME
 
 
 class KeyDotNotationDict(dict):

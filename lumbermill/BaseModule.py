@@ -4,13 +4,12 @@
 import abc
 import logging
 import os
-import re
 import sys
 from functools import wraps
 
-from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from utils.ConfigurationValidator import ConfigurationValidator
-from utils.DynamicValues import parseDynamicValue, mapDynamicValue, LM_DYNAMIC_VAL_REGEX, LM_DYNAMIC_VAL_REGEX_WITH_TYPES
+from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.utils.ConfigurationValidator import ConfigurationValidator
+from lumbermill.utils.DynamicValues import parseDynamicValue, mapDynamicValue
 
 
 class BaseModule:

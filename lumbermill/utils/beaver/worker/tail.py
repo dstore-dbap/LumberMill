@@ -32,9 +32,9 @@ import time
 import logging
 import threading
 
-from constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
-from utils.beaver.worker.utils import IS_GZIPPED_FILE, REOPEN_FILES
-from utils.beaver.worker.utils import ENCODINGS
+from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT
+from lumbermill.utils.beaver.worker.utils import IS_GZIPPED_FILE, REOPEN_FILES
+from lumbermill.utils.beaver.worker.utils import ENCODINGS
 
 
 class Tail(threading.Thread):
