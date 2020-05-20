@@ -72,6 +72,130 @@ Other basic configuration examples: https://github.com/dstore-dbap/LumberMill/tr
 For a how-to running LumberMill, Elasticsearch and Kibana on CentOS, feel free to visit
 http://www.netprojects.de/collect-visualize-your-logs-with-lumbermill-and-elasticsearch-on-centos/.
 
+Working modules
+'''''''''''''''
+
+Event inputs
+^^^^^^^^^^^^
+
+-  Beats, read elastic beat inputs, e.g. filebeat.
+-  ElasticSearch, get documents from elasticsearch.
+-  File, read data from files.
+-  Kafka, receive events from apache kafka.
+-  NmapScanner, scan network with nmap and emit result as new event.
+-  RedisChannel, read events from redis channels.
+-  RedisList, read events from redis lists.
+-  Sniffer, sniff network traffic.
+-  Spam, what it says on the can - spams LumberMill for testing.
+-  SQS, read messages from amazons simple queue service.
+-  StdIn, read stream from standard in.
+-  Tcp, read stream from a tcp socket.
+-  Udp, read data from udp socket.
+-  UnixSocket, read stream from a named socket on unix like systems.
+-  ZeroMQ, read events from a zeromq.
+
+Event parsers
+^^^^^^^^^^^^^
+
+-  Base64, parse base64 data.
+-  Collectd, parse collectd binary protocol data.
+-  CSV, parse a char separated string.
+-  DateTime, parse a string to a dateobject and convert it to different date pattern.
+-  DomainName, parse a domain name or url to tld, subdomain etc. parts.
+-  Inflate, inflates any fields with supported compression codecs.
+-  Json, parse a json formatted string.
+-  Line, split lines at a seperator and emit each line as new
+   event.
+-  MsgPack, parse a msgpack encoded string.
+-  Regex, parse a string using regular expressions and named
+   capturing groups.
+-  SyslogPrival, parse the syslog prival value (RFC5424).
+-  Url, parse the query string from an url.
+-  UserAgent, parse a http user agent string.
+-  XPath, parse an XML document via an xpath expression.
+
+Event modifiers
+^^^^^^^^^^^^^^^
+
+-  AddDateTime, adds a timestamp field.
+-  AddDnsLookup. adds dns data.
+-  AddGeoInfo, adds geo info fields.
+-  DropEvent, discards event.
+-  ExecPython, execute custom python code.
+-  Facet, collect all encountered variations of en event value over a
+   configurable period of time.
+-  HttpRequest, execute an arbritrary http request and store result.
+-  Math, execute arbitrary math functions.
+-  MergeEvent, merge multiple events to one single event.
+-  Field, some methods to change extracted fields, e.g. insert,
+   delete, replace, castToInteger etc.
+-  Permutate, takes a list in the event data emits events for all
+   possible permutations of that list.
+
+Outputs
+^^^^^^^
+
+-  DevNull, discards all data that it receives.
+-  ElasticSearch, stores data entries in an elasticsearch index.
+-  File, store events in a file.
+-  Graphite, send metrics to graphite server.
+-  Kafka, publish incoming events to kafka topic.
+-  Logger, sends data to lumbermill internal logger for output.
+-  MongoDb, stores data entries in a mongodb index.
+-  RedisChannel, publish incoming events to redis channel.
+-  RedisList, publish incoming events to redis list.
+-  StdOut, prints all received data to standard out.
+-  SQS, sends events to amazons simple queue service.
+-  Syslog, send events to syslog.
+-  WebHdfs, store events in hdfs via webhdfs.
+-  Zabbix, send metrics to zabbix.
+-  Zmq, sends incoming event to zeromq.
+
+Misc modules
+^^^^^^^^^^^^
+
+-  EventBuffer, store received events in a persistent backend until the
+   event was successfully handled.
+-  Cache, use cache to store and retrieve values, e.g. to store the
+   result of the XPathParser modul.
+-  SimpleStats, simple statistic module just for event rates etc.
+-  Statistics, more versatile. Configurable fields for collecting
+   statistic data.
+-  Tarpit, slows event propagation down - for testing.
+-  Throttle, throttle event count over a given time period.
+
+Cluster modules
+^^^^^^^^^^^^^^^
+
+-  Pack, base pack module. Handles pack leader and pack member
+   discovery.
+-  PackConfiguration, syncs leader configuration to pack members.
+
+Plugins
+^^^^^^^
+
+-  WebGui, a web interface to LumberMill.
+-  WebserverTornado, base webserver module. Handles all incoming
+   requests.
+
+Event flow basics
+'''''''''''''''''
+
+-  an input module receives an event.
+-  the event data will be wrapped in a default event dictionary of the
+   following structure: { "data": payload, "lumbermill": { "event\_id":
+   unique event id, "event\_type": "Unknown", "received\_from": ip
+   address of sender, "source\_module": caller\_class\_name, } }
+-  the input module sends the new event to its receivers. Either by
+   adding it to a queue or by calling the receivers handleEvent method.
+-  if no receivers are configured, the next module in config will be the
+   default receiver.
+-  each following module will process the event via its handleEvent
+   method and pass it on to its receivers.
+-  each module can have an input filter and an output filter to manage
+   event propagation through the modules.
+-  output modules can not have receivers.
+
 Configuration example (with explanations)
 '''''''''''''''''''''''''''''''''''''''''
 
@@ -407,129 +531,6 @@ with pypy-2.0.2, pypy-2.2.1, pypy-2.3 and pypy-2.4.
 For IPC ZeroMq is used instead of the default multiprocessing.Queue.
 This resulted in nearly 3 times of the performance with
 multiprocessing.Queue.
-
-Working modules
-'''''''''''''''
-
-Event inputs
-^^^^^^^^^^^^
-
--  Beats, read elastic beat inputs, e.g. filebeat.
--  ElasticSearch, get documents from elasticsearch.
--  File, read data from files.
--  Kafka, receive events from apache kafka.
--  NmapScanner, scan network with nmap and emit result as new event.
--  RedisChannel, read events from redis channels.
--  RedisList, read events from redis lists.
--  Sniffer, sniff network traffic.
--  Spam, what it says on the can - spams LumberMill for testing.
--  SQS, read messages from amazons simple queue service.
--  StdIn, read stream from standard in.
--  Tcp, read stream from a tcp socket.
--  Udp, read data from udp socket.
--  UnixSocket, read stream from a named socket on unix like systems.
--  ZeroMQ, read events from a zeromq.
-
-Event parsers
-^^^^^^^^^^^^^
-
--  Base64, parse base64 data.
--  Collectd, parse collectd binary protocol data.
--  CSV, parse a char separated string.
--  DateTime, parse a string to a dateobject and convert it to different date pattern.
--  DomainName, parse a domain name or url to tld, subdomain etc. parts.
--  Inflate, inflates any fields with supported compression codecs.
--  Json, parse a json formatted string.
--  Line, split lines at a seperator and emit each line as new
-   event.
--  MsgPack, parse a msgpack encoded string.
--  Regex, parse a string using regular expressions and named
-   capturing groups.
--  SyslogPrival, parse the syslog prival value (RFC5424).
--  Url, parse the query string from an url.
--  UserAgent, parse a http user agent string.
--  XPath, parse an XML document via an xpath expression.
-
-Event modifiers
-^^^^^^^^^^^^^^^
-
--  AddDateTime, adds a timestamp field.
--  AddDnsLookup. adds dns data.
--  AddGeoInfo, adds geo info fields.
--  DropEvent, discards event.
--  ExecPython, execute custom python code.
--  Facet, collect all encountered variations of en event value over a
-   configurable period of time.
--  HttpRequest, execute an arbritrary http request and store result.
--  Math, execute arbitrary math functions.
--  MergeEvent, merge multiple events to one single event.
--  Field, some methods to change extracted fields, e.g. insert,
-   delete, replace, castToInteger etc.
--  Permutate, takes a list in the event data emits events for all
-   possible permutations of that list.
-
-Outputs
-^^^^^^^
-
--  DevNull, discards all data that it receives.
--  ElasticSearch, stores data entries in an elasticsearch index.
--  File, store events in a file.
--  Graphite, send metrics to graphite server.
--  Logger, sends data to lumbermill internal logger for output.
--  MongoDb, stores data entries in a mongodb index.
--  RedisChannel, publish incoming events to redis channel.
--  RedisList, publish incoming events to redis list.
--  StdOut, prints all received data to standard out.
--  SQS, sends events to amazons simple queue service.
--  Syslog, send events to syslog.
--  WebHdfs, store events in hdfs via webhdfs.
--  Zabbix, send metrics to zabbix.
--  Zmq, sends incoming event to zeromq.
-
-Misc modules
-^^^^^^^^^^^^
-
--  EventBuffer, store received events in a persistent backend until the
-   event was successfully handled.
--  Cache, use cache to store and retrieve values, e.g. to store the
-   result of the XPathParser modul.
--  SimpleStats, simple statistic module just for event rates etc.
--  Statistics, more versatile. Configurable fields for collecting
-   statistic data.
--  Tarpit, slows event propagation down - for testing.
--  Throttle, throttle event count over a given time period.
-
-Cluster modules
-^^^^^^^^^^^^^^^
-
--  Pack, base pack module. Handles pack leader and pack member
-   discovery.
--  PackConfiguration, syncs leader configuration to pack members.
-
-Plugins
-^^^^^^^
-
--  WebGui, a web interface to LumberMill.
--  WebserverTornado, base webserver module. Handles all incoming
-   requests.
-
-Event flow basics
-'''''''''''''''''
-
--  an input module receives an event.
--  the event data will be wrapped in a default event dictionary of the
-   following structure: { "data": payload, "lumbermill": { "event\_id":
-   unique event id, "event\_type": "Unknown", "received\_from": ip
-   address of sender, "source\_module": caller\_class\_name, } }
--  the input module sends the new event to its receivers. Either by
-   adding it to a queue or by calling the receivers handleEvent method.
--  if no receivers are configured, the next module in config will be the
-   default receiver.
--  each following module will process the event via its handleEvent
-   method and pass it on to its receivers.
--  each module can have an input filter and an output filter to manage
-   event propagation through the modules.
--  output modules can not have receivers.
 
 Configuration basics
 ''''''''''''''''''''

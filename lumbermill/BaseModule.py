@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# Testing merge request
-# and notification emails.
 import abc
 import logging
 import os

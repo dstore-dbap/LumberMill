@@ -96,7 +96,7 @@ Configuration template:
 
 
 Graphite
-------------
+--------
 
 Send metrics to graphite server.
 
@@ -136,6 +136,27 @@ Configuration template:
        batch_size:                      # <default: 50; type: integer; is: optional>
        backlog_size:                    # <default: 50; type: integer; is: optional>
 
+
+Kafka
+-----
+
+
+Publish incoming events to kafka topic.
+
+| **topic**: Name of kafka topic to send data to.
+| **brokers**: Kafka brokers to connect to.
+| **key**: Key for compacted topics.
+| **format**: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set, the whole event dict is send.
+
+Configuration template:
+
+::
+
+    - output.Kafka:
+       topic:                           # <type: string; is: required>
+       brokers:                         # <default: ['localhost:9092']; type: list; is: optional>
+       key:                             # <default: None; type: None||string; is: optional>
+       format:                          # <default: None; type: None||string; is: optional>
 
 Logger
 ----------

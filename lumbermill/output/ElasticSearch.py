@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
-import pprint
 import logging
 import elasticsearch
 
