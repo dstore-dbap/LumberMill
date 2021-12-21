@@ -25,4 +25,4 @@ class TestRedisStore(ModuleBaseTestCase):
         rc = self.test_object.getClient()
         rc.setex('Johann Gambolputty', 10, value)
         test = str(rc.get('Johann Gambolputty'), "utf-8")
-        self.assertEquals(test, value)
+        self.assertEqual(test, value)

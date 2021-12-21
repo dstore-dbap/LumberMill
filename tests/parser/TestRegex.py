@@ -36,8 +36,8 @@ To high eternal gain."""
         data = DictUtils.getDefaultEventDict({'data': self.multiline_raw_data})
         event = None
         for event in self.test_object.handleEvent(data):
-            self.assertEquals(self.multiline_raw_data.split('\n')[0], event['poem'])
-            self.assertEquals(event['lumbermill.event_type'], 'dame_irene')
+            self.assertEqual(self.multiline_raw_data.split('\n')[0], event['poem'])
+            self.assertEqual(event['lumbermill.event_type'], 'dame_irene')
         self.assertIsNotNone(event)
 
     def testMultilineWithRegexOptions(self):
@@ -48,8 +48,8 @@ To high eternal gain."""
         event = None
         for event in self.test_object.handleEvent(data):
             print(event)
-            self.assertEquals(self.multiline_raw_data, event['poem'])
-            self.assertEquals(event['lumbermill.event_type'], 'dame_irene')
+            self.assertEqual(self.multiline_raw_data, event['poem'])
+            self.assertEqual(event['lumbermill.event_type'], 'dame_irene')
         self.assertIsNotNone(event)
 
     def testFindAllRegexOption(self):
@@ -59,7 +59,7 @@ To high eternal gain."""
         data = DictUtils.getDefaultEventDict({'data': self.multiline_raw_data})
         event = None
         for event in self.test_object.handleEvent(data):
-            self.assertEquals(event['lumbermill.event_type'], 'dame_irene')
+            self.assertEqual(event['lumbermill.event_type'], 'dame_irene')
             self.assertListEqual(event['date'], ['When', 'When', 'When'])
         self.assertIsNotNone(event)
 
@@ -69,5 +69,5 @@ To high eternal gain."""
         self.test_object.readLogstashPatterns()
         logstash_regex_pattern = '(?P<virtual_host_name>%{HOST}) (?P<remote_ip>%{IP})'
         parsed_regex_pattern = self.test_object.replaceLogstashPatterns(logstash_regex_pattern)
-        self.assertNotEquals(logstash_regex_pattern, parsed_regex_pattern)
+        self.assertNotEqual(logstash_regex_pattern, parsed_regex_pattern)
 

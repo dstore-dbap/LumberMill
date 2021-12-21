@@ -49,8 +49,8 @@ class TestFacet(ModuleBaseTestCase):
                 continue
             events.append(event)
         events = sorted(events, key=lambda k: k['facet_count'])
-        self.assertEquals(len(events), 2)
-        self.assertEquals(events[0]['facets'], ['http://www.johann.com', 'http://www.lumbermill.com'])
-        self.assertEquals(events[0]['other_event_fields'][0], {'facet': 'http://www.johann.com', 'user_agent': 'Graham', 'remote_ip': '127.0.0.2'})
-        self.assertEquals(events[1]['facets'], ['http://www.google.com', 'http://www.blackknight.com', 'http://www.blank.com'])
-        self.assertEquals(events[1]['other_event_fields'][0], {'facet': 'http://www.google.com', 'user_agent': 'Eric', 'remote_ip': '127.0.0.1'})
+        self.assertEqual(len(events), 2)
+        self.assertEqual(events[0]['facets'], ['http://www.johann.com', 'http://www.lumbermill.com'])
+        self.assertEqual(events[0]['other_event_fields'][0], {'facet': 'http://www.johann.com', 'user_agent': 'Graham', 'remote_ip': '127.0.0.2'})
+        self.assertEqual(events[1]['facets'], ['http://www.google.com', 'http://www.blackknight.com', 'http://www.blank.com'])
+        self.assertEqual(events[1]['other_event_fields'][0], {'facet': 'http://www.google.com', 'user_agent': 'Eric', 'remote_ip': '127.0.0.1'})

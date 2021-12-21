@@ -18,7 +18,7 @@ class TestSetIntervalDecorator(unittest.TestCase):
         handler = timedFunction()
         time.sleep(1.1)
         handler.set()
-        self.assertEquals(self.values, ['spam', 'spam', 'spam'])
+        self.assertEqual(self.values, ['spam', 'spam', 'spam'])
 
     def testSetIntervalMaxRunCount(self):
         @setInterval(.1, max_run_count=3)
@@ -27,7 +27,7 @@ class TestSetIntervalDecorator(unittest.TestCase):
         handler = timedFunction()
         time.sleep(1)
         handler.set()
-        self.assertEquals(self.values, ['spam', 'spam', 'spam'])
+        self.assertEqual(self.values, ['spam', 'spam', 'spam'])
 
     def testSetIntervalCallOnInit(self):
         @setInterval(.3, call_on_init=True)
@@ -36,4 +36,4 @@ class TestSetIntervalDecorator(unittest.TestCase):
         handler = timedFunction()
         time.sleep(1.1)
         handler.set()
-        self.assertEquals(self.values, ['spam', 'spam', 'spam', 'spam'])
+        self.assertEqual(self.values, ['spam', 'spam', 'spam', 'spam'])

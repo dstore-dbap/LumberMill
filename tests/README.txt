@@ -6,9 +6,5 @@ To install and use a redis docker container for running tests:
 >docker run -d --rm --name redis -p 6379:6379 redis
 
 To install and use an elasticsearch docker container for running tests:
->docker pull elasticsearch
->docker run -d --rm --name elasticsearch -p 9200:9200 elasticsearch
-
-To install and use an elasticsearch docker container for running tests:
->docker pull elasticsearch
->docker run -d --rm --name elasticsearch -p 9200:9200 elasticsearch
+>docker pull elasticsearch:7.16.2
+>docker run --name elasticsearch -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" elasticsearch:7.16.2

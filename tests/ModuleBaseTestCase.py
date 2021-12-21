@@ -139,7 +139,7 @@ class ModuleBaseTestCase(unittest.TestCase):
                                           'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                                           'filename': None,
                                           'filemode': 'w'}}
-        logging.basicConfig(handlers=logging.StreamHandler())
+        logging.basicConfig(handlers=[logging.StreamHandler()])
         self.logger = logging.getLogger(self.__class__.__name__)
         self.configure()
         self.configureLogging()
@@ -148,6 +148,7 @@ class ModuleBaseTestCase(unittest.TestCase):
 
     def configure(self):
         """Loads and parses the configuration"""
+        return
         try:
             with open(self.path_to_config_file, "r") as configuration_file:
                 self.raw_conf_file = configuration_file.read()

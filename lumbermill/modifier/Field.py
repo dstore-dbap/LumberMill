@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import random
 import re
+import os
 import sys
 
 from lumbermill.BaseThreadedModule import BaseThreadedModule
 from lumbermill.utils.Decorators import ModuleDocstringParser
+from lumbermill.utils.DictUtils import cloneDefaultDict
 
 
 @ModuleDocstringParser
@@ -179,7 +182,7 @@ class Field(BaseThreadedModule):
        action: join                     # <type: string; is: required>
        source_field:                    # <type: string; is: required>
        target_field:                    # <type: string; is: required>
-       separator:                       # <default: ","; type: string; is: optional>
+       separator:                       # <type: string; is: required>
        receivers:
         - NextModule
 
@@ -231,7 +234,7 @@ class Field(BaseThreadedModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
-        # Set defaultså
+        # Set defaults
         self.typecast_switch = { 'int': self.cast_to_int,
                                  'integer': self.cast_to_int,
                                  'float': self.cast_to_float,
@@ -266,46 +269,51 @@ class Field(BaseThreadedModule):
         self.source_fields = self.getConfigurationValue('source_fields') if "source_fields" in self.configuration_data else []
         self.target_field = self.getConfigurationValue('target_field') if "target_field" in self.configuration_data else []
         self.target_fields = self.getConfigurationValue('target_fields') if "target_fields" in self.configuration_data else []
-        # Call action specific configure method.
-        if "configure_%s_action" % self.action in dir(self):
-            getattr(self, "configure_%s_action" % self.action)()
         # Get action specific method
         try:
-            self.event_handler = getattr(self, "%s" % self.action)
+            self.handleEvent = getattr(self, "%s" % self.action)
         except AttributeError:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("ModifyFields action called that does not exist: %s. Exception: %s, Error: %s" % (self.action, etype, evalue))
             self.lumbermill.shutDown()
+        # Call action specific configure method.
+        if "configure_%s_action" % self.action in dir(self):
+            getattr(self, "configure_%s_action" % self.action)(configuration)
 
-    def configure_slice_action(self):
+
+    def configure_slice_action(self, configuration):
         self.slice_start = self.getConfigurationValue('start')
         self.slice_end = self.getConfigurationValue('end')
 
-    def configure_rename_replace_action(self):
+    def configure_rename_replace_action(self, configuration):
         self.recursive = self.getConfigurationValue('recursive')
         self.old = self.getConfigurationValue('old')
         self.new = self.getConfigurationValue('new')
 
-    def configure_rename_regex_action(self):
+    def configure_rename_regex_action(self, configuration):
         self.recursive = self.getConfigurationValue('recursive')
         self.regex = re.compile(self.getConfigurationValue('regex'))
         self.replace = self.getConfigurationValue('replace')
 
-    def configure_split_action(self):
-        self.separator = self.getConfigurationValue('separator')
+    def configure_split_action(self, configuration):
+        if 'separator' in configuration:
+            self.separator = self.getConfigurationValue('separator')
+            self.logger.info(self.separator)
+        else:
+            self.handleEvent = getattr(self, "split_list")
 
-    def configure_key_value_action(self):
+    def configure_key_value_action(self, configuration):
         self.line_separator = self.getConfigurationValue('line_separator')
         self.kv_separator = self.getConfigurationValue('kv_separator')
         self.prefix = self.getConfigurationValue('prefix')
 
-    def configure_key_value_regex_action(self):
+    def configure_key_value_regex_action(self, configuration):
         self.prefix = self.getConfigurationValue('prefix')
 
-    def configure_join_action(self):
+    def configure_join_action(self, configuration):
         self.separator = self.getConfigurationValue('separator')
 
-    def configure_hash_action(self):
+    def configure_hash_action(self, configuration):
         # Import murmur hashlib if configured.
         self.salt = self.getConfigurationValue('salt') if self.getConfigurationValue('salt') else ""
         self.algorithm = self.getConfigurationValue('algorithm')
@@ -343,7 +351,7 @@ class Field(BaseThreadedModule):
     def hashlibFunc(self, string):
         return self.hashlib_func(string).hexdigest()
 
-    def handleEvent(self, event):
+    def __handleEvent(self, event):
         try:
             event = self.event_handler(event)
         except AttributeError:
@@ -352,12 +360,12 @@ class Field(BaseThreadedModule):
             self.lumbermill.shutDown()
         yield event
 
-    def keep(self,event):
+    def keep(self, event):
         """
         Field names not listed in self.configuration_data['source_fields'] will be deleted from data dictionary.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         fields_to_del = set(event).difference(self.source_fields)
         for field in fields_to_del:
@@ -365,7 +373,7 @@ class Field(BaseThreadedModule):
             if field == 'lumbermill':
                 continue
             event.pop(field, None)
-        return event
+        yield event
 
     def delete(self, event):
         """
@@ -384,21 +392,24 @@ class Field(BaseThreadedModule):
         Maybe the code can be altered to take this into account.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for field in self.source_fields:
             event.pop(field, None)
-        return event
+        yield event
 
     def insert(self, event):
         """
         Insert a new field with a given value.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
-        event[self.target_field] = self.getConfigurationValue('value', event)
-        return event
+        try:
+            event[self.target_field] = event[self.getConfigurationValue('value')]
+        except KeyError:
+            event[self.target_field] = self.getConfigurationValue('value', event)
+        yield event
 
     def concat(self, event):
         """
@@ -406,7 +417,7 @@ class Field(BaseThreadedModule):
         The result will be stored in ['target_field']
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         concat_str = ""
         for field in self.source_fields:
@@ -415,7 +426,7 @@ class Field(BaseThreadedModule):
             except KeyError:
                 pass
         event[self.target_field] = concat_str
-        return event
+        yield event
 
     def lower(self, event):
         """
@@ -423,14 +434,14 @@ class Field(BaseThreadedModule):
         The result will be stored in ['target_field']
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for idx, field in enumerate(self.source_fields):
             if self.target_fields:
                 event[self.target_fields[idx]] = event[field].lower()
             else:
                 event[field] = event[field].lower()
-        return event
+        yield event
 
     def upper(self, event):
         """
@@ -438,64 +449,64 @@ class Field(BaseThreadedModule):
         The result will be stored in ['target_field']
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for idx, field in enumerate(self.source_fields):
             if self.target_fields:
                 event[self.target_fields[idx]] = event[field].upper()
             else:
                 event[field] = event[field].upper()
-        return event
+        yield event
 
     def slice(self, event):
         """
         Slice a field value to given parameters.
 
         :param event: dictionary
-        :return: event: dictionary
+        :yields event: dictionary
         """
         try:
             event[self.target_field] = event[self.source_field][self.slice_start:self.slice_end]
         except KeyError:
             pass
-        return event
+        yield event
 
     def replace(self, event):
         """
         Field value in data dictionary will be replaced with ['with']
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             event[self.source_field] = self.regex.sub(self.getConfigurationValue('with', event), event[self.source_field])
         except KeyError:
             pass
-        return event
+        yield event
 
     def rename(self, event):
         """
         Field name ['from'] in data dictionary will be renamed to ['to']
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             event[self.target_field] = event.pop(self.source_field)
         except KeyError:
             pass
-        return event
+        yield event
 
     def rename_regex(self, event):
         if self.source_field:
             try:
                 dict_to_scan = event[self.source_field]
             except KeyError:
-                return event
+                yield event
         else:
             dict_to_scan = event
         self._rename_regex_recursive(dict_to_scan)
-        return event
+        yield event
 
     def _rename_regex_recursive(self, dict_to_scan):
         fields_to_rename = {}
@@ -514,11 +525,11 @@ class Field(BaseThreadedModule):
             try:
                 dict_to_scan = event[self.source_field]
             except KeyError:
-                return event
+                yield event
         else:
             dict_to_scan = event
         self._rename_replace_recursive(dict_to_scan)
-        return event
+        yield event
 
     def _rename_replace_recursive(self, dict_to_scan):
         fields_to_rename = {}
@@ -536,13 +547,13 @@ class Field(BaseThreadedModule):
         Field value matching string in data dictionary will be replace with new.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             event[self.source_field] = event[self.source_field].replace(self.getConfigurationValue('old', event), self.getConfigurationValue('new', event), self.getConfigurationValue('max'))
         except KeyError:
             pass
-        return event
+        yield event
 
     def map(self, event):
         """
@@ -552,7 +563,7 @@ class Field(BaseThreadedModule):
 
         Useful e.g. to map http status codes to human readable status codes.
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         target_field = self.target_field if self.target_field else "%s_mapped" % self.source_field
         try:
@@ -562,13 +573,13 @@ class Field(BaseThreadedModule):
                 event[target_field] = event[self.source_field]
             else:
                 pass
-        return event
+        yield event
 
     def key_value(self, event):
         """
         Split source field to target fields based on key value pairs.
 
-        - module: ModifyFields
+        - modify.Field:
           action: key_value                           # <type: string; is: required>
           kv_separator:                               # <type: string; is: required>
           line_separator:                             # <default: None; type: None||string; is: required>
@@ -579,7 +590,7 @@ class Field(BaseThreadedModule):
             - NextModule
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         if self.line_separator:
             kv_dict = {}
@@ -596,14 +607,14 @@ class Field(BaseThreadedModule):
             event[self.target_field] = kv_dict
         else:
             event.update(kv_dict)
-        return event
+        yield event
 
 
     def key_value_regex(self, event):
         """
         Split source field to target fields based on key value pairs.
 
-        - module: ModifyFields
+        - modify.Field:
           action: key_value_regex                     # <type: string; is: required>
           regex:                                      # <type: string; is: required>
           source_field:                               # <type: list; is: required>
@@ -615,26 +626,26 @@ class Field(BaseThreadedModule):
         # ([^=&?]+)[=]([^&=?]+)
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             kv_dict = dict(re.findall(self.regex, event[self.source_field]))
         except:
-            return event
+            yield event
         if self.prefix:
             kv_dict = dict(map(lambda key, value: ("%s%s" % (self.prefix, str(key)), value), kv_dict.items()))
         if self.target_field:
             event[self.target_field] = kv_dict
         else:
             event.update(kv_dict)
-        return event
+        yield event
 
 
     def split(self, event):
         """
         Split source field to array at separator.
 
-        - module: ModifyFields
+        - modify.Field:
           action: split                               # <type: string; is: required>
           separator:                                  # <type: string; is: required>
           source_field:                               # <type: list; is: required>
@@ -643,21 +654,47 @@ class Field(BaseThreadedModule):
             - NextModule
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             values = event[self.source_field].split(self.separator)
         except:
-            return event
+            yield event
         target_field = self.target_field if self.target_field else self.source_field
         event[target_field] = values
-        return event
+        yield event
+
+    def split_list(self, event):
+        """
+        Split source field list to multiple events. The new events will be clones of the original one,
+        with the source list items as new payload.
+
+        - modify.Field:
+          action: split                               # <type: string; is: required>
+          source_field:                               # <type: list; is: required>
+          target_field:                               # <default: None; type: None||string; is: optional>
+          receivers:
+            - NextModule
+
+        @param event: dictionary
+        @yields: event: dictionary
+        """
+        try:
+            values = event[self.source_field]
+        except:
+            yield event
+        target_field = self.target_field if self.target_field else self.source_field
+        for value in values:
+            new_event = cloneDefaultDict(event)
+            new_event.pop(self.source_field, None)
+            new_event[target_field] = value
+            yield new_event
 
     def strip(self, event):
         """
         Strip whitespaces from string.
 
-        - module: ModifyFields
+        - modify.Field:
           action: strip                               # <type: string; is: required>
           source_field:                               # <type: list; is: required>
           target_field:                               # <default: None; type: None||string; is: optional>
@@ -665,22 +702,22 @@ class Field(BaseThreadedModule):
             - NextModule
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
             value = event[self.source_field].strip()
         except:
-            return event
+            yield event
         target_field = self.target_field if self.target_field else self.source_field
         event[target_field] = value
-        return event
+        yield event
 
     def merge(self, event):
         """
         Merge source fields to target field as list.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         merged_fields = []
         for field in self.source_fields:
@@ -689,21 +726,21 @@ class Field(BaseThreadedModule):
             except:
                 pass
         event[self.target_field] = merged_fields
-        return event
+        yield event
 
     def join(self, event):
         """
         Join source field to target field as string.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         #event.update({self.getConfigurationValue('target_field'): separator.join(fields)})
         try:
             event[self.target_field] = self.separator.join(event[self.source_field])
         except:
             pass
-        return event
+        yield event
 
     def cast(self, event):
         """
@@ -711,10 +748,10 @@ class Field(BaseThreadedModule):
         This is just an alias function for the direct call to the castTo{DataType} method.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         try:
-            return self.typecast_switch[self.getConfigurationValue('type'), event](event)
+            yield self.typecast_switch[self.getConfigurationValue('type'), event](event)
         except:
             pass
 
@@ -723,7 +760,7 @@ class Field(BaseThreadedModule):
        ['source_fields'] values in data dictionary will be cast to integer.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for field in self.source_fields:
             try:
@@ -732,14 +769,14 @@ class Field(BaseThreadedModule):
                 event[field] = 0
             except KeyError:
                 pass
-        return event
+        yield event
 
     def cast_to_float(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to float.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for field in self.source_fields:
             try:
@@ -748,14 +785,14 @@ class Field(BaseThreadedModule):
                 event[field] = 0
             except KeyError:
                 pass
-        return event
+        yield event
 
     def cast_to_str(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to string.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for field in self.source_fields:
             try:
@@ -764,14 +801,14 @@ class Field(BaseThreadedModule):
                 event[field] = ""
             except KeyError:
                 pass
-        return event
+        yield event
 
     def cast_to_bool(self, event):
         """
         ['source_fields'] values in data dictionary will be cast to boolean.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for field in self.source_fields:
             try:
@@ -780,14 +817,14 @@ class Field(BaseThreadedModule):
                 event[field] = False
             except KeyError:
                 pass
-        return event
+        yield event
 
     def hash(self, event):
         """
         ['source_fields'] values in data dictionary will hashed with hash algorithm set in configuration.
 
         @param event: dictionary
-        @return: event: dictionary
+        @yields: event: dictionary
         """
         for idx, field in enumerate(self.source_fields):
             target_fieldname = field if not self.target_fields else self.target_fields[idx]
@@ -795,4 +832,4 @@ class Field(BaseThreadedModule):
                 event[target_fieldname] = self.hash_func(("%s%s" % (self.salt, event[field])).encode('utf-8'))
             except:
                 pass
-        return event
+        yield event

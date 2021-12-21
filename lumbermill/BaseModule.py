@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-import abc
-import logging
 import os
 import sys
+import abc
+import logging
 from functools import wraps
 
 from lumbermill.constants import LOGLEVEL_STRING_TO_LOGLEVEL_INT

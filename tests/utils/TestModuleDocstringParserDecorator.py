@@ -31,12 +31,12 @@ class TestModuleDocStringParserDecorator(unittest.TestCase):
     def testConfigurationData(self):
         self.doc_string_example = DocStringExample()
         doc_string_config_data = self.doc_string_example.configuration_data
-        self.assertEquals(doc_string_config_data['string'], "TestString")
-        self.assertEquals(doc_string_config_data['int'], 1)
-        self.assertEquals(doc_string_config_data['dict'], {'filed1': 'value1'})
-        self.assertEquals(doc_string_config_data['list'], ['field2', 'field3'])
-        self.assertEquals(doc_string_config_data['none'], None)
-        self.assertEquals(doc_string_config_data['bool'], True)
+        self.assertEqual(doc_string_config_data['string'], "TestString")
+        self.assertEqual(doc_string_config_data['int'], 1)
+        self.assertEqual(doc_string_config_data['dict'], {'filed1': 'value1'})
+        self.assertEqual(doc_string_config_data['list'], ['field2', 'field3'])
+        self.assertEqual(doc_string_config_data['none'], None)
+        self.assertEqual(doc_string_config_data['bool'], True)
 
 
 

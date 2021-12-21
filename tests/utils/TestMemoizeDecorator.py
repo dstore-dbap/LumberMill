@@ -18,22 +18,22 @@ class TestSetIntervalDecorator(unittest.TestCase):
         @memoize()
         def memoizedFunc(key):
             return self.lookupKey(key)
-        for _ in xrange(0, 100):
+        for _ in range(0, 100):
             memoizedFunc('val1')
-        self.assertEquals(self.key_lookups, 1)
-        for _ in xrange(0, 100):
+        self.assertEqual(self.key_lookups, 1)
+        for _ in range(0, 100):
             memoizedFunc('val2')
-        self.assertEquals(self.key_lookups, 2)
+        self.assertEqual(self.key_lookups, 2)
 
     def testMemoizeMaxlen(self):
         @memoize(maxlen=2)
         def memoizedFunc(key):
             return self.lookupKey(key)
         memoizedFunc('val1')
-        self.assertEquals(self.key_lookups, 1)
+        self.assertEqual(self.key_lookups, 1)
         memoizedFunc('val2')
-        self.assertEquals(self.key_lookups, 2)
+        self.assertEqual(self.key_lookups, 2)
         memoizedFunc('val3')
-        self.assertEquals(self.key_lookups, 3)
+        self.assertEqual(self.key_lookups, 3)
         memoizedFunc('val1')
-        self.assertEquals(self.key_lookups, 4)
+        self.assertEqual(self.key_lookups, 4)

@@ -37,7 +37,7 @@ class TestMapDynaimcValue(unittest.TestCase):
         self.assertTrue(mapDynamicValue('%(lumbermill.event_id)s', self.event) == "715bd321b1016a442bf046682722c78e")
         self.assertTrue(mapDynamicValue('%(lumbermill.list.0)s', self.event) == "10")
         self.assertTrue(mapDynamicValue('%(lumbermill.list.2.hovercraft)s', self.event) == "eels")
-        self.assertTrue(mapDynamicValue('%(params.spanish)s', self.event) == "[u'inquisition']")
+        self.assertTrue(mapDynamicValue('%(params.spanish)s', self.event) == "['inquisition']")
 
     def testMapDynamicValueWithMissingKey(self):
         self.assertTrue(mapDynamicValue('%(missing_key)s', self.event) == '%(missing_key)s')
@@ -59,15 +59,15 @@ class TestMapDynaimcValue(unittest.TestCase):
         # Make sure that mapDynamicValue will work on a copy of value when passing in a list or a dict.
         mapping_dict = {'event_id': '%(lumbermill.event_id)s'}
         mapped_values = mapDynamicValue(mapping_dict, self.event)
-        self.assertEquals(mapped_values['event_id'], '715bd321b1016a442bf046682722c78e')
-        self.assertEquals(mapping_dict, {'event_id': '%(lumbermill.event_id)s'})
+        self.assertEqual(mapped_values['event_id'], '715bd321b1016a442bf046682722c78e')
+        self.assertEqual(mapping_dict, {'event_id': '%(lumbermill.event_id)s'})
 
     def testMapDynamicValueWithListType(self):
         # Make sure that mapDynamicValue will work on a copy of value when passing in a list or a dict.
         mapping_list = ['%(lumbermill.event_id)s']
         mapped_values = mapDynamicValue(mapping_list, self.event)
-        self.assertEquals(mapped_values[0], '715bd321b1016a442bf046682722c78e')
-        self.assertEquals(mapping_list, ['%(lumbermill.event_id)s'])
+        self.assertEqual(mapped_values[0], '715bd321b1016a442bf046682722c78e')
+        self.assertEqual(mapping_list, ['%(lumbermill.event_id)s'])
 
     def testMapDynamicValueWithNoneType(self):
-        self.assertEquals(mapDynamicValue(None, self.event), None)
+        self.assertEqual(mapDynamicValue(None, self.event), None)

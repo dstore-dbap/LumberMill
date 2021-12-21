@@ -45,8 +45,8 @@ except ImportError:
 # Vanilla asyncio will throw "RuntimeError: This event loop is already running".
 # nest_asyncio monkeypathes vanilla asyncio to allow for this.
 # See @https://github.com/erdewit/nest_asyncio
-import nest_asyncio
-nest_asyncio.apply()
+#import nest_asyncio
+#nest_asyncio.apply()
 
 class LumberMill():
     """
@@ -450,14 +450,14 @@ class LumberMill():
             if tries > 3:
                 # Back off if problem does not resolve after max tries.
                 self.shutDown()
-            tornado.ioloop.IOLoop.current().start()
-            #try:
-            #    tornado.ioloop.IOLoop.current().start()
-            #except SystemExit:
-            #    pass
-            #except:
-            #    etype, evalue, etb = sys.exc_info()
-            #    self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
+            #tornado.ioloop.IOLoop.current().start()
+            try:
+                tornado.ioloop.IOLoop.current().start()
+            except SystemExit:
+                pass
+            except:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Error in tornado ioloop. Exception: %s, Error: %s." % (etype, evalue))
             self.shutDown();
 
     def restart(self, signum=False, frame=False):

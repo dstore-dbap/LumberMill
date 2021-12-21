@@ -1,7 +1,6 @@
 import os
 import time
 import mock
-import pprint
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
@@ -45,12 +44,11 @@ java.lang.IllegalArgumentException: no category found for name: en
         for input_line in example_input_data.split("\n"):
             event = DictUtils.getDefaultEventDict({'data': input_line}, received_from='TestMergeEvent_%s' % os.getpid())
             self.test_object.receiveEvent(event)
-        time.sleep(1)
+        time.sleep(2)
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
-        pprint.pprint(events)
-        self.assertEquals(len(events), 3)
+        self.assertEqual(4, len(events))
 
     def testMergeEventWithNonMatchingLines(self):
         example_input_data = """Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.
@@ -67,7 +65,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
-        self.assertEquals(len(events), 4)
+        self.assertEqual(len(events), 4)
 
     def testMergeEventWithMixedMatchingLines(self):
         example_input_data = """2015-02-18 14:25:10,661 [http-bio-8080] ERROR errors.GrailsExceptionResolver  - IllegalArgumentException occurred when processing request: [GET] /en
@@ -106,7 +104,7 @@ java.lang.IllegalArgumentException: no category found for name: en
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
-        self.assertEquals(len(events), 5)
+        self.assertEqual(len(events), 5)
 
     def testNewlineEndEvent(self):
         self.test_object.configure({'pattern': "\n$",
@@ -121,5 +119,5 @@ java.lang.IllegalArgumentException: no category found for name: en
         events = []
         for event in self.receiver.getEvent():
             events.append(event)
-        self.assertEquals(len(events), 1)
-        self.assertEquals(events[0]['data'], 'No newline.But now: \n')
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]['data'], 'No newline.But now: \n')

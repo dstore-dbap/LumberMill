@@ -80,16 +80,17 @@ class MergeEvent(BaseThreadedModule):
         path = "%s/../assets/grok_patterns" % os.path.dirname(os.path.realpath(__file__))
         for (dirpath, dirnames, filenames) in os.walk(path):
             for filename in filenames:
-                lines = [line.strip() for line in open('%s%s%s' % (dirpath, os.sep, filename))]
-                for line_no, line in enumerate(lines):
-                    if line == "" or line.startswith('#'):
-                        continue
-                    try:
-                        pattern_name, pattern = line.split(' ', 1)
-                        self.logstash_patterns[pattern_name] = pattern
-                    except:
-                        etype, evalue, etb = sys.exc_info()
-                        self.logger.warning("Could not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s." % (dirpath,  os.sep, filename, line_no+1, etype, evalue))
+                with open('%s%s%s' % (dirpath, os.sep, filename)) as f:
+                    lines = [line.strip() for line in f.readlines()]
+                    for line_no, line in enumerate(lines):
+                        if line == "" or line.startswith('#'):
+                            continue
+                        try:
+                            pattern_name, pattern = line.split(' ', 1)
+                            self.logstash_patterns[pattern_name] = pattern
+                        except:
+                            etype, evalue, etb = sys.exc_info()
+                            self.logger.warning("Could not read logstash pattern in file %s%s%s, line %s. Exception: %s, Error: %s." % (dirpath,  os.sep, filename, line_no+1, etype, evalue))
 
     def replaceLogstashPatterns(self, regex_pattern):
         pattern_name_re = re.compile('%\{(.*?)\}')

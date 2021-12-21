@@ -18,9 +18,9 @@ class TestSpam(ModuleBaseTestCase):
         time.sleep(1)
         for event in self.receiver.getEvent():
             count += 1
-        self.assertEquals(event['Lobster'], 'Thermidor')
-        self.assertEquals(event['Truffle'], 'Pate')
-        self.assertEquals(count, 985)
+        self.assertEqual(event['Lobster'], 'Thermidor')
+        self.assertEqual(event['Truffle'], 'Pate')
+        self.assertEqual(count, 985)
 
     def testSpamWithSingleString(self):
         self.test_object.configure({'event': 'How to recognize different types of trees from quite a long way away.',
@@ -31,8 +31,8 @@ class TestSpam(ModuleBaseTestCase):
         time.sleep(1)
         for event in self.receiver.getEvent():
             count += 1
-        self.assertEquals(event['data'], 'How to recognize different types of trees from quite a long way away.')
-        self.assertEquals(count, 42)
+        self.assertEqual(event['data'], 'How to recognize different types of trees from quite a long way away.')
+        self.assertEqual(count, 42)
 
     def testSpamWithMultipleDict(self):
         self.test_object.configure({'event': [{'Lobster': 'Thermidor', 'Truffle': 'Pate'},
@@ -44,13 +44,13 @@ class TestSpam(ModuleBaseTestCase):
         time.sleep(1)
         for event in self.receiver.getEvent():
             if count % 2 == 0:
-                self.assertEquals(event['Lobster'], 'Thermidor')
-                self.assertEquals(event['Truffle'], 'Pate')
+                self.assertEqual(event['Lobster'], 'Thermidor')
+                self.assertEqual(event['Truffle'], 'Pate')
             else:
-                self.assertEquals(event['Lovely'], 'Spam')
-                self.assertEquals(event['Twit'], 'of the year')
+                self.assertEqual(event['Lovely'], 'Spam')
+                self.assertEqual(event['Twit'], 'of the year')
             count += 1
-        self.assertEquals(count, 42)
+        self.assertEqual(count, 42)
 
     def testSpamWithMultipleString(self):
         self.test_object.configure({'event': ['How to recognize different types of trees from quite a long way away.',
@@ -62,11 +62,11 @@ class TestSpam(ModuleBaseTestCase):
         time.sleep(1)
         for event in self.receiver.getEvent():
             if count % 2 == 0:
-                self.assertEquals(event['data'], 'How to recognize different types of trees from quite a long way away.')
+                self.assertEqual(event['data'], 'How to recognize different types of trees from quite a long way away.')
             else:
-                self.assertEquals(event['data'], 'Number one: the larch.')
+                self.assertEqual(event['data'], 'Number one: the larch.')
             count += 1
-        self.assertEquals(count, 42)
+        self.assertEqual(count, 42)
 
     def testDistributeSpamToMultipleWorkers(self):
         worker_count = 3
@@ -78,7 +78,7 @@ class TestSpam(ModuleBaseTestCase):
         for _ in range(0, self.test_object.lumbermill.getWorkerCount()):
             self.test_object.initAfterFork()
             if self.test_object.lumbermill.is_master_process:
-                self.assertEquals(self.test_object.max_events_count, 3)
+                self.assertEqual(self.test_object.max_events_count, 3)
                 self.test_object.lumbermill.is_master_process = False
             else:
-                self.assertEquals(self.test_object.max_events_count, 2)
+                self.assertEqual(self.test_object.max_events_count, 2)

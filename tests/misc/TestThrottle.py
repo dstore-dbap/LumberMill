@@ -21,7 +21,7 @@ class TestThrottle(ModuleBaseTestCase):
         event_counter = 0
         for _ in self.receiver.getEvent():
             event_counter += 1
-        self.assertEquals(event_counter, 1)
+        self.assertEqual(event_counter, 1)
 
     def testMinCountNotReached(self):
         self.test_object.configure({'key': '$(Spam)',
@@ -48,7 +48,7 @@ class TestThrottle(ModuleBaseTestCase):
         event_counter = False
         for _ in self.receiver.getEvent():
             event_counter += 1
-        self.assertEquals(event_counter, 10)
+        self.assertEqual(event_counter, 10)
 
     def testMaxCountNotReached(self):
         self.test_object.configure({'key': '$(Spam)',
@@ -62,4 +62,4 @@ class TestThrottle(ModuleBaseTestCase):
         event_counter = 0
         for _ in self.receiver.getEvent():
             event_counter += 1
-        self.assertEquals(event_counter, 6)
+        self.assertEqual(event_counter, 6)

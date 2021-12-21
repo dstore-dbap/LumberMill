@@ -16,5 +16,5 @@ class TestNoop(ModuleBaseTestCase):
         event = DictUtils.getDefaultEventDict({})
         event_received = None
         for event_received in self.test_object.handleEvent(event):
-            self.assertEquals(event, event_received)
+            self.assertEqual(event, event_received)
         self.assertIsNotNone(event_received)

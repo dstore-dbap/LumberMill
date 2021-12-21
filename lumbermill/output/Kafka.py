@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import kafka
+import logging
 
 from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -46,10 +47,15 @@ class Kafka(BaseThreadedModule):
     can_run_forked = True
 
     def configure(self, configuration):
-         # Call parent configure method
+        # Call parent configure method
         BaseThreadedModule.configure(self, configuration)
         self.format = self.getConfigurationValue('format')
         self.has_key = True if self.getConfigurationValue('key') else False
+        # Set log level for kafka library if configured to other than default.
+        if self.getConfigurationValue('log_level') != 'info':
+            logging.getLogger('kafka').setLevel(self.logger.level)
+        else:
+            logging.getLogger('kafka').setLevel(logging.WARN)
         try:
             self.producer = kafka.KafkaProducer(bootstrap_servers=self.getConfigurationValue('brokers'))
         except:
@@ -73,7 +79,7 @@ class Kafka(BaseThreadedModule):
         if self.has_key:
             key = self.getConfigurationValue('key', event).encode('utf-8')
         try:
-            self.producer.send(self.getConfigurationValue('topic', event), value=publish_data)
+            self.producer.send(self.getConfigurationValue('topic', event), key=key, value=publish_data)
         except kafka.errors.CorruptRecordException:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not publish event to kafka topic %s at %s. Exception: %s, Error: %s." % (self.getConfigurationValue('topic', event), self.getConfigurationValue('brokers'), etype, evalue))

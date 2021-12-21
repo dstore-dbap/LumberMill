@@ -49,7 +49,7 @@ class TestFile(ModuleBaseTestCase):
         self.test_object.shutDown()
         with open(temp_file_name) as temp_file:
             for line in temp_file:
-                self.assertEquals(line.rstrip(), event['data'])
+                self.assertEqual(line.rstrip(), event['data'])
         self.deleteTempFile(temp_file_name)
 
     def testGzipCompression(self):
@@ -65,5 +65,5 @@ class TestFile(ModuleBaseTestCase):
             for line in temp_file:
                 defalted_data = self.inflateGzipData(line)
                 self.assertIsNotNone(defalted_data)
-                self.assertEquals(defalted_data.rstrip(), event['data'])
+                self.assertEqual(defalted_data.rstrip(), event['data'])
         self.deleteTempFile("%s.gz" % temp_file_name)

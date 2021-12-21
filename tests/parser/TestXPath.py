@@ -57,7 +57,7 @@ class TestXPath(ModuleBaseTestCase):
                                                'category': 'COOKING'})
         event = None
         for event in self.test_object.handleEvent(data):
-            self.assertEquals(event['xpath_result'], ['Everyday Italian'])
+            self.assertEqual(event['xpath_result'], ['Everyday Italian'])
         self.assertIsNotNone(event)
 
     def testHandleDataWithTargetField(self):
@@ -69,7 +69,7 @@ class TestXPath(ModuleBaseTestCase):
                                                'category': 'COOKING'})
         event = None
         for event in self.test_object.handleEvent(data):
-            self.assertEquals(event['book_title'], ['Everyday Italian'])
+            self.assertEqual(event['book_title'], ['Everyday Italian'])
         self.assertIsNotNone(event)
 
     def testCache(self):
@@ -86,6 +86,6 @@ class TestXPath(ModuleBaseTestCase):
         next(self.test_object.handleEvent(data))
         event = None
         for event in self.test_object.handleEvent(data):
-            self.assertEquals(event['xpath_result'], ['Everyday Italian'])
+            self.assertEqual(event['xpath_result'], ['Everyday Italian'])
             self.assertTrue(event['lumbermill']['cache_hit'])
         self.assertIsNotNone(event)

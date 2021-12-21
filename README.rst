@@ -238,10 +238,10 @@ Below, I will explain each section in more detail.
         - http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
         - iptables: '(?P<syslog_prival>\<\d+\>)(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+kernel:.*?\ iptables\ (?P<iptables_action>.*?)\ :\ IN=(?P<iptables_in_int>.*?)\ OUT=(?P<iptables_out_int>.*?)\ SRC=(?P<iptables_src>.*?)\ DST=(?P<iptables_dst>.*?)\ LEN=(?P<iptables_len>.*?)\ .*?PROTO=(?P<iptables_proto>.*?)\ SPT=(?P<iptables_spt>.*?)\ DPT=(?P<iptables_dpt>.*?)\ WINDOW=.*'
        receivers:
-        - SimpleStats:
+        - misc.SimpleStats:
            filter: $(lumbermill.event_type) != 'Unknown'
         # Print out messages that did not match
-        - StdOutSink:
+        - output.StdOut:
            filter: $(lumbermill.event_type) == 'Unknown'
 
     # Print out some stats every 10 seconds.
@@ -300,7 +300,7 @@ Below, I will explain each section in more detail.
        nodes: [localhost]
        store_interval_in_secs: 5
 
-    - output.StdOutSink
+    - output.StdOut
 
 Let me explain it in more detail:
 
@@ -369,10 +369,10 @@ This can be used to e.g. handle data send via
         - http_common_access_log: '(?P<remote_ip>\d+\.\d+\.\d+\.\d+)\s(?P<x_forwarded_for>\d+\.\d+\.\d+\.\d+)\s(?P<identd>\w+|-)\s(?P<user>\w+|-)\s\[(?P<datetime>\d+\/\w+\/\d+:\d+:\d+:\d+\s.\d+)\]\s\"(?P<url>.*)\"\s(?P<http_status>\d+)\s(?P<bytes_send>\d+)'
         - iptables: '(?P<syslog_prival>\<\d+\>)(?P<log_timestamp>\w+\s+\d+\s+\d+:\d+:\d+)\s+(?P<host>[\w\-\._]+)\s+kernel:.*?\ iptables\ (?P<iptables_action>.*?)\ :\ IN=(?P<iptables_in_int>.*?)\ OUT=(?P<iptables_out_int>.*?)\ SRC=(?P<iptables_src>.*?)\ DST=(?P<iptables_dst>.*?)\ LEN=(?P<iptables_len>.*?)\ .*?PROTO=(?P<iptables_proto>.*?)\ SPT=(?P<iptables_spt>.*?)\ DPT=(?P<iptables_dpt>.*?)\ WINDOW=.*'
        receivers:
-        - SimpleStats:
+        - misc.SimpleStats:
            filter: $(lumbermill.event_type) != 'Unknown'
         # Print out messages that did not match
-        - StdOutSink:
+        - output.StdOut:
            filter: $(lumbermill.event_type) == 'Unknown'
 
 Use regular expressions to extract fields from a log event.

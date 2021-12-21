@@ -69,8 +69,8 @@ def parseDynamicValuesinFilterString(filter_string):
     # Remove event reference.
     filter_string_tmp = re.sub('\$\(event\.', '%(', filter_string_tmp)
     # Check if we have a reference to the internal LumberMill datastore.
-    if re.search(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
-        filter_string_tmp = re.sub(r"\$\(internal.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
+    if re.search(r"\$\(internal\.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", filter_string_tmp):
+        filter_string_tmp = re.sub(r"\$\(internal\.(.*?)\)(-?\d*[-\.\*]?\d*[sdf]?)", r"lumbermill.getFromInternalDataStore('\1', False)", filter_string_tmp)
     # Replace all remaining dynamic references.
     filter_string_tmp = LM_DYNAMIC_VAL_REGEX.sub(r"event.get('\1', False)", filter_string_tmp)
     filter_string_tmp = "lambda lumbermill, event : " + filter_string_tmp

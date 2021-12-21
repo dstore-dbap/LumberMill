@@ -17,4 +17,4 @@ class TestExecPython(ModuleBaseTestCase):
         data = None
         for event in self.receiver.getEvent():
             data = event['data']
-        self.assertEquals(data, 'Incontinenzia')
+        self.assertEqual(data, 'Incontinenzia')

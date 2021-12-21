@@ -30,7 +30,7 @@ class TestMsgPack(ModuleBaseTestCase):
         dict = DictUtils.getDefaultEventDict(data)
         event = None
         for event in self.test_object.handleEvent(dict):
-            self.assertEquals(event['data'], msg_packed_data)
+            self.assertEqual(event['data'], msg_packed_data)
         self.assertIsNotNone(event)
 
     def testEncodeLineModeWithDropOriginal(self):
@@ -45,7 +45,7 @@ class TestMsgPack(ModuleBaseTestCase):
         dict = DictUtils.getDefaultEventDict(data)
         event = None
         for event in self.test_object.handleEvent(dict):
-            self.assertEquals(event['data_packed'], msg_packed_data)
+            self.assertEqual(event['data_packed'], msg_packed_data)
             self.assertNotIn('data', event)
         self.assertIsNotNone(event)
 
@@ -59,7 +59,7 @@ class TestMsgPack(ModuleBaseTestCase):
         dict = DictUtils.getDefaultEventDict({'spam': msg_packed_data})
         event = None
         for event in self.test_object.handleEvent(dict):
-            self.assertEquals(event['spam_decoded'], data)
+            self.assertEqual(event['spam_decoded'], data)
         self.assertIsNotNone(event)
 
     def testDecodeStreamMode(self):

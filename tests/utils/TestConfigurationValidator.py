@@ -12,7 +12,7 @@ class TestConfigurationValidator(unittest.TestCase):
         try:
             with open(path_to_config_file, "r") as configuration_file:
                 raw_conf_file = configuration_file.read()
-            return yaml.load(raw_conf_file)
+            return yaml.safe_load(raw_conf_file)
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not read config file %s. Exception: %s, Error: %s." % (path_to_config_file, etype, evalue))
@@ -21,7 +21,7 @@ class TestConfigurationValidator(unittest.TestCase):
     def testValidSimpleConfiguration(self):
         configuration = self.readConfigurationData(LUMBERMILL_BASEPATH + "/../tests/test_data/conf_examples/simple.conf")
         configuration_errors = ConfigurationValidator().validateConfiguration(configuration)
-        self.assertEquals(len(configuration_errors), 0)
+        self.assertEqual(len(configuration_errors), 0)
 
     def testInvalidSimpleConfiguration(self):
         configuration = self.readConfigurationData(LUMBERMILL_BASEPATH + "/../tests/test_data/conf_examples/simple_invalid.conf")
@@ -33,4 +33,4 @@ class TestConfigurationValidator(unittest.TestCase):
                            "'Spam.id' not of correct datatype. Is: <type 'bool'>, should be: [<type 'str'>]. Please check your configuration.",
                            "'Spam.delete_fields' not of correct datatype. Is: <type 'int'>, should be: [<type 'list'>]. Please check your configuration.",
                            "'Spam.receivers' not of correct datatype. Is: <type 'str'>, should be: [<type 'list'>]. Please check your configuration."]
-        self.assertEquals(configuration_errors.sort(), expected_errors.sort())
+        self.assertEqual(configuration_errors.sort(), expected_errors.sort())

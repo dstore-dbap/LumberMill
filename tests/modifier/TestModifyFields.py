@@ -33,8 +33,6 @@ class TestFields(ModuleBaseTestCase):
         self.test_object.configure({'action': 'upper',
                                     'source_fields': ['First name', 'Last name']})
         for event in self.test_object.handleEvent(self.default_dict):
-            import pprint
-            pprint.pprint(event)
             self.assertTrue('First name' in event and event['First name'] == 'JOHANN')
             self.assertTrue('Last name' in event and event['Last name'] == 'GAMBOLPUTTY')
 
@@ -76,7 +74,7 @@ class TestFields(ModuleBaseTestCase):
                                     'regex': 'Sp.*?sh',
                                     'with': 'English'})
         for event in self.test_object.handleEvent(self.default_dict):
-            self.assertEquals(event['replaceme'], 'The English Inquisition')
+            self.assertEqual(event['replaceme'], 'The English Inquisition')
 
     def testReplaceDynamic(self):
         self.default_dict['replaceme'] = 'The Spanish Inquisition'
@@ -86,7 +84,7 @@ class TestFields(ModuleBaseTestCase):
                                     'regex': 'Sp.*?sh',
                                     'with': '$(withme)'})
         for event in self.test_object.handleEvent(self.default_dict):
-            self.assertEquals(event['replaceme'], 'The English Inquisition')
+            self.assertEqual(event['replaceme'], 'The English Inquisition')
 
     def testMap(self):
         self.default_dict['http_status'] = 100
@@ -97,7 +95,7 @@ class TestFields(ModuleBaseTestCase):
                                   })
         for event in self.test_object.handleEvent(self.default_dict):
             self.assert_('http_status_mapped' in event)
-            self.assertEquals(event['http_status_mapped'], 'Continue')
+            self.assertEqual(event['http_status_mapped'], 'Continue')
 
     def testMapWithUnmappableFields(self):
         self.default_dict['http_status'] = 300
@@ -109,7 +107,7 @@ class TestFields(ModuleBaseTestCase):
                                   })
         for event in self.test_object.handleEvent(self.default_dict):
             self.assert_('http_status_mapped' in event)
-            self.assertEquals(event['http_status_mapped'], 300)
+            self.assertEqual(event['http_status_mapped'], 300)
 
     def testMapWithTargetField(self):
         self.default_dict['http_status'] = 200
@@ -120,7 +118,7 @@ class TestFields(ModuleBaseTestCase):
                                     'target_field': 'http_status'
                                   })
         for event in self.test_object.handleEvent(self.default_dict):
-            self.assertEquals(event['http_status'], 'OK')
+            self.assertEqual(event['http_status'], 'OK')
 
     def testKeep(self):
         self.default_dict['keep-this'] = 'The Spanish Inquisition'
@@ -196,9 +194,9 @@ class TestFields(ModuleBaseTestCase):
                                               'Gambolputty Johann-de von Ausfern Schlingern Schlendern': 3})
         for event in self.test_object.handleEvent(data):
             self.assertIsNotNone(event)
-            self.assertEquals(event['Johann Gambolputty de von'], 1)
-            self.assertEquals(event['Johann Gambolputty de von Ausfern'], 2)
-            self.assertEquals(event['Johann Gambolputty de von Ausfern Schlingern Schlendern'], 3)
+            self.assertEqual(event['Johann Gambolputty de von'], 1)
+            self.assertEqual(event['Johann Gambolputty de von Ausfern'], 2)
+            self.assertEqual(event['Johann Gambolputty de von Ausfern Schlingern Schlendern'], 3)
         self.assertIsNotNone(event)
 
     def testRenameReplace(self):
@@ -210,9 +208,9 @@ class TestFields(ModuleBaseTestCase):
                                               'Gambolputty Hannes de von Ausfern Schlingern Schlendern': 3,})
         for event in self.test_object.handleEvent(data):
             self.assertIsNotNone(event)
-            self.assertEquals(event['Gambolputty Johann de von'], 1)
-            self.assertEquals(event['Gambolputty Johann de von Ausfern'], 2)
-            self.assertEquals(event['Gambolputty Johann de von Ausfern Schlingern Schlendern'], 3)
+            self.assertEqual(event['Gambolputty Johann de von'], 1)
+            self.assertEqual(event['Gambolputty Johann de von Ausfern'], 2)
+            self.assertEqual(event['Gambolputty Johann de von Ausfern Schlingern Schlendern'], 3)
         self.assertIsNotNone(event)
 
     def testKeyValue(self):
@@ -223,10 +221,10 @@ class TestFields(ModuleBaseTestCase):
         data = DictUtils.getDefaultEventDict({'lumbermill': {'event_id': 1}, 'url': 'Johann-Gambolputty/Schlingern-Schlendern/nobody-/spammish-repetition/'})
         for event in self.test_object.handleEvent(data):
             self.assertIsNotNone(event)
-            self.assertEquals(event['Johann'], 'Gambolputty')
-            self.assertEquals(event['Schlingern'], 'Schlendern')
-            self.assertEquals(event['nobody'], '')
-            self.assertEquals(event['spammish'], 'repetition')
+            self.assertEqual(event['Johann'], 'Gambolputty')
+            self.assertEqual(event['Schlingern'], 'Schlendern')
+            self.assertEqual(event['nobody'], '')
+            self.assertEqual(event['spammish'], 'repetition')
         self.assertIsNotNone(event)
 
     def __testQueueCommunication(self):

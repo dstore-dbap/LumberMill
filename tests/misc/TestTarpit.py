@@ -17,5 +17,5 @@ class TestTarpit(ModuleBaseTestCase):
         event = None
         for event in self.test_object.handleEvent(DictUtils.getDefaultEventDict({})):
             after = time.time()
-            self.assertEquals(1, int(after - before))
+            self.assertEqual(1, int(after - before))
         self.assertIsNotNone(event)

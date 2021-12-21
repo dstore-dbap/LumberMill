@@ -25,6 +25,7 @@ class TornadoTcpServer(TCPServer):
             etype, evalue, etb = sys.exc_info()
             self.logger.error("Could not create tcp server. Exception: %s, Error: %s." % (etype, evalue))
             self.gp_module.shutDown()
+
     def handle_stream(self, stream, address):
         ConnectionHandler(stream, address, self.gp_module)
 
@@ -187,11 +188,13 @@ class Tcp(BaseModule):
         self.server.add_sockets(self.sockets)
 
     def shutDown(self):
-        if self.is_configured:
+        if not self.is_configured:
+            return
+        if self.server:
             self.server.stop()
-            for server_socket in self.sockets:
-                try:
-                    server_socket.shutdown(socket.SHUT_RDWR)
-                except socket.error:
-                    pass
-                server_socket.close()
+        for server_socket in self.sockets:
+            try:
+                server_socket.shutdown(socket.SHUT_RDWR)
+            except socket.error:
+                pass
+            server_socket.close()

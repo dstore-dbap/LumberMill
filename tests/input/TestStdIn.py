@@ -19,7 +19,7 @@ class TestStdIn(ModuleBaseTestCase):
         self.test_object.run()
         sys.stdin = stdin
         for event in self.receiver.getEvent():
-            self.assertEquals(event['data'], "We are the knights who say ni!")
+            self.assertEqual(event['data'], "We are the knights who say ni!")
 
     def testStdInMultiLine(self):
         self.test_object.configure({'multiline': True})
@@ -30,7 +30,7 @@ Bring us a shrubbery!""")
         self.test_object.run()
         sys.stdin = stdin
         for event in self.receiver.getEvent():
-            self.assertEquals(event['data'], """We are the knights who say ni!
+            self.assertEqual(event['data'], """We are the knights who say ni!
 Bring us a shrubbery!""")        
 
     def testStdInStreamBoundry(self):
@@ -48,7 +48,7 @@ We are now no longer the Knights who say Ni.""")
         item = []
         for event in self.receiver.getEvent():
             item.append(event)
-        self.assertEquals(len(item), 2)
-        self.assertEquals(item[0]['data'], """We are the knights who say ni!
+        self.assertEqual(len(item), 2)
+        self.assertEqual(item[0]['data'], """We are the knights who say ni!
 Bring us a shrubbery!\n""")
-        self.assertEquals(item[1]['data'], "We are now no longer the Knights who say Ni.")
+        self.assertEqual(item[1]['data'], "We are now no longer the Knights who say Ni.")

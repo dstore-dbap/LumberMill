@@ -40,7 +40,7 @@ class TestTcp(ModuleBaseTestCase):
             print("Could not connect to %s:%s. Exception: %s, Error: %s" % ('localhost', self.test_object.getConfigurationValue("port"), etype, evalue))
             connection_succeeded = False
         self.assertTrue(connection_succeeded)
-        expected_ret_val = DictUtils.getDefaultEventDict({'data': "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
+        expected_ret_val = DictUtils.getDefaultEventDict({'data': b"Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever."})
         expected_ret_val.pop('lumbermill')
         event = False
         time.sleep(2)
@@ -92,7 +92,7 @@ class TestTcp(ModuleBaseTestCase):
         self.assertTrue(event != False)
         self.assertEqual(counter, 1500)
         event.pop('lumbermill')
-        self.assertDictEqual(event, expected_ret_val)
+        self.assertEqual(event['data'], b"Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.")
         self.stopTornadoEventLoop()
         #self.tearDown()
 
@@ -125,8 +125,8 @@ class TestTcp(ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             counter += 1
         self.assertIsNotNone(event)
-        self.assertEquals(counter, 4)
-        self.assertEquals(event['data'], "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.Confused   cat")
+        self.assertEqual(counter, 4)
+        self.assertEqual(event['data'], b"Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.Confused   cat")
         #self.tearDown()
 
     def testLineModeSimpleSeparator(self):
@@ -158,8 +158,8 @@ class TestTcp(ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             counter += 1
         self.assertIsNotNone(event)
-        self.assertEquals(counter, 4)
-        self.assertEquals(event['data'], "Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.***")
+        self.assertEqual(counter, 4)
+        self.assertEqual(event['data'], b"Beethoven, Mozart, Chopin, Liszt, Brahms, Panties...I'm sorry...Schumann, Schubert, Mendelssohn and Bach. Names that will live for ever.***")
         #self.tearDown()
 
     def testStreamMode(self):
@@ -190,9 +190,9 @@ class TestTcp(ModuleBaseTestCase):
         time.sleep(1)
         for event in self.receiver.getEvent():
             events.append(event)
-        self.assertEquals(len(events), 6)
-        self.assertEquals(len(events[0]['data']), 1024)
-        #self.tearDown()
+        self.assertEqual(len(events), 6)
+        self.assertEqual(len(events[0]['data']), 1024)
+    #     #self.tearDown()
 
     def tearDown(self):
         self.test_object.shutDown()

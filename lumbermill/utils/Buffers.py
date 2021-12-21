@@ -221,7 +221,6 @@ class ZeroMqMpQueue:
 
 
     def initReceiver(self):
-        #print("Init receiver in %s" % os.getpid())
         zmq_context = zmq.Context()
         self.receiver = zmq_context.socket(zmq.PULL)
         try:

@@ -22,7 +22,7 @@ class TestPermutate(ModuleBaseTestCase):
                                                                2: {'ctx': 'b', 'ctx2': 'bb'}}})
         for result in self.test_object.handleEvent(source_event):
             events.append(result)
-        self.assertEquals(len(events), 2)
+        self.assertEqual(len(events), 2)
 
     def tearDown(self):
         pass

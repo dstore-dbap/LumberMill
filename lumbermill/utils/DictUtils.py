@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
-import copy
 import random
+import copy
 from string import Formatter
 
 from lumbermill.constants import MY_HOSTNAME
@@ -43,7 +43,10 @@ class KeyDotNotationDict(dict):
                 raise KeyError(key)
             return ret
         current_key, remaining_keys = key.split('.', 1)
-        item = item.__getitem__(current_key)
+        try:
+            item = item.__getitem__(current_key)
+        except TypeError:
+            item = item.__getitem__(int(current_key))
         return self.__setitem__(remaining_keys, value, item)
 
     def __delitem__(self, key, item=None):
@@ -57,7 +60,10 @@ class KeyDotNotationDict(dict):
                 raise KeyError(key)
             return ret
         current_key, remaining_keys = key.split('.', 1)
-        item = item.__getitem__(current_key)
+        try:
+            item = item.__getitem__(current_key)
+        except TypeError:
+            item = item.__getitem__(int(current_key))
         return self.__delitem__(remaining_keys, item)
 
     def __contains__(self, key, item=None):
@@ -71,6 +77,9 @@ class KeyDotNotationDict(dict):
         current_key, remaining_keys = key.split('.', 1)
         try:
             item = item.__getitem__(current_key)
+            return self.__contains__(remaining_keys, item)
+        except TypeError:
+            item = item.__getitem__(int(current_key))
             return self.__contains__(remaining_keys, item)
         except KeyError:
             return False
@@ -126,7 +135,10 @@ class KeyDotNotationDict(dict):
                     return default
         current_key, remaining_keys = key.split('.', 1)
         try:
-            item = item.__getitem__(current_key)
+            try:
+                item = item.__getitem__(current_key)
+            except TypeError:
+                item = item.__getitem__(int(current_key))
             return self.pop(remaining_keys, default, item)
         except KeyError:
             return default
@@ -175,3 +187,12 @@ def getDefaultEventDict(dict={}, caller_class_name='', received_from="Unknown", 
     default_dict.update(dict)
     default_dict = KeyDotNotationDict(default_dict)
     return default_dict
+
+def cloneDefaultDict(orig_dict):
+    cloned_dict = copy.deepcopy(orig_dict)
+    cloned_dict['lumbermill']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
+    #try:
+    #    cloned_dict['lumbermill']['event_id'] = "%032x%s" % (random.getrandbits(128), os.getpid())
+    #except KeyError:
+    #    pass
+    return cloned_dict

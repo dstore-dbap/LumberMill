@@ -44,3 +44,4 @@ LumberMill.egg-info
 build
 certs_keys
 tests/coverage/
+conf/

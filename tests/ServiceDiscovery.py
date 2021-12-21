@@ -9,7 +9,9 @@ def discover_redis():
     for server in servers_to_try:
         for port in ports_to_try:
             if s.connect_ex((server, port)) == 0:
+                s.close()
                 return {'server': server, 'port': port}
+    s.close()
     return None
 
 def discover_elasticsearch():
@@ -19,7 +21,9 @@ def discover_elasticsearch():
     for server in servers_to_try:
         for port in ports_to_try:
             if s.connect_ex((server, port)) == 0:
+                s.close()
                 return {'server': server, 'port': port}
+    s.close()
     return None
 
 def discover_mongodb():
@@ -29,15 +33,18 @@ def discover_mongodb():
     for server in servers_to_try:
         for port in ports_to_try:
             if s.connect_ex((server, port)) == 0:
+                s.close()
                 return {'server': server, 'port': port}
+    s.close()
     return None
 
 
 def getFreeTcpPortoOnLocalhost():
     # Get a free random port.
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('127.0.0.1', 0))
-    sock.listen(socket.SOMAXCONN)
-    ipaddr, port = sock.getsockname()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind(('127.0.0.1', 0))
+    s.listen(socket.SOMAXCONN)
+    ipaddr, port = s.getsockname()
+    s.close()
     return (ipaddr, port)

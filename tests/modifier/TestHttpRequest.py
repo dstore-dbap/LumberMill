@@ -57,7 +57,7 @@ class TestHttpRequest(ModuleBaseTestCase):
         for event in self.receiver.getEvent():
             events.append(event)
         self.assertTrue(len(events) == 3)
-        self.assertNotEquals(events[0]['http_request_result'], '')
+        self.assertNotEqual(events[0]['http_request_result'], '')
 
     def testGetResponseHeader(self):
         self.test_object.configure({'url': 'http://www.google.com',
