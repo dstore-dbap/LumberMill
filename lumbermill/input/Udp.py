@@ -78,12 +78,16 @@ class ThreadedUdpRequestHandler(socketserver.BaseRequestHandler):
                 return
             host = self.client_address[0]
             port = self.client_address[1]
-            event = DictUtils.getDefaultEventDict({"data": str(data, "utf-8")}, received_from="%s:%s" % (host, port), caller_class_name='UdpServer')
-            self.udp_server_instance.sendEvent(event)
         except socket.error as e:
            self.logger.warning("Error occurred while reading from socket. Error: %s" % (e))
         except socket.timeout as e:
             self.logger.warning("Timeout occurred while reading from socket. Error: %s" % (e))
+        try:
+           data = data.decode(self.udp_server_instance.encoding)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+           pass
+        event = DictUtils.getDefaultEventDict({"data": data}, received_from="%s:%s" % (host, port), caller_class_name='UdpServer')
+        self.udp_server_instance.sendEvent(event)
 
 class ThreadedUdpServer(ThreadPoolMixIn, socketserver.UDPServer):
 
@@ -108,6 +112,7 @@ class Udp(BaseModule):
     interface:  Ipaddress to listen on.
     port:       Port to listen on.
     timeout:    Sockettimeout in seconds.
+    encoding:   Encoding of the input data.
 
     Configuration template:
 
@@ -115,6 +120,7 @@ class Udp(BaseModule):
        interface:                       # <default: '0.0.0.0'; type: string; is: optional>
        port:                            # <default: 5151; type: integer; is: optional>
        timeout:                         # <default: None; type: None||integer; is: optional>
+       encoding:                        # <default: 'utf-8'; type: string; is: optional>
        receivers:
         - NextModule
     """
@@ -127,6 +133,7 @@ class Udp(BaseModule):
     def configure(self, configuration):
         # Call parent configure method
         BaseModule.configure(self, configuration)
+        self.encoding = self.getConfigurationValue('encoding')
         self.server = False
         handler_factory = UdpRequestHandlerFactory()
         try:

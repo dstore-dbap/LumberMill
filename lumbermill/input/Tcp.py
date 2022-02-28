@@ -38,6 +38,7 @@ class ConnectionHandler(object):
         self.regex_separator = self.gp_module.getConfigurationValue('regex_separator')
         self.chunksize = self.gp_module.getConfigurationValue('chunksize')
         self.mode = self.gp_module.getConfigurationValue('mode')
+        self.encoding = self.gp_module.getConfigurationValue('encoding')
         self.is_open = True
         self.stream = stream
         self.address = address
@@ -103,10 +104,10 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        #try:
-        #    data = str(data, "utf-8")
-        #except UnicodeDecodeError:
-        #    pass
+        try:
+           data = data.decode(self.encoding)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+           pass
         self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @ModuleDocstringParser
@@ -128,6 +129,7 @@ class Tcp(BaseModule):
     regex_separator:   If mode is line, set separator between lines. Here regex can be used. The result includes the data that matches the regex.
     chunksize:  If mode is stream, set chunksize in bytes to read from stream.
     max_buffer_size: Max kilobytes to in receiving buffer.
+    encoding:   Encoding of the input data.
 
     Configuration template:
 
@@ -145,6 +147,7 @@ class Tcp(BaseModule):
        regex_separator:                 # <default: None; type: None||string; is: optional>
        chunksize:                       # <default: 16384; type: integer; is: required if mode is 'stream' else optional>
        max_buffer_size:                 # <default: 10240; type: integer; is: optional>
+       encoding:                        # <default: 'utf-8'; type: string; is: optional>
        receivers:
         - NextModule
     """

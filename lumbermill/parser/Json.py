@@ -86,8 +86,8 @@ class Json(BaseThreadedModule):
     def decodeEvent(self, event):
         for source_field in self.source_fields:
             try:
-                json_string = event[source_field].decode('utf-8')
-            except (UnicodeEncodeError, UnicodeDecodeError):
+                json_string = event[source_field].decode()
+            except (AttributeError, UnicodeEncodeError, UnicodeDecodeError):
                 json_string = UnicodeDammit(event[source_field]).unicode_markup
             except KeyError:
                 continue

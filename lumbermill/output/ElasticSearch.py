@@ -2,7 +2,13 @@
 import sys
 import time
 import logging
-import elasticsearch
+try:
+    import elasticsearch
+except ImportError:
+    try: 
+        import elasticsearch7 as elasticsearch
+    except ImportError:
+        import elasticsearch6 as elasticsearch
 
 from lumbermill.constants import IS_PYPY
 from lumbermill.BaseThreadedModule import BaseThreadedModule
@@ -39,7 +45,7 @@ class ElasticSearch(BaseThreadedModule):
     nodes:      Configures the elasticsearch nodes.
     read_timeout: Set number of seconds to wait until requests to elasticsearch will time out.
     connection_type:    One of: 'thrift', 'http'.
-    http_auth:  'user:password'.
+    basic_auth: 'user:password'.
     use_ssl:    One of: True, False.
     index_name: Sets the index name. Timepatterns like %Y.%m.%d and dynamic values like $(bar) are allowed here.
     doc_id:     Sets the es document id for the committed event data.
@@ -60,23 +66,22 @@ class ElasticSearch(BaseThreadedModule):
     Configuration template:
 
     - output.ElasticSearch:
-       action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
-       fields:                          # <default: None; type: None||list; is: optional>
-       nodes:                           # <type: string||list; is: required>
-       read_timeout:                    # <default: 10; type: integer; is: optional>
-       connection_type:                 # <default: 'urllib3'; type: string; values: ['urllib3', 'requests']; is: optional>
-       http_auth:                       # <default: None; type: None||string; is: optional>
-       use_ssl:                         # <default: False; type: boolean; is: optional>
-       index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
-       doc_id:                          # <default: '$(lumbermill.event_id)'; type: string; is: optional>
-       doc_type:                        # <default: '$(lumbermill.event_type)'; type: string; is: optional>
-       routing:                         # <default: None; type: None||string; is: optional>
-       ttl:                             # <default: None; type: None||integer||string; is: optional>
-       sniff_on_start:                  # <default: False; type: boolean; is: optional>
-       sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
-       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
-       batch_size:                      # <default: 500; type: integer; is: optional>
-       backlog_size:                    # <default: 500; type: integer; is: optional>
+        action:                          # <default: 'index'; type: string; is: optional; values: ['index', 'update']>
+        fields:                          # <default: None; type: None||list; is: optional>
+        nodes:                           # <type: string||list; is: required>
+        read_timeout:                    # <default: 10; type: integer; is: optional>
+        basic_auth:                      # <default: None; type: None||string; is: optional>
+        use_ssl:                         # <default: False; type: boolean; is: optional>
+        index_name:                      # <default: 'lumbermill-%Y.%m.%d'; type: string; is: optional>
+        doc_id:                          # <default: '$(lumbermill.event_id)'; type: string; is: optional>
+        doc_type:                        # <default: '$(lumbermill.event_type)'; type: string; is: optional>
+        routing:                         # <default: None; type: None||string; is: optional>
+        ttl:                             # <default: None; type: None||integer||string; is: optional>
+        sniff_on_start:                  # <default: False; type: boolean; is: optional>
+        sniff_on_connection_fail:        # <default: False; type: boolean; is: optional>
+        store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+        batch_size:                      # <default: 500; type: integer; is: optional>
+        backlog_size:                    # <default: 500; type: integer; is: optional>
     """
 
     module_type = "output"
@@ -103,10 +108,6 @@ class ElasticSearch(BaseThreadedModule):
         self.read_timeout = self.getConfigurationValue("read_timeout")
         if not isinstance(self.es_nodes, list):
             self.es_nodes = [self.es_nodes]
-        if self.getConfigurationValue("connection_type") == 'urllib3':
-            self.connection_class = elasticsearch.connection.Urllib3HttpConnection
-        elif self.getConfigurationValue("connection_type") == 'requests':
-            self.connection_class = elasticsearch.connection.RequestsHttpConnection
 
     def getStartMessage(self):
         return "Idx: %s. Max buffer size: %d" % (self.index_name, self.getConfigurationValue('backlog_size'))
@@ -129,14 +130,12 @@ class ElasticSearch(BaseThreadedModule):
                 # Connect to es node and round-robin between them.
                 self.logger.debug("Connecting to %s." % self.es_nodes)
                 es = elasticsearch.Elasticsearch(self.es_nodes,
-                                                 connection_class=self.connection_class,
                                                  timeout=self.read_timeout,
                                                  sniff_on_start=self.getConfigurationValue('sniff_on_start'),
                                                  sniff_on_connection_fail=self.getConfigurationValue('sniff_on_connection_fail'),
                                                  sniff_timeout=5,
                                                  maxsize=20,
-                                                 use_ssl=self.getConfigurationValue('use_ssl'),
-                                                 http_auth=self.getConfigurationValue('http_auth'))
+                                                 basic_auth=self.getConfigurationValue('basic_auth'))
             except:
                 etype, evalue, etb = sys.exc_info()
                 self.logger.warning("Connection to %s failed. Exception: %s, Error: %s." % (self.es_nodes, etype, evalue))
