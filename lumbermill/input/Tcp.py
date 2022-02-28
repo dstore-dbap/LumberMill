@@ -104,10 +104,6 @@ class ConnectionHandler(object):
         self.stream.close()
 
     def sendEvent(self, data):
-        try:
-           data = data.decode(self.encoding)
-        except (UnicodeEncodeError, UnicodeDecodeError):
-           pass
         self.gp_module.sendEvent(DictUtils.getDefaultEventDict({"data": data}, caller_class_name="TcpServer", received_from="%s:%d" % (self.host, self.port)))
 
 @ModuleDocstringParser
