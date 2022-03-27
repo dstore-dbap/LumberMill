@@ -4,9 +4,16 @@ import sys
 import time
 import types
 import requests
-from elasticsearch import Elasticsearch, connection
 from ctypes import c_char_p
 from multiprocessing import Manager, Lock
+
+try:
+    from elasticsearch import Elasticsearch, connection
+except ImportError:
+    try:
+        from elasticsearch7 import Elasticsearch, connection
+    except ImportError:
+        from elasticsearch6 import Elasticsearch, connection
 
 import lumbermill.utils.DictUtils as DictUtils
 from lumbermill.constants import IS_PYPY
