@@ -340,6 +340,27 @@ Configuration template:
        proto:                           # <default: 'tcp'; type: string; values: ['tcp', 'udp']; is: optional>
        facility:                        # <default: 'user'; type: string; is: optional>
 
+Udp
+-----------
+
+Send events to udp socket.
+
+| **address**: address:port
+| **format**: Which event fields to send on, e.g. '$(@timestamp) - $(url) - $(country_code)'. If not set the whole event dict is send.
+| **store_interval_in_secs**: Send data to redis in x seconds intervals.
+| **batch_size**: Send data to redis if event count is above, even if store_interval_in_secs is not reached.
+| **backlog_size**: Maximum count of events waiting for transmission. Events above count will be dropped.
+
+Configuration template:
+
+::
+
+    - output.Udp:
+       address:                         # <default: 'localhost:514'; type: string; is: required>
+       format:                          # <default: None; type: None||string; is: optional>
+       store_interval_in_secs:          # <default: 5; type: integer; is: optional>
+       batch_size:                      # <default: 500; type: integer; is: optional>
+       backlog_size:                    # <default: 500; type: integer; is: optional>
 
 WebHdfs
 -----------

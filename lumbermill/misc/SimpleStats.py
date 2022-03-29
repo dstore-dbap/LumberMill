@@ -49,8 +49,11 @@ class SimpleStats(BaseThreadedModule):
         self.interval = self.getConfigurationValue('interval')
         self.event_type_statistics = self.getConfigurationValue('event_type_statistics')
         self.process_statistics = self.getConfigurationValue('process_statistics')
+        self.stats_namespace = "SimpleStats"
         self.stats_collector = StatisticCollector()
         self.mp_stats_collector = MultiProcessStatisticCollector()
+        self.stats_collector.initCounter(self.stats_namespace)
+        self.mp_stats_collector.initCounter(self.stats_namespace)
         self.module_queues = {}
         self.psutil_processes = []
         self.last_values = {'events_received': 0}
@@ -66,17 +69,17 @@ class SimpleStats(BaseThreadedModule):
         return evaluateStats
 
     def accumulateEventTypeStats(self):
-        for event_type, count in self.stats_collector.getAllCounters().items():
+        for event_type, count in self.stats_collector.getAllCounters(namespace=self.stats_namespace).items():
             if count == 0:
                 continue
-            self.mp_stats_collector.incrementCounter(event_type, count)
-            self.stats_collector.resetCounter(event_type)
+            self.mp_stats_collector.incrementCounter(event_type, count, namespace=self.stats_namespace)
+            self.stats_collector.resetCounter(event_type, namespace=self.stats_namespace)
 
     def accumulateReceiveRateStats(self):
-        if self.stats_collector.getCounter('events_received') == 0:
+        if self.stats_collector.getCounter('events_received', namespace=self.stats_namespace) == 0:
             return
-        self.mp_stats_collector.incrementCounter('events_received', self.stats_collector.getCounter('events_received'))
-        self.stats_collector.resetCounter('events_received')
+        self.mp_stats_collector.incrementCounter('events_received', self.stats_collector.getCounter('events_received'), namespace=self.stats_namespace)
+        self.stats_collector.resetCounter('events_received', namespace=self.stats_namespace)
 
     def printIntervalStatistics(self):
         self.logger.info("############# Statistics (PID: %s) #############" % os.getpid())
@@ -91,29 +94,29 @@ class SimpleStats(BaseThreadedModule):
 
     def receiveRateStatistics(self):
         self.logger.info(">> Receive rate stats")
-        events_received = self.mp_stats_collector.getCounter('events_received')
+        events_received = self.mp_stats_collector.getCounter('events_received', namespace=self.stats_namespace)
         # If LumberMill is shutting down and running with multiple processes, we might end up with an empty return value.
         if not events_received:
             return
         self.logger.info("Received events in %ss: %s%s (%s/eps)%s" % (self.getConfigurationValue('interval'), AnsiColors.YELLOW, events_received, (events_received/self.interval), AnsiColors.ENDC))
         if self.emit_as_event:
             self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "receiverate_stats", "receiverate_count": events_received, "receiverate_count_per_sec": int((events_received/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
-        self.mp_stats_collector.setCounter('last_events_received', events_received)
-        self.mp_stats_collector.resetCounter('events_received')
+        self.mp_stats_collector.setCounter('last_events_received', events_received, namespace=self.stats_namespace)
+        self.mp_stats_collector.resetCounter('events_received', namespace=self.stats_namespace)
 
     def eventTypeStatistics(self):
         self.logger.info(">> EventTypes Statistics")
         try:
-            for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
+            for event_type in sorted(self.mp_stats_collector.getAllCounters(namespace=self.stats_namespace).keys()):
                 if not event_type.startswith('event_type_'):
                     continue
-                count = self.mp_stats_collector.getCounter(event_type)
+                count = self.mp_stats_collector.getCounter(event_type, namespace=self.stats_namespace)
                 event_name = event_type.replace('event_type_', '').lower()
                 self.logger.info("EventType: %s%s%s - Hits: %s%s%s" % (AnsiColors.YELLOW, event_name, AnsiColors.ENDC, AnsiColors.YELLOW, count, AnsiColors.ENDC))
                 if self.emit_as_event:
                     self.sendEvent(DictUtils.getDefaultEventDict({"stats_type": "event_type_stats", "%s_count" % event_name: count, "%s_count_per_sec" % event_name:int((count/self.interval)), "interval": self.interval, "timestamp": time.time()}, caller_class_name="Statistics", event_type="statistic"))
-                self.mp_stats_collector.setCounter("last_%s" % event_type, count)
-                self.mp_stats_collector.resetCounter(event_type)
+                self.mp_stats_collector.setCounter("last_%s" % event_type, count, namespace=self.stats_namespace)
+                self.mp_stats_collector.resetCounter(event_type, namespace=self.stats_namespace)
         except BrokenPipeError:
             # BrokenPipeError  may be thrown when exiting via CTRL+C. Ignore it.
             pass
@@ -173,17 +176,17 @@ class SimpleStats(BaseThreadedModule):
 
     def getLastReceiveCount(self):
         try:
-            received_counter = self.mp_stats_collector.getCounter('last_events_received')
+            received_counter = self.mp_stats_collector.getCounter('last_events_received', namespace=self.stats_namespace)
         except KeyError:
             received_counter = 0
         return received_counter
 
     def getLastEventTypeCounter(self):
         event_type_counter = {}
-        for event_type in sorted(self.mp_stats_collector.getAllCounters().keys()):
+        for event_type in sorted(self.mp_stats_collector.getAllCounters(namespace=self.stats_namespace).keys()):
             if not event_type.startswith('last_event_type_'):
                 continue
-            count = self.mp_stats_collector.getCounter(event_type)
+            count = self.mp_stats_collector.getCounter(event_type, namespace=self.stats_namespace)
             event_name = event_type.replace('last_event_type_', '').lower()
             event_type_counter[event_name] = count
         return event_type_counter
@@ -208,10 +211,10 @@ class SimpleStats(BaseThreadedModule):
         BaseThreadedModule.initAfterFork(self)
 
     def handleEvent(self, event):
-        self.stats_collector.incrementCounter('events_received')
+        self.stats_collector.incrementCounter('events_received', namespace=self.stats_namespace)
         if self.event_type_statistics:
             try:
-                self.stats_collector.incrementCounter('event_type_%s' % event['lumbermill']['event_type'])
+                self.stats_collector.incrementCounter('event_type_%s' % event['lumbermill']['event_type'], namespace=self.stats_namespace)
             except:
                 pass
         yield event

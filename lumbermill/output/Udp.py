@@ -66,23 +66,17 @@ class Udp(BaseThreadedModule):
                                                                     self.getConfigurationValue('batch_size'),
                                                                     self.getConfigurationValue('backlog_size'))
 
-    def initAfterFork(self):
-        BaseThreadedModule.initAfterFork(self)
-        self.buffer = Buffer(self.getConfigurationValue('batch_size'), self.storeData, self.getConfigurationValue('store_interval_in_secs'), maxsize=self.getConfigurationValue('backlog_size'))
-
-    def storeData(self, buffered_data):
-        try:
-            self.socket.sendto(*buffered_data, self.target_address)
-            return True
-        except:
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            self.logger.error("Could not add event to %s. Exception: %s, Error: %s." % (self.target_address, exc_type, exc_value))
-            return False
-
     def handleEvent(self, event):
         if self.format:
             publish_data = mapDynamicValue(self.format, event).encode('utf-8')
         else:
             publish_data = json.dumps(event).encode('utf-8')
-        self.buffer.append(publish_data)
+        publish_data += "\n".encode('utf-8')
+        try:
+            self.socket.sendto(publish_data, self.target_address)
+            return True
+        except:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            self.logger.error("Could not add event to %s. Exception: %s, Error: %s." % (self.target_address, exc_type, exc_value))
+            return False
         yield None

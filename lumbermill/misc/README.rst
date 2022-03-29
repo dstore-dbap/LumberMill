@@ -16,6 +16,7 @@ created, a copy of the event is stored in the persistence backend. If it gets ga
 the event will be deleted from the backend.
 When used, this module forces a garbage collection every <gc_interval> seconds.
 This approach seemed to be the fastest and simplest with a small drawback:
+
 IMPORTANT: It is not absolutely guaranteed, that an event will be collected, thus the event will
 not be deleted from the backend data. This can cause a limited amount of duplicate events being
 send to the sinks.
@@ -43,7 +44,7 @@ When set, the following options cause RedisStore to use a buffer for setting val
 Multiple values are set via the pipe command, which speeds up storage. Still this comes at a price.
 Buffered values, that have not yet been send to redis, will be lost when LumberMill crashes.
 
-backend: backends supported by [simplekv](http://pythonhosted.org//simplekv/)
+| **backend**: backends supported by [simplekv](http://pythonhosted.org//simplekv/)
 | **store_interval_in_secs**:  Sending data to redis in x seconds intervals.
 | **batch_size**:  Sending data to redis if count is above, even if store_interval_in_secs is not reached.
 | **backlog_size**:  Maximum count of values waiting for transmission. Values above count will be dropped.
@@ -93,56 +94,88 @@ Configuration template:
        emit_as_event:                   # <default: False; type: boolean; is: optional>
 
 
-SimpleStats
------------
+Metrics
+-------
 
-Collect and log some simple lumbermill statistic data.
+Collect metrics data from events.
 
-Use this module if you just need some simple statistics on how many events are passing through lumbermill.
-Per default, statistics will just be send to stdout.
-
-Configuration template:
-
-::
-
-    - misc.SimpleStats:
-       interval:                        # <default: 10; type: integer; is: optional>
-       event_type_statistics:           # <default: True; type: boolean; is: optional>
-       receive_rate_statistics:         # <default: True; type: boolean; is: optional>
-       waiting_event_statistics:        # <default: False; type: boolean; is: optional>
-       emit_as_event:                   # <default: False; type: boolean; is: optional>
-
-
-Statistics
-----------
-
-Collect and log statistic data.
+As a side note: This module inits MultiProcessStatisticCollector. As it uses multiprocessing.Manager().dict()
+this will start another process. So if you use SimpleStats, you will see workers + 1 processes in the process
+list.
 
 This module keeps track of the number of times a field occured in an event during interval.
 So, if you want to count the http_status codes encountered during the last 10s, you would use this configuration:
-- Statistics:
-interval: 10
-fields: [http_status]
 
-After interval seconds, an event will be emitted with the following fields (counters are just examples ;):
-{'data': '',
-'event_type': 'statistic',
-'field_name': 'http_status',
-'field_counts': {'200': 5, '301': 10, '400': 5},
-'lumbermill': {'event_id': 'cef34d298fbe8ce4b662251e17b2acfb',
-'event_type': 'statistic',
-'received_from': False,
-'source_module': 'Statistics'}
-'interval': 10,
-'total_count': 20}
+::
+
+    - Mertrics:
+        interval: 10
+        aggregations:
+            - key: http_status_%{vhost}
+              value: http_status
+
+After interval seconds, an event will be emitted with the following fields (counters are just examples):
+
+Example output:
+
+::
+
+    {'data': '',
+     'field_name': 'http_status_this.parrot.dead',
+     'field_counts': {'200': 5, '301': 10, '400': 5},
+     'lumbermill': {'event_id': 'cef34d298fbe8ce4b662251e17b2acfb',
+                     'event_type': 'metrics',
+                     'received_from': False,
+                     'source_module': 'Metrics'}
+     'interval': 10,
+     'total_count': 20}
+
+Same with buckets:
+
+::
+
+    - Mertrics:
+        interval: 10
+        aggregations:
+            - key: http_status_%{vhost}
+              value: http_status
+              buckets:
+                - key: 100
+                  upper: 199
+                - key: 200
+                  upper: 299
+                - key: 300
+                  upper: 399
+                - key: 400
+                  upper: 499
+                - key: 500
+                  upper: 599
+        percentiles:
+            - key: request_time_%{vhost}
+              value: request_time
+              percentiles: [50, 75, 95, 99]
+
+Example output:
+
+::
+
+    {'data': '',
+     'field_name': 'http_status_this.parrot.dead',
+     'field_counts': {'200': 5, '300': 10, '400': 5},
+     'lumbermill': {'event_id': 'cef34d298fbe8ce4b662251e17b2acfb',
+                     'event_type': 'metrics',
+                     'received_from': False,
+                     'source_module': 'Metrics'}
+     'interval': 10,
+     'total_count': 20}
 
 Configuration template:
 
 ::
 
-    - misc.Statistics:
+    - Metrics:
        interval:                        # <default: 10; type: integer; is: optional>
-       fields:                          # <default: ['lumbermill.event_type']; type: list; is: optional>
+       aggregations:                    # <default: []; type: list; is: optional>
 
 
 Tarpit

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill

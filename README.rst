@@ -147,6 +147,7 @@ Outputs
 -  StdOut, prints all received data to standard out.
 -  SQS, sends events to amazons simple queue service.
 -  Syslog, send events to syslog.
+-  Udp, send events to udp server.
 -  WebHdfs, store events in hdfs via webhdfs.
 -  Zabbix, send metrics to zabbix.
 -  Zmq, sends incoming event to zeromq.
@@ -159,8 +160,7 @@ Misc modules
 -  Cache, use cache to store and retrieve values, e.g. to store the
    result of the XPathParser modul.
 -  SimpleStats, simple statistic module just for event rates etc.
--  Statistics, more versatile. Configurable fields for collecting
-   statistic data.
+-  Metrics, Configurable fields for different metric data.
 -  Tarpit, slows event propagation down - for testing.
 -  Throttle, throttle event count over a given time period.
 

@@ -18,8 +18,8 @@ class TestPermutate(ModuleBaseTestCase):
         self.checkConfiguration()
         events = []
         source_event = DictUtils.getDefaultEventDict({'facets': [1,2],
-                                                  'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},
-                                                               2: {'ctx': 'b', 'ctx2': 'bb'}}})
+                                                      'context': { 1: {'ctx': 'a', 'ctx2': 'aa'},
+                                                                   2: {'ctx': 'b', 'ctx2': 'bb'}}})
         for result in self.test_object.handleEvent(source_event):
             events.append(result)
         self.assertEqual(len(events), 2)

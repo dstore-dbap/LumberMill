@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 import mock
 import unittest
@@ -18,7 +19,7 @@ class TestCache(ModuleBaseTestCase):
         except AttributeError:
             pass
 
-    def testSimpleValue(self):
+    def testSimpleMetric(self):
         self.test_object.configure({})
         self.checkConfiguration()
         value = 'Putty'

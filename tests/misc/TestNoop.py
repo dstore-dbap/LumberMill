@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 import mock
-import time
 import lumbermill.utils.DictUtils as DictUtils
 
 from tests.ModuleBaseTestCase import ModuleBaseTestCase
