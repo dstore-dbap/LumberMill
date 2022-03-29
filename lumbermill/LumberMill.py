@@ -399,14 +399,19 @@ class LumberMill():
         return os.getpid() == self.main_process_pid
 
     def configTest(self):
+        for idx, configuration in enumerate(self.configuration):
+            if 'Global' in configuration:
+                # Force logger to use stdout no matter how it was configured.
+                configuration['Global']['logging']['filename'] = None
+                configuration['Global']['logging']['level'] = 'info'
+        self.configureLogging()
         self.logger.info("Running configuration test for %s." % self.path_to_config_file)
         self.configureGlobal()
-        self.configureLogging()
         self.initModulesFromConfig()
         self.setDefaultReceivers()
         self.configureModules()
         self.initEventStream()
-        self.logger.info("Done...")
+        self.logger.info("Configuration is valid.")
         return
 
     def start(self):
