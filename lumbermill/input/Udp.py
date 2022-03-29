@@ -95,9 +95,9 @@ class ThreadedUdpServer(ThreadPoolMixIn, socketserver.UDPServer):
         self.timeout = timeout
 
 class UdpRequestHandlerFactory:
-    def produce(self, tcp_server_instance):
+    def produce(self, udp_server_instance):
         def createHandler(*args, **keys):
-            return ThreadedUdpRequestHandler(tcp_server_instance, *args, **keys)
+            return ThreadedUdpRequestHandler(udp_server_instance, *args, **keys)
         return createHandler
 
 @ModuleDocstringParser
