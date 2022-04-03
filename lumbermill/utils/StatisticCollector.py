@@ -11,33 +11,29 @@ from lumbermill.utils.Decorators import Singleton
 class StatisticCollector:
 
     def __init__(self):
-        self.max_int = sys.maxsize
-        self.counter_stats = defaultdict(dict)
-        #self.counter_stats_per_module = defaultdict(lambda: defaultdict(int))
+        self.counters = defaultdict(dict)
         """ Stores the statistic data """
 
     def initCounter(self, namespace="default"):
-        self.counter_stats[namespace] = defaultdict(int)
+        self.counters[namespace] = defaultdict(int)
 
     def incrementCounter(self, key, increment_value=1, namespace="default"):
-        self.counter_stats[namespace][key] += increment_value
-        #print "Incr %s: %s" % (name, self.counter_stats[name])
+        self.counters[namespace][key] += increment_value
 
     def decrementCounter(self, key, decrement_value=1, namespace="default"):
-        self.counter_stats[namespace][key] -= decrement_value
-        #print "Decr %s: %s" % (name, self.counter_stats[name])
+        self.counters[namespace][key] -= decrement_value
 
     def resetCounter(self, key, namespace="default"):
-        self.counter_stats[namespace][key] = 0
+        self.counters[namespace][key] = 0
 
     def setCounter(self, key, value, namespace="default"):
-        self.counter_stats[namespace][key] = value
+        self.counters[namespace][key] = value
 
     def getCounter(self, key, namespace="default"):
-        return self.counter_stats[namespace][key]
+        return self.counters[namespace][key]
 
     def getAllCounters(self, namespace="default"):
-        return self.counter_stats[namespace]
+        return self.counters[namespace]
 
 @Singleton
 class MultiProcessStatisticCollector:
@@ -45,18 +41,18 @@ class MultiProcessStatisticCollector:
     def __init__(self):
         self.lock = multiprocessing.Lock()
         self.sync_manager = multiprocessing.Manager()
-        self.counter_stats = self.sync_manager.dict()
-        """ Stores the statistic data """
+        self.counters = self.sync_manager.dict()
+        self.values = self.sync_manager.dict()
 
     def initCounter(self, namespace="default"):
-        self.counter_stats[namespace] = self.sync_manager.dict()
+        self.counters[namespace] = self.sync_manager.dict()
 
     def incrementCounter(self, key, increment_value=1, namespace="default"):
         with self.lock:
             try:
-                self.counter_stats[namespace][key] += increment_value
+                self.counters[namespace][key] += increment_value
             except KeyError:
-                self.counter_stats[namespace][key] = increment_value
+                self.counters[namespace][key] = increment_value
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
@@ -74,9 +70,9 @@ class MultiProcessStatisticCollector:
     def decrementCounter(self, key, decrement_value=1, namespace="default"):
         with self.lock:
             try:
-                self.counter_stats[namespace][key] -= decrement_value
+                self.counters[namespace][key] -= decrement_value
             except KeyError:
-                self.counter_stats[namespace][key] = 0
+                self.counters[namespace][key] = 0
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
@@ -94,7 +90,7 @@ class MultiProcessStatisticCollector:
     def resetCounter(self, key, namespace="default"):
         with self.lock:
             try:
-                self.counter_stats[namespace][key] = 0
+                self.counters[namespace][key] = 0
             except KeyError:
                 pass
             except OSError:
@@ -114,9 +110,9 @@ class MultiProcessStatisticCollector:
     def setCounter(self, key, value, namespace="default"):
         with self.lock:
             try:
-                self.counter_stats[namespace][key] = value
+                self.counters[namespace][key] = value
             except KeyError:
-                self.counter_stats[namespace][key] = value
+                self.counters[namespace][key] = value
             except OSError:
                 # OSError: [Errno 32] Broken pipe may be thrown when exiting via CTRL+C. Ignore it.
                 pass
@@ -134,7 +130,7 @@ class MultiProcessStatisticCollector:
     def getCounter(self, key, namespace="default"):
         with self.lock:
             try:
-                return self.counter_stats[namespace][key]
+                return self.counters[namespace][key]
             except KeyError:
                 return 0
             except OSError:
@@ -153,7 +149,33 @@ class MultiProcessStatisticCollector:
 
     def getAllCounters(self, namespace="default"):
         try:
-            return self.counter_stats[namespace]
+            return self.counters[namespace]
+        except KeyError:
+            return {}
+
+    def initValues(self, namespace="default"):
+        self.values[namespace] = self.sync_manager.dict()
+
+    def appendValues(self, key, values, namespace="default"):
+        with self.lock:
+            if key not in self.values[namespace].keys():
+                self.values[namespace][key] = values
+            else:
+                self.values[namespace][key].append(values)
+
+    def resetValues(self, key, namespace="default"):
+        with self.lock:
+            self.values[namespace][key] = self.sync_manager.list()
+
+    def getValues(self, key, namespace="default"):
+        try:
+            return self.values[namespace][key]
+        except KeyError:
+            return []
+
+    def getAllValues(self, namespace="default"):
+        try:
+            return self.values[namespace]
         except KeyError:
             return {}
 

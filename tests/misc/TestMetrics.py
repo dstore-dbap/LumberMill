@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-import pprint
-
 import lumbermill.utils.DictUtils as DictUtils
+
 from tests.ModuleBaseTestCase import ModuleBaseTestCase, MockLumberMill
 from lumbermill.misc import Metrics
 
@@ -11,7 +10,7 @@ class TestMetrics(ModuleBaseTestCase):
         super(TestMetrics, self).setUp(Metrics.Metrics(MockLumberMill()))
 
     def testSimpleMetric(self):
-        self.test_object.configure({'interval': 1, 'aggregations': [{'key': 'http_status_$(vhost)', 'value': 'http_status'}]})
+        self.test_object.configure({'interval': 1, 'aggregations': [{'name': 'http_status_$(vhost)', 'field': 'http_status'}]})
         self.checkConfiguration()
         events = []
         for _ in range(0, 10):
@@ -42,17 +41,17 @@ class TestMetrics(ModuleBaseTestCase):
         self.assertEqual(2, metrics_event_count)
 
     def testBucketMetric(self):
-        self.test_object.configure({'interval': 1, 'aggregations': [{'key': 'http_status_$(vhost)',
-                                                                     'value': 'http_status',
-                                                                     'buckets': [{'key': 100,
+        self.test_object.configure({'interval': 1, 'aggregations': [{'name': 'http_status_$(vhost)',
+                                                                     'field': 'http_status',
+                                                                     'buckets': [{'name': 100,
                                                                                   'upper': 199},
-                                                                                 {'key': 200,
+                                                                                 {'name': 200,
                                                                                   'upper': 299},
-                                                                                 {'key': 300,
+                                                                                 {'name': 300,
                                                                                   'upper': 399},
-                                                                                 {'key': 400,
+                                                                                 {'name': 400,
                                                                                   'upper': 499},
-                                                                                 {'key': 500,
+                                                                                 {'name': 500,
                                                                                   'upper': 599}]}]})
         self.checkConfiguration()
         events = []
@@ -81,4 +80,50 @@ class TestMetrics(ModuleBaseTestCase):
                     self.assertEqual({200: 10, 300: 8, 400: 3}, event['field_counts'])
                 if event['field_name'] == "http_status_this.parrot.alive":
                     self.assertEqual({200: 1, 300: 2, 400: 3}, event['field_counts'])
+        self.assertEqual(2, metrics_event_count)
+
+    def testSinglePercentiles(self):
+        self.test_object.configure({'interval': 1, 'percentiles': [{'name': 'request_time_$(vhost)', 'field': 'request_time', 'percentiles': [50, 75, 95, 99]}]})
+        self.checkConfiguration()
+        events = []
+        for _ in range(10, 100, 10):
+            events.append(DictUtils.getDefaultEventDict({'request_time': _, 'vhost': 'this.parrot.dead'}))
+        for event in events:
+            self.test_object.receiveEvent(event)
+        self.test_object.shutDown()
+        for event in self.receiver.getEvent():
+            if event['lumbermill']['event_type'] == 'metrics':
+                self.assertEqual(10, event['min'])
+                self.assertEqual(90, event['max'])
+                self.assertEqual(50.0, event['mean'])
+                self.assertEqual(25.81988897471611, event['std'])
+                self.assertEqual([50.0, 70.0, 86.0, 89.2], event['percentiles'])
+
+    def testMultiplePercentiles(self):
+        self.test_object.configure({'interval': 1, 'percentiles': [{'name': 'request_time_$(vhost)', 'field': 'request_time', 'percentiles': [40, 65, 95, 99]}]})
+        self.checkConfiguration()
+        events = []
+        for _ in range(10, 100, 10):
+            events.append(DictUtils.getDefaultEventDict({'request_time': _, 'vhost': 'this.parrot.dead'}))
+        for _ in range(10, 100, 5):
+            events.append(DictUtils.getDefaultEventDict({'request_time': _, 'vhost': 'this.parrot.alive'}))
+        for event in events:
+            self.test_object.receiveEvent(event)
+        self.test_object.shutDown()
+        metrics_event_count = 0
+        for event in self.receiver.getEvent():
+            if event['lumbermill']['event_type'] == 'metrics':
+                metrics_event_count += 1
+                if event['field_name'] == "http_status_this.parrot.dead":
+                    self.assertEqual(10, event['min'])
+                    self.assertEqual(90, event['max'])
+                    self.assertEqual(50.0, event['mean'])
+                    self.assertEqual(25.81988897471611, event['std'])
+                    self.assertEqual([50.0, 70.0, 86.0, 89.2], event['percentiles'])
+                if event['field_name'] == "http_status_this.parrot.alive":
+                    self.assertEqual(10, event['min'])
+                    self.assertEqual(95, event['max'])
+                    self.assertEqual(52.5, event['mean'])
+                    self.assertEqual(25.940637360455632, event['std'])
+                    self.assertEqual([44.0, 65.25, 90.75, 94.14999999999999], event['percentiles'])
         self.assertEqual(2, metrics_event_count)
