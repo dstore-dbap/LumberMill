@@ -395,7 +395,11 @@ class Field(BaseThreadedModule):
         @yields: event: dictionary
         """
         for field in self.source_fields:
-            event.pop(field, None)
+            try:
+                event.pop(field, None)
+            except AttributeError:
+                etype, evalue, etb = sys.exc_info()
+                self.logger.error("Could not delete field %s. Exception: %s, Error: %s. " % (field, etype, evalue))
         yield event
 
     def insert(self, event):

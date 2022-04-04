@@ -59,7 +59,7 @@ class Json(BaseThreadedModule):
     - parser.Jsons:
        action:                          # <default: 'decode'; type: string; values: ['decode','encode']; is: optional>
        source_fields:                   # <default: 'data'; type: string||list; is: optional>
-       target_field:                    # <default: None; type: None||string; is: optional>
+       target_field:                    # <default: None; type: None||string; is: required if action == 'encode' else optional>
        keep_original:                   # <default: False; type: boolean; is: optional>
        receivers:
         - NextModule
