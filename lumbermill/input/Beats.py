@@ -7,7 +7,7 @@ import time
 import socket
 import struct
 import logging
-from io import StringIO
+from io import BytesIO, StringIO
 
 from tornado import autoreload
 from tornado.iostream import StreamClosedError
@@ -55,23 +55,24 @@ class TornadoTcpServer(TCPServer):
 
 class BeatsConnectionHandler(object):
 
-    code_window_size_frame = 'W'
-    code_json_frame = 'J'
-    code_compressed_frame = 'C'
-    code_frame = 'D'
+    code_window_size_frame = b'W'
+    code_json_frame = b'J'
+    code_compressed_frame = b'C'
+    code_frame = b'D'
+
+    states = ["DECODE_HEADER",
+              "DECODE_FRAME_TYPE",
+              "DECODE_WINDOW_SIZE",
+              "DECODE_JSON_HEADER",
+              "DECODE_COMPRESSED_FRAME_HEADER",
+              "DECODE_COMPRESSED_FRAME",
+              "DECODE_JSON",
+              "DECODE_DATA_FIELDS"]
 
     def __init__(self, stream, address, gp_module):
         self.logger = logging.getLogger(self.__class__.__name__)
         #self.logger.setLevel(logging.DEBUG)
         self.gp_module = gp_module
-        self.states = ["DECODE_HEADER",
-                       "DECODE_FRAME_TYPE",
-                       "DECODE_WINDOW_SIZE",
-                       "DECODE_JSON_HEADER",
-                       "DECODE_COMPRESSED_FRAME_HEADER",
-                       "DECODE_COMPRESSED_FRAME",
-                       "DECODE_JSON",
-                       "DECODE_DATA_FIELDS"]
         self.state_decoder = [self.decodeHeader,
                               self.decodeFrameType,
                               self.decodeWindowSize,
@@ -88,7 +89,8 @@ class BeatsConnectionHandler(object):
         self.initBatch()
 
     def initBatch(self):
-        self.stringio_stream = None
+        self.bytesio_stream = None
+        self.bytesio_size = 0
         self.stringio_size = 0
         self.current_state = 0
         self.required_bytes = 1
@@ -109,10 +111,10 @@ class BeatsConnectionHandler(object):
                     print(self.tcp_stream._read_buffer)
                     sys.exit()
         if data != "":
-            if not self.stringio_stream:
-                self.stringio_stream = StringIO()
-            self.stringio_size += len(data)
-            self.stringio_stream.write(data)
+            if not self.bytesio_stream:
+                self.bytesio_stream = BytesIO()
+            self.bytesio_size += len(data)
+            self.bytesio_stream.write(data)
             self.readRequiredBytes()
         self.tcp_stream.close()
 
@@ -124,33 +126,34 @@ class BeatsConnectionHandler(object):
 
     def sendAck(self):
         self.logger.debug("Sending ack for seq: %s. %sA%s" % (self.sequence_number, self.batch.getProtocol(), struct.pack(">I", self.sequence_number)))
-        self.tcp_stream.write("%sA%s" % (self.batch.getProtocol(), struct.pack(">I", self.sequence_number)))
+        payload = "%sA%s" % (self.batch.getProtocol(), struct.pack(">I", self.sequence_number))
+        self.tcp_stream.write(payload.encode('utf-8'))
 
     def transition(self, next, required_bytes):
-        self.logger.debug("Transition, from: %s to: %s required bytes: %d." % (self.getCurrentState(), self.states[next], required_bytes))
+        self.logger.debug("Transition, from: %s to: %s required bytes: %d." % (self.getCurrentState(), BeatsConnectionHandler.states[next], required_bytes))
         self.required_bytes = required_bytes
         self.current_state = next
 
     def getCurrentState(self):
-        return self.states[self.current_state]
+        return BeatsConnectionHandler.states[self.current_state]
 
     @gen.coroutine
     def handleStream(self):
         """
-        decodeCompressedFrame produces a StringIO object, containing the uncompressed data stream.
-        So if self.stringio_stream exists, read from this stream instead of the tcp stream.
-        When all data from self.stringio_stream has been read, discard it and continue to read from tcp stream.
+        decodeCompressedFrame produces a BytesIO object, containing the uncompressed data stream.
+        So if self.bytesio_stream exists, read from this stream instead of the tcp stream.
+        When all data from self.bytesio_stream has been read, discard it and continue to read from tcp stream.
         :return:
         """
         while True:
             try:
-                if self.stringio_stream:
+                if self.bytesio_stream:
                     self.logger.debug("Reading %d byte(s) from stringio stream." % self.required_bytes)
-                    stream_data = self.stringio_stream.read(self.required_bytes)
-                    self.stringio_size -= self.required_bytes
-                    if self.stringio_size <= 0:
-                        self.stringio_stream = None
-                        self.stringio_size = 0
+                    stream_data = self.bytesio_stream.read(self.required_bytes)
+                    self.bytesio_size -= self.required_bytes
+                    if self.bytesio_size <= 0:
+                        self.bytesio_stream = None
+                        self.bytesio_size = 0
                 else:
                     self.logger.debug("Reading %d byte(s) from tcp stream." % self.required_bytes)
                     stream_data = yield self.tcp_stream.read_bytes(self.required_bytes)
@@ -158,41 +161,41 @@ class BeatsConnectionHandler(object):
                 if not stream_data:
                     self.logger.warning("Got empty stream data. Falling back to decoding next header.")
                     self.sendBatch()
-                    self.transition(0, 1)
+                    self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
                 self.state_decoder[self.current_state](stream_data)
             except StreamClosedError:
                 break
 
     def decodeHeader(self, stream_data):
         self.logger.debug("decodeHeader, requiredBytes: %s" % self.required_bytes)
-        if stream_data == "2":
+        if stream_data == b"2":
             self.logger.debug("Frame version 2 detected.")
             self.batch.setProtocol(2)
-        elif stream_data == "1":
+        elif stream_data == b"1":
             self.logger.debug("Frame version 1 detected.")
             self.batch.setProtocol(1)
         else:
             self.logger.warning("Unknown header: %s (Hex: %s). Skipping." % (stream_data, "{:02x}".format(ord(stream_data))))
             self.sendBatch()
-            self.transition(0, 1)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
             return
-        self.transition(1, 1)
+        self.transition(BeatsConnectionHandler.states.index("DECODE_FRAME_TYPE"), 1)
 
     def decodeFrameType(self, stream_data):
         self.logger.debug("decodeFrameType, requiredBytes: %s" % self.required_bytes)
         self.logger.debug("FrameType: %s" % stream_data)
         if stream_data == BeatsConnectionHandler.code_window_size_frame:
-            self.transition(2, 4)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_WINDOW_SIZE"), 4)
         elif stream_data == BeatsConnectionHandler.code_json_frame:
-            self.transition(3, 8)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_JSON_HEADER"), 8)
         elif stream_data == BeatsConnectionHandler.code_compressed_frame:
-            self.transition(4, 4)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_COMPRESSED_FRAME_HEADER"), 4)
         elif stream_data == BeatsConnectionHandler.code_frame:
-            self.transition(7, 8)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_DATA_FIELDS"), 8)
         else:
             self.logger.warning("Unknown frame type: %s (Hex: %s). Falling back to decoding next header." % (stream_data, "{:02x}".format(ord(stream_data))))
             self.sendBatch()
-            self.transition(0, 1)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
 
     def decodeWindowSize(self, stream_data):
         self.logger.debug("decodeWindowSize, requiredBytes: %s" % self.required_bytes)
@@ -204,10 +207,10 @@ class BeatsConnectionHandler(object):
         # actually completely done other than checking the windows and the sequence number,
         # If the FSM read a new window and I have still
         # events buffered I should send the current batch down to the next handler.
-        if not self.batch.isEmpty() and not self.stringio_stream:
-            self.logger.warn("New window size received but the current batch was not complete, sending the current batch.")
+        if not self.batch.isEmpty() and not self.bytesio_stream:
+            self.logger.warning("New window size received but the current batch was not complete, sending the current batch.")
             self.sendBatch()
-        self.transition(0, 1)
+        self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
 
     def decodeDataFields(self, stream_data):
         """
@@ -224,7 +227,7 @@ class BeatsConnectionHandler(object):
 
     def decodeCompressedFrameHeader(self, stream_data):
         self.logger.debug("decodeCompressedFrameHeader, requiredBytes: %s" % self.required_bytes)
-        self.transition(5, struct.unpack(">I", stream_data)[0])
+        self.transition(BeatsConnectionHandler.states.index("DECODE_COMPRESSED_FRAME"), struct.unpack(">I", stream_data)[0])
 
     def decodeCompressedFrame(self, stream_data):
         self.logger.debug("decodeCompressedFrame, requiredBytes: %s" % self.required_bytes)
@@ -234,24 +237,24 @@ class BeatsConnectionHandler(object):
         except:
             etype, evalue, etb = sys.exc_info()
             self.logger.warning("Could not decompress data %s. Exception: %s, Error: %s. Falling back to decoding header." % (len(stream_data), etype, evalue))
-            self.transition(0, 1)
+            self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
             return None
-        self.stringio_size = len(decompressed_data)
-        self.stringio_stream = StringIO(decompressed_data)
-        self.transition(0, 1)
+        self.bytesio_size = len(decompressed_data)
+        self.bytesio_stream = BytesIO(decompressed_data)
+        self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
 
     def decodeJsonHeader(self, stream_data):
         self.logger.debug("decodeJsonHeader, requiredBytes: %s" % self.required_bytes)
         self.sequence_number = struct.unpack(">I", stream_data[:4])[0]
         self.logger.debug("Sequence: %s" % self.sequence_number)
-        self.transition(6, struct.unpack(">I", stream_data[4:])[0])
+        self.transition(BeatsConnectionHandler.states.index("DECODE_JSON"), struct.unpack(">I", stream_data[4:])[0])
 
     def decodeJson(self, stream_data):
         self.logger.debug("decodeJson, requiredBytes: %s" % self.required_bytes)
         self.batch.addMessage({"sequence": self.sequence_number, "data": self.decodeJsonString(stream_data)})
         if self.batch.size() == self.batch.getWindowSize():
             self.sendBatch()
-        self.transition(0, 1)
+        self.transition(BeatsConnectionHandler.states.index("DECODE_HEADER"), 1)
 
     def decodeJsonString(self, json_string):
         try:
