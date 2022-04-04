@@ -13,8 +13,9 @@ class TestFields(ModuleBaseTestCase):
 
     def testDelete(self):
         self.default_dict['delme'] = 1
+        self.default_dict['nested'] = {'delme': 1}
         self.test_object.configure({'action': 'delete',
-                                    'source_fields': ['delme']})
+                                    'source_fields': ['delme','nested.delme']})
         for event in self.test_object.handleEvent(self.default_dict):
             self.assertTrue('delme' not in event)
 
